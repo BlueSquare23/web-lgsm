@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web LGSM</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous">
+</head>
+
+<body style="background-color: black">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="https://github.com/BlueSquare23/web-lgsm">Project's Github</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+  </nav>
+
+  <br>
+  <h1 style="color:white"> Welcome to the Web LGSM Project </h1>
+  <p style="color:white"> A simple web interface for your Linux Game Server! </p>
+  <hr style="color:white">
+
+  <script>
+ 
+    /* JS Cookie functions copied from W3School */
+    /* https://www.w3schools.com/js/js_cookies.asp */
+
+    function setCookie(cname, cvalue, exdays) {
+
+      const d = new Date();
+      d.setTime(d.getTime() + (exdays*24*60*60*1000));
+      let expires = "expires="+ d.toUTCString();
+      document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+
+    }
+
+    function getCookie(cname) {
+
+      let name = cname + "=";
+      let decodedCookie = decodeURIComponent(document.cookie);
+      let ca = decodedCookie.split(';');
+
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+
+        while (c.charAt(0) == ' ') {                          
+          c = c.substring(1);
+        }
+
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+
+    function resetCookie(){
+      document.cookie = "ServerName" + 
+        "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+       location.reload();
+    }
+
+    /* Help prevent XSS */
+    function htmlEncode(str){
+      return String(str).replace(/[^\w. ]/gi, function(c){
+        return '&#'+c.charCodeAt(0)+';';
+      });
+    }
+
+    serverCookie = "ServerName";
+    var gameServer = getCookie(serverCookie);
+
+    if (gameServer) {
+      controlsText = "<h2 style='color:white'>Game Server Controls / Output</h2>" +
+        "<iframe id='frame' class='embed-responsive-item' src='/cgi-bin/controls.cgi?server_name=" + 
+        gameServer + "'" +
+        "  height='500' width='100%' title='Iframe Example'></iframe>" +
+        "<hr style='color:white'>";
+      htmlBody = controlsText;
+
+      document.write(htmlBody);
+
+    } else {
+      gsName = prompt("Enter Game Server Script Name: \n" +
+        "Common Names\n" +
+        "Valheim: vhserver\n" +
+        "7 Days: sdtdserver\n" +
+        "Gmod TTT: gmodserver\n" +
+        "ect...","");
+      if (gsName != "" && gsName != null) {
+        gsName = htmlEncode(gsName)
+        setCookie(serverCookie, gsName, 30);
+        location.reload();
+      }
+    }
+  </script>
+
+  <button class="btn btn-primary" onclick=location.reload()>Back To Controls</button>
+
+  <button onclick=resetCookie() type=button' class='btn btn-secondary'>Reset Script Name Cookie</button>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous">
+  </script>
+
+</body>
+</html>

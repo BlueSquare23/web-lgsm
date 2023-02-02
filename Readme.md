@@ -3,10 +3,10 @@
 ## Main Idea
 
 This project is intended to be an easy to use web interface for the [Linux Game
-Server Manager (LGSM)](https://linuxgsm.com/servers/vhserver/) command line
-tool. The LGSM is a fantastic tool for installing and administering game
-servers. However, some users would rather manage their Game server through a
-web interface instead. That is what this project attempts to provide.
+Server Manager (LGSM)](https://linuxgsm.com/) command line tool. The LGSM is a
+fantastic tool for installing and administering game servers. However, some
+users would rather manage their Game server through a web interface instead.
+That is what this project attempts to provide.
 
 ## Installation
 

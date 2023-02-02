@@ -79,3 +79,7 @@ The web interface can be started and stopped using the `init.sh` script.
 ## License MIT
 
 [MIT License](license.txt)
+
+## Author
+
+John L. Radford (Aka BlueSquare23)

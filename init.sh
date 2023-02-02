@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # This script uses the built in python web server in order to serve the cgi
 # application.
+# Written by John R., Feb. 2023.
 
 PORT="8080"
 

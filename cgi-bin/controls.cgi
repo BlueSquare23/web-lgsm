@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # This python3 CGI script lists and processes the lsgm game server commands for
 # the supplied game server.
+# Written by John R., Feb. 2023.
 
 import os
 import re

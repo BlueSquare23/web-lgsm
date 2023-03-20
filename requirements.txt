@@ -1,1 +1,7 @@
-requests==2.25.1
+Flask==2.2.3
+flask_login==0.6.2
+flask_sqlalchemy==3.0.3
+pages==0.3
+python-dotenv==1.0.0
+SQLAlchemy==2.0.7
+Werkzeug==2.2.3

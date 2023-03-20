@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- Bootstrap CSS Only -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" 
+		rel="stylesheet" 
+		integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" 
+		crossorigin="anonymous">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+	<title>{% block title %}{% endblock %}</title>
+</head>
+
+<body>
+<a name="top"></a>
+
+	<!-- Bootstrap Navbar https://getbootstrap.com/docs/5.1/components/navbar/ -->
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<div class="container-fluid">
+				<a class="navbar-brand" href="/home">
+				<img src="/static/img/favicon.ico" alt="" width="30" height="24" class="d-inline-block align-text-top">
+				</a>
+			<button class="navbar-toggler" 
+				type="button" 
+				data-bs-toggle="collapse"
+				data-bs-target="#navbar">
+
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbar">
+				<div class="navbar-nav">
+					<a class="nav-item nav-link" href="/home">Home</a>
+					{% if user.is_authenticated %}
+					<a class="nav-item nav-link" href="/settings">Settings</a>
+					<a class="nav-item nav-link" href="/logout">Logout</a>
+					{% else %}
+					<a class="nav-item nav-link" href="/login">Login</a>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	{% with messages = get_flashed_messages(with_categories=True) %}
+		{% if messages %}
+			{% for category, message in messages %}
+				{% if category == "error" %}
+
+				<div class="alert alert-danger alert-dismissable fade show" 
+					role="alert">
+
+				{{ message }}
+
+				<button type="button" 
+					class="btn-close" 
+					data-bs-dismiss="alert">
+				</button>
+				</div>
+
+				{% else %}
+
+				<div class="alert alert-success alert-dismissable fade show" 
+					role="alert">
+
+				{{ message }}
+
+				<button type="button" 
+					class="btn-close" 
+					data-bs-dismiss="alert">
+				</button>
+				</div>
+				{% endif %}
+			{% endfor %}
+		{% endif %}
+	{% endwith %}
+
+	<div id="invisible-container" class="container-fluid">
+	</div>
+
+	<div class="container pb-5">{% block content %}{% endblock %}</div>
+
+	<!-- Bootstrap JavaScript Bundle with Popper -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" 
+		integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" 
+		crossorigin="anonymous">
+	</script>
+
+<div id="footer-container" class="container-fluid fixed-bottom bg-dark pt-2">
+<p class="text-center text-muted">Web LGSM - Version: 1.1</p>
+</div>
+</body>
+</html>

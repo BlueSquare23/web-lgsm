@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+
+{% block content %}
+
+<br/>
+
+<div class="container bg-dark border border-secondary p-2">
+
+<form method="POST">
+    <h3 align="enter" style="color: white">
+        Web LGSM Setup
+    </h3>
+    <div class="form-group" style="color: white">
+        <label for="username">Username</label>
+        <input type="text" 
+            id="username" 
+            name="username" 
+            class="form-control"
+            placeholder="Enter Username"
+        />
+
+        <label for="password1" style="color: white">Password</label>
+        <input type="password"
+            id="password1"
+            name="password1"
+            class="form-control"
+            placeholder="Enter Password"
+        />
+
+        <label for="password2" style="color: white">Confirm Password</label>
+        <input type="password"
+            id="password2"
+            name="password2"
+            class="form-control"
+            placeholder="Retype Password"
+        />
+
+        <br/>
+
+        <center>
+        <button class="btn btn-primary" 
+            type="submit">Submit
+        </button>
+        </center>       
+    </div>
+</form>
+</div>
+{% endblock %}

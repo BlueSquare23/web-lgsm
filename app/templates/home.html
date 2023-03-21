@@ -1,9 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}Web LGSM Home{% endblock %}
 
 {% block content %}
 
 <br/>
 
-<p>Welcome To The Home Page!</p>
+<h2 style='color:white'>Installed Servers</h2>
+{% if installed_servers|length > 0 %}
+    <div class="list-group">
+    {% for server in installed_servers %}
+      <a href="/controls?server={{server}}" class="list-group-item list-group-item-action">{{server}}</a>
+    {% endfor %}
+    </div>
+{% else %}
+    <ul class="list-group">
+      <li class="list-group-item">No Servers Currently Installed</li> 
+    </ul>
+{% endif %}
+
+<br/>
+
+<h2 style='color:white'>Other Options</h2>
+<div class="list-group">
+  <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
+  <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
+</div>
+
 {% endblock %}

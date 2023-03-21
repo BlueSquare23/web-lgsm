@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Add Existing Server{% endblock %}
+
+{% block content %}
+
+<br/>
+
+<div class="container bg-dark border border-secondary p-2">
+
+<form method="POST">
+    <h3 align="enter" style="color: white">
+        Add Existing LGSM Installation
+    </h3>
+    <div class="form-group" style="color: white">
+        <label for="install_name">Installation Title</label>
+        <input type="text" 
+            id="install_name" 
+            name="install_name" 
+            class="form-control"
+            placeholder="Enter a unique name for this install"
+        />
+
+        <label for="install_path" style="color: white">Installation Full Path</label>
+        <input type="text"
+            id="install_path"
+            name="install_path"
+            class="form-control"
+            placeholder="Enter the full path to the game server directory"
+        />
+
+        <label for="script_name" style="color: white">LGSM Script Name</label>
+        <input type="text"
+            id="script_name"
+            name="script_name"
+            class="form-control"
+            placeholder="Enter the name of the game server script. For example, 'gmodserver'"
+        />
+
+        <br/>
+
+        <center>
+        <button class="btn btn-primary" 
+            type="submit">Submit
+        </button>
+        </center>       
+    </div>
+</form>
+</div>
+{% endblock %}

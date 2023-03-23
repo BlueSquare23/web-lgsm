@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM Server Controls{% endblock %}
+
+{% block content %}
+
+<br/>
+
+<script>
+function displaySpinner(){
+  var spinners = document.getElementById("spinners");  
+  spinners.style.display = "block";
+}
+</script>
+
+<!-- Spinnyboos hidden till onclick event -->
+<div id="spinners" style="display:none">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-secondary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-success" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-danger" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-warning" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-info" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-border text-light" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+
+  <hr style='color:white'>
+
+  <p style='color:green'>Here's a random pupper pic while you wait!</p>
+  <a href="{{doggo_img}}" alt="Random Doggo Link!" title="Click to open image in new tab." target="_blank">
+  <img class="img-fluid img-thumbnail" loading="lazy" src="{{doggo_img}}" alt="Random Dog Image"></img>
+  </a>
+
+</div>
+
+<div class="container">
+
+  {% if output|length %}
+  <div class="row">
+    <h2 style='color:white'>Output:</h2>
+    {% if output_type == "stderr" %}
+    <pre style='color:red'>{{output}}</pre>
+    {% elif output_type == "stdout" %}
+    <pre style='color:green'>{{output}}</pre>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <h2 style='color:white'>Server Controls for: {{server_name|capitalize}}</h2>
+
+  {% for command in server_commands %}
+  <div class="row">
+    <div class="col">
+      
+      <a onclick='displaySpinner()' class='btn btn-primary' href='/controls?server={{server_name}}&command={{command.short_cmd}}'>{{command.long_cmd}}</a>
+    </div>
+
+    <div class="col" style="color:green">
+      {{command.description}}
+    </div>
+  </div>
+  <br/>
+  {% endfor %}
+</div>
+<br/>
+
+<button id="topBtn" type="button" class="btn btn-primary d-sm-none d-md-block d-none d-sm-block">
+  <a href="#top" style="color: white">/\ Top /\</a>
+</button>
+
+<a id="delBtn" title="Remove server entry from web-lgsm database"
+  onclick="return confirm('Are you sure?');" class="btn btn-danger"
+  href="/delete?server={{server_name}}" role="button">Delete Server</a>
+
+{% endblock %}

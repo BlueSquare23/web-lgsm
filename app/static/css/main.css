@@ -1,3 +1,15 @@
 body {
   background-color: black;
 }
+
+#topBtn {
+	position: fixed;
+	right: 40px;
+	bottom: 70px;
+}
+
+#delBtn {
+	position: fixed;
+	left: 40px;
+	bottom: 70px;
+}

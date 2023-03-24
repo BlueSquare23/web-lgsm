@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM Settings{% endblock %}
+
+{% block content %}
+
+<br/>
+
+<div class="container bg-dark border border-secondary p-2">
+
+<form method="POST">
+    <h3 align="enter" style="color: white">
+        Web LGSM Settings
+    </h3>
+    <div class="form-group" style="color: white">
+        <label for="install_name">Generic Setting</label>
+        <input type="text" 
+            id="install_name" 
+            name="install_name" 
+            class="form-control"
+            placeholder="Settings Not Finished Yet"
+        />
+
+        <br/>
+
+        <center>
+        <button class="btn btn-primary" 
+            type="submit">Submit
+        </button>
+        </center>       
+    </div>
+</form>
+</div>
+{% endblock %}

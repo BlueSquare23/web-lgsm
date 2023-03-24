@@ -1,10 +1,15 @@
 import os
-from flask import Blueprint, render_template, request, flash, url_for, redirect
+import sys
+import subprocess
+import shutil
+from flask import Blueprint, render_template, request, flash, url_for, redirect, Response
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from .models import User, GameServer
 from . import db
-from .utils import run_script, escape_ansi, check_input, get_doggo
+from .utils import *
+#run_script, capture_tmux_pane, escape_ansi, get_doggo, \
+#    contains_bad_chars, list_all_lgsm_servers, wget_lgsmsh, install_lgsm_server
 
 views = Blueprint("views", __name__)
 
@@ -39,49 +44,41 @@ def controls():
     script_path = server.install_path + '/' + server.script_name
     output = ""
     output_type = ""
+    disabled_cmds = ['d', 'sk', 'i', 'dev']
 
     if script_arg != None:
         # Check for hax injectypoo attempt!
-        check_input(script_arg)
-
-        # If arg is install, deny (requires stdin (y/n) prompts).
-        if script_arg == "i":
-            flash("Install option disabled", category="error")
-            return redirect(url_for('views.controls', server_name=server_name))
+        if contains_bad_chars(script_arg):
+            flash("Illegal Character Entered", category="error")
+            flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
+            return redirect(url_for('views.controls', server=server_name))
 
         # Not allowed to start in debug mode.
-        if script_arg == "d":
-            flash("Debug option disabled", category="error")
-            return redirect(url_for('views.controls', server_name=server_name))
-
-        # Not allowed to create a skel dir.
-        if script_arg == "sk":
-            flash("Skel dir option disabled", category="error")
-            return redirect(url_for('views.controls', server_name=server_name))
+        if script_arg in disabled_cmds:
+            flash("Option disabled", category="error")
+            return redirect(url_for('views.controls', server=server_name))
 
         # If its live console use custom python console solution.
         if script_arg == "c":
-            stdout, stderr = capture_tmux_pane()
+            stdout, stderr = capture_tmux_pane(server.script_name)
             output = escape_ansi(stdout)
             output_type = "stdout"
 
             if stderr != "":
                 output = escape_ansi(stderr)
                 output_type = "stderr"
+        else:
+            stdout, stderr = rce(script_path, script_arg)
+    
+            # For Debug.
+            if stderr != "":
+                output = escape_ansi(stderr)
+                output_type = "stderr"
+    
+            output = escape_ansi(stdout)
+            output_type = "stdout"
 
-        stdout, stderr = run_script(script_path, script_arg)
-
-        # For Debug.
-        if stderr != "":
-            output = escape_ansi(stderr)
-            output_type = "stderr"
-
-        output = escape_ansi(stdout)
-        output_type = "stdout"
-
-#        output, output_type = process_script_args(script_path, script_arg, server_name)
-
-    stdout, stderr = run_script(script_path, "")
+    stdout, stderr = rce(script_path, "")
 
     # For Debug.
     if stderr != "":
@@ -101,6 +98,10 @@ def controls():
     for line in cmds.splitlines():
         cmd = CmdDescriptor()
         args = line.split()
+
+        if args[1] in disabled_cmds:
+            continue
+
         cmd.long_cmd = args[0]
         cmd.short_cmd = args[1]
         cmd.description = line.split("|")[1]
@@ -116,7 +117,100 @@ def controls():
 @views.route("/install", methods=['GET'])
 @login_required
 def install():
-    return render_template("install.html", user=current_user)
+    server_script_name = request.args.get("server")
+    server_full_name = request.args.get("full_name")
+    output = ""
+
+    # Check for / install the main linuxgsm.sh script. 
+    lgsmsh = "linuxgsm.sh"
+    if not os.path.isfile(lgsmsh):
+        stdout, stderr = wget_lgsmsh()
+
+        # For Debug.
+        if stderr != "":
+            print(stderr)
+
+    os.chmod(lgsmsh, 0o755)
+
+    if server_script_name != None and server_full_name != None:
+        server_full_name = server_full_name.replace(" ", "_")
+        # Gotta check all input, even if it should just be coming from buttons.
+        for input_item in (server_script_name, server_full_name):
+            if contains_bad_chars(input_item):
+                flash("Illegal Character Found! Stop Haxing!", category="error")
+                return redirect(url_for('views.install'))
+
+        install_name_exists = GameServer.query.filter_by(install_name=server_full_name).first()
+        
+        if install_name_exists:
+            flash('An installation by that name already exits.', category='error')
+            return redirect(url_for('views.install'))
+        elif os.path.exists(server_full_name):
+            flash('Install directory already exists.', category='error')
+            flash('Did you perhaps have this server installed previously?', category='error')
+            return redirect(url_for('views.install'))
+        
+        # Make a new server dir and copy linuxgsm.sh into it then cd into it.
+        os.mkdir(server_full_name)
+        shutil.copy(lgsmsh, server_full_name)
+        os.chdir(server_full_name)
+
+        # Add the install to the database.
+        new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, script_name=server_script_name) 
+        db.session.add(new_game_server)
+        db.session.commit()
+
+        try:
+            stdout, stderr = pre_install_lgsm_server(server_script_name)
+        except:
+            # For debug.
+            print(sys.exc_info()[0])
+
+        # For Debug.
+        if stderr != "":
+            output = escape_ansi(stderr)
+    
+        output = escape_ansi(stdout)
+
+        print(os.getcwd())
+        os.chdir('..')
+
+        # Wont flash till install finishes.
+        flash('Game server added to Web LGSM DB!')
+        flash('Game server installed!')
+
+        # Redirect to the auto controls page and run the auto install (ai) command.
+        return redirect(url_for('views.controls', server=server_full_name, command='ai'))
+
+    # Run linuxgsm.sh to get dictionary listing of servers to install.
+    stdout, stderr = list_all_lgsm_servers()
+    
+    # For Debug.
+    if stderr != "":
+        print(stderr)
+
+    servers_list = escape_ansi(stdout)
+    servers = {}
+    
+    for line in servers_list.splitlines():
+        server_script_name = line.split()[0]
+        server_full_name = line.split(" ", 1)[1].strip()
+
+        # Part of status stdout, not part of listing so ignore.
+        if server_script_name == "fetching":
+            continue
+
+        servers[server_script_name] = server_full_name
+
+    return render_template("install.html", user=current_user, servers=servers, output=output, doggo_img=get_doggo())
+
+######### Settings Page #########
+
+@views.route("/settings", methods=['GET', 'POST'])
+@login_required
+def settings():
+    
+    return render_template("settings.html", user=current_user)
 
 ######### Add Page #########
 
@@ -125,11 +219,17 @@ def install():
 def add():
 
     if request.method == 'POST':
-        install_name = request.form.get("install_name")
+        install_name = request.form.get("install_name").replace(" ", "_")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
 
         install_name_exists = GameServer.query.filter_by(install_name=install_name).first()
+
+        for input_item in (install_name, install_path, script_name):
+            if contains_bad_chars(input_item):
+                flash("Illegal Character Entered", category="error")
+                flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
+                return redirect(url_for('views.add'))
 
         if install_name_exists:
             flash('An installation by that name already exits.', category='error')
@@ -152,8 +252,15 @@ def add():
 
 ######### Delete Route #########
 
-@views.route("/delete", methods=['GET', 'POST'])
+@views.route("/delete", methods=['GET'])
 @login_required
 def delete():
+    server_name = request.args.get("server")
+    GameServer.query.filter_by(install_name=server_name).delete()
+    db.session.commit()
 
-    return render_template("delete.html", user=current_user)
+    if os.path.isdir(server_name):
+        shutil.rmtree(server_name)
+    
+    flash('Game server deleted')
+    return redirect(url_for('views.home'))

@@ -1,0 +1,9 @@
+* Refactor all RCE utils into a single universal secure RCE function.
+  - Validate ALL args going into RCE function!
+* Add toggle setting to keep / remove server install files on delete.
+  - Use python configparser lib to setup site config.
+* Double check for template injection!
+  - Make sure all input is checked before putting in DB.
+* Setup Unit Testing.
+  - Test all endpoints to make sure they can handel null data.
+* Add delete toggles to Installed Servers to provide option to delete multiple.

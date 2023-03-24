@@ -4,8 +4,8 @@ import requests
 import subprocess
 
 # Kindly does the RCE.
-def run_script(cmd, arg):
-    proc = subprocess.Popen([cmd, arg], 
+def rce(cmd, arg):
+    proc = subprocess.Popen([cmd, arg],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True)
@@ -13,8 +13,37 @@ def run_script(cmd, arg):
     return proc.communicate()
 
 # Kindly does the console read RCE.
-def capture_tmux_pane():
-    proc = subprocess.Popen(['tmux', 'capture-pane', '-pS', '-5'],
+def capture_tmux_pane(script_name):
+    proc = subprocess.Popen(['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', script_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True)
+
+    return proc.communicate()
+
+# Kindly does the linuxgsm.sh wget RCE. Their site blocks python requests
+# somehow. I tried changing the UA, that didn't work. Will find a better
+# solution l8t3r.
+def wget_lgsmsh():
+    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True)
+
+    return proc.communicate()
+
+# Kindly does the linuxgsm.sh server listing RCE.
+def list_all_lgsm_servers():
+    proc = subprocess.Popen(['./linuxgsm.sh', 'list'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True)
+
+    return proc.communicate()
+
+# Kindly does the linuxgsm.sh server install RCE.
+def pre_install_lgsm_server(script_name):
+    proc = subprocess.Popen([f'./linuxgsm.sh', script_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True)
@@ -26,14 +55,14 @@ def escape_ansi(line):
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
 
-# Tries protect against hax. Returns False if hax char detected.
-def check_input(i):
+# Checks for the presense of bad chars in input.
+def contains_bad_chars(i):
     bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">",
                   "|", ";", "{", "}", "(", ")", "*", ",", "?", "~", "&" }
 
     for char in bad_chars:
         if char in i: 
-            return False
+            return True
 
 # Get's random doggo pic.
 def get_doggo():

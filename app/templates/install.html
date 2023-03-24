@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM Install Server{% endblock %}
+
+{% block content %}
+
+<br/>
+
+{% include 'doggos_and_spinners.html' %}
+
+<div class="container">
+
+  <br/>
+  <h2 style='color:white'>Install a New LGSM Server</h2>
+  <hr>
+
+  {% for script_name, full_name in servers.items() %}
+  <div class="row">
+    <div class="col">
+      <a onclick='displaySpinner(); window.scrollTo(0,0);' class='btn btn-primary'
+        href='/install?server={{script_name}}&full_name={{full_name}}'>Install {{script_name}}</a>
+    </div>
+    <div class="col" style="color:green">
+      {{full_name}}
+    </div>
+  </div>
+  <br/>
+  {% endfor %}
+</div>
+<br/>
+
+<button id="topBtn" onclick='window.scrollTo(0,0);' type="button" 
+  class="btn btn-primary d-sm-none d-md-block d-none d-sm-block">
+  <a href="#top" style="color: white">/\ Top /\</a>
+</button>
+
+{% endblock %}

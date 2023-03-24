@@ -2,5 +2,6 @@
 *.env
 *.db
 *.misc
+linuxgsm.sh
 venv
 __pycache__

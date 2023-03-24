@@ -2,6 +2,7 @@ import os
 from . import db
 from pathlib import Path
 from .models import User
+from .utils import contains_bad_chars
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort
@@ -46,6 +47,11 @@ def setup():
 
         # Check if submitted form data for issues 
         username_exists = User.query.filter_by(username=username).first()
+
+        if contains_bad_chars(username):
+            flash("Username Contains Illegal Character(s)", category="error")
+            flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
+            return redirect(url_for('auth.setup'))
 
         if username_exists:
             flash('Username is already in use.', category='error')

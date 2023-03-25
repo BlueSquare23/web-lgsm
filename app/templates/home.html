@@ -6,16 +6,26 @@
 <br/>
 
 <h2 style='color:white'>Installed Servers</h2>
+
 {% if installed_servers|length > 0 %}
-    <div class="list-group">
+<form method="POST" action="/delete">
+  <div class="list-group form-check form-switch">
     {% for server in installed_servers %}
-      <a href="/controls?server={{server}}" class="list-group-item list-group-item-action">{{server}}</a>
+    <a href="/controls?server={{server}}" class="list-group-item
+      list-group-item-action">{{server}}<input class="form-check-input"
+      style="float: right !important;" type="checkbox"
+      name="server_num_{{ loop.index }}" value="{{server}}"></a>
     {% endfor %}
-    </div>
+  </div>
+  <br/>
+  <button onclick="return confirm('Are you sure you want to delete these servers?');" 
+    class="btn btn-primary" style="float: right !important;" type="submit">Delete Selected
+  </button>
+</form>
 {% else %}
-    <ul class="list-group">
-      <li class="list-group-item">No Servers Currently Installed</li> 
-    </ul>
+<ul class="list-group">
+  <li class="list-group-item">No Servers Currently Installed</li> 
+</ul>
 {% endif %}
 
 <br/>

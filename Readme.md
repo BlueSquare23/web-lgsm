@@ -12,6 +12,15 @@ interface. That is what this project attempts to be.
 
 TBD
 
+## Usage & Liability
+
+I claim no liability for any injury or damages that may result from the use or
+abuse of this piece of software. Use at your own risk! I have tried to take
+security precautions when building this this app to prevent it from being
+horribly abused. However, please note I am an amateur programmer and this app
+is fundamentally sorta suss. It is a web portal for wrapping shell commands.
+That is very big target for haxzorz!
+
 ## License MIT
 
 [MIT License](license.txt)

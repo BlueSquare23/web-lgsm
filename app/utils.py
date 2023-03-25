@@ -43,7 +43,7 @@ def list_all_lgsm_servers():
 
 # Kindly does the linuxgsm.sh server install RCE.
 def pre_install_lgsm_server(script_name):
-    proc = subprocess.Popen([f'./linuxgsm.sh', script_name],
+    proc = subprocess.Popen(['./linuxgsm.sh', script_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True)

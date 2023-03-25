@@ -3,5 +3,6 @@
 *.db
 *.misc
 linuxgsm.sh
+lgsm
 venv
 __pycache__

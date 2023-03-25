@@ -1,9 +1,24 @@
+* Explore solutions for piping stdout to an iframe or something in realtime.
+  - Ideally replace random doggo and spinners with realtime console display.
 * Refactor all RCE utils into a single universal secure RCE function.
   - Validate ALL args going into RCE function!
-* Add toggle setting to keep / remove server install files on delete.
+  - There are only so many things that can be run.
+  - Do NOT allow arbitrary user input into RCE function!!!
+    - Dev build does rn because I'm just working things out.
+    - Goal is to have prod v-sanatized and clean!
+* Harden /add page checks to lock down directory traversal attempts.
+  - Only allow dirs under pwd.
+* Preform additional checks to ensure lgsm script files are the files they're
+  expected to be.
+  - Perhaps compare checksums against online versions.
+* Add toggle Setting to keep / remove server install files on delete.
   - Use python configparser lib to setup site config.
+* Make text color an adjustable config / setting.
 * Double check for template injection!
   - Make sure all input is checked before putting in DB.
 * Setup Unit Testing.
   - Test all endpoints to make sure they can handel null data.
-* Add delete toggles to Installed Servers to provide option to delete multiple.
+* Write easy install script.
+* Fix up Readme.
+  - Add easy install instructions.
+  - Add pretty pictures of app in action!

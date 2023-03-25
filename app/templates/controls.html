@@ -7,19 +7,19 @@
 
 {% include 'doggos_and_spinners.html' %}
 
+<script>
+// Scrolls to bottom of iframe automatically.
+//setInterval('frames[0].scrollTo(0,9999999)',10);
+</script>
+
 <div class="container">
 
-  {% if output|length %}
   <div class="row">
     <h2 style='color:white'>Output:</h2>
+    <iframe style="color:green" width="100%" height="400px" src="/rconsole?server={{server_name}}&command={{cmd}}">
+    </iframe>
     <hr>
-    {% if output_type == "stderr" %}
-    <pre style='color:red'>{{output}}</pre>
-    {% elif output_type == "stdout" %}
-    <pre style='color:green'>{{output}}</pre>
-    {% endif %}
   </div>
-  {% endif %}
 
   <br/>
   <h2 style='color:white'>Server Controls for: {{server_name|capitalize}}</h2>

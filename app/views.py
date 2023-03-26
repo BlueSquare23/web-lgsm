@@ -8,8 +8,6 @@ from werkzeug.security import generate_password_hash
 from .models import User, GameServer
 from . import db
 from .utils import *
-#run_script, capture_tmux_pane, escape_ansi, get_doggo, \
-#    contains_bad_chars, list_all_lgsm_servers, wget_lgsmsh, install_lgsm_server
 
 views = Blueprint("views", __name__)
 
@@ -29,49 +27,47 @@ def home():
 
 ######### Controls Page #########
 
-@views.route("/controls", methods=['GET'])
+@views.route("/controls", methods=['GET', 'POST'])
 @login_required
 def controls():
-
-    server_name = request.args.get("server")
-    script_arg = request.args.get("command")
+    if request.method == 'POST':
+        server_name = request.form.get("server")
+        script_arg = request.form.get("command")
+    else:
+        server_name = request.args.get("server")
+        script_arg = None
 
     if server_name == None:
-        flash("Error loading page", category="error")
+        flash("Error, no server specified!", category="error")
         return redirect(url_for('views.home'))
 
     server = GameServer.query.filter_by(install_name=server_name).first()
     script_path = server.install_path + '/' + server.script_name
     disabled_cmds = ['d', 'sk', 'i', 'dev']
 
-    if script_arg != None:
-        # Check for hax injectypoo attempt!
-        if contains_bad_chars(script_arg):
+    # Check for hax injectypoo attempt!
+    for input_item in (server_name, script_arg):
+        if contains_bad_chars(input_item):
             flash("Illegal Character Entered", category="error")
             flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
-        # Not allowed to start in debug mode.
+    if script_arg != None and request.method == 'POST':
         if script_arg in disabled_cmds:
             flash("Option disabled", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
         # If its live console use custom python console solution.
         if script_arg == "c":
-            stdout, stderr = capture_tmux_pane(server.script_name)
-            output = escape_ansi(stdout)
-            output_type = "stdout"
-
-            if stderr != "":
-                output = escape_ansi(stderr)
-                output_type = "stderr"
+            cmd_list = ['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', server.script_name]
+            return Response(read_process(cmd_list), mimetype= 'text/html')
+        else:
+            cmd_list = [script_path, script_arg]
+            return Response(read_process(cmd_list), mimetype= 'text/html')
             
 
-    stdout, stderr = rce(script_path, "")
-
-    # For Debug.
-    if stderr != "":
-        print(stderr)
+    # Temporary.
+    stdout = os.popen(script_path).read()
 
     cmds = escape_ansi(stdout)
 
@@ -107,38 +103,12 @@ def controls():
 
     return render_template("controls.html", user=current_user, server_name=server_name, server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
 
-######### Console Page #########
+######### Iframe Default Page #########
 
-@views.route("/rconsole", methods=['GET'])
+@views.route("/no_output", methods=['GET'])
 @login_required
-def rconsole():
-    def execute(cmd):
-        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-        for stdout_line in iter(popen.stdout.readline, ""):
-            yield stdout_line
-        popen.stdout.close()
-        return_code = popen.wait()
-        if return_code:
-            raise subprocess.CalledProcessError(return_code, cmd)
-
-    def read_process(cmd_list):
-        yield "<pre style='color:green'>"
-        for line in execute(cmd_list):
-            yield escape_ansi(line)
-            #print(line, end="")
-        yield "</pre>"
-
-    server_name = request.args.get("server")
-    script_arg = request.args.get("command")
-
-    if script_arg == "None":
-        return Response( "<h3 style='color:green'>No output currently!</h3>", mimetype = 'text/html' )
-
-    server = GameServer.query.filter_by(install_name=server_name).first()
-    script_path = server.install_path + '/' + server.script_name
-
-    cmd_list = [script_path, script_arg]
-    return Response(read_process(cmd_list), mimetype= 'text/html')
+def no_output():
+    return render_template("no_output.html", user=current_user)
 
 ######### Install Page #########
 

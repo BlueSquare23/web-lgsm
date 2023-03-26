@@ -5,10 +5,9 @@
 
 <br/>
 
-{% include 'doggos_and_spinners.html' %}
-
-<script>
+<script type="text/javascript">
 // Scrolls to bottom of iframe automatically.
+// TODO: FIND BETTER SOLUTION.
 //setInterval('frames[0].scrollTo(0,9999999)',10);
 </script>
 
@@ -16,7 +15,7 @@
 
   <div class="row">
     <h2 style='color:white'>Output:</h2>
-    <iframe style="color:green" width="100%" height="400px" src="/rconsole?server={{server_name}}&command={{cmd}}">
+    <iframe style="color:green" id="output_iframe" name="output_iframe" width="100%" height="400px" src="/no_output">
     </iframe>
     <hr>
   </div>
@@ -28,8 +27,12 @@
   {% for command in server_commands %}
   <div class="row">
     <div class="col">
-      <a onclick='displaySpinner(); window.scrollTo(0,0);' class='btn btn-primary'
-        href='/controls?server={{server_name}}&command={{command.short_cmd}}'>{{command.long_cmd}}</a>
+      <form method="POST" target="output_iframe" action="/controls">
+        <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control"/>
+        <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control"/>
+
+        <input onclick='window.scrollTo(0,0);' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
+      </form>
     </div>
     <div class="col" style="color:green">
       {{command.description}}

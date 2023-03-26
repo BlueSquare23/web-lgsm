@@ -1,24 +1,41 @@
-* Explore solutions for piping stdout to an iframe or something in realtime.
-  - Ideally replace random doggo and spinners with realtime console display.
+* Instead of reaching down to the shell to grab the cmd list or install list
+  every time those pages are loaded, only grab those items once the first time
+  the user ever loads the page then put them into the DB and from then on use
+  the value from the DB.
+
 * Refactor all RCE utils into a single universal secure RCE function.
+  - Just pass in list of args.
   - Validate ALL args going into RCE function!
   - There are only so many things that can be run.
   - Do NOT allow arbitrary user input into RCE function!!!
-    - Dev build does rn because I'm just working things out.
-    - Goal is to have prod v-sanatized and clean!
+    - Still mulling over solution for sudo password.
+    - Dev build is a mess rn because I'm just working things out.
+    - Goal is to have prod v-sanitized and clean!
+
+* Come up with secure solution for auto install requiring sudo access.
+  - Auto-install is broken until I can pipe sudo password down to shell.
+    - Sudo access required to install necessary game server dependencies.
+
 * Harden /add page checks to lock down directory traversal attempts.
   - Only allow dirs under pwd.
+
 * Preform additional checks to ensure lgsm script files are the files they're
   expected to be.
   - Perhaps compare checksums against online versions.
+
 * Add toggle Setting to keep / remove server install files on delete.
   - Use python configparser lib to setup site config.
+  
 * Make text color an adjustable config / setting.
+
 * Double check for template injection!
   - Make sure all input is checked before putting in DB.
+
 * Setup Unit Testing.
-  - Test all endpoints to make sure they can handel null data.
+  - Test all endpoints to make sure they can handle null data.
+
 * Write easy install script.
+
 * Fix up Readme.
   - Add easy install instructions.
   - Add pretty pictures of app in action!

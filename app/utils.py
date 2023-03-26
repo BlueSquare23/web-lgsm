@@ -3,52 +3,35 @@ import json
 import requests
 import subprocess
 
-# Kindly does the RCE.
-def rce(cmd, arg):
-    proc = subprocess.Popen([cmd, arg],
+# WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
+# INPUT VALIDATION!!! Working on it...
+
+def shell_exec(cmd_list):
+    proc = subprocess.Popen(cmd_list,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True)
 
-    return proc.communicate()
+    for stdout_line in iter(proc.stdout.readline, ""):
+        yield stdout_line
 
-# Kindly does the console read RCE.
-def capture_tmux_pane(script_name):
-    proc = subprocess.Popen(['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', script_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
+    for stderr_line in iter(proc.stderr.readline, ""):
+        yield "<span style='color:red'>" + stderr_line + "</span>"
 
-    return proc.communicate()
+    proc.stdout.close()
+    proc.stderr.close()
 
-# Kindly does the linuxgsm.sh wget RCE. Their site blocks python requests
-# somehow. I tried changing the UA, that didn't work. Will find a better
-# solution l8t3r.
-def wget_lgsmsh():
-    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
+# Kindly does the live process read.
+def read_process(cmd_list):
+    yield "<pre style='color:green'>"
+    for line in shell_exec(cmd_list):
+        yield escape_ansi(line)
+    yield "</pre>"
 
-    return proc.communicate()
 
-# Kindly does the linuxgsm.sh server listing RCE.
-def list_all_lgsm_servers():
-    proc = subprocess.Popen(['./linuxgsm.sh', 'list'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
-
-    return proc.communicate()
-
-# Kindly does the linuxgsm.sh server install RCE.
-def pre_install_lgsm_server(script_name):
-    proc = subprocess.Popen(['./linuxgsm.sh', script_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
-
-    return proc.communicate()
+#    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],
+#    proc = subprocess.Popen(['./linuxgsm.sh', 'list'],
+#    proc = subprocess.Popen(['./linuxgsm.sh', script_name],
 
 # Removes color codes from cmd line output.
 def escape_ansi(line):
@@ -59,6 +42,8 @@ def escape_ansi(line):
 def contains_bad_chars(i):
     bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">",
                   "|", ";", "{", "}", "(", ")", "*", ",", "?", "~", "&" }
+    if i is None:
+        return False
 
     for char in bad_chars:
         if char in i: 

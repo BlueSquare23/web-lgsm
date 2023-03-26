@@ -18,13 +18,13 @@
     {% endfor %}
   </div>
   <br/>
-  <button onclick="return confirm('Are you sure you want to delete these servers?');" 
-    class="btn btn-primary" style="float: right !important;" type="submit">Delete Selected
+  <button onclick="return confirm('Are you sure you want to delete these servers?');"
+    class="btn btn-danger" style="float: right !important;" type="submit">Delete Selected
   </button>
 </form>
 {% else %}
 <ul class="list-group">
-  <li class="list-group-item">No Servers Currently Installed</li> 
+  <li class="list-group-item">No Servers Currently Installed</li>
 </ul>
 {% endif %}
 

@@ -14,24 +14,24 @@ DB_NAME = "database.db"
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
-secret_key = os.environ['SECRET_KEY']
+SECRET_KEY = os.environ['SECRET_KEY']
 
 def main():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = secret_key
+    app.config['SECRET_KEY'] = SECRET_KEY
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{app.root_path}/{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
-    # Pull in our views route(s)
+    # Pull in our views route(s).
     from .views import views
     app.register_blueprint(views, url_prefix="/")
 
-    # Pull in our auth route(s)
+    # Pull in our auth route(s).
     from .auth import auth 
     app.register_blueprint(auth, url_prefix="/")
 
-    # Initialize DB
+    # Initialize DB.
     from .models import User
     with app.app_context():
         db.create_all()

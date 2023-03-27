@@ -31,8 +31,10 @@ def main():
     from .auth import auth 
     app.register_blueprint(auth, url_prefix="/")
 
+
+
     # Initialize DB.
-    from .models import User
+    from .models import User, GameServer, ControlSet, InstallServer
     with app.app_context():
         db.create_all()
 

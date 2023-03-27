@@ -14,3 +14,15 @@ class GameServer(db.Model):
     install_path = db.Column(db.String(150))
     # The name of the lgsm game server script. For example, 'gmodserver'.
     script_name = db.Column(db.String(150))
+
+class ControlSet(db.Model):
+    id =  db.Column(db.Integer, primary_key=True)
+    install_name = db.Column(db.String(150), unique=True)
+    short_cmds = db.Column(db.String(150))
+    long_cmds = db.Column(db.String(250))
+    descriptions = db.Column(db.String(500))
+
+class InstallServer(db.Model):
+    id =  db.Column(db.Integer, primary_key=True)
+    short_names = db.Column(db.String(150))
+    long_names = db.Column(db.String(250))

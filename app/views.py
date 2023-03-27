@@ -5,7 +5,7 @@ import shutil
 from flask import Blueprint, render_template, request, flash, url_for, redirect, Response
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
-from .models import User, GameServer
+from .models import *
 from . import db
 from .utils import *
 
@@ -25,6 +25,48 @@ def home():
 
     return render_template("home.html", user=current_user, installed_servers=server_names)
 
+
+# Controls route helper function. Uses script_path to gather list of short &
+# long cmds and then commits them to the db. Helps speed up page load times if
+# cmds are pulled from db rather than gathered each time via a popen call.
+def add_cmd_to_db(server_name, script_path, disabled_cmds):
+
+    # Requires further validation!!!
+    ## TRY TO VALIDATE EVERYTHING!!!
+    stdout = os.popen(script_path).read()
+
+    cmds = escape_ansi(stdout)
+
+    long_cmds = []
+    short_cmds = []
+    descriptions = []
+
+    before_commands_line = True
+
+    for line in cmds.splitlines():
+        # We only care about lines after Commands line.
+        if line.rstrip() == "Commands":
+            before_commands_line = False
+            continue
+
+        if before_commands_line:
+            continue
+
+        args = line.split()
+
+        if args[1] in disabled_cmds:
+            continue
+
+        long_cmds.append(args[0])
+        short_cmds.append(args[1])
+        descriptions.append(line.split("|")[1])
+
+    controls = ControlSet(install_name=server_name, short_cmds=','.join(short_cmds), \
+                 long_cmds=','.join(long_cmds), descriptions=','.join(descriptions)) 
+    db.session.add(controls)
+    db.session.commit()
+    return controls
+
 ######### Controls Page #########
 
 @views.route("/controls", methods=['GET', 'POST'])
@@ -42,8 +84,32 @@ def controls():
         return redirect(url_for('views.home'))
 
     server = GameServer.query.filter_by(install_name=server_name).first()
+    if server == None:
+        flash("Error loading page!", category="error")
+        return redirect(url_for('views.home'))
+
     script_path = server.install_path + '/' + server.script_name
     disabled_cmds = ['d', 'sk', 'i', 'dev']
+
+    controls = ControlSet.query.filter_by(install_name=server_name).first()
+    if controls == None:
+        controls = add_cmd_to_db(server_name, script_path, disabled_cmds)
+
+    class CmdDescriptor:
+        def __init__(self):
+            self.long_cmd  = ""
+            self.short_cmd = ""
+            self.description = ""
+
+    commands = []
+    cmd_strings = zip(controls.short_cmds.split(','), controls.long_cmds.split(','), controls.descriptions.split(','))
+
+    for short_cmd, long_cmd, description in cmd_strings:
+        cmd = CmdDescriptor()
+        cmd.long_cmd = long_cmd
+        cmd.short_cmd = short_cmd
+        cmd.description = description
+        commands.append(cmd)
 
     # Check for hax injectypoo attempt!
     for input_item in (server_name, script_arg):
@@ -66,40 +132,6 @@ def controls():
             return Response(read_process(cmd_list), mimetype= 'text/html')
             
 
-    # Temporary.
-    stdout = os.popen(script_path).read()
-
-    cmds = escape_ansi(stdout)
-
-    class CmdDescriptor:
-        def __init__(self):
-            self.long_cmd  = ""
-            self.short_cmd = ""
-            self.description = ""
-
-    commands = []
-
-    before_commands_line = True
-
-    for line in cmds.splitlines():
-        # We only care about lines after Commands line.
-        if line.rstrip() == "Commands":
-            before_commands_line = False
-            continue
-
-        if before_commands_line:
-            continue
-
-        cmd = CmdDescriptor()
-        args = line.split()
-
-        if args[1] in disabled_cmds:
-            continue
-
-        cmd.long_cmd = args[0]
-        cmd.short_cmd = args[1]
-        cmd.description = line.split("|")[1]
-        commands.append(cmd)
 
     return render_template("controls.html", user=current_user, server_name=server_name, server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
 
@@ -110,88 +142,18 @@ def controls():
 def no_output():
     return render_template("no_output.html", user=current_user)
 
-######### Install Page #########
-
-@views.route("/install", methods=['GET', 'POST'])
-@login_required
-def install():
-    output = ""
-
-    # Check for / install the main linuxgsm.sh script. 
-    lgsmsh = "linuxgsm.sh"
-    if not os.path.isfile(lgsmsh):
-        stdout, stderr = wget_lgsmsh()
-
-        # For Debug.
-        if stderr != "":
-            print(stderr)
-
-    os.chmod(lgsmsh, 0o755)
-
-    if request.method == 'GET':
-        server_script_name = request.args.get("server")
-        server_full_name = request.args.get("full_name")
-
-        if server_script_name != None and server_full_name != None:
-            server_full_name = server_full_name.replace(" ", "_")
-            # Gotta check all input, even if it should just be coming from buttons.
-            for input_item in (server_script_name, server_full_name):
-                if contains_bad_chars(input_item):
-                    flash("Illegal Character Detected! Stop Haxing!", category="error")
-                    return redirect(url_for('views.install'))
-
-            install_name_exists = GameServer.query.filter_by(install_name=server_full_name).first()
-            
-            if install_name_exists:
-                flash('An installation by that name already exits.', category='error')
-                return redirect(url_for('views.install'))
-            elif os.path.exists(server_full_name):
-                flash('Install directory already exists.', category='error')
-                flash('Did you perhaps have this server installed previously?', category='error')
-                return redirect(url_for('views.install'))
-            
-            # Make a new server dir and copy linuxgsm.sh into it then cd into it.
-            os.mkdir(server_full_name)
-            shutil.copy(lgsmsh, server_full_name)
-            os.chdir(server_full_name)
-
-            # Add the install to the database.
-            new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, script_name=server_script_name) 
-            db.session.add(new_game_server)
-            db.session.commit()
-
-            try:
-                stdout, stderr = pre_install_lgsm_server(server_script_name)
-            except:
-                # For debug.
-                print(sys.exc_info()[0])
-
-            # For Debug.
-            if stderr != "":
-                output = escape_ansi(stderr)
-        
-            output = escape_ansi(stdout)
-
-            print(os.getcwd())
-            os.chdir('..')
-
-            # Wont flash till install finishes.
-            flash('Game server added to Web LGSM DB!')
-            flash('Game server sucessfully installed!')
-
-            # Redirect to the auto controls page and run the auto install (ai) command.
-            return redirect(url_for('views.controls', server=server_full_name, command='ai'))
-
-    # Run linuxgsm.sh to get dictionary listing of servers to install.
-    stdout, stderr = list_all_lgsm_servers()
-    
-    # For Debug.
-    if stderr != "":
-        print(stderr)
+# Install route helper function. Uses the main linuxgsm.sh to gather list of
+# short & long server names and then commits them to the db. Helps speed up
+# page load times if server names are pulled from db rather than gathered each
+# time via a popen call.
+def add_server_list_to_db():
+    stdout = os.popen('./linuxgsm.sh list').read()
 
     servers_list = escape_ansi(stdout)
-    servers = {}
-    
+    print(servers_list)
+    short_server_names = []
+    long_server_names = []
+
     for line in servers_list.splitlines():
         server_script_name = line.split()[0]
         server_full_name = line.split(" ", 1)[1].strip()
@@ -200,7 +162,94 @@ def install():
         if server_script_name == "fetching":
             continue
 
-        servers[server_script_name] = server_full_name
+        short_server_names.append(server_script_name)
+        long_server_names.append(server_full_name)
+
+    servers = InstallServer(short_names=','.join(short_server_names), \
+                            long_names=','.join(long_server_names))
+    db.session.add(servers)
+    db.session.commit()
+    return servers
+
+######### Install Page #########
+
+@views.route("/install", methods=['GET'])
+@login_required
+def install():
+    output = ""
+
+    # Check for / install the main linuxgsm.sh script. 
+    lgsmsh = "linuxgsm.sh"
+    if not os.path.isfile(lgsmsh):
+        # Temporary solution. Tried using requests for download, didn't work.
+        os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh").read()
+
+    os.chmod(lgsmsh, 0o755)
+
+    server_script_name = request.args.get("server")
+    server_full_name = request.args.get("full_name")
+
+    if server_script_name != None and server_full_name != None:
+        server_full_name = server_full_name.replace(" ", "_")
+        # Gotta check all input, even if it should just be coming from buttons.
+        for input_item in (server_script_name, server_full_name):
+            if contains_bad_chars(input_item):
+                flash("Illegal Character Detected! Stop Haxing!", category="error")
+                return redirect(url_for('views.install'))
+
+        install_name_exists = GameServer.query.filter_by(install_name=server_full_name).first()
+
+        if install_name_exists:
+            flash('An installation by that name already exits.', category='error')
+            return redirect(url_for('views.install'))
+        elif os.path.exists(server_full_name):
+            flash('Install directory already exists.', category='error')
+            flash('Did you perhaps have this server installed previously?', category='error')
+            return redirect(url_for('views.install'))
+
+        # Make a new server dir and copy linuxgsm.sh into it then cd into it.
+        os.mkdir(server_full_name)
+        shutil.copy(lgsmsh, server_full_name)
+        os.chdir(server_full_name)
+
+        # Add the install to the database.
+        new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, script_name=server_script_name) 
+        db.session.add(new_game_server)
+        db.session.commit()
+
+        try:
+            stdout, stderr = pre_install_lgsm_server(server_script_name)
+        except:
+            # For debug.
+            print(sys.exc_info()[0])
+
+        # For Debug.
+        if stderr != "":
+            output = escape_ansi(stderr)
+
+        output = escape_ansi(stdout)
+
+        print(os.getcwd())
+        os.chdir('..')
+
+        # Wont flash till install finishes.
+        flash('Game server added to Web LGSM DB!')
+        flash('Game server sucessfully installed!')
+
+        # Redirect to the auto controls page and run the auto install (ai) command.
+        return redirect(url_for('views.controls', server=server_full_name, command='ai'))
+
+
+    servers_list = InstallServer.query.get(1)
+    if servers_list == None:
+        # Rename at some point.
+        servers_list = add_server_list_to_db()
+
+    servers = {}
+    server_name_strings = zip(servers_list.short_names.split(','), servers_list.long_names.split(','))
+
+    for short_names, long_names in server_name_strings:
+        servers[short_names] = long_names
 
     return render_template("install.html", user=current_user, servers=servers, output=output, doggo_img=get_doggo())
 

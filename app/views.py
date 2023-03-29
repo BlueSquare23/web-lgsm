@@ -102,7 +102,8 @@ def controls():
             self.description = ""
 
     commands = []
-    cmd_strings = zip(controls.short_cmds.split(','), controls.long_cmds.split(','), controls.descriptions.split(','))
+    cmd_strings = zip(controls.short_cmds.split(','), controls.long_cmds.split(','), \
+                                                controls.descriptions.split(','))
 
     for short_cmd, long_cmd, description in cmd_strings:
         cmd = CmdDescriptor()
@@ -131,9 +132,8 @@ def controls():
             cmd_list = [script_path, script_arg]
             return Response(read_process(cmd_list), mimetype= 'text/html')
             
-
-
-    return render_template("controls.html", user=current_user, server_name=server_name, server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
+    return render_template("controls.html", user=current_user, server_name=server_name, \
+                        server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
 
 ######### Iframe Default Page #########
 
@@ -182,7 +182,7 @@ def install():
     lgsmsh = "linuxgsm.sh"
     if not os.path.isfile(lgsmsh):
         # Temporary solution. Tried using requests for download, didn't work.
-        os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh").read()
+        os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh")
 
     os.chmod(lgsmsh, 0o755)
 
@@ -213,21 +213,17 @@ def install():
         os.chdir(server_full_name)
 
         # Add the install to the database.
-        new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, script_name=server_script_name) 
+        new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, \
+                                                                script_name=server_script_name) 
         db.session.add(new_game_server)
         db.session.commit()
 
         try:
             stdout, stderr = pre_install_lgsm_server(server_script_name)
+            output = escape_ansi(stdout)
         except:
             # For debug.
             print(sys.exc_info()[0])
-
-        # For Debug.
-        if stderr != "":
-            output = escape_ansi(stderr)
-
-        output = escape_ansi(stdout)
 
         print(os.getcwd())
         os.chdir('..')
@@ -251,7 +247,8 @@ def install():
     for short_names, long_names in server_name_strings:
         servers[short_names] = long_names
 
-    return render_template("install.html", user=current_user, servers=servers, output=output, doggo_img=get_doggo())
+    return render_template("install.html", user=current_user, servers=servers, \
+                                        output=output, doggo_img=get_doggo())
 
 ######### Settings Page #########
 
@@ -289,7 +286,8 @@ def add():
             flash('Script file does not exist.', category='error')
         else:
             # Add the install to the database, then redirect home.
-            new_game_server = GameServer(install_name=install_name, install_path=install_path, script_name=script_name) 
+            new_game_server = GameServer(install_name=install_name, install_path=install_path, \
+                                                                    script_name=script_name) 
             db.session.add(new_game_server)
             db.session.commit()
 
@@ -300,11 +298,16 @@ def add():
 
 # Helper function for del route.
 def del_server(server_name):
+    server = GameServer.query.filter_by(install_name=server_name).first()
+    install_path = server.install_path 
+
     GameServer.query.filter_by(install_name=server_name).delete()
+    ControlSet.query.filter_by(install_name=server_name).delete()
     db.session.commit()
 
-    if os.path.isdir(server_name):
-        shutil.rmtree(server_name)
+# Disabled auto delete rn. Will add configparse option to disable l8t3r.
+    if os.path.isdir(install_path):
+        shutil.rmtree(install_path)
     
     flash(f'Game server, {server_name} deleted!')
     return

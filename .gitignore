@@ -2,6 +2,7 @@
 *.env
 *.db
 *.misc
+*.swp
 linuxgsm.sh
 lgsm
 venv

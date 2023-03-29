@@ -1,3 +1,9 @@
+* General refactor!
+  - Remove silly unused or redundant code.
+  - Do some renaming.
+  - Fix up / add / update comments.
+  - Prue.
+
 * Refactor all RCE utils into a single universal secure RCE function.
   - Just pass in list of args.
   - Validate ALL args going into RCE function!
@@ -17,6 +23,16 @@
 * Preform additional checks to ensure lgsm script files are the files they're
   expected to be.
   - Perhaps compare checksums against online versions.
+
+* Add JS to tell if iframe is populated yet or not, and if not but after
+  controls button onclick, then show spinner.
+  - In other words, if its between the time when the user presses a controls
+    button and when the output starts spilling into the iframe, then use some
+    js to show a loading... & spinners.
+  - POST to iframe currently has no status indictor as to when output is
+    comming. Can be an uncomfortable amount of time where nothing happens
+    before output comes back, even though output is comming in realtime.
+    - First few lines may be buffered??? Idk have to do some goog in.
 
 * Add toggle Setting to keep / remove server install files on delete.
   - Use python configparser lib to setup site config.

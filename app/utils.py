@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import requests
@@ -6,7 +7,10 @@ import subprocess
 # WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
 # INPUT VALIDATION!!! Working on it...
 
-def shell_exec(cmd_list):
+def shell_exec(exec_dir, base_dir, cmd_list):
+
+    os.chdir(exec_dir)
+
     proc = subprocess.Popen(cmd_list,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -21,12 +25,16 @@ def shell_exec(cmd_list):
     proc.stdout.close()
     proc.stderr.close()
 
+    os.chdir(base_dir)
+
 # Kindly does the live process read.
-def read_process(cmd_list):
+def read_process(exec_dir, base_dir, cmd_list, ):
+    yield "<!DOCTYPE html><html lang='en'><body>"
     yield "<pre style='color:green'>"
-    for line in shell_exec(cmd_list):
+    for line in shell_exec(exec_dir, base_dir, cmd_list):
         yield escape_ansi(line)
     yield "</pre>"
+    yield "</body></html>"
 
 
 #    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],

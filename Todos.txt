@@ -1,3 +1,11 @@
+* Finish stitching together auto install system!
+  - I was going to try to have the sudo pass input form on the controls page
+    and just have the install page do the presetup and then just redirect. 
+    - However I've decided against this design because its a bad idea.
+  - Copy onclick appear sudo pass form onto install.html page too.
+  - Copy / rewrite logic for handeling sudo pass and auto install into install
+    route.
+
 * General refactor!
   - Remove silly unused or redundant code.
   - Do some renaming.
@@ -13,10 +21,6 @@
     - Dev build is a mess rn because I'm just working things out.
     - Goal is to have prod v-sanitized and clean!
 
-* Come up with secure solution for auto install requiring sudo access.
-  - Auto-install is broken until I can pipe sudo password down to shell.
-    - Sudo access required to install necessary game server dependencies.
-
 * Harden /add page checks to lock down directory traversal attempts.
   - Only allow dirs under pwd.
 
@@ -30,8 +34,8 @@
     button and when the output starts spilling into the iframe, then use some
     js to show a loading... & spinners.
   - POST to iframe currently has no status indictor as to when output is
-    comming. Can be an uncomfortable amount of time where nothing happens
-    before output comes back, even though output is comming in realtime.
+    coming. Can be an uncomfortable amount of time where nothing happens
+    before output comes back, even though output is coming in realtime.
     - First few lines may be buffered??? Idk have to do some goog in.
 
 * Add toggle Setting to keep / remove server install files on delete.

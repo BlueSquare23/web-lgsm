@@ -31,15 +31,12 @@ def main():
     from .auth import auth 
     app.register_blueprint(auth, url_prefix="/")
 
-
-
     # Initialize DB.
-    from .models import User, GameServer, ControlSet, InstallServer
+    from .models import User, MetaData, GameServer, ControlSet, InstallServer
     with app.app_context():
         db.create_all()
 
     print(" * Created Database!")
-#   create_database(app)
 
     # Setup LoginManager
     login_manager = LoginManager()
@@ -54,8 +51,3 @@ def main():
         return User.query.get(int(id))
 
     return app
-
-## DB Setup
-#def create_database(app):
-#   if not os.path.exists("app/" + DB_NAME):
-#       db.create_all(app=app)

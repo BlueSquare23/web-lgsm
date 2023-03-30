@@ -1,7 +1,7 @@
 import os
 from . import db
 from pathlib import Path
-from .models import User
+from .models import User, MetaData
 from .utils import contains_bad_chars
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -38,6 +38,12 @@ def login():
 
 @auth.route("/setup", methods=['GET', 'POST'])
 def setup():
+    # Add app meta data on inital app setup.
+    if MetaData.query.get(1) is None:
+        app_data = MetaData(app_install_path=os.getcwd())
+        db.session.add(app_data)
+        db.session.commit()
+
 
     if request.method == 'POST':
         # Collect form data

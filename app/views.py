@@ -33,7 +33,11 @@ def add_cmd_to_db(server_name, script_path, disabled_cmds):
 
     # Requires further validation!!!
     ## TRY TO VALIDATE EVERYTHING!!!
-    stdout = os.popen(script_path).read()
+    try:
+        stdout = os.popen(script_path).read()
+    except:
+        # For debug.
+        print(sys.exc_info()[0])
 
     cmds = escape_ansi(stdout)
 
@@ -44,12 +48,8 @@ def add_cmd_to_db(server_name, script_path, disabled_cmds):
     before_commands_line = True
 
     for line in cmds.splitlines():
-        # We only care about lines after Commands line.
-        if line.rstrip() == "Commands":
-            before_commands_line = False
-            continue
-
-        if before_commands_line:
+        # Only the command lines have a | char.
+        if "|" not in line:
             continue
 
         args = line.split()
@@ -67,17 +67,58 @@ def add_cmd_to_db(server_name, script_path, disabled_cmds):
     db.session.commit()
     return controls
 
+# Parse /controls route GET/POST args input.
+def controls_arg_parse(script_arg, script_path, sudo_pass, disabled_cmds):
+    if script_arg in disabled_cmds:
+        flash("Option disabled", category="error")
+        return redirect(url_for('views.controls', server=server_name))
+
+    # Auto install option, requires sudo pass to install any lgsm dependancies.
+    if script_arg == "ai":
+        if sudo_pass == None:
+            flash("Auto install option requires sudo password!", category="error")
+            return redirect(url_for('views.controls', server=server_name))
+
+        escaped_password = sudo_pass.replace('"', '\\"')
+
+        # Attempt's to get sudo tty ticket.
+        try:
+            print(os.popen(f'/usr/bin/echo "{escaped_password}" | /usr/bin/sudo -S apt-get check').read())
+        except:
+            # For debug.
+            print(sys.exc_info()[0])
+
+        cmd_list = [script_path, script_arg]
+        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
+
+    # Console option, use tmux capture-pane.
+    elif script_arg == "c":
+        cmd_list = ['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', server.script_name]
+        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
+    else:
+        cmd_list = [script_path, script_arg]
+        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
+
 ######### Controls Page #########
 
 @views.route("/controls", methods=['GET', 'POST'])
 @login_required
 def controls():
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
+    # For GET->POST proxy.
+    auto_post = False
+
+    print(os.getcwd())
     if request.method == 'POST':
         server_name = request.form.get("server")
         script_arg = request.form.get("command")
+        # Only needed for auto install command.
+        sudo_pass = request.form.get("sudo_pass")
     else:
         server_name = request.args.get("server")
-        script_arg = None
+        script_arg = request.args.get("command")
 
     if server_name == None:
         flash("Error, no server specified!", category="error")
@@ -119,21 +160,14 @@ def controls():
             flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
-    if script_arg != None and request.method == 'POST':
-        if script_arg in disabled_cmds:
-            flash("Option disabled", category="error")
-            return redirect(url_for('views.controls', server=server_name))
-
-        # If its live console use custom python console solution.
-        if script_arg == "c":
-            cmd_list = ['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', server.script_name]
-            return Response(read_process(cmd_list), mimetype= 'text/html')
+    if script_arg != None:
+        if request.method == 'POST':
+            controls_arg_parse(script_arg, script_path, sudo_pass, disabled_cmds)
         else:
-            cmd_list = [script_path, script_arg]
-            return Response(read_process(cmd_list), mimetype= 'text/html')
-            
+            auto_post = True
+       
     return render_template("controls.html", user=current_user, server_name=server_name, \
-                        server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
+        server_commands=commands, cmd=script_arg, doggo_img=get_doggo(), auto_post=auto_post)
 
 ######### Iframe Default Page #########
 
@@ -147,10 +181,13 @@ def no_output():
 # page load times if server names are pulled from db rather than gathered each
 # time via a popen call.
 def add_server_list_to_db():
-    stdout = os.popen('./linuxgsm.sh list').read()
+    try:
+        stdout = os.popen('./linuxgsm.sh list').read()
+    except:
+        # For debug.
+        print(sys.exc_info()[0])
 
     servers_list = escape_ansi(stdout)
-    print(servers_list)
     short_server_names = []
     long_server_names = []
 
@@ -176,13 +213,20 @@ def add_server_list_to_db():
 @views.route("/install", methods=['GET'])
 @login_required
 def install():
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
     output = ""
 
     # Check for / install the main linuxgsm.sh script. 
     lgsmsh = "linuxgsm.sh"
     if not os.path.isfile(lgsmsh):
         # Temporary solution. Tried using requests for download, didn't work.
-        os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh")
+        try:
+            os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh")
+        except:
+            # For debug.
+            print(sys.exc_info()[0])
 
     os.chmod(lgsmsh, 0o755)
 
@@ -210,31 +254,21 @@ def install():
         # Make a new server dir and copy linuxgsm.sh into it then cd into it.
         os.mkdir(server_full_name)
         shutil.copy(lgsmsh, server_full_name)
-        os.chdir(server_full_name)
+
+        install_path = base_dir + '/' + server_full_name
 
         # Add the install to the database.
-        new_game_server = GameServer(install_name=server_full_name, install_path=server_full_name, \
-                                                                script_name=server_script_name) 
+        new_game_server = GameServer(install_name=server_full_name, \
+                install_path=install_path, script_name=server_script_name) 
         db.session.add(new_game_server)
         db.session.commit()
+        
+        setup_cmd = [f'./{lgsmsh}', server_script_name]
 
-        try:
-            stdout, stderr = pre_install_lgsm_server(server_script_name)
-            output = escape_ansi(stdout)
-        except:
-            # For debug.
-            print(sys.exc_info()[0])
+        flash("Game server added to database!")
+        flash("Please enter sudo password to auto install the game server!")
 
-        print(os.getcwd())
-        os.chdir('..')
-
-        # Wont flash till install finishes.
-        flash('Game server added to Web LGSM DB!')
-        flash('Game server sucessfully installed!')
-
-        # Redirect to the auto controls page and run the auto install (ai) command.
-        return redirect(url_for('views.controls', server=server_full_name, command='ai'))
-
+        return Response(read_process(install_path, base_dir, setup_cmd), mimetype= 'text/html')
 
     servers_list = InstallServer.query.get(1)
     if servers_list == None:
@@ -242,7 +276,8 @@ def install():
         servers_list = add_server_list_to_db()
 
     servers = {}
-    server_name_strings = zip(servers_list.short_names.split(','), servers_list.long_names.split(','))
+    server_name_strings = zip(servers_list.short_names.split(','), \
+                                servers_list.long_names.split(','))
 
     for short_names, long_names in server_name_strings:
         servers[short_names] = long_names
@@ -256,7 +291,9 @@ def install():
 @login_required
 def settings():
     
-    return render_template("settings.html", user=current_user)
+    flash("Redirecting to controls")
+    return redirect(url_for('views.controls', server="Minecraft", command="m"))
+   # return render_template("settings.html", user=current_user)
 
 ######### Add Page #########
 
@@ -286,8 +323,8 @@ def add():
             flash('Script file does not exist.', category='error')
         else:
             # Add the install to the database, then redirect home.
-            new_game_server = GameServer(install_name=install_name, install_path=install_path, \
-                                                                    script_name=script_name) 
+            new_game_server = GameServer(install_name=install_name, \
+                        install_path=install_path, script_name=script_name) 
             db.session.add(new_game_server)
             db.session.commit()
 

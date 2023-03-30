@@ -9,6 +9,21 @@
 // Scrolls to bottom of iframe automatically.
 // TODO: FIND BETTER SOLUTION.
 //setInterval('frames[0].scrollTo(0,9999999)',10);
+
+  function openForm(){
+    document.getElementById("sudo_pass_form").style.display = "block";
+  }
+  
+  function closeForm(){
+    document.getElementById("sudo_pass_form").style.display = "none";
+  }
+  
+  {% if auto_post == True %}
+  // If in auto_post mode, on window load click ai_btn.
+  window.addEventListener('load', function(){
+    document.getElementById("ai_btn").click();
+  })
+  {% endif %}
 </script>
 
 <div class="container">
@@ -27,12 +42,35 @@
   {% for command in server_commands %}
   <div class="row">
     <div class="col">
+    {% if command.short_cmd == "ai" %}
+      <button id="ai_btn" class="btn btn-primary open-button" onclick="openForm();">{{command.long_cmd}}</button>
+
+      <div class="form-group form-popup" id="sudo_pass_form" style="color: white">
+        <form method="POST" class="" id="sudo_pass_form" target="output_iframe" action="/controls">
+          <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control"/>
+          <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control"/>
+          <label for="sudo_pass" style="color: white">Sudo Password</label>
+          <input type="password"
+              id="sudo_pass"
+              name="sudo_pass"
+              class="form-control"
+              title="Sudo password is required to install necessary LGSM dependancies."
+              placeholder="Please Enter Sudo Password"
+              required
+          />
+
+          <br/>
+          <input onclick='window.scrollTo(0,0);closeForm();' class="btn btn-primary" type="submit" value="Start {{command.long_cmd}}">
+        </form>
+      </div>
+    {% else %}
       <form method="POST" target="output_iframe" action="/controls">
         <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control"/>
         <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control"/>
 
-        <input onclick='window.scrollTo(0,0);' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
+        <input onclick='window.scrollTo(0,0);closeForm();' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
       </form>
+    {% endif %}
     </div>
     <div class="col" style="color:green">
       {{command.description}}

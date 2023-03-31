@@ -1,10 +1,10 @@
-* Finish stitching together auto install system!
-  - I was going to try to have the sudo pass input form on the controls page
-    and just have the install page do the presetup and then just redirect. 
-    - However I've decided against this design because its a bad idea.
-  - Copy onclick appear sudo pass form onto install.html page too.
-  - Copy / rewrite logic for handeling sudo pass and auto install into install
-    route.
+* Look into hardcoding command options.
+  - Currently command options are generated on fly per server.
+  - Might save time / be easier to just hard code them.
+    - Have to look at a bunch of different lgsm server and see if any of them
+      have different special options. 
+    - Also check if the shortenings are the same across the board.
+      - st for start, sp for stop, ect.
 
 * General refactor!
   - Remove silly unused or redundant code.
@@ -23,10 +23,6 @@
 
 * Harden /add page checks to lock down directory traversal attempts.
   - Only allow dirs under pwd.
-
-* Preform additional checks to ensure lgsm script files are the files they're
-  expected to be.
-  - Perhaps compare checksums against online versions.
 
 * Add JS to tell if iframe is populated yet or not, and if not but after
   controls button onclick, then show spinner.

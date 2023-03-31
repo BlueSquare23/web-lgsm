@@ -8,6 +8,12 @@ body {
 	bottom: 70px;
 }
 
+#bottomBtn {
+	position: fixed;
+	right: 40px;
+	top: 40px;
+}
+
 #delBtn {
 	position: fixed;
 	right: 40px;

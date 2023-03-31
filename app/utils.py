@@ -7,11 +7,12 @@ import subprocess
 # WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
 # INPUT VALIDATION!!! Working on it...
 
-def shell_exec(exec_dir, base_dir, cmd_list):
+def shell_exec(exec_dir, base_dir, cmds):
 
     os.chdir(exec_dir)
 
-    proc = subprocess.Popen(cmd_list,
+    proc = subprocess.Popen(cmds,
+            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True)
@@ -28,13 +29,48 @@ def shell_exec(exec_dir, base_dir, cmd_list):
     os.chdir(base_dir)
 
 # Kindly does the live process read.
-def read_process(exec_dir, base_dir, cmd_list, ):
+def read_process(exec_dir, base_dir, cmds, mode):
     yield "<!DOCTYPE html><html lang='en'><body>"
     yield "<pre style='color:green'>"
-    for line in shell_exec(exec_dir, base_dir, cmd_list):
+    yield "<link rel='stylesheet' href='/static/css/main.css'>"
+    yield """<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css'
+         rel='stylesheet'
+         integrity='sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We'
+         crossorigin='anonymous'>"""
+
+    yield """<button id='bottomBtn' type='button' class='btn btn-primary'
+            style='text-decoration:overline' onclick='window.scrollTo(0,
+            100000)'>\/Bottom\/</button>"""
+
+    if mode == "install":
+        yield """
+        <script>
+          // Scrolls to bottom of iframe automatically.
+          // TODO: FIND BETTER SOLUTION.
+          window.addEventListener('load', function(){
+            window.location.href = "/home";
+          })
+        </script>
+        """
+
+    for line in shell_exec(exec_dir, base_dir, cmds):
         yield escape_ansi(line)
+
     yield "</pre>"
     yield "</body></html>"
+
+## Probably not the best solution.
+## Potentially vulnerable, will look into better options.
+# Uses sudo_pass to get sudo tty ticket.
+def get_tty_ticket(sudo_pass):
+    escaped_password = sudo_pass.replace('"', '\\"')
+    
+    # Attempt's to get sudo tty ticket.
+    try:
+        print(os.popen(f'/usr/bin/echo "{escaped_password}" | /usr/bin/sudo -S apt-get check').read())
+    except:
+        # For debug.
+        print(sys.exc_info()[0])
 
 
 #    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],

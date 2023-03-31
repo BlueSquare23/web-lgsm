@@ -3,6 +3,8 @@
 
 {% block content %}
 
+<script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
+
 <br/>
 
 <div class="container">
@@ -11,11 +13,35 @@
   <h2 style='color:white'>Install a New LGSM Server</h2>
   <hr>
 
+  <!-- Hidden sudo pass form -->
+  <div class="form-group form-popup" id="sudo_pass_form" style="color: white">
+    <form method="POST" class="" id="sudo_pass_form" action="/install">
+      <input type="hidden" id="server_name" name="server_name" value="" class="form-control"/>
+      <input type="hidden" id="full_name" name="full_name" value="" class="form-control"/>
+      <label for="sudo_pass" style="color: white">Sudo Password</label>
+      <input type="password"
+          id="sudo_pass"
+          name="sudo_pass"
+          class="form-control"
+          title="Sudo password is required to install necessary LGSM dependancies."
+          placeholder="Please Enter Sudo Password"
+          required
+      />
+
+      <br/>
+      <input onclick='window.scrollTo(0,0);closeForm();' id="install_btn" class="btn btn-primary" type="submit" value="">
+    </form>
+  </div>
+
   {% for script_name, full_name in servers.items() %}
   <div class="row">
     <div class="col">
+      <button id="ai_btn" class="btn btn-primary open-button" onclick="openForm('{{script_name}}', '{{full_name}}');">Install {{script_name}}</button>
+
+<!--
       <a onclick='displaySpinner(); window.scrollTo(0,0);' class='btn btn-primary'
         href='/install?server={{script_name}}&full_name={{full_name}}'>Install {{script_name}}</a>
+-->
     </div>
     <div class="col" style="color:green">
       {{full_name}}

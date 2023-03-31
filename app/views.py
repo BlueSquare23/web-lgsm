@@ -67,58 +67,24 @@ def add_cmd_to_db(server_name, script_path, disabled_cmds):
     db.session.commit()
     return controls
 
-# Parse /controls route GET/POST args input.
-def controls_arg_parse(script_arg, script_path, sudo_pass, disabled_cmds):
-    if script_arg in disabled_cmds:
-        flash("Option disabled", category="error")
-        return redirect(url_for('views.controls', server=server_name))
-
-    # Auto install option, requires sudo pass to install any lgsm dependancies.
-    if script_arg == "ai":
-        if sudo_pass == None:
-            flash("Auto install option requires sudo password!", category="error")
-            return redirect(url_for('views.controls', server=server_name))
-
-        escaped_password = sudo_pass.replace('"', '\\"')
-
-        # Attempt's to get sudo tty ticket.
-        try:
-            print(os.popen(f'/usr/bin/echo "{escaped_password}" | /usr/bin/sudo -S apt-get check').read())
-        except:
-            # For debug.
-            print(sys.exc_info()[0])
-
-        cmd_list = [script_path, script_arg]
-        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
-
-    # Console option, use tmux capture-pane.
-    elif script_arg == "c":
-        cmd_list = ['/usr/bin/tmux', 'capture-pane', '-pS', '-5', '-t', server.script_name]
-        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
-    else:
-        cmd_list = [script_path, script_arg]
-        return Response(read_process(server.install_path, base_dir, cmd_list), mimetype= 'text/html')
-
 ######### Controls Page #########
 
-@views.route("/controls", methods=['GET', 'POST'])
+@views.route("/controls", methods=['GET'])
 @login_required
 def controls():
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
-    # For GET->POST proxy.
-    auto_post = False
 
     print(os.getcwd())
-    if request.method == 'POST':
-        server_name = request.form.get("server")
-        script_arg = request.form.get("command")
-        # Only needed for auto install command.
-        sudo_pass = request.form.get("sudo_pass")
-    else:
-        server_name = request.args.get("server")
-        script_arg = request.args.get("command")
+    server_name = request.args.get("server")
+    script_arg = request.args.get("command")
+
+    print("##### /controls route GET")
+    if server_name != None:
+        print("Server Name: " + server_name)
+    if script_arg != None:
+        print("Script Arg: " + script_arg)
 
     if server_name == None:
         flash("Error, no server specified!", category="error")
@@ -130,7 +96,7 @@ def controls():
         return redirect(url_for('views.home'))
 
     script_path = server.install_path + '/' + server.script_name
-    disabled_cmds = ['d', 'sk', 'i', 'dev']
+    disabled_cmds = ['d', 'sk', 'i', 'ai', 'dev']
 
     controls = ControlSet.query.filter_by(install_name=server_name).first()
     if controls == None:
@@ -161,13 +127,20 @@ def controls():
             return redirect(url_for('views.controls', server=server_name))
 
     if script_arg != None:
-        if request.method == 'POST':
-            controls_arg_parse(script_arg, script_path, sudo_pass, disabled_cmds)
+        if script_arg in disabled_cmds:
+            flash("Option disabled", category="error")
+            return redirect(url_for('views.controls', server=server_name))
+
+        # Console option, use tmux capture-pane.
+        elif script_arg == "c":
+            cmd = f'/usr/bin/tmux capture-pane -pS -5 -t {server.script_name}'
+            return Response(read_process(server.install_path, base_dir, cmd, ""), mimetype= 'text/html')
         else:
-            auto_post = True
+            cmd = f'{script_path} {script_arg}'
+            return Response(read_process(server.install_path, base_dir, cmd, ""), mimetype= 'text/html')
        
     return render_template("controls.html", user=current_user, server_name=server_name, \
-        server_commands=commands, cmd=script_arg, doggo_img=get_doggo(), auto_post=auto_post)
+                        server_commands=commands, cmd=script_arg, doggo_img=get_doggo())
 
 ######### Iframe Default Page #########
 
@@ -210,7 +183,7 @@ def add_server_list_to_db():
 
 ######### Install Page #########
 
-@views.route("/install", methods=['GET'])
+@views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
     # Import meta data.
@@ -218,6 +191,7 @@ def install():
     base_dir = meta_data.app_install_path
     output = ""
 
+    ## Make its own function / find better solution.
     # Check for / install the main linuxgsm.sh script. 
     lgsmsh = "linuxgsm.sh"
     if not os.path.isfile(lgsmsh):
@@ -230,12 +204,20 @@ def install():
 
     os.chmod(lgsmsh, 0o755)
 
-    server_script_name = request.args.get("server")
-    server_full_name = request.args.get("full_name")
+    if request.method == 'POST':
+        server_script_name = request.form.get("server_name")
+        server_full_name = request.form.get("full_name")
+        sudo_pass = request.form.get("sudo_pass")
 
-    if server_script_name != None and server_full_name != None:
+        if server_script_name == None or server_full_name == None or sudo_pass == None:
+            flash("Missing Required Form Feild!", category="error")
+            return redirect(url_for('views.install'))
+
+        print("#### IS POST ON /install")
+        print("Server Script Name: " + server_script_name)
+        print("Server Full Name: " + server_full_name)
+            
         server_full_name = server_full_name.replace(" ", "_")
-        # Gotta check all input, even if it should just be coming from buttons.
         for input_item in (server_script_name, server_full_name):
             if contains_bad_chars(input_item):
                 flash("Illegal Character Detected! Stop Haxing!", category="error")
@@ -251,6 +233,7 @@ def install():
             flash('Did you perhaps have this server installed previously?', category='error')
             return redirect(url_for('views.install'))
 
+        
         # Make a new server dir and copy linuxgsm.sh into it then cd into it.
         os.mkdir(server_full_name)
         shutil.copy(lgsmsh, server_full_name)
@@ -263,12 +246,14 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
         
-        setup_cmd = [f'./{lgsmsh}', server_script_name]
+        setup_cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
+#        setup_cmd = [f'./{lgsmsh}', server_script_name, ';', script_path, 'ai']
 
-        flash("Game server added to database!")
-        flash("Please enter sudo password to auto install the game server!")
+        flash("Game server added!")
 
-        return Response(read_process(install_path, base_dir, setup_cmd), mimetype= 'text/html')
+        get_tty_ticket(sudo_pass)
+
+        return Response(read_process(install_path, base_dir, setup_cmd, "install"), mimetype= 'text/html')
 
     servers_list = InstallServer.query.get(1)
     if servers_list == None:

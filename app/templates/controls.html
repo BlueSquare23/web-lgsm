@@ -5,8 +5,6 @@
 
 <br/>
 
-<script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
-
 <script type="text/javascript">
   // Scrolls to bottom of iframe automatically.
   // TODO: FIND BETTER SOLUTION.
@@ -40,7 +38,7 @@
         <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control"/>
         <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control"/>
 
-        <input onclick='window.scrollTo(0,0);closeForm();' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
+        <input onclick='window.scrollTo(0,0);' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
       </form>
     </div>
     <div class="col" style="color:green">
@@ -52,12 +50,12 @@
 </div>
 <br/>
 
-<button id="topBtn" onclick='window.scrollTo(0,0);' type="button" 
+<button id="top-button" onclick='window.scrollTo(0,0);' type="button" 
   class="btn btn-primary d-sm-none d-md-block d-none d-sm-block">
   <a href="#top" style="color: white">/\ Top /\</a>
 </button>
 
-<a id="delBtn" title="Remove server entry from web-lgsm database"
+<a id="del-button" title="Remove server entry from web-lgsm database"
   onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-danger"
   href="/delete?server={{server_name}}" role="button">Delete Server</a>
 

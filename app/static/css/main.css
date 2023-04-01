@@ -2,19 +2,19 @@ body {
   background-color: black;
 }
 
-#topBtn {
+#top-button {
 	position: fixed;
 	left: 40px;
 	bottom: 70px;
 }
 
-#bottomBtn {
+#auto-scroll-button {
 	position: fixed;
 	right: 40px;
 	top: 40px;
 }
 
-#delBtn {
+#del-button {
 	position: fixed;
 	right: 40px;
 	bottom: 70px;
@@ -22,17 +22,11 @@ body {
 
 /* The popup form - hidden by default */
 .form-popup {
+  max-width: 350px;
   display: none;
   position: fixed;
   top: 50%;
   left: 50%;
-}
-
-/* Add styles to the form container */
-.form-container {
-  max-width: 300px;
-  padding: 10px;
-  background-color: white;
 }
 
 @keyframes blink {50% { color: transparent }}

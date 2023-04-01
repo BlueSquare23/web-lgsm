@@ -233,6 +233,9 @@ def install():
             flash('Did you perhaps have this server installed previously?', category='error')
             return redirect(url_for('views.install'))
 
+        if get_tty_ticket(sudo_pass) == False:
+            flash('Problem with sudo password!', category='error')
+            return redirect(url_for('views.install'))
         
         # Make a new server dir and copy linuxgsm.sh into it then cd into it.
         os.mkdir(server_full_name)
@@ -247,11 +250,8 @@ def install():
         db.session.commit()
         
         setup_cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
-#        setup_cmd = [f'./{lgsmsh}', server_script_name, ';', script_path, 'ai']
 
         flash("Game server added!")
-
-        get_tty_ticket(sudo_pass)
 
         return Response(read_process(install_path, base_dir, setup_cmd, "install"), mimetype= 'text/html')
 

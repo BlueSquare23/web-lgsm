@@ -30,17 +30,17 @@ def shell_exec(exec_dir, base_dir, cmds):
 
 # Kindly does the live process read.
 def read_process(exec_dir, base_dir, cmds, mode):
-    yield "<!DOCTYPE html><html lang='en'><body>"
-    yield "<pre style='color:green'>"
+    yield "<!DOCTYPE html><html lang='en'></head><body style='background-color: black;'>"
     yield "<link rel='stylesheet' href='/static/css/main.css'>"
     yield """<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css'
          rel='stylesheet'
          integrity='sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We'
          crossorigin='anonymous'>"""
 
-    yield """<button id='bottomBtn' type='button' class='btn btn-primary'
-            style='text-decoration:overline' onclick='window.scrollTo(0,
-            100000)'>\/Bottom\/</button>"""
+    yield """<button id='auto-scroll-button' type='button' class='btn btn-primary' 
+            style='text-decoration:overline'>\/Toggle Auto-Scroll\/</button>"""
+
+    yield "<script src='/static/js/auto-scroll-button.js'></script>"
 
     if mode == "install":
         yield """
@@ -51,7 +51,14 @@ def read_process(exec_dir, base_dir, cmds, mode):
             window.location.href = "/home";
           })
         </script>
+        <h2 style='color:green'>Installing Game Server<span
+        class="loader__dot">.</span><span class="loader__dot">.</span><span
+        class="loader__dot">.</span></h2>
+        <h3 style='color:red'>Don't Click Away!</h3>
+        <p style='color:green'>You'll be redirected when the installation finishes.</p>
         """
+
+    yield "<pre style='color:green'>"
 
     for line in shell_exec(exec_dir, base_dir, cmds):
         yield escape_ansi(line)
@@ -66,11 +73,20 @@ def get_tty_ticket(sudo_pass):
     escaped_password = sudo_pass.replace('"', '\\"')
     
     # Attempt's to get sudo tty ticket.
-    try:
-        print(os.popen(f'/usr/bin/echo "{escaped_password}" | /usr/bin/sudo -S apt-get check').read())
-    except:
-        # For debug.
-        print(sys.exc_info()[0])
+    proc = subprocess.Popen('/usr/bin/sudo -S apt-get check', 
+                shell=True, 
+                stdin=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                universal_newlines=True)
+    stdout, stderr = proc.communicate(input=escaped_password)
+
+    print(proc.returncode)
+    if proc.returncode != 0:
+        print(stderr)
+        return False
+
+    # For debug.
+    print(stdout)
 
 
 #    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],

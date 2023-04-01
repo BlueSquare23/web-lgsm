@@ -5,21 +5,35 @@
       have different special options. 
     - Also check if the shortenings are the same across the board.
       - st for start, sp for stop, ect.
+  - Would make validation much easier.
+  - Improves initial load times.
+  - Reduces calls to os.popen.
+  - Would render lot of code existing unnecessary and allow it to be deleted!
+
+* Improve live console tmux capture pane shell exec code so it is continuous.
+  - Rn console only captures the last few lines of the tmux pane.
+    - Need to click it again to get next few lines.
+  - I want to make this continuously displaying the live tmux console to the
+    output iframe.
+    - Perhaps write python shell script wrapper to accomplish this.
+
+* Look into / play around with alternate means of generating sudo TTY ticket
+  for auto install.
 
 * General refactor!
+  - Remove unnecessary indents!
   - Remove silly unused or redundant code.
   - Do some renaming.
   - Fix up / add / update comments.
   - Prue.
 
-* Refactor all RCE utils into a single universal secure RCE function.
-  - Just pass in list of args.
-  - Validate ALL args going into RCE function!
-  - There are only so many things that can be run.
-  - Do NOT allow arbitrary user input into RCE function!!!
-    - Still mulling over solution for sudo password.
-    - Dev build is a mess rn because I'm just working things out.
-    - Goal is to have prod v-sanitized and clean!
+* Refactor main route code and utils code to secure RCE functions.
+  - Scrapped the idea of universal RCE function. This project does too much
+    shell communication to all go through one function.
+  - Afaict cant have one function do both realtime rce and wait till complete
+    proc open.
+  - Instead just validate and sanitize heavily.
+    - Preset hardcoded list of args and server names would help with this.
 
 * Harden /add page checks to lock down directory traversal attempts.
   - Only allow dirs under pwd.
@@ -41,6 +55,11 @@
 
 * Double check for template injection!
   - Make sure all input is checked before putting in DB.
+
+* Fix firefox home page toggle bug.
+  - Rn in firefox when you go to toggle the delete switch it just clicks the
+    underlying a href and goes to the server page. Doesn't do that in chrome.
+    - I'm probably using bootstrap wrong.
 
 * Setup Unit Testing.
   - Test all endpoints to make sure they can handle null data.

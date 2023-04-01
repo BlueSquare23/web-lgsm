@@ -1,5 +1,9 @@
 # Web LGSM
 
+# IN DEVELOPMENT ATM
+
+Latest version may not be working. Will update readme as project progresses.
+
 ## Main Idea
 
 This project is intended to be an easy to use web interface for the [Linux Game

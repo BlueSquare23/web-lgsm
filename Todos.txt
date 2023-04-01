@@ -1,15 +1,3 @@
-* Look into hardcoding command options.
-  - Currently command options are generated on fly per server.
-  - Might save time / be easier to just hard code them.
-    - Have to look at a bunch of different lgsm server and see if any of them
-      have different special options. 
-    - Also check if the shortenings are the same across the board.
-      - st for start, sp for stop, ect.
-  - Would make validation much easier.
-  - Improves initial load times.
-  - Reduces calls to os.popen.
-  - Would render lot of code existing unnecessary and allow it to be deleted!
-
 * Improve live console tmux capture pane shell exec code so it is continuous.
   - Rn console only captures the last few lines of the tmux pane.
     - Need to click it again to get next few lines.
@@ -47,11 +35,6 @@
     coming. Can be an uncomfortable amount of time where nothing happens
     before output comes back, even though output is coming in realtime.
     - First few lines may be buffered??? Idk have to do some goog in.
-
-* Add toggle Setting to keep / remove server install files on delete.
-  - Use python configparser lib to setup site config.
-  
-* Make text color an adjustable config / setting.
 
 * Double check for template injection!
   - Make sure all input is checked before putting in DB.

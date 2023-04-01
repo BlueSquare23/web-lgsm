@@ -12,19 +12,45 @@
         Web LGSM Settings
     </h3>
     <div class="form-group" style="color: white">
-        <label for="install_name">Generic Setting</label>
+        <label for="text_color">Text Color</label>
         <input type="text" 
-            id="install_name" 
-            name="install_name" 
-            class="form-control"
-            placeholder="Settings Not Finished Yet"
-        />
+          id="text_color" 
+          name="text_color" 
+          class="form-control"
+          value="{{text_color}}"
+          placeholder="Enter HackerText Color"
+        >
+
+        <br/>
+
+        <div class="form-check">
+          <input class="form-check-input" 
+            type="radio"
+            name="delete_files"
+            id="delFiles"
+            value="true"
+            {% if remove_files == true %}checked{% endif %}>
+          <label class="form-check-label" for="delFiles">
+            Remove Game Server Files on Delete
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input"
+            type="radio" 
+            name="delete_files" 
+            id="delFiles2" 
+            value="false"
+            {% if remove_files == false %}checked{% endif %}>
+          <label class="form-check-label" for="delFiles2">
+            Leave Game Server Files on Delete
+          </label>
+        </div>
 
         <br/>
 
         <center>
         <button class="btn btn-primary" 
-            type="submit">Submit
+            type="submit">Apply
         </button>
         </center>       
     </div>

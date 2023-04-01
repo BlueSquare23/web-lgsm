@@ -4,6 +4,39 @@ import json
 import requests
 import subprocess
 
+# Turns data in commands.json into list of command objects that implement the
+# CmdDescriptor class.
+def get_commands():
+    commands_json = open('commands.json', 'r')
+    json_data = json.load(commands_json)
+    commands_json.close()
+
+    commands = []
+    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
+        json_data["descriptions"])
+
+    class CmdDescriptor:
+        def __init__(self):
+            self.long_cmd  = ""
+            self.short_cmd = ""
+            self.description = ""
+
+    for short_cmd, long_cmd, description in cmds:
+        cmd = CmdDescriptor()
+        cmd.long_cmd = long_cmd
+        cmd.short_cmd = short_cmd
+        cmd.description = description
+        commands.append(cmd)
+
+    return commands
+
+# Turns data in games_servers.json into servers list for install route.
+def get_servers():
+    servers_json = open('game_servers.json', 'r')
+    json_data = json.load(servers_json)
+    servers_json.close()
+    return dict(zip(json_data['servers'], json_data['server_names']))
+
 # WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
 # INPUT VALIDATION!!! Working on it...
 
@@ -29,7 +62,7 @@ def shell_exec(exec_dir, base_dir, cmds):
     os.chdir(base_dir)
 
 # Kindly does the live process read.
-def read_process(exec_dir, base_dir, cmds, mode):
+def read_process(exec_dir, base_dir, cmds, text_color, mode):
     yield "<!DOCTYPE html><html lang='en'></head><body style='background-color: black;'>"
     yield "<link rel='stylesheet' href='/static/css/main.css'>"
     yield """<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css'
@@ -43,22 +76,22 @@ def read_process(exec_dir, base_dir, cmds, mode):
     yield "<script src='/static/js/auto-scroll-button.js'></script>"
 
     if mode == "install":
-        yield """
+        yield f"""
         <script>
           // Scrolls to bottom of iframe automatically.
           // TODO: FIND BETTER SOLUTION.
-          window.addEventListener('load', function(){
+          window.addEventListener('load', function(){{
             window.location.href = "/home";
-          })
+          }})
         </script>
-        <h2 style='color:green'>Installing Game Server<span
+        <h2 style='color:{text_color}'>Installing Game Server<span
         class="loader__dot">.</span><span class="loader__dot">.</span><span
         class="loader__dot">.</span></h2>
         <h3 style='color:red'>Don't Click Away!</h3>
-        <p style='color:green'>You'll be redirected when the installation finishes.</p>
+        <p style='color:{text_color}'>You'll be redirected when the installation finishes.</p>
         """
 
-    yield "<pre style='color:green'>"
+    yield f"<pre style='color:{text_color}'>"
 
     for line in shell_exec(exec_dir, base_dir, cmds):
         yield escape_ansi(line)

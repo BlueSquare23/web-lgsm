@@ -22,7 +22,7 @@
 
   <div class="row">
     <h2 style='color:white'>Output:</h2>
-    <iframe style="color:green" id="output_iframe" name="output_iframe" width="100%" height="400px" src="/no_output">
+    <iframe style="color:{{text_color}}" id="output_iframe" name="output_iframe" width="100%" height="400px" src="/no_output">
     </iframe>
     <hr>
   </div>
@@ -41,7 +41,7 @@
         <input onclick='window.scrollTo(0,0);' class="btn btn-primary" type="submit" value="{{command.long_cmd}}">
       </form>
     </div>
-    <div class="col" style="color:green">
+    <div class="col" style="color:{{text_color}}">
       {{command.description}}
     </div>
   </div>

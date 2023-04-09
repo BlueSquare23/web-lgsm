@@ -1,3 +1,8 @@
+* Validate all user input options against content in .json files.
+
+* Harden /add page checks to lock down directory traversal attempts.
+  - Only allow dirs under install dir.
+
 * Improve live console tmux capture pane shell exec code so it is continuous.
   - Rn console only captures the last few lines of the tmux pane.
     - Need to click it again to get next few lines.
@@ -8,44 +13,39 @@
 * Look into / play around with alternate means of generating sudo TTY ticket
   for auto install.
 
-* General refactor!
-  - Remove unnecessary indents!
-  - Remove silly unused or redundant code.
-  - Do some renaming.
-  - Fix up / add / update comments.
-  - Prue.
-
-* Refactor main route code and utils code to secure RCE functions.
-  - Scrapped the idea of universal RCE function. This project does too much
-    shell communication to all go through one function.
-  - Afaict cant have one function do both realtime rce and wait till complete
-    proc open.
-  - Instead just validate and sanitize heavily.
-    - Preset hardcoded list of args and server names would help with this.
-
-* Harden /add page checks to lock down directory traversal attempts.
-  - Only allow dirs under pwd.
-
 * Add JS to tell if iframe is populated yet or not, and if not but after
   controls button onclick, then show spinner.
   - In other words, if its between the time when the user presses a controls
     button and when the output starts spilling into the iframe, then use some
     js to show a loading... & spinners.
-  - POST to iframe currently has no status indictor as to when output is
+  - POST to iframe currently has no status indicator as to when output is
     coming. Can be an uncomfortable amount of time where nothing happens
     before output comes back, even though output is coming in realtime.
     - First few lines may be buffered??? Idk have to do some goog in.
-
-* Double check for template injection!
-  - Make sure all input is checked before putting in DB.
 
 * Fix firefox home page toggle bug.
   - Rn in firefox when you go to toggle the delete switch it just clicks the
     underlying a href and goes to the server page. Doesn't do that in chrome.
     - I'm probably using bootstrap wrong.
 
+* General refactor!
+  - Use html pretty printer to format html pages.
+  - Remove unnecessary indents!
+  - Remove silly unused or redundant code.
+  - Do some renaming.
+  - Fix up / add / update comments.
+  - Prue.
+
 * Setup Unit Testing.
   - Test all endpoints to make sure they can handle null data.
+  - Test all endpoints to ensure they respond as they ought to.
+    - Tests will serve as defacto spec for how pages ought to behave.
+  * Security Tests:
+    - Test for template injection.
+    - Test for form data RCE attempts.
+    - Test for path traversal attempts.
+    - Test for XSS.
+    - Test for SQL injection.
 
 * Write easy install script.
 

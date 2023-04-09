@@ -29,21 +29,16 @@
       />
 
       <br/>
-      <input onclick='window.scrollTo(0,0);closeForm();' id="install_btn" class="btn btn-primary" type="submit" value="">
+      <input onclick='window.scrollTo(0,0);closeForm();' id="install_btn" class="btn btn-outline-primary" type="submit" value="">
     </form>
   </div>
 
   {% for script_name, full_name in servers.items() %}
   <div class="row">
     <div class="col">
-      <button id="ai_btn" class="btn btn-primary open-button" onclick="openForm('{{script_name}}', '{{full_name}}');">Install {{script_name}}</button>
-
-<!--
-      <a onclick='displaySpinner(); window.scrollTo(0,0);' class='btn btn-primary'
-        href='/install?server={{script_name}}&full_name={{full_name}}'>Install {{script_name}}</a>
--->
+      <button id="ai_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{script_name}}', '{{full_name}}');">Install {{script_name}}</button>
     </div>
-    <div class="col" style="color:{{text_color}}">
+    <div class="col text-primary">
       {{full_name}}
     </div>
   </div>
@@ -53,7 +48,7 @@
 <br/>
 
 <button id="top-button" onclick='window.scrollTo(0,0);' type="button" 
-  class="btn btn-primary d-sm-none d-md-block d-none d-sm-block">
+  class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
   <a href="#top" style="color: white">/\ Top /\</a>
 </button>
 

@@ -12,14 +12,13 @@
         Web LGSM Settings
     </h3>
     <div class="form-group" style="color: white">
-        <label for="text_color">Text Color</label>
-        <input type="text" 
-          id="text_color" 
-          name="text_color" 
-          class="form-control"
-          value="{{text_color}}"
-          placeholder="Enter HackerText Color"
-        >
+      <label for="text_color" class="form-label">Output Text Color</label>
+      <input type="color" 
+        class="form-control form-control-color" 
+        id="text_color"
+        name="text_color"
+        value="{{text_color}}" 
+        title="Choose your color">
 
         <br/>
 
@@ -49,7 +48,7 @@
         <br/>
 
         <center>
-        <button class="btn btn-primary" 
+        <button class="btn btn-outline-primary" 
             type="submit">Apply
         </button>
         </center>       

@@ -11,15 +11,19 @@
 <form method="POST" action="/delete">
   <div class="list-group form-check form-switch">
     {% for server in installed_servers %}
-    <a href="/controls?server={{server}}" class="list-group-item
-      list-group-item-action">{{server}}<input class="form-check-input"
-      style="float: right !important;" type="checkbox"
-      name="server_num_{{ loop.index }}" value="{{server}}"></a>
+    <a href="/controls?server={{server}}" 
+      class="list-group-item list-group-item-action">{{server}}
+      <input class="form-check-input"
+        style="float: right !important;"
+        type="checkbox"
+        name="server_num_{{ loop.index }}" 
+        value="{{server}}">
+    </a>
     {% endfor %}
   </div>
   <br/>
   <button onclick="return confirm('Are you sure you want to delete these servers?');"
-    class="btn btn-danger" style="float: right !important;" type="submit">Delete Selected
+    class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected
   </button>
 </form>
 {% else %}
@@ -32,8 +36,12 @@
 
 <h2 style='color:white'>Other Options</h2>
 <div class="list-group">
-  <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
-  <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
+  <a href="/install" 
+    class="list-group-item list-group-item-action">Install a New Game Server
+  </a>
+  <a href="/add" 
+    class="list-group-item list-group-item-action">Add an Existing LGSM Installation
+  </a>
 </div>
 
 {% endblock %}

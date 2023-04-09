@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import subprocess
 import shutil
@@ -18,6 +19,15 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=['GET'])
 @login_required
 def home():
+    print(os.getcwd())
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
+
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+
     servers = GameServer.query.all()
     server_names = []
 
@@ -32,16 +42,15 @@ def home():
 @views.route("/controls", methods=['GET'])
 @login_required
 def controls():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read('main.conf')
-    text_color = config['aesthetic']['text_color']
-
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
 
-    print(os.getcwd())
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
+
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
 
@@ -86,22 +95,31 @@ def controls():
 @views.route("/no_output", methods=['GET'])
 @login_required
 def no_output():
-    return render_template("no_output.html", user=current_user)
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
 
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
+
+    return render_template("no_output.html", user=current_user, text_color=text_color)
 
 ######### Install Page #########
 
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read('main.conf')
-    text_color = config['aesthetic']['text_color']
-
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
+
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
+
     output = ""
 
     ## Make its own function / find better solution.
@@ -177,9 +195,13 @@ def install():
 @views.route("/settings", methods=['GET', 'POST'])
 @login_required
 def settings():
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
+
     # Import config data.
     config = configparser.ConfigParser()
-    config.read('main.conf')
+    config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
     remove_files = config['settings'].getboolean('remove_files')
 
@@ -193,9 +215,14 @@ def settings():
         
         config['aesthetic']['text_color'] = text_color
         if color_pref != None:
+            # Validate color code with regular expression.
+            if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
+                flash('Invalid color!', category='error')
+                return redirect(url_for('views.settings'))
+
             config['aesthetic']['text_color'] = color_pref
 
-        with open('main.conf', 'w') as configfile:
+        with open(f'{base_dir}/main.conf', 'w') as configfile:
              config.write(configfile)
 
         flash("Settings Updated!")
@@ -262,10 +289,14 @@ def del_server(server_name, remove_files):
 @views.route("/delete", methods=['GET', 'POST'])
 @login_required
 def delete():
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
+
     # Import config data.
     config = configparser.ConfigParser()
-    config.read('main.conf')
-    remove_files = config['settings']['remove_files']
+    config.read(f'{base_dir}/main.conf')
+    remove_files = config['settings'].getboolean('remove_files')
 
     # For multiple deletions from home page.
     if request.method == 'POST':

@@ -41,25 +41,31 @@ def get_servers():
 # INPUT VALIDATION!!! Working on it...
 
 def shell_exec(exec_dir, base_dir, cmds):
-
+    # Change dir context for installation.
     os.chdir(exec_dir)
 
-    proc = subprocess.Popen(cmds,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
-
-    for stdout_line in iter(proc.stdout.readline, ""):
-        yield stdout_line
-
-    for stderr_line in iter(proc.stderr.readline, ""):
-        yield "<span style='color:red'>" + stderr_line + "</span>"
-
-    proc.stdout.close()
-    proc.stderr.close()
+    # Try, except in case user leave while generator's outputting.
+    try:
+        proc = subprocess.Popen(cmds,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True)
+    
+        for stdout_line in iter(proc.stdout.readline, ""):
+            yield stdout_line
+    
+        for stderr_line in iter(proc.stderr.readline, ""):
+            yield "<span style='color:red'>" + stderr_line + "</span>"
+    
+        proc.stdout.close()
+        proc.stderr.close()
+    
+    except:
+        os.chdir(base_dir)
 
     os.chdir(base_dir)
+
 
 # Kindly does the live process read.
 def read_process(exec_dir, base_dir, cmds, text_color, mode):
@@ -70,7 +76,7 @@ def read_process(exec_dir, base_dir, cmds, text_color, mode):
          integrity='sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We'
          crossorigin='anonymous'>"""
 
-    yield """<button id='auto-scroll-button' type='button' class='btn btn-primary' 
+    yield """<button id='auto-scroll-button' type='button' class='btn btn-outline-primary' 
             style='text-decoration:overline'>\/Toggle Auto-Scroll\/</button>"""
 
     yield "<script src='/static/js/auto-scroll-button.js'></script>"

@@ -1,5 +1,6 @@
 {
    "servers":[
+      "acserver",
       "ahlserver",
       "ahl2server",
       "arkserver",

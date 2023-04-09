@@ -54,6 +54,7 @@ def controls():
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
 
+    ## For Debug Logging.
     print("##### /controls route GET")
     if server_name != None:
         print("Server Name: " + server_name)
@@ -71,24 +72,21 @@ def controls():
 
     script_path = server.install_path + '/' + server.script_name
 
-    # Check for hax injectypoo attempt!
-    for input_item in (server_name, script_arg):
-        if contains_bad_chars(input_item):
-            flash("Illegal Character Entered", category="error")
-            flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
-            return redirect(url_for('views.controls', server=server_name))
-
     if script_arg != None:
+        if is_invalid_command(script_arg):
+            return render_template('no_output.html', user=current_user, text_color=text_color, invalid_cmd=True)
+
         # Console option, use tmux capture-pane.
         if script_arg == "c":
             cmd = f'/usr/bin/tmux capture-pane -pS -5 -t {server.script_name}'
             return Response(read_process(server.install_path, base_dir, cmd, text_color, ""), mimetype= 'text/html')
+
         else:
             cmd = f'{script_path} {script_arg}'
             return Response(read_process(server.install_path, base_dir, cmd, text_color, ""), mimetype= 'text/html')
        
     return render_template("controls.html", user=current_user, server_name=server_name, \
-                server_commands=get_commands(), cmd=script_arg, text_color=text_color)
+                server_commands=get_commands(), text_color=text_color)
 
 ######### Iframe Default Page #########
 
@@ -120,39 +118,33 @@ def install():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
 
-    output = ""
-
     ## Make its own function / find better solution.
     # Check for / install the main linuxgsm.sh script. 
     lgsmsh = "linuxgsm.sh"
-    if not os.path.isfile(lgsmsh):
-        # Temporary solution. Tried using requests for download, didn't work.
-        try:
-            os.popen("/usr/bin/wget -O linuxgsm.sh https://linuxgsm.sh")
-        except:
-            # For debug.
-            print(sys.exc_info()[0])
-
-    os.chmod(lgsmsh, 0o755)
+    check_and_get_lgsmsh(f"{base_dir}/{lgsmsh}")
 
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
         server_full_name = request.form.get("full_name")
         sudo_pass = request.form.get("sudo_pass")
 
+        # Make sure required options are supplied.
         if server_script_name == None or server_full_name == None or sudo_pass == None:
             flash("Missing Required Form Feild!", category="error")
             return redirect(url_for('views.install'))
 
+        # Validate form submission data against install list in json file.
+        if install_options_are_invalid(server_script_name, server_full_name):
+            flash("Invalid Installation Option(s)!", category="error")
+            return redirect(url_for('views.install'))
+
+        # For debug info.
         print("#### IS POST ON /install")
         print("Server Script Name: " + server_script_name)
         print("Server Full Name: " + server_full_name)
             
+        # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
-        for input_item in (server_script_name, server_full_name):
-            if contains_bad_chars(input_item):
-                flash("Illegal Character Detected! Stop Haxing!", category="error")
-                return redirect(url_for('views.install'))
 
         install_name_exists = GameServer.query.filter_by(install_name=server_full_name).first()
 
@@ -182,13 +174,14 @@ def install():
         
         setup_cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
 
+        # Only flashes after install redirect to home page.
         flash("Game server added!")
 
         return Response(read_process(install_path, base_dir, setup_cmd, \
                         text_color, "install"), mimetype= 'text/html')
 
     return render_template("install.html", user=current_user, \
-        servers=get_servers(), output=output, text_color=text_color)
+        servers=get_servers(), text_color=text_color)
 
 ######### Settings Page #########
 
@@ -269,10 +262,10 @@ def add():
     
     return render_template("add.html", user=current_user)
 
-# Helper function for del route.
-def del_server(server_name, remove_files):
-    server = GameServer.query.filter_by(install_name=server_name).first()
+# Does the actual deletions for the /delete route.
+def del_server(server, remove_files):
     install_path = server.install_path 
+    server_name = server.install_name
 
     GameServer.query.filter_by(install_name=server_name).delete()
     db.session.commit()
@@ -298,20 +291,20 @@ def delete():
     config.read(f'{base_dir}/main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
-    # For multiple deletions from home page.
+    # Delete via POST is for multiple deletions, from toggles on home page.
     if request.method == 'POST':
-        for server, server_name in request.form.items():
-            # Always check all input!
-            if contains_bad_chars(server) or contains_bad_chars(server_name):
-                flash("Illegal Character Detected! Stop Haxing!", category="error")
-                return redirect(url_for('views.home'))
-            del_server(server_name, remove_files)
+        for server_id, server_name in request.form.items():
+            server = GameServer.query.filter_by(install_name=server_name).first()
+            if server != None:
+                del_server(server, remove_files)
     else:
         server_name = request.args.get("server")
-        # Always check all input!
-        if contains_bad_chars(server_name):
-            flash("Illegal Character Detected! Stop Haxing!", category="error")
+        if server_name == None:
+            flash("Missing Required Args!", category=error)
             return redirect(url_for('views.home'))
-        del_server(server_name, remove_files)
+
+        server = GameServer.query.filter_by(install_name=server_name).first()
+        if server != None:
+            del_server(server, remove_files)
 
     return redirect(url_for('views.home'))

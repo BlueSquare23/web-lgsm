@@ -1,4 +1,5 @@
-* Validate all user input options against content in .json files.
+* Add checks to make sure game server directory exists before loading server's
+  controls page.
 
 * Harden /add page checks to lock down directory traversal attempts.
   - Only allow dirs under install dir.

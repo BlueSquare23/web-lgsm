@@ -1,41 +1,9 @@
 import os
 import re
+import sys
 import json
 import requests
 import subprocess
-
-# Turns data in commands.json into list of command objects that implement the
-# CmdDescriptor class.
-def get_commands():
-    commands_json = open('commands.json', 'r')
-    json_data = json.load(commands_json)
-    commands_json.close()
-
-    commands = []
-    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
-        json_data["descriptions"])
-
-    class CmdDescriptor:
-        def __init__(self):
-            self.long_cmd  = ""
-            self.short_cmd = ""
-            self.description = ""
-
-    for short_cmd, long_cmd, description in cmds:
-        cmd = CmdDescriptor()
-        cmd.long_cmd = long_cmd
-        cmd.short_cmd = short_cmd
-        cmd.description = description
-        commands.append(cmd)
-
-    return commands
-
-# Turns data in games_servers.json into servers list for install route.
-def get_servers():
-    servers_json = open('game_servers.json', 'r')
-    json_data = json.load(servers_json)
-    servers_json.close()
-    return dict(zip(json_data['servers'], json_data['server_names']))
 
 # WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
 # INPUT VALIDATION!!! Working on it...
@@ -127,10 +95,68 @@ def get_tty_ticket(sudo_pass):
     # For debug.
     print(stdout)
 
+# Turns data in commands.json into list of command objects that implement the
+# CmdDescriptor class.
+def get_commands():
+    commands_json = open('commands.json', 'r')
+    json_data = json.load(commands_json)
+    commands_json.close()
 
-#    proc = subprocess.Popen(['/usr/bin/wget', '-O', 'linuxgsm.sh', 'https://linuxgsm.sh'],
-#    proc = subprocess.Popen(['./linuxgsm.sh', 'list'],
-#    proc = subprocess.Popen(['./linuxgsm.sh', script_name],
+    commands = []
+    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
+        json_data["descriptions"])
+
+    class CmdDescriptor:
+        def __init__(self):
+            self.long_cmd  = ""
+            self.short_cmd = ""
+            self.description = ""
+
+    for short_cmd, long_cmd, description in cmds:
+        cmd = CmdDescriptor()
+        cmd.long_cmd = long_cmd
+        cmd.short_cmd = short_cmd
+        cmd.description = description
+        commands.append(cmd)
+
+    return commands
+
+# Turns data in games_servers.json into servers list for install route.
+def get_servers():
+    servers_json = open('game_servers.json', 'r')
+    json_data = json.load(servers_json)
+    servers_json.close()
+    return dict(zip(json_data['servers'], json_data['server_names']))
+
+# Validates short commands.
+def is_invalid_command(cmd):
+    commands = get_commands()
+    for command in commands:
+        # If cmd is in list of short_cmds return False.
+        # Aka is not invalid command.
+        if cmd == command.short_cmd:
+            return False
+
+    return True
+
+# Validates form submitted server_script_name and server_full_name options.
+def install_options_are_invalid(script_name, full_name):
+    servers = get_servers()
+    for server, server_name in servers.items():
+        if server == script_name and server_name == full_name:
+            return False
+    return True
+
+# Checks if linuxgsm.sh already exists and if not, wgets it.
+def check_and_get_lgsmsh(lgsmsh):
+    if not os.path.isfile(lgsmsh):
+        # Temporary solution. Tried using requests for download, didn't work.
+        try:
+            out = os.popen(f"/usr/bin/wget -O {lgsmsh} https://linuxgsm.sh").read()
+            os.chmod(lgsmsh, 0o755)
+        except:
+            # For debug.
+            print(sys.exc_info()[0])
 
 # Removes color codes from cmd line output.
 def escape_ansi(line):

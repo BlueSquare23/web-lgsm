@@ -1,16 +1,3 @@
-* Add checks to make sure game server directory exists before loading server's
-  controls page.
-
-* Harden /add page checks to lock down directory traversal attempts.
-  - Only allow dirs under install dir.
-
-* Improve live console tmux capture pane shell exec code so it is continuous.
-  - Rn console only captures the last few lines of the tmux pane.
-    - Need to click it again to get next few lines.
-  - I want to make this continuously displaying the live tmux console to the
-    output iframe.
-    - Perhaps write python shell script wrapper to accomplish this.
-
 * Look into / play around with alternate means of generating sudo TTY ticket
   for auto install.
 
@@ -53,3 +40,11 @@
 * Fix up Readme.
   - Add easy install instructions.
   - Add pretty pictures of app in action!
+
+## Todos for After 1.2 Update
+
+* Add config editor.
+  - Create config page where game server config file is loaded in and user can
+    edit it.
+
+* Add home page green or red circle ●  to indicate if servers are on or off.

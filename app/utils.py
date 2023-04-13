@@ -2,15 +2,16 @@ import os
 import re
 import sys
 import json
+import psutil
 import requests
 import subprocess
 
-# WARNING!!! DANGEROUS EXEC FUNCTIONS ATM!!! FUNCTIONS STILL NEEDS ADDITIONAL
-# INPUT VALIDATION!!! Working on it...
-
+# Kindly does the RCE.
 def shell_exec(exec_dir, base_dir, cmds):
     # Change dir context for installation.
     os.chdir(exec_dir)
+
+    proc = None
 
     # Try, except in case user leave while generator's outputting.
     try:
@@ -28,42 +29,37 @@ def shell_exec(exec_dir, base_dir, cmds):
     
         proc.stdout.close()
         proc.stderr.close()
+        proc.kill()
     
     except:
+        proc.stdout.close()
+        proc.stderr.close()
+        proc.kill()
+
         os.chdir(base_dir)
 
     os.chdir(base_dir)
 
+# Kills any running sub procs and resets the apps dir context in case user
+# leaves a page while generator proc is still executing.
+def reset_app(base_dir):
+    app_proc = psutil.Process(os.getpid())
+    for child in app_proc.children(recursive=True):
+        print(child)
+        child.kill()
+
+    os.chdir(base_dir)
 
 # Kindly does the live process read.
 def read_process(exec_dir, base_dir, cmds, text_color, mode):
-    yield "<!DOCTYPE html><html lang='en'></head><body style='background-color: black;'>"
-    yield "<link rel='stylesheet' href='/static/css/main.css'>"
-    yield """<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css'
-         rel='stylesheet'
-         integrity='sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We'
-         crossorigin='anonymous'>"""
-
-    yield """<button id='auto-scroll-button' type='button' class='btn btn-outline-primary' 
-            style='text-decoration:overline'>\/Toggle Auto-Scroll\/</button>"""
-
-    yield "<script src='/static/js/auto-scroll-button.js'></script>"
+    with open(f'{base_dir}/app/templates/generator_head.html') as header_file:
+        for line in header_file:
+            yield line
 
     if mode == "install":
-        yield f"""
-        <script>
-          // Scrolls to bottom of iframe automatically.
-          // TODO: FIND BETTER SOLUTION.
-          window.addEventListener('load', function(){{
-            window.location.href = "/home";
-          }})
-        </script>
-        <h2 style='color:{text_color}'>Installing Game Server<span
-        class="loader__dot">.</span><span class="loader__dot">.</span><span
-        class="loader__dot">.</span></h2>
-        <h3 style='color:red'>Don't Click Away!</h3>
-        <p style='color:{text_color}'>You'll be redirected when the installation finishes.</p>
-        """
+        with open(f'{base_dir}/app/templates/install_mode.html') as html_file:
+            for line in html_file:
+                yield line
 
     yield f"<pre style='color:{text_color}'>"
 
@@ -94,6 +90,7 @@ def get_tty_ticket(sudo_pass):
 
     # For debug.
     print(stdout)
+    return True
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
@@ -147,6 +144,13 @@ def install_options_are_invalid(script_name, full_name):
             return False
     return True
 
+def script_name_is_invalid(script_name):
+    servers = get_servers()
+    for server, server_name in servers.items():
+        if server == script_name:
+            return False
+    return True
+
 # Checks if linuxgsm.sh already exists and if not, wgets it.
 def check_and_get_lgsmsh(lgsmsh):
     if not os.path.isfile(lgsmsh):
@@ -160,7 +164,7 @@ def check_and_get_lgsmsh(lgsmsh):
 
 # Removes color codes from cmd line output.
 def escape_ansi(line):
-    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]|[(B]')
     return ansi_escape.sub('', line)
 
 # Checks for the presense of bad chars in input.

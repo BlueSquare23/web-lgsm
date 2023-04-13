@@ -1,15 +1,16 @@
 import os
 import re
 import sys
-import subprocess
 import shutil
-from flask import Blueprint, render_template, request, flash, url_for, redirect, Response
-from flask_login import login_required, current_user
-from werkzeug.security import generate_password_hash
-from .models import *
+import subprocess
+import configparser
 from . import db
 from .utils import *
-import configparser
+from .models import *
+from pathlib import Path
+from werkzeug.security import generate_password_hash
+from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, flash, url_for, redirect, Response
 
 views = Blueprint("views", __name__)
 
@@ -24,6 +25,10 @@ def home():
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
 
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
@@ -34,7 +39,8 @@ def home():
     for server in servers:
         server_names.append(server.install_name)
 
-    return render_template("home.html", user=current_user, installed_servers=server_names)
+    return render_template("home.html", user=current_user, \
+                                installed_servers=server_names)
 
 
 ######### Controls Page #########
@@ -45,6 +51,10 @@ def controls():
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
+
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -70,23 +80,31 @@ def controls():
         flash("Error loading page!", category="error")
         return redirect(url_for('views.home'))
 
+    if not os.path.isdir(server.install_path):
+        flash("Error: No game server installation directory!", category="error")
+        return redirect(url_for('views.home'))
+
     script_path = server.install_path + '/' + server.script_name
 
     if script_arg != None:
         if is_invalid_command(script_arg):
-            return render_template('no_output.html', user=current_user, text_color=text_color, invalid_cmd=True)
+            return render_template('no_output.html', text_color=text_color, \
+                                                        invalid_cmd=True)
 
         # Console option, use tmux capture-pane.
         if script_arg == "c":
-            cmd = f'/usr/bin/tmux capture-pane -pS -5 -t {server.script_name}'
-            return Response(read_process(server.install_path, base_dir, cmd, text_color, ""), mimetype= 'text/html')
+            cmd = f'/usr/bin/watch -te /usr/bin/tmux capture-pane -pt {server.script_name}'
+            return Response(read_process(server.install_path, base_dir, cmd, \
+                                        text_color, ""), mimetype= 'text/html')
 
         else:
             cmd = f'{script_path} {script_arg}'
-            return Response(read_process(server.install_path, base_dir, cmd, text_color, ""), mimetype= 'text/html')
+            return Response(read_process(server.install_path, base_dir, cmd, \
+                                        text_color, ""), mimetype= 'text/html')
        
-    return render_template("controls.html", user=current_user, server_name=server_name, \
-                server_commands=get_commands(), text_color=text_color)
+    return render_template("controls.html", user=current_user, \
+                server_name=server_name, server_commands=get_commands(), \
+                text_color=text_color)
 
 ######### Iframe Default Page #########
 
@@ -102,7 +120,7 @@ def no_output():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
 
-    return render_template("no_output.html", user=current_user, text_color=text_color)
+    return render_template("no_output.html", text_color=text_color)
 
 ######### Install Page #########
 
@@ -112,6 +130,10 @@ def install():
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
+
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -129,9 +151,10 @@ def install():
         sudo_pass = request.form.get("sudo_pass")
 
         # Make sure required options are supplied.
-        if server_script_name == None or server_full_name == None or sudo_pass == None:
-            flash("Missing Required Form Feild!", category="error")
-            return redirect(url_for('views.install'))
+        for item in (server_script_name, server_full_name, sudo_pass):
+            if item == None:
+                flash("Missing Required Form Feild!", category="error")
+                return redirect(url_for('views.install'))
 
         # Validate form submission data against install list in json file.
         if install_options_are_invalid(server_script_name, server_full_name):
@@ -146,17 +169,19 @@ def install():
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
 
-        install_name_exists = GameServer.query.filter_by(install_name=server_full_name).first()
+        install_exists = GameServer.query.filter_by(install_name=server_full_name).first()
 
-        if install_name_exists:
+        if install_exists:
             flash('An installation by that name already exits.', category='error')
             return redirect(url_for('views.install'))
-        elif os.path.exists(server_full_name):
+
+        if os.path.exists(server_full_name):
             flash('Install directory already exists.', category='error')
-            flash('Did you perhaps have this server installed previously?', category='error')
+            flash('Did you perhaps have this server installed previously?', \
+                                                            category='error')
             return redirect(url_for('views.install'))
 
-        if get_tty_ticket(sudo_pass) == False:
+        if not get_tty_ticket(sudo_pass):
             flash('Problem with sudo password!', category='error')
             return redirect(url_for('views.install'))
         
@@ -191,6 +216,10 @@ def settings():
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
+    
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -229,27 +258,50 @@ def settings():
 @views.route("/add", methods=['GET', 'POST'])
 @login_required
 def add():
+    # Import meta data.
+    meta_data = MetaData.query.get(1)
+    base_dir = meta_data.app_install_path
+
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
+
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    remove_files = config['settings'].getboolean('remove_files')
 
     if request.method == 'POST':
         install_name = request.form.get("install_name").replace(" ", "_")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
 
-        install_name_exists = GameServer.query.filter_by(install_name=install_name).first()
+        install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
+        # Try to prevent arbitrary bad input.
         for input_item in (install_name, install_path, script_name):
             if contains_bad_chars(input_item):
                 flash("Illegal Character Entered", category="error")
-                flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", category="error")
+                flash("Bad Chars: $ ' \" \ # = [ ] ! < > | ; { } ( ) * , ? ~ &", \
+                                                            category="error")
                 return redirect(url_for('views.add'))
 
-        if install_name_exists:
+        if install_exists:
             flash('An installation by that name already exits.', category='error')
+
         elif not os.path.exists(install_path) or not os.path.isdir(install_path):
             flash('Directory path does not exist.', category='error')
+
+        elif Path(base_dir) not in Path(install_path).parents:
+            flash(f'Only dirs under {base_dir} allowed!', category='error')
+
+        elif script_name_is_invalid(script_name):
+            flash('Invalid game server script file name!', category='error')
+
         elif not os.path.exists(install_path + '/' + script_name) or \
                 not os.path.isfile(install_path + '/' + script_name):
             flash('Script file does not exist.', category='error')
+
         else:
             # Add the install to the database, then redirect home.
             new_game_server = GameServer(install_name=install_name, \
@@ -285,6 +337,10 @@ def delete():
     # Import meta data.
     meta_data = MetaData.query.get(1)
     base_dir = meta_data.app_install_path
+
+    # Fixes dir context in case exit while executing.
+    if base_dir != os.getcwd():
+        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()

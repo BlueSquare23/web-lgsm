@@ -61,6 +61,9 @@ def controls():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
 
+    # Bootstrap spinner colors.
+    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light']
+
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
 
@@ -87,12 +90,27 @@ def controls():
     script_path = server.install_path + '/' + server.script_name
 
     if script_arg != None:
+        # Validate script_arg.
         if is_invalid_command(script_arg):
             return render_template('no_output.html', text_color=text_color, \
-                                                        invalid_cmd=True)
+                                        invalid_cmd=True, bs_colors=bs_colors)
 
         # Console option, use tmux capture-pane.
         if script_arg == "c":
+            # First check if its running.
+            cmd = f'/usr/bin/tmux has-session -t {server.script_name}'
+            proc = subprocess.Popen(cmd, 
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, 
+                shell=True
+            )
+            output, error = proc.communicate()
+
+            # Return any errors checking tmux session.
+            if len(error) > 0:
+                return f"<pre style='color:red'>{error.decode()}</pre>"
+
+            # Otherwise, use the `watch` command to keep live console running.
             cmd = f'/usr/bin/watch -te /usr/bin/tmux capture-pane -pt {server.script_name}'
             return Response(read_process(server.install_path, base_dir, cmd, \
                                         text_color, ""), mimetype= 'text/html')
@@ -104,7 +122,7 @@ def controls():
        
     return render_template("controls.html", user=current_user, \
                 server_name=server_name, server_commands=get_commands(), \
-                text_color=text_color)
+                text_color=text_color, bs_colors=bs_colors)
 
 ######### Iframe Default Page #########
 

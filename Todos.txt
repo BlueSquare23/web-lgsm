@@ -1,21 +1,6 @@
 * Look into / play around with alternate means of generating sudo TTY ticket
   for auto install.
 
-* Add JS to tell if iframe is populated yet or not, and if not but after
-  controls button onclick, then show spinner.
-  - In other words, if its between the time when the user presses a controls
-    button and when the output starts spilling into the iframe, then use some
-    js to show a loading... & spinners.
-  - POST to iframe currently has no status indicator as to when output is
-    coming. Can be an uncomfortable amount of time where nothing happens
-    before output comes back, even though output is coming in realtime.
-    - First few lines may be buffered??? Idk have to do some goog in.
-
-* Fix firefox home page toggle bug.
-  - Rn in firefox when you go to toggle the delete switch it just clicks the
-    underlying a href and goes to the server page. Doesn't do that in chrome.
-    - I'm probably using bootstrap wrong.
-
 * General refactor!
   - Use html pretty printer to format html pages.
   - Remove unnecessary indents!
@@ -35,11 +20,14 @@
     - Test for XSS.
     - Test for SQL injection.
 
-* Write easy install script.
+* Write easy install script and project init script.
+  - Look into using Gunicorn as the prod wsgi server.
+    - Host this app on high port 5000 then proxy to nginx or apache on 443.
 
 * Fix up Readme.
   - Add easy install instructions.
   - Add pretty pictures of app in action!
+  - Emojis! :exploding_head:
 
 ## Todos for After 1.2 Update
 

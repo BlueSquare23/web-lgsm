@@ -19,7 +19,8 @@ def shell_exec(exec_dir, base_dir, cmds):
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                universal_newlines=True)
+                universal_newlines=True
+        )
     
         for stdout_line in iter(proc.stdout.readline, ""):
             yield stdout_line
@@ -164,7 +165,7 @@ def check_and_get_lgsmsh(lgsmsh):
 
 # Removes color codes from cmd line output.
 def escape_ansi(line):
-    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]|[(B]')
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
 
 # Checks for the presense of bad chars in input.

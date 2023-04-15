@@ -5,20 +5,18 @@
 
 <br/>
 
-<script type="text/javascript">
-  // Scrolls to bottom of iframe automatically.
-  // TODO: FIND BETTER SOLUTION.
-  //setInterval('frames[0].scrollTo(0,9999999)',10);
-
-  {% if auto_post == True %}
-  // If in auto_post mode, on window load click ai_btn.
-  window.addEventListener('load', function(){
-    document.getElementById("ai_btn").click();
-  })
-  {% endif %}
-</script>
-
 <div class="container">
+  
+  <div id="spinners" style="display:none">
+    {% for bs_color in bs_colors %}
+    <div class="spinner-border text-{{bs_color}}" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    {% endfor %}
+
+    <hr style='color:white'>
+
+  </div>
 
   <div class="row">
     <h2 style='color:white'>Output:</h2>
@@ -34,11 +32,11 @@
   {% for command in server_commands %}
   <div class="row">
     <div class="col">
-      <form method="GET" target="output_iframe" action="/controls">
+      <form method="GET" id="ctrls-form" target="output_iframe" action="/controls">
         <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control"/>
         <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control"/>
 
-        <input onclick='window.scrollTo(0,0);' class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}">
+        <input onclick="window.scrollTo(0,0); document.getElementById('spinners').style.display = 'block';" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}">
       </form>
     </div>
     <div class="col text-primary">
@@ -47,6 +45,16 @@
   </div>
   <br/>
   {% endfor %}
+
+  <script type="text/javascript">
+    var form = document.getElementById('ctrls-form');
+    var spinners = document.getElementById('spinners'); 
+
+    document.getElementById('output_iframe').onload = function(){
+      spinners.style.display = 'none';
+    };
+  </script>
+
 </div>
 <br/>
 

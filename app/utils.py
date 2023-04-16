@@ -13,7 +13,7 @@ def shell_exec(exec_dir, base_dir, cmds):
 
     proc = None
 
-    # Try, except in case user leave while generator's outputting.
+    # Try, except in case user leave while generator is still executing.
     try:
         proc = subprocess.Popen(cmds,
                 shell=True,
@@ -21,17 +21,17 @@ def shell_exec(exec_dir, base_dir, cmds):
                 stderr=subprocess.PIPE,
                 universal_newlines=True
         )
-    
+
         for stdout_line in iter(proc.stdout.readline, ""):
             yield stdout_line
-    
+
         for stderr_line in iter(proc.stderr.readline, ""):
             yield "<span style='color:red'>" + stderr_line + "</span>"
-    
+
         proc.stdout.close()
         proc.stderr.close()
         proc.kill()
-    
+
     except:
         proc.stdout.close()
         proc.stderr.close()
@@ -53,11 +53,14 @@ def reset_app(base_dir):
 
 # Kindly does the live process read.
 def read_process(exec_dir, base_dir, cmds, text_color, mode):
+    # Read in html from files for code tidyness.
     with open(f'{base_dir}/app/templates/generator_head.html') as header_file:
         for line in header_file:
             yield line
 
+    # To show install generator page specific html and js.
     if mode == "install":
+        # Read in html from files for code tidyness.
         with open(f'{base_dir}/app/templates/install_mode.html') as html_file:
             for line in html_file:
                 yield line
@@ -70,28 +73,20 @@ def read_process(exec_dir, base_dir, cmds, text_color, mode):
     yield "</pre>"
     yield "</body></html>"
 
-## Probably not the best solution.
-## Potentially vulnerable, will look into better options.
 # Uses sudo_pass to get sudo tty ticket.
 def get_tty_ticket(sudo_pass):
-    escaped_password = sudo_pass.replace('"', '\\"')
-    
     # Attempt's to get sudo tty ticket.
-    proc = subprocess.Popen('/usr/bin/sudo -S apt-get check', 
-                shell=True, 
-                stdin=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                universal_newlines=True)
-    stdout, stderr = proc.communicate(input=escaped_password)
-
-    print(proc.returncode)
-    if proc.returncode != 0:
-        print(stderr)
+    try:
+        subprocess.run(['/usr/bin/sudo', '-S', 'apt-get', 'check'],
+                       check=True,
+                       input=sudo_pass,
+                       stderr=subprocess.PIPE,
+                       universal_newlines=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        # For debug.
+        print(e.stderr)
         return False
-
-    # For debug.
-    print(stdout)
-    return True
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
@@ -145,6 +140,7 @@ def install_options_are_invalid(script_name, full_name):
             return False
     return True
 
+# Validates script_name.
 def script_name_is_invalid(script_name):
     servers = get_servers()
     for server, server_name in servers.items():
@@ -179,25 +175,4 @@ def contains_bad_chars(i):
         if char in i: 
             return True
 
-# Get's random doggo pic.
-def get_doggo():
-	url = "https://random.dog/woof.json"
 
-	s = requests.Session()
-	g = s.get(url)
-
-	doggo_json = json.loads(g.text)
-	doggo_url = doggo_json["url"]
-	doggo_size = doggo_json["fileSizeBytes"]
-
-	# If the img is larger than 3mb...
-	if doggo_size > 3000000:
-        # Then recurse to find better link and return the link.
-		doggo_url = get_doggo()
-
-	# Or if the link is to an mp4 webm video...
-	if "mp4" in doggo_url or "webm" in doggo_url:
-        # Then recurse to find better link and return the link.
-		doggo_url = get_doggo()
-
-	return doggo_url

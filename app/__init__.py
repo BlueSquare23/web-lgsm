@@ -48,6 +48,6 @@ def main():
     # Decorator to set up login session.
     @login_manager.user_loader
     def load_user(id):
-        return User.query.get(int(id))
+        return db.session.get(User, 1)
 
     return app

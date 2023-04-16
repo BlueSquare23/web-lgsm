@@ -1,5 +1,5 @@
-* Look into / play around with alternate means of generating sudo TTY ticket
-  for auto install.
+* Fix add page, lock down dir traversal!
+  - Don't allow paths to be added that go above install dir!
 
 * General refactor!
   - Use html pretty printer to format html pages.
@@ -8,17 +8,6 @@
   - Do some renaming.
   - Fix up / add / update comments.
   - Prue.
-
-* Setup Unit Testing.
-  - Test all endpoints to make sure they can handle null data.
-  - Test all endpoints to ensure they respond as they ought to.
-    - Tests will serve as defacto spec for how pages ought to behave.
-  * Security Tests:
-    - Test for template injection.
-    - Test for form data RCE attempts.
-    - Test for path traversal attempts.
-    - Test for XSS.
-    - Test for SQL injection.
 
 * Write easy install script and project init script.
   - Look into using Gunicorn as the prod wsgi server.

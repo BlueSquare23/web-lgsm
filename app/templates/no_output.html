@@ -1,25 +1,24 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Bootstrap CSS Only -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" 
-      rel="stylesheet" 
-      integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" 
-      crossorigin="anonymous">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <!-- Bootstrap CSS Only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous" />
 
-  <title>Iframe No Output Page</title>
-</head>
+    <!-- Stylesheet & Favicon -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
 
-<body>
-{% if invalid_cmd == true %}
-  <h4 style='color:red'><b><i><u>Invalid Command!</u></i></b></h4>
-{% else %}
-  <h4 style='color:{{text_color}}'><b><i>No Output Yet</i></b></h4>
-{% endif %}
-</body>
+    <title>Iframe No Output Page</title>
+  </head>
+
+  <body>
+    {% if invalid_cmd == true %}
+      <h4 style='color:red'><b><i><u>Invalid Command!</u></i></b></h4>
+    {% else %}
+      <h4 style='color:{{text_color}}'><b><i>No Output Yet</i></b></h4>
+    {% endif %}
+  </body>
 </html>

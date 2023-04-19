@@ -39,7 +39,7 @@
       </div>
     </nav>
 
-    {% with messages = get_flashed_messages(with_categories=True) %}
+    {%- with messages = get_flashed_messages(with_categories=True) -%}
         {% if messages %}
             {% for category, message in messages %}
                 {% if category == "error" %}
@@ -55,12 +55,11 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
-    {% endwith %}
+    {%- endwith %}
 
     <div class="container pb-5">
-      {% block content %}
-      {% endblock %}
-    </div>
+      {%- block content -%}
+      {%- endblock +%}    </div>
 
     <!-- Bootstrap JavaScript Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>

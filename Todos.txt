@@ -1,10 +1,3 @@
-* Fix add page, lock down dir traversal!
-  - Don't allow paths to be added that go above install dir!
-
-* General refactor!
-  - Fix up / add / update comments.
-  - Prue.
-
 * Write easy install script and project init script.
   - Look into using Gunicorn as the prod wsgi server.
     - Host this app on high port 5000 then proxy to nginx or apache on 443.
@@ -15,6 +8,8 @@
   - Emojis! :exploding_head:
 
 ## Todos for After 1.2 Update
+
+* Continue writing tests to improve coverage.
 
 * Add config editor.
   - Create config page where game server config file is loaded in and user can

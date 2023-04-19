@@ -7,10 +7,10 @@ import configparser
 from . import db
 from .utils import *
 from .models import *
-from pathlib import Path
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
-from flask import Blueprint, render_template, request, flash, url_for, redirect, Response
+from flask import Blueprint, render_template, request, flash, url_for, \
+                                                    redirect, Response
 
 views = Blueprint("views", __name__)
 
@@ -301,7 +301,7 @@ def add():
     status_code = 200
 
     if request.method == 'POST':
-        install_name = request.form.get("install_name").replace(" ", "_")
+        install_name = request.form.get("install_name")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
 
@@ -310,6 +310,9 @@ def add():
             if required_form_item == None or required_form_item == '':
                 flash("Missing required form field(s)!", category="error")
                 return redirect(url_for('views.add'))
+
+        # Make install name unix friendly for dir creation.
+        install_name = install_name.replace(" ", "_")
 
         install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
@@ -329,7 +332,7 @@ def add():
             flash('Directory path does not exist.', category='error')
             status_code = 400
 
-        elif Path(base_dir) not in Path(install_path).parents:
+        elif os.path.commonprefix((os.path.realpath(install_path),base_dir)) != base_dir:
             flash(f'Only dirs under {base_dir} allowed!', category='error')
             status_code = 400
 

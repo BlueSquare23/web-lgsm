@@ -33,8 +33,9 @@ That is very big target for haxzorz!
 ## License MIT
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 [MIT License Text](license.txt)
 
 ## Author
 
-John L. Radford (Aka BlueSquare23)
+John L. Radford (Aka [BlueSquare23](https://johnlradford.io/))

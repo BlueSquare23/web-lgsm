@@ -67,35 +67,72 @@ def test_add(app, client):
         assert b"Submit" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 
-        # Tests with empty strings, helper function.
-        def test_empty(response):
+
+        ### Add Page Post Request tests.
+
+        # Checks response contains correct error msg.
+        def check_for_error(response, error_msg, resp_code):
             # Is 200 bc follow_redirects=True.
-            assert response.status_code == 200
+            assert response.status_code == resp_code
 
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for(f'views.add')
-            assert b"Missing required form field(s)!" in response.data
+            assert error_msg in response.data
 
-        ### Add Page Post Request tests.
-        # Test empty parameters.
+        ## Test empty parameters.
+        resp_code = 200
+        error_msg = b"Missing required form field(s)!"
         response = client.post('/add', data={'install_name':'', \
             'install_path':'', 'script_name':''}, follow_redirects=True)
-        test_empty(response)
+        check_for_error(response, error_msg, resp_code)
 
         response = client.post('/add', data={'install_name':'', \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        test_empty(response)
+        check_for_error(response, error_msg, resp_code)
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':TEST_SERVER_PATH, 'script_name':''}, \
                                                     follow_redirects=True)
-        test_empty(response)
+        check_for_error(response, error_msg, resp_code)
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':'', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        test_empty(response)
+        check_for_error(response, error_msg, resp_code)
+
+
+        ## Test empty parameters.
+        resp_code = 200
+        error_msg = b"Missing required form field(s)!"
+        response = client.post('/add', data={'install_name':'', \
+            'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
+                                                    follow_redirects=True)
+        check_for_error(response, error_msg, resp_code)
+
+        response = client.post('/add', data={'install_name':TEST_SERVER, \
+                     'install_path':TEST_SERVER_PATH, 'script_name':''}, \
+                                                    follow_redirects=True)
+        check_for_error(response, error_msg, resp_code)
+
+        response = client.post('/add', data={'install_name':TEST_SERVER, \
+                     'install_path':'', 'script_name':TEST_SERVER_NAME}, \
+                                                    follow_redirects=True)
+        check_for_error(response, error_msg, resp_code)
+
+
+        ## Test upward directory traversal.
+        error_msg = b"Only dirs under"
+        response = client.post('/add', data={'install_name':'upup_test', \
+            'install_path':'../..', 'script_name':TEST_SERVER_NAME}, \
+                                                    follow_redirects=True)
+        check_for_error(response, error_msg, 400)
+
+        ## Test unauthorized dir.
+        response = client.post('/add', data={'install_name':'root_test', \
+            'install_path':'/root', 'script_name':TEST_SERVER_NAME}, \
+                                                    follow_redirects=True)
+        check_for_error(response, error_msg, 400)
 
 
         ## Test legit server add.

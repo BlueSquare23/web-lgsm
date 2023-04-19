@@ -1,9 +1,5 @@
 # Web LGSM
 
-# IN DEVELOPMENT ATM
-
-Latest version may not be working. Will update readme as project progresses.
-
 ## Main Idea
 
 This project is intended to be an easy to use web interface for the [Linux Game
@@ -16,6 +12,15 @@ interface. That is what this project attempts to be.
 
 TBD
 
+## Stack Technologies
+
+* Language: [Python 3](https://www.python.org/)
+* Web Framework: [Flask](https://palletsprojects.com/p/flask/)
+* Database: [SQLite](https://www.sqlite.org/index.html)
+* ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
+* CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
+* Testing: [Pytest](https://docs.pytest.org/)
+
 ## Usage & Liability
 
 I claim no liability for any injury or damages that may result from the use or
@@ -27,7 +32,8 @@ That is very big target for haxzorz!
 
 ## License MIT
 
-[MIT License](license.txt)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[MIT License Text](license.txt)
 
 ## Author
 

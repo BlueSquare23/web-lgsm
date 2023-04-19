@@ -20,7 +20,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
-        
+
         # Make sure required form items are supplied.
         for form_item in (username, password):
             if form_item == None or form_item == "":
@@ -65,7 +65,7 @@ def setup():
                 flash("Missing required form field!", category='error')
                 return redirect(url_for('auth.setup'))
 
-        # Check if submitted form data for issues 
+        # Check if submitted form data for issues
         username_exists = User.query.filter_by(username=username).first()
 
         lower_alpha_count = 0
@@ -99,7 +99,7 @@ def setup():
             status_code = 400
         else:
             # Add the new_user to the database, then redirect home.
-            new_user = User(username=username, password=generate_password_hash(password1, method='sha256')) 
+            new_user = User(username=username, password=generate_password_hash(password1, method='sha256'))
             db.session.add(new_user)
             db.session.commit()
 

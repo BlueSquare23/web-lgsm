@@ -2,10 +2,6 @@
   - Don't allow paths to be added that go above install dir!
 
 * General refactor!
-  - Use html pretty printer to format html pages.
-  - Remove unnecessary indents!
-  - Remove silly unused or redundant code.
-  - Do some renaming.
   - Fix up / add / update comments.
   - Prue.
 

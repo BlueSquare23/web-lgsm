@@ -28,7 +28,7 @@ def main():
     app.register_blueprint(views, url_prefix="/")
 
     # Pull in our auth route(s).
-    from .auth import auth 
+    from .auth import auth
     app.register_blueprint(auth, url_prefix="/")
 
     # Initialize DB.

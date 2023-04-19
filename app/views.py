@@ -63,44 +63,52 @@ def controls():
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light']
 
+    # Collect args from GET request.
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
 
-    ## For Debug Logging.
+    ## For Dev Debug Logging.
     print("##### /controls route GET")
     if server_name != None:
         print("Server Name: " + server_name)
     if script_arg != None:
         print("Script Arg: " + script_arg)
 
+    # Can't load the controls page without a server specified.
     if server_name == None:
-        flash("Error, no server specified!", category="error")
+        flash("No server specified!", category="error")
         return redirect(url_for('views.home'))
 
+    # Check that the submitted server exists in db.
     server = GameServer.query.filter_by(install_name=server_name).first()
+    # If game server doesn't exist in db, can't load page for it.
     if server == None:
-        flash("Error loading page!", category="error")
+        flash("Invalid game server name!", category="error")
         return redirect(url_for('views.home'))
 
+    # Checks that install dir exists.
     if not os.path.isdir(server.install_path):
-        flash("Error: No game server installation directory!", category="error")
+        flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
     script_path = server.install_path + '/' + server.script_name
 
+    # This code block is only triggered in the event the script_arg param is
+    # supplied with the GET request. Aka if a user has clicked one of the
+    # control button.
     if script_arg != None:
-        # Validate script_arg.
+        # Validate script_arg against contents of commands.json file.
         if is_invalid_command(script_arg):
-            return render_template('no_output.html', text_color=text_color, \
-                                        invalid_cmd=True, bs_colors=bs_colors)
+            flash("Invalid Command!", category="error")
+            return redirect(url_for('views.controls', server=server_name))
 
-        # Console option, use tmux capture-pane.
+        # Console option, use tmux capture-pane to get output.
         if script_arg == "c":
-            # First check if its running.
+            # First check if tmux session is running.
             cmd = f'/usr/bin/tmux has-session -t {server.script_name}'
-            proc = subprocess.Popen(cmd, 
+            proc = subprocess.Popen(cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
                 shell=True
             )
             output, error = proc.communicate()
@@ -114,6 +122,7 @@ def controls():
             return Response(read_process(server.install_path, base_dir, cmd, \
                                         text_color, ""), mimetype= 'text/html')
 
+        # If its not the console command
         else:
             cmd = f'{script_path} {script_arg}'
             return Response(read_process(server.install_path, base_dir, cmd, \
@@ -158,7 +167,7 @@ def install():
     text_color = config['aesthetic']['text_color']
 
     ## Make its own function / find better solution.
-    # Check for / install the main linuxgsm.sh script. 
+    # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
     check_and_get_lgsmsh(f"{base_dir}/{lgsmsh}")
 
@@ -213,7 +222,7 @@ def install():
                 install_path=install_path, script_name=server_script_name)
         db.session.add(new_game_server)
         db.session.commit()
-        
+
         setup_cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
 
         # Only flashes after install redirect to home page.
@@ -342,7 +351,7 @@ def add():
 
             flash('Game server added!')
             return redirect(url_for('views.home'))
-    
+
     return render_template("add.html", user=current_user), status_code
 
 # Does the actual deletions for the /delete route.

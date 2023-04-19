@@ -172,7 +172,7 @@ def contains_bad_chars(i):
         return False
 
     for char in bad_chars:
-        if char in i: 
+        if char in i:
             return True
 
 

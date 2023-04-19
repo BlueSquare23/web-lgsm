@@ -39,7 +39,7 @@ def test_setup(app, client):
         def test_empty(response):
             # Is 200 bc follow_redirects=True.
             assert response.status_code == 200
-        
+
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for(f'auth.setup')
             assert b"Missing required form field!" in response.data
@@ -65,12 +65,12 @@ def test_setup(app, client):
         def test_username_bad_chars(response):
             # No redirect on setup.
             assert response.status_code == 400
-    
+
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for('auth.setup')
             assert b"Username Contains Illegal Character(s)" in response.data
 
-        bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">", 
+        bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">",
                       "|", ";", "{", "}", "(", ")", "*", ",", "?", "~", "&" }
 
         for char in bad_chars:
@@ -110,14 +110,14 @@ def test_login(app, client):
         assert b"Enter Password" in response.data
         assert b"Login" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
-        
+
         # Post Request tests.
-        
+
         # Tests with empty strings, helper function.
         def test_empty(response):
             # Is 200 bc follow_redirects=True.
             assert response.status_code == 200
-        
+
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for(f'auth.login')
             assert b"Missing required form field!" in response.data

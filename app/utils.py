@@ -46,7 +46,6 @@ def shell_exec(exec_dir, base_dir, cmds):
 def reset_app(base_dir):
     app_proc = psutil.Process(os.getpid())
     for child in app_proc.children(recursive=True):
-        print(child)
         child.kill()
 
     os.chdir(base_dir)
@@ -84,8 +83,6 @@ def get_tty_ticket(sudo_pass):
                        universal_newlines=True)
         return True
     except subprocess.CalledProcessError as e:
-        # For debug.
-        print(e.stderr)
         return False
 
 # Turns data in commands.json into list of command objects that implement the

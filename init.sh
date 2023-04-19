@@ -26,10 +26,10 @@ cat << EOF
 
     You can kill the web server with:
 
-        ./init.sh kill 
+        ./init.sh kill
 
     Please Note: It is strongly advisable to firewall off port $PORT to the
-    outside world and then proxy this server to a real web server such as 
+    outside world and then proxy this server to a real web server such as
     Apache or Nginx with SSL encryption! See the Readme for more info.
 
 EOF

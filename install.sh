@@ -29,7 +29,7 @@ if [[ ! -f '/etc/os-release' ]]; then
     exit 3
 fi
 
-sys_name=$(grep -w 'NAME' /etc/os-release|cut -d= -f2|tr -d '"') 
+sys_name=$(grep -w 'NAME' /etc/os-release|cut -d= -f2|tr -d '"')
 
 if [[ $sys_name != 'Ubuntu' ]]; then
     echo -e "${red}Only run on Ubuntu Linux!${reset}"

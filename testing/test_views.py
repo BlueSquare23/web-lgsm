@@ -124,7 +124,7 @@ def test_add(app, client):
         ## Test upward directory traversal.
         error_msg = b"Only dirs under"
         response = client.post('/add', data={'install_name':'upup_test', \
-            'install_path':'../..', 'script_name':TEST_SERVER_NAME}, \
+            'install_path':'../../../../../..', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
         check_for_error(response, error_msg, 400)
 

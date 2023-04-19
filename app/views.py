@@ -67,13 +67,6 @@ def controls():
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
 
-    ## For Dev Debug Logging.
-    print("##### /controls route GET")
-    if server_name != None:
-        print("Server Name: " + server_name)
-    if script_arg != None:
-        print("Script Arg: " + script_arg)
-
     # Can't load the controls page without a server specified.
     if server_name == None:
         flash("No server specified!", category="error")
@@ -186,11 +179,6 @@ def install():
         if install_options_are_invalid(server_script_name, server_full_name):
             flash("Invalid Installation Option(s)!", category="error")
             return redirect(url_for('views.install'))
-
-        # For debug info.
-        print("#### IS POST ON /install")
-        print("Server Script Name: " + server_script_name)
-        print("Server Full Name: " + server_full_name)
 
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
@@ -324,6 +312,9 @@ def add():
                                                             category="error")
                 return redirect(url_for('views.add'))
 
+        # Only allow lgsm installs under home dir.
+        user_home_dir = os.path.expanduser('~')
+
         if install_exists:
             flash('An installation by that name already exits.', category='error')
             status_code = 400
@@ -332,8 +323,8 @@ def add():
             flash('Directory path does not exist.', category='error')
             status_code = 400
 
-        elif os.path.commonprefix((os.path.realpath(install_path),base_dir)) != base_dir:
-            flash(f'Only dirs under {base_dir} allowed!', category='error')
+        elif os.path.commonprefix((os.path.realpath(install_path),user_home_dir)) != user_home_dir:
+            flash(f'Only dirs under {user_home_dir} allowed!', category='error')
             status_code = 400
 
         elif script_name_is_invalid(script_name):

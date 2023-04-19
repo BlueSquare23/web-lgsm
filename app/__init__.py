@@ -35,8 +35,8 @@ def main():
     from .models import User, MetaData, GameServer
     with app.app_context():
         db.create_all()
+        print(" * Created Database!")
 
-    print(" * Created Database!")
 
     # Setup LoginManager
     login_manager = LoginManager()

@@ -8,7 +8,7 @@ PASSWORD = '**Testing12345'
 TEST_SERVER = 'Minecraft'
 TEST_SERVER_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft'
 TEST_SERVER_NAME = 'mcserver'
-VERSION = 1.1
+VERSION = 1.2
 
 # Test home page.
 def test_home(app, client):

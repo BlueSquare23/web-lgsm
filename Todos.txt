@@ -1,15 +1,11 @@
-* Write easy install script and project init script.
-  - Look into using Gunicorn as the prod wsgi server.
-    - Host this app on high port 5000 then proxy to nginx or apache on 443.
-
-* Fix up Readme.
-  - Add easy install instructions.
-  - Add pretty pictures of app in action!
-  - Emojis! :exploding_head:
-
 ## Todos for After 1.2 Update
 
+* Setup Githup actions to run project tests.
+  - I want the green badges!
+
 * Continue writing tests to improve coverage.
+  - Create test for login page to make sure it always redirects to setup if
+    there's no user created yet.
 
 * Add config editor.
   - Create config page where game server config file is loaded in and user can

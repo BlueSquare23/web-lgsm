@@ -1,11 +1,33 @@
 ## Todos for After 1.2 Update
 
-* Setup Githup actions to run project tests.
-  - I want the green badges!
+* Abandon HTTP streams as method for generating realtime output!
+  - This approach breaks through a proxy. I've tried many tweaks to get it to
+    push the unspecified content length http stream through a reverse proxy and
+    I can't get it to work.
+    - I didn't find this out until after I already wrote the app to heavily
+      rely on http streams, and then tried to host the app through a proxy.
+      - Womp womp :(
+    - I tried tweaking the app.
+    - I tried tweaking proxy settings.
+    - Can't figure it out. And even if I could I think this is more just a sign
+      that this whole general approach to realtime content over http is flawed
+      anyways. Http is stateless and discrete.
+  - Instead, I'm going to replace the generator function and Response http
+    stream object with a daemon thread that runs until its legs fall off and
+    appends its output to a global or global object or something.
+  - Then I'll add some js on the front end to auto refresh and on the backend
+    it will just update the page with the latest content from the global.
+  - The idea is to convert the continuous http stream output with a discrete
+    series of http request / responses, with hopefully no really significant
+    changes to the interface from the users perspective.
+  - Rewrite a bunch of tests for all of these changes.
 
 * Continue writing tests to improve coverage.
   - Create test for login page to make sure it always redirects to setup if
     there's no user created yet.
+
+* Setup Githup actions to run project tests.
+  - I want the green badges!
 
 * Add config editor.
   - Create config page where game server config file is loaded in and user can

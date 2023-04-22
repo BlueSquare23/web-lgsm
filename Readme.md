@@ -37,10 +37,14 @@ cd web-lgsm
 
 ### Setup & Basic Usage :wrench:
 
-After starting the server you can browse to the web address in a browser to
-visit the web-lgsm `Setup` page.
+#### Setup Page
+
+After starting the server you can browse to the web address in a browser and
+you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 
 ![Setup Page](docs/images/add_user.png)
+
+#### Home Page
 
 After creating a user, you'll be automatically logged in and redirected to the
 home page.
@@ -49,16 +53,22 @@ home page.
 
 From the home page you can do several things!
 
+#### Install Page
+
 You can auto install a new LGSM server from their entire list of available game
 servers.
 
-![Setup Page](docs/images/install_server.png)
+![Install Page](docs/images/install_server.png)
+
+#### Add Page
 
 If you already have an LGSM game installed and setup your machine and you just
 want to add it to the Web-LGSM interface you can do so by clicking the "Add an
 Existing LGSM Installation" option.
 
-![Setup Page](docs/images/add_existing_server.png)
+![Add Page](docs/images/add_existing_server.png)
+
+#### Controls Page
 
 Once you have a server added or installed you can access its `controls` page by
 clicking on the link for it under the "Installed Servers" list on the home
@@ -67,16 +77,22 @@ page.
 The console menu includes most of the common LGSM script commands, besides the
 ones that require additional user input.
 
-![Setup Page](docs/images/server_controls.png)
+![Controls Page](docs/images/server_controls.png)
+
+#### Running a Command
 
 The console page also includes a **live** output feed from the command being
 executed in a python subprocess shell on the system.
 
 ![Running Command](docs/images/running_cmd.png)
 
+#### Settings Page
+
 There's a basic app settings page.
 
 ![Settings Page](docs/images/settings_page.png)
+
+#### Login Page
 
 And if you log out or are logged out, there's also a basic login page.
 

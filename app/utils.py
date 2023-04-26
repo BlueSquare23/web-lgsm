@@ -6,71 +6,58 @@ import psutil
 import requests
 import subprocess
 
+# Holds the output from a running daemon thread.
+class OutputContainer:
+    def __init__(self, output_lines, process_lock, just_finished):
+        self.output_lines = output_lines
+        # Boolean to act as a lock and tell if process is already running and
+        # output is being appended.
+        self.process_lock = process_lock
+        # Tells if output just finished for one more refresh.
+        self.just_finished = just_finished
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+            sort_keys=True, indent=4)
+
+
 # Kindly does the RCE.
-def shell_exec(exec_dir, base_dir, cmds):
-    # Change dir context for installation.
-    os.chdir(exec_dir)
+def shell_exec(exec_dir, cmds, output):
+    # Clear any previous output.
+    output.output_lines.clear()
 
-    proc = None
+    # Set lock flag to true.
+    output.process_lock = True
 
-    # Try, except in case user leave while generator is still executing.
-    try:
-        proc = subprocess.Popen(cmds,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True
-        )
+    proc = subprocess.Popen(cmds,
+            cwd=exec_dir,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True
+    )
 
-        for stdout_line in iter(proc.stdout.readline, ""):
-            yield stdout_line
+    for stdout_line in iter(proc.stdout.readline, ""):
+        output.output_lines.append(escape_ansi(stdout_line))
 
-        for stderr_line in iter(proc.stderr.readline, ""):
-            yield "<span style='color:red'>" + stderr_line + "</span>"
+    for stderr_line in iter(proc.stderr.readline, ""):
+        output.output_lines.append(escape_ansi(stderr_line))
 
-        proc.stdout.close()
-        proc.stderr.close()
-        proc.kill()
+    # Reset process_lock flag.
+    output.process_lock = False
+    output.just_finished = True
 
-    except:
-        proc.stdout.close()
-        proc.stderr.close()
-        proc.kill()
 
-        os.chdir(base_dir)
+### DEPRECATED!! Keeping code commented for quick reference.
+## Kills any running sub procs and resets the apps dir context in case user
+## leaves a page while generator proc is still executing.
+#def reset_app(base_dir):
+#    app_proc = psutil.Process(os.getpid())
+#    for child in app_proc.children(recursive=True):
+#        child.kill()
+#
+#    os.chdir(base_dir)
 
-    os.chdir(base_dir)
-
-# Kills any running sub procs and resets the apps dir context in case user
-# leaves a page while generator proc is still executing.
-def reset_app(base_dir):
-    app_proc = psutil.Process(os.getpid())
-    for child in app_proc.children(recursive=True):
-        child.kill()
-
-    os.chdir(base_dir)
-
-# Kindly does the live process read.
-def read_process(exec_dir, base_dir, cmds, text_color, mode):
-    # Read in html from files for code tidyness.
-    with open(f'{base_dir}/app/templates/generator_head.html') as header_file:
-        for line in header_file:
-            yield line
-
-    # To show install generator page specific html and js.
-    if mode == "install":
-        # Read in html from files for code tidyness.
-        with open(f'{base_dir}/app/templates/install_mode.html') as html_file:
-            for line in html_file:
-                yield line
-
-    yield f"<pre style='color:{text_color}'>"
-
-    for line in shell_exec(exec_dir, base_dir, cmds):
-        yield escape_ansi(line)
-
-    yield "</pre>"
-    yield "</body></html>"
 
 # Uses sudo_pass to get sudo tty ticket.
 def get_tty_ticket(sudo_pass):
@@ -84,6 +71,7 @@ def get_tty_ticket(sudo_pass):
         return True
     except subprocess.CalledProcessError as e:
         return False
+
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
@@ -111,12 +99,14 @@ def get_commands():
 
     return commands
 
+
 # Turns data in games_servers.json into servers list for install route.
 def get_servers():
     servers_json = open('game_servers.json', 'r')
     json_data = json.load(servers_json)
     servers_json.close()
     return dict(zip(json_data['servers'], json_data['server_names']))
+
 
 # Validates short commands.
 def is_invalid_command(cmd):
@@ -129,6 +119,7 @@ def is_invalid_command(cmd):
 
     return True
 
+
 # Validates form submitted server_script_name and server_full_name options.
 def install_options_are_invalid(script_name, full_name):
     servers = get_servers()
@@ -137,6 +128,7 @@ def install_options_are_invalid(script_name, full_name):
             return False
     return True
 
+
 # Validates script_name.
 def script_name_is_invalid(script_name):
     servers = get_servers()
@@ -144,6 +136,7 @@ def script_name_is_invalid(script_name):
         if server == script_name:
             return False
     return True
+
 
 # Checks if linuxgsm.sh already exists and if not, wgets it.
 def check_and_get_lgsmsh(lgsmsh):
@@ -156,10 +149,12 @@ def check_and_get_lgsmsh(lgsmsh):
             # For debug.
             print(sys.exc_info()[0])
 
+
 # Removes color codes from cmd line output.
 def escape_ansi(line):
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
+
 
 # Checks for the presense of bad chars in input.
 def contains_bad_chars(i):

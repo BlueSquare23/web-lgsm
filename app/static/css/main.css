@@ -9,9 +9,9 @@ body {
 }
 
 #auto-scroll-button {
-	position: fixed;
+	position: relative;
 	right: 40px;
-	top: 40px;
+	top: 70px;
 }
 
 #del-button {

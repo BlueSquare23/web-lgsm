@@ -13,7 +13,7 @@ function snip(){
     exit
 }
 
-[[ $1  =~ ^(kill|snip)$ ]] && snip
+[[ $1  =~ ^(kill|stop|snip)$ ]] && snip
 
 # Print usage.
 cat << EOF

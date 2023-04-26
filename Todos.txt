@@ -1,26 +1,18 @@
-## Todos for After 1.2 Update
+## Beta Version 1.3 Todos
 
-* Abandon HTTP streams as method for generating realtime output!
-  - This approach breaks through a proxy. I've tried many tweaks to get it to
-    push the unspecified content length http stream through a reverse proxy and
-    I can't get it to work.
-    - I didn't find this out until after I already wrote the app to heavily
-      rely on http streams, and then tried to host the app through a proxy.
-      - Womp womp :(
-    - I tried tweaking the app.
-    - I tried tweaking proxy settings.
-    - Can't figure it out. And even if I could I think this is more just a sign
-      that this whole general approach to realtime content over http is flawed
-      anyways. Http is stateless and discrete.
-  - Instead, I'm going to replace the generator function and Response http
-    stream object with a daemon thread that runs until its legs fall off and
-    appends its output to a global or global object or something.
-  - Then I'll add some js on the front end to auto refresh and on the backend
-    it will just update the page with the latest content from the global.
-  - The idea is to convert the continuous http stream output with a discrete
-    series of http request / responses, with hopefully no really significant
-    changes to the interface from the users perspective.
-  - Rewrite a bunch of tests for all of these changes.
+* Implement backend output thread + frontend Ajax for /install route.
+
+* Remove global output object and replace it with game server specific output
+  objects. Pipe object passing around accordingly.
+  - Will allow for multiple output streams to be written for each game server.
+  - Expand existing update-text-area.js code to only display output for
+    specific game server.
+
+* Adjust test code to account for new async way of doing things.
+
+* Migrate del_server function into utils.
+
+* Make default text area height a config / settings parameter.
 
 * Continue writing tests to improve coverage.
   - Create test for login page to make sure it always redirects to setup if
@@ -34,3 +26,8 @@
     edit it.
 
 * Add home page green or red circle ●  to indicate if servers are on or off.
+  - I think the way to implement this is to just check for the presence or
+    absence of tmux sessions for each installed game server.
+    - If the tmux session exists just assume its running.
+      - Fair assumption to make because lgsm game servers never just leave an
+        empty tmux session running.

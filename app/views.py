@@ -1,18 +1,25 @@
 import os
 import re
 import sys
+import json
 import shutil
 import subprocess
 import configparser
 from . import db
 from .utils import *
 from .models import *
+from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
                                                     redirect, Response
 
+# Global object to hold output from any running daemon threads.
+output = OutputContainer([], False, False)
+
+# Initialize view blueprint.
 views = Blueprint("views", __name__)
+
 
 ######### Home Page #########
 
@@ -23,10 +30,6 @@ def home():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -50,10 +53,6 @@ def controls():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -104,42 +103,76 @@ def controls():
                 stderr=subprocess.PIPE,
                 shell=True
             )
-            output, error = proc.communicate()
+            stdout, stderr = proc.communicate()
 
             # Return any errors checking tmux session.
-            if len(error) > 0:
-                return f"<pre style='color:red'>{error.decode()}</pre>"
+            if len(stderr) > 0:
+                # Clear any previous output.
+                output.output_lines.clear()
+                output.output_lines.append(stderr.decode())
+
+                flash("No Console Output!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
 
             # Otherwise, use the `watch` command to keep live console running.
             cmd = f'/usr/bin/watch -te /usr/bin/tmux capture-pane -pt {server.script_name}'
-            return Response(read_process(server.install_path, base_dir, cmd, \
-                                        text_color, ""), mimetype= 'text/html')
+            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+                                    output), daemon=True, name='Console')
+            daemon.start()
+            flash("Console Started!")
+            return redirect(url_for('views.controls', server=server_name))
 
         # If its not the console command
         else:
             cmd = f'{script_path} {script_arg}'
-            return Response(read_process(server.install_path, base_dir, cmd, \
-                                        text_color, ""), mimetype= 'text/html')
+            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+                                    output), daemon=True, name='Command')
+            daemon.start()
+            return redirect(url_for('views.controls', server=server_name))
+
+    # Default to no refresh.
+    refresh = False
+
+    # If the process is still running or just finished running do a refresh.
+    if output.process_lock or output.just_finished:
+        refresh = True
+        print("#### Do a refresh!")
+        output.just_finished = False
 
     return render_template("controls.html", user=current_user, \
-                server_name=server_name, server_commands=get_commands(), \
-                text_color=text_color, bs_colors=bs_colors)
+        server_name=server_name, server_commands=get_commands(), \
+        text_color=text_color, bs_colors=bs_colors, refresh=refresh)
 
-######### Iframe Default Page #########
+######### Output Page #########
 
-@views.route("/no_output", methods=['GET'])
+@views.route("/output", methods=['GET'])
 @login_required
 def no_output():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
 
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
-    text_color = config['aesthetic']['text_color']
+    # Convert & return json using .toJSON() method.
+    return output.toJSON()
 
-    return render_template("no_output.html", text_color=text_color)
+    # Renders output page with latest content from output object.
+    # Used for Ajax requests to populate /controls output textarea.
+    #return render_template("output.html", output=output)
+
+
+########## Iframe Default Page #########
+#
+#@views.route("/no_output", methods=['GET'])
+#@login_required
+#def no_output():
+#    # Import meta data.
+#    meta_data = db.session.get(MetaData, 1)
+#    base_dir = meta_data.app_install_path
+#
+#    # Import config data.
+#    config = configparser.ConfigParser()
+#    config.read(f'{base_dir}/main.conf')
+#    text_color = config['aesthetic']['text_color']
+#
+#    return render_template("no_output.html", text_color=text_color)
+
 
 ######### Install Page #########
 
@@ -149,10 +182,6 @@ def install():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -211,16 +240,26 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        setup_cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
+        cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
 
         # Only flashes after install redirect to home page.
         flash("Game server added!")
 
-        return Response(read_process(install_path, base_dir, setup_cmd, \
-                        text_color, "install"), mimetype= 'text/html')
+        daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+                                output), daemon=True, name='Command')
+        daemon.start()
+#        return Response(read_process(install_path, base_dir, setup_cmd, \
+#                        text_color, "install"), mimetype= 'text/html')
+
+    # If the process is still running or just finished running do a refresh.
+    if output.process_lock == True or output.just_finished == True:
+        refresh = True
+        print("#### Do a refresh!")
+        output.just_finished = False
 
     return render_template("install.html", user=current_user, \
-    servers=get_servers(), text_color=text_color)
+    servers=get_servers(), text_color=text_color, output=output)
+
 
 ######### Settings Page #########
 
@@ -230,10 +269,6 @@ def settings():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -267,6 +302,7 @@ def settings():
     return render_template("settings.html", user=current_user, \
                 text_color=text_color, remove_files=remove_files)
 
+
 ######### Add Page #########
 
 @views.route("/add", methods=['GET', 'POST'])
@@ -275,10 +311,6 @@ def add():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -348,6 +380,7 @@ def add():
 
     return render_template("add.html", user=current_user), status_code
 
+
 # Does the actual deletions for the /delete route.
 def del_server(server, remove_files):
     install_path = server.install_path
@@ -371,10 +404,6 @@ def delete():
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
-
-    # Fixes dir context in case exit while executing.
-    if base_dir != os.getcwd():
-        reset_app(base_dir)
 
     # Import config data.
     config = configparser.ConfigParser()

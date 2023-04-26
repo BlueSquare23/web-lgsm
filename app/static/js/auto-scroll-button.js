@@ -1,6 +1,9 @@
 // Get the button element from the HTML.
 const autoScrollButton = document.getElementById('auto-scroll-button');
 
+// Get the outputTextArea element from the HTML.
+const outputTextArea = document.getElementById('outputTextArea');
+
 // Initialize the auto-scrolling state to true.
 let isAutoScrolling = true;
 
@@ -13,8 +16,8 @@ function doAnAutoScoll(isAutoScrolling){
   if (isAutoScrolling){
     // Use setInterval to scroll to the bottom every 100ms.
     scrollInterval = setInterval(function(){
-      // Scroll to the bottom.
-      window.scrollTo(0, 100000);
+      // Scroll to the bottom of the outputTextArea.
+      outputTextArea.scrollTop = outputTextArea.scrollHeight;
     }, 100);
   }
   // Otherwise, stop auto-scrolling.
@@ -32,4 +35,3 @@ autoScrollButton.onclick = function(){
 
 // Fox...
 doAnAutoScoll(isAutoScrolling);
-

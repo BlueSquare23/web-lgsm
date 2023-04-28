@@ -1,0 +1,15 @@
+        {# If there's an install going display the Loading... message #}
+        {% if install_name|length %}
+          <h2 style='color:#00ff11'>Installing Game Server<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
+        {% endif %}
+
+        <div id="spinners" style="display: none;">
+          {% for bs_color in bs_colors %}
+            <div class="spinner-border text-{{bs_color}}" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          {% endfor %}
+      
+          <hr style="color: white;" />
+        </div>
+

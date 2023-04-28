@@ -3,24 +3,30 @@ body {
 }
 
 #top-button {
-	position: fixed;
-	left: 40px;
-	bottom: 70px;
+  position: fixed;
+  left: 40px;
+  bottom: 70px;
 }
 
 #auto-scroll-button {
-	position: relative;
-	right: 40px;
-	top: 70px;
+  position: relative;
+  right: 40px;
+  top: 70px;
+}
+
+/* Adjust textArea to account for autoscroll repositioning */
+#textArea {
+  margin-top: -35px;
+  margin-bottom: 35px;
 }
 
 #del-button {
-	position: fixed;
-	right: 40px;
-	bottom: 70px;
+  position: fixed;
+  right: 40px;
+  bottom: 70px;
 }
 
-/* The popup form - hidden by default */
+/* The popup sudopass form - hidden by default */
 .form-popup {
   max-width: 350px;
   display: none;

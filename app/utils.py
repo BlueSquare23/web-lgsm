@@ -5,10 +5,13 @@ import json
 import psutil
 import requests
 import subprocess
+from . import db
+from flask import flash
 
 # Holds the output from a running daemon thread.
 class OutputContainer:
     def __init__(self, output_lines, process_lock, just_finished):
+        # Lines of output delievered by running daemon threat.
         self.output_lines = output_lines
         # Boolean to act as a lock and tell if process is already running and
         # output is being appended.
@@ -57,6 +60,22 @@ def shell_exec(exec_dir, cmds, output):
 #        child.kill()
 #
 #    os.chdir(base_dir)
+
+
+# Does the actual deletions for the /delete route.
+def del_server(server, remove_files):
+    install_path = server.install_path
+    server_name = server.install_name
+
+    GameServer.query.filter_by(install_name=server_name).delete()
+    db.session.commit()
+
+    if remove_files:
+        if os.path.isdir(install_path):
+            shutil.rmtree(install_path)
+
+    flash(f'Game server, {server_name} deleted!')
+    return
 
 
 # Uses sudo_pass to get sudo tty ticket.

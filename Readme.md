@@ -32,7 +32,7 @@ cd web-lgsm
 * You can also stop the server with the `init.sh` script.
 
 ```
-./init.sh kill
+./init.sh stop
 ```
 
 ### Setup & Basic Usage :wrench:

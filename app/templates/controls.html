@@ -5,25 +5,11 @@
 
       <br />
       <div class="container">
-        <div id="spinners" style="display: none;">
-          {% for bs_color in bs_colors %}
-            <div class="spinner-border text-{{bs_color}}" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          {% endfor %}
-      
-          <hr style="color: white;" />
-        </div>
+        {% include 'spinners.html' %}
       
         <div class="row">
-          <h2 style="color: white;">Output:</h2>
-          <div id="textArea">
-            <button id="auto-scroll-button" type="button" class="btn btn-outline-primary float-end" style="text-decoration: overline;">\/Toggle Auto-Scroll\/</button>
-            <textarea class="bg-dark border border-secondary" id="outputTextArea" style="width: 100%; height: 100%; color:{{text_color}}; padding: 5px" rows="10" readonly>
-            </textarea>
-          </div>
+          {% include 'textarea.html' %}
 
-          <hr />
         </div>
       
         <br />
@@ -37,7 +23,7 @@
                 <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
                 <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
       
-                <input onclick="window.scrollTo(0,0); document.getElementById('spinners').style.display = 'block';" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
+                <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
               </form>
             </div>
             <div class="col text-primary">
@@ -49,6 +35,8 @@
       </div>
       <br />
 
+      <!-- Set global serverName for update-text-area.js -->
+      <script>var serverName = "{{server_name}}";</script>
       <script src="/static/js/update-text-area.js"></script>
       <script src="/static/js/auto-scroll-button.js"></script>
       

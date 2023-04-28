@@ -1,20 +1,11 @@
 ## Beta Version 1.3 Todos
 
-* Implement backend output thread + frontend Ajax for /install route.
-
-* Remove global output object and replace it with game server specific output
-  objects. Pipe object passing around accordingly.
-  - Will allow for multiple output streams to be written for each game server.
-  - Expand existing update-text-area.js code to only display output for
-    specific game server.
-
-* Adjust test code to account for new async way of doing things.
-
-* Migrate del_server function into utils.
-
-* Make default text area height a config / settings parameter.
+* Add mechanism to kill long running watch sessions.
+  - Maybe do some sort of timeout where if output hasn't been requested in x
+    minutes kill any backgrounded watch threads.
 
 * Continue writing tests to improve coverage.
+  - Adjust test code to account for new async way of doing things.
   - Create test for login page to make sure it always redirects to setup if
     there's no user created yet.
 

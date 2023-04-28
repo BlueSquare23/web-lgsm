@@ -14,8 +14,9 @@ from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
                                                     redirect, Response
 
-# Global object to hold output from any running daemon threads.
-output = OutputContainer([], False, False)
+# Globals dictionaries to hold output objects.
+GAME_SERVERS = {}
+INSTALL_SERVERS = {}
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -58,9 +59,11 @@ def controls():
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
+    text_area_height = config['aesthetic']['text_area_height']
 
     # Bootstrap spinner colors.
-    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light']
+    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
+                                                        'info', 'light']
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -82,6 +85,17 @@ def controls():
     if not os.path.isdir(server.install_path):
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
+
+    # Object to hold output from any running daemon threads.
+    output_obj = OutputContainer([''], False, False)
+
+    # If this is the first time we're ever seeing the server_name then put it
+    # and its associated output_obj in the global GAME_SERVERS dictionary.
+    if not server_name in GAME_SERVERS:
+        GAME_SERVERS[server_name] = output_obj
+
+    # Set the output object to the one stored in the global dictionary.
+    output = GAME_SERVERS[server_name]
 
     script_path = server.install_path + '/' + server.script_name
 
@@ -119,7 +133,6 @@ def controls():
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()
-            flash("Console Started!")
             return redirect(url_for('views.controls', server=server_name))
 
         # If its not the console command
@@ -141,37 +154,8 @@ def controls():
 
     return render_template("controls.html", user=current_user, \
         server_name=server_name, server_commands=get_commands(), \
-        text_color=text_color, bs_colors=bs_colors, refresh=refresh)
-
-######### Output Page #########
-
-@views.route("/output", methods=['GET'])
-@login_required
-def no_output():
-
-    # Convert & return json using .toJSON() method.
-    return output.toJSON()
-
-    # Renders output page with latest content from output object.
-    # Used for Ajax requests to populate /controls output textarea.
-    #return render_template("output.html", output=output)
-
-
-########## Iframe Default Page #########
-#
-#@views.route("/no_output", methods=['GET'])
-#@login_required
-#def no_output():
-#    # Import meta data.
-#    meta_data = db.session.get(MetaData, 1)
-#    base_dir = meta_data.app_install_path
-#
-#    # Import config data.
-#    config = configparser.ConfigParser()
-#    config.read(f'{base_dir}/main.conf')
-#    text_color = config['aesthetic']['text_color']
-#
-#    return render_template("no_output.html", text_color=text_color)
+        text_color=text_color, text_area_height=text_area_height, \
+                            bs_colors=bs_colors, refresh=refresh)
 
 
 ######### Install Page #########
@@ -179,6 +163,8 @@ def no_output():
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
+    for server in INSTALL_SERVERS:
+        print(server)
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
@@ -187,7 +173,14 @@ def install():
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
+    text_area_height = config['aesthetic']['text_area_height']
 
+    # Initialize blank install_name, used for update-text-area.js.
+    install_name = ""
+
+    # Bootstrap spinner colors.
+    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
+                                                        'info', 'light']
     ## Make its own function / find better solution.
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
@@ -211,6 +204,20 @@ def install():
 
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
+
+        # Used to pass install_name to frontend js.
+        install_name = server_full_name
+
+        # Object to hold output from any running daemon threads.
+        output_obj = OutputContainer([''], False, False)
+
+        # If this is the first time we're ever seeing the server_name then put it
+        # and its associated output_obj in the global INSTALL_SERVERS dictionary.
+        if not server_full_name in INSTALL_SERVERS:
+            INSTALL_SERVERS[server_full_name] = output_obj
+
+        # Set the output object to the one stored in the global dictionary.
+        output = INSTALL_SERVERS[server_full_name]
 
         install_exists = GameServer.query.filter_by(install_name=server_full_name).first()
 
@@ -241,24 +248,44 @@ def install():
         db.session.commit()
 
         cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
-
-        # Only flashes after install redirect to home page.
-        flash("Game server added!")
-
-        daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+        daemon = Thread(target=shell_exec, args=(install_path, cmd, \
                                 output), daemon=True, name='Command')
         daemon.start()
-#        return Response(read_process(install_path, base_dir, setup_cmd, \
-#                        text_color, "install"), mimetype= 'text/html')
-
-    # If the process is still running or just finished running do a refresh.
-    if output.process_lock == True or output.just_finished == True:
-        refresh = True
-        print("#### Do a refresh!")
-        output.just_finished = False
 
     return render_template("install.html", user=current_user, \
-    servers=get_servers(), text_color=text_color, output=output)
+            servers=get_servers(), text_color=text_color, bs_colors=bs_colors, \
+            install_name=install_name, text_area_height=text_area_height)
+
+
+######### Output Page #########
+
+@views.route("/output", methods=['GET'])
+@login_required
+def no_output():
+    # Collect args from GET request.
+    server_name = request.args.get("server")
+
+    # Can't load the controls page without a server specified.
+    if server_name == None:
+        return """{ "error" : "eer can't load page n'@" }"""
+
+    # Can't do anyting if we don't recognize the server_name.
+    if server_name not in GAME_SERVERS and server_name not in INSTALL_SERVERS:
+        return """{ "error" : "eer never heard of em" }"""
+
+    # If its a server in the INSTALL_SERVERS dict set the output object to the
+    # one from that dictionary.
+    if server_name in INSTALL_SERVERS:
+        output = INSTALL_SERVERS[server_name]
+
+    # If its a server in the GAME_SERVERS dict set the output object to the one
+    # from that dictionary. Will clober the above after server is installed. Is
+    # intentional.
+    if server_name in GAME_SERVERS:
+        output = GAME_SERVERS[server_name]
+
+    # Returns json for used by ajax code on /controls route.
+    return output.toJSON()
 
 
 ######### Settings Page #########
@@ -274,16 +301,20 @@ def settings():
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
+    text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
 
     if request.method == 'POST':
         color_pref = request.form.get("text_color")
         file_pref = request.form.get("delete_files")
+        height_pref = request.form.get("text_area_height")
 
+        # Set Remove files setting.
         config['settings']['remove_files'] = 'yes'
         if file_pref == "false":
             config['settings']['remove_files'] = 'no'
 
+        # Set text color setting.
         config['aesthetic']['text_color'] = text_color
         if color_pref != None:
             # Validate color code with regular expression.
@@ -293,6 +324,24 @@ def settings():
 
             config['aesthetic']['text_color'] = color_pref
 
+        # Set default text area height setting.
+        config['aesthetic']['text_area_height'] = text_area_height
+        if height_pref != None:
+            # Validate textarea height is int.
+            try:
+                height_pref = int(height_pref)
+            except ValueError:
+                flash('Invalid Textarea Height!', category='error')
+                return redirect(url_for('views.settings'))
+
+            # Check if height pref is in valid range.
+            if height_pref > 100 or height_pref < 5:
+                flash('Invalid Textarea Height!', category='error')
+                return redirect(url_for('views.settings'))
+
+            # Have to cast back to string to save in config.
+            config['aesthetic']['text_area_height'] = str(height_pref)
+
         with open(f'{base_dir}/main.conf', 'w') as configfile:
              config.write(configfile)
 
@@ -300,7 +349,16 @@ def settings():
         return redirect(url_for('views.settings'))
 
     return render_template("settings.html", user=current_user, \
-                text_color=text_color, remove_files=remove_files)
+            text_color=text_color, remove_files=remove_files, \
+                           text_area_height=text_area_height)
+
+
+######### About Page #########
+
+@views.route("/about", methods=['GET'])
+@login_required
+def about():
+    return render_template("about.html", user=current_user)
 
 
 ######### Add Page #########
@@ -380,21 +438,6 @@ def add():
 
     return render_template("add.html", user=current_user), status_code
 
-
-# Does the actual deletions for the /delete route.
-def del_server(server, remove_files):
-    install_path = server.install_path
-    server_name = server.install_name
-
-    GameServer.query.filter_by(install_name=server_name).delete()
-    db.session.commit()
-
-    if remove_files:
-        if os.path.isdir(install_path):
-            shutil.rmtree(install_path)
-
-    flash(f'Game server, {server_name} deleted!')
-    return
 
 ######### Delete Route #########
 

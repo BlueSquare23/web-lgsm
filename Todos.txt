@@ -1,9 +1,5 @@
 ## Beta Version 1.3 Todos
 
-* Add mechanism to kill long running watch sessions.
-  - Maybe do some sort of timeout where if output hasn't been requested in x
-    minutes kill any backgrounded watch threads.
-
 * Continue writing tests to improve coverage.
   - Adjust test code to account for new async way of doing things.
   - Create test for login page to make sure it always redirects to setup if
@@ -16,9 +12,16 @@
   - Create config page where game server config file is loaded in and user can
     edit it.
 
-* Add home page green or red circle ●  to indicate if servers are on or off.
-  - I think the way to implement this is to just check for the presence or
-    absence of tmux sessions for each installed game server.
-    - If the tmux session exists just assume its running.
-      - Fair assumption to make because lgsm game servers never just leave an
-        empty tmux session running.
+* Take new screenshots of all pages to reflect latest changes for v1.3 release.
+
+## Beta Version 1.4 Todos
+
+* Create mechanism for exempting certain controls for certain game servers.
+  - For example, the Update and Console commands for the Battlefield 1942
+    server don't do anything.
+    - They're not recognized by that lgsm server and so they just print the
+      help menu.
+      - Not terrible but just not polished.
+  - Instead, I want to somehow hardcode exceptions like that, maybe via another
+    json file with a list of game server exceptions. Then those options wont
+    even be loaded on the page.

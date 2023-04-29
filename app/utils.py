@@ -2,10 +2,12 @@ import os
 import re
 import sys
 import json
+import shutil
 import psutil
 import requests
 import subprocess
 from . import db
+from .models import GameServer
 from flask import flash
 
 # Holds the output from a running daemon thread.
@@ -16,8 +18,6 @@ class OutputContainer:
         # Boolean to act as a lock and tell if process is already running and
         # output is being appended.
         self.process_lock = process_lock
-        # Tells if output just finished for one more refresh.
-        self.just_finished = just_finished
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__,
@@ -51,15 +51,63 @@ def shell_exec(exec_dir, cmds, output):
     output.just_finished = True
 
 
-### DEPRECATED!! Keeping code commented for quick reference.
-## Kills any running sub procs and resets the apps dir context in case user
-## leaves a page while generator proc is still executing.
-#def reset_app(base_dir):
-#    app_proc = psutil.Process(os.getpid())
-#    for child in app_proc.children(recursive=True):
-#        child.kill()
-#
-#    os.chdir(base_dir)
+# Snips any lingering `watch` processes.
+def kill_watchers():
+    app_proc = psutil.Process(os.getpid())
+    for child in app_proc.children(recursive=True):
+        if child.name() == "watch":
+            child.kill()
+
+
+# Get's the list of servers that are currently turnned on.
+def get_active_servers(all_game_servers):
+    # Initialize active_servers dict as all inactive to begin with.
+    active_servers = {}
+    for server in all_game_servers:
+        active_servers[server.install_name] = 'inactive'
+
+    # Get's the paths of every active tmux session.
+    cmd = ["/usr/bin/tmux", "list-sessions", "-F", "'#{session_path}'"]
+    out = subprocess.run(cmd,
+        capture_output=True, text=True
+    )
+
+    if out.stderr:
+        # For debug.
+        print(out.stderr)
+
+        # Stderr is probably the default tmux no servers running msg.
+        # But either way if tmux errors just return no servers active.
+        return active_servers
+
+    # Find out which game server the session path(s) belong to.
+
+    # First get list of active session paths.
+    session_paths = []
+    for path in out.stdout.split('\n'):
+        # Only allow valid paths.
+        if '/' not in path:
+            continue
+        session_paths.append(path.strip("'"))
+
+    # Next compare the current tmux session paths against the installed game
+    # server paths.
+    for server in all_game_servers:
+        for session_path in session_paths:
+            print("### Session Path: " + session_path)
+            # If the session_path is beneith the install_path add that server
+            # to active servers list.
+            path_comparitor = (os.path.realpath(session_path), server.install_path)
+            print(path_comparitor)
+            if os.path.commonprefix(path_comparitor) == server.install_path:
+                active_servers[server.install_name] = 'active'
+
+    for server_name, status in active_servers.items():
+        print("### Server Name: " + server_name)
+        print("### Status: " + status)
+
+
+    return active_servers
 
 
 # Does the actual deletions for the /delete route.

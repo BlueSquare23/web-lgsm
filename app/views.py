@@ -36,14 +36,18 @@ def home():
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
 
-    servers = GameServer.query.all()
-    server_names = []
+    # Kill any lingering background watch processes
+    # Used in case console page is clicked away from.
+    kill_watchers()
 
-    for server in servers:
-        server_names.append(server.install_name)
+    installed_servers = GameServer.query.all()
+
+    # Fetch dict containing all servers and flag specifying if they're running
+    # or not via a util function.
+    server_status_dict = get_active_servers(installed_servers)
 
     return render_template("home.html", user=current_user, \
-                                installed_servers=server_names)
+                        server_status_dict=server_status_dict)
 
 
 ######### Controls Page #########
@@ -146,16 +150,10 @@ def controls():
     # Default to no refresh.
     refresh = False
 
-    # If the process is still running or just finished running do a refresh.
-    if output.process_lock or output.just_finished:
-        refresh = True
-        print("#### Do a refresh!")
-        output.just_finished = False
-
     return render_template("controls.html", user=current_user, \
         server_name=server_name, server_commands=get_commands(), \
         text_color=text_color, text_area_height=text_area_height, \
-                            bs_colors=bs_colors, refresh=refresh)
+                                            bs_colors=bs_colors)
 
 
 ######### Install Page #########
@@ -163,8 +161,6 @@ def controls():
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
-    for server in INSTALL_SERVERS:
-        print(server)
     # Import meta data.
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
@@ -177,6 +173,9 @@ def install():
 
     # Initialize blank install_name, used for update-text-area.js.
     install_name = ""
+
+    # Kill any lingering background watch processes if page is reloaded.
+    kill_watchers()
 
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
@@ -297,6 +296,10 @@ def settings():
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
 
+    # Kill any lingering background watch processes in case console page is
+    # clicked away fromleft.
+    kill_watchers()
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
@@ -358,6 +361,10 @@ def settings():
 @views.route("/about", methods=['GET'])
 @login_required
 def about():
+    # Kill any lingering background watch processes in case console page is
+    # clicked away fromleft.
+    kill_watchers()
+
     return render_template("about.html", user=current_user)
 
 
@@ -374,6 +381,10 @@ def add():
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     remove_files = config['settings'].getboolean('remove_files')
+
+    # Kill any lingering background watch processes in case console page is
+    # clicked away fromleft.
+    kill_watchers()
 
     # Set default status_code.
     status_code = 200

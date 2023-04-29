@@ -5,27 +5,34 @@
       <br />
       <h2 style="color: white;">Installed Servers</h2>
       
-      {% if installed_servers|length > 0 %}
-      <form method="POST" action="/delete">
-        <div class="list-group form-check form-switch">
-          {% for server in installed_servers %}
-          <div class="list-group-item list-group-item-action">
-            <div class="d-flex align-items-center">
-              <a href="/controls?server={{server}}" style="color: black;" class="text-decoration-none flex-grow-1">{{server}}</a>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server}}" />
+      {% if server_status_dict|length > 0 %}
+        <form method="POST" action="/delete">
+          <div class="list-group form-check form-switch">
+            {% for server_name, status in server_status_dict.items() %}
+              {% if status == "active" %}
+                {% set status_color = '#00FF11' %}
+              {% else %}
+                {% set status_color = 'red' %}
+              {% endif %}
+              <div class="list-group-item list-group-item-action">
+                <div class="d-flex align-items-center">
+                  <a href="/controls?server={{server_name}}" style="color: black;" class="text-decoration-none flex-grow-1">
+                    <span style="font-size:150%;color:{{status_color}};">● </span>{{server_name}}
+                  </a>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server_name}}" />
+                  </div>
+                </div>
               </div>
-            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
-        <br />
-        <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
-      </form>
+          <br />
+          <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
+        </form>
       {% else %}
-      <ul class="list-group">
-        <li class="list-group-item">No Servers Currently Installed</li>
-      </ul>
+        <ul class="list-group">
+          <li class="list-group-item">No Servers Currently Installed</li>
+        </ul>
       {% endif %}
       
       <br />

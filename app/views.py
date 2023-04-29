@@ -361,11 +361,21 @@ def settings():
 @views.route("/about", methods=['GET'])
 @login_required
 def about():
-    # Kill any lingering background watch processes in case console page is
-    # clicked away fromleft.
+    # Import meta data.
+    meta_data = db.session.get(MetaData, 1)
+    base_dir = meta_data.app_install_path
+
+    # Kill any lingering background watch processes.
+    # In case console page is clicked away from.
     kill_watchers()
 
-    return render_template("about.html", user=current_user)
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
+
+    return render_template("about.html", user=current_user, \
+                                        text_color=text_color)
 
 
 ######### Add Page #########

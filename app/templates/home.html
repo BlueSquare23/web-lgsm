@@ -2,6 +2,7 @@
 {% block title %}Web LGSM Home{% endblock %}
 
 {% block content %}
+
       <br />
       <h2 style="color: white;">Installed Servers</h2>
       
@@ -17,7 +18,7 @@
               <div class="list-group-item list-group-item-action">
                 <div class="d-flex align-items-center">
                   <a href="/controls?server={{server_name}}" style="color: black;" class="text-decoration-none flex-grow-1">
-                    <span style="font-size:150%;color:{{status_color}};">● </span>{{server_name}}
+                    <span id="status-circle" style="font-size:150%;color:{{status_color}};">● </span>{{server_name}}
                   </a>
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server_name}}" />

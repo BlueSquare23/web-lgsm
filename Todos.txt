@@ -1,5 +1,22 @@
 ## Beta Version 1.3 Todos
 
+* Add config editor.
+  - Create config page where game server config file is loaded in and user can
+    edit it.
+  - Create an /edit page with a textarea input where file contents are read
+    from and written into.
+  - I'm going to try to use the details menu to get the config file locations
+    for each game server.
+    - https://docs.linuxgsm.com/configuration/game-server-config
+  - This might be tricky to get the parsing 100% correct especially considering
+    I don't know how it handles game servers with multiple configs yet...
+  - So I might be forced to abandon this approach in favor of something of
+    more hardcoded.
+    - Would require a lot more work.
+    - Would have to install every game server and run details to manually craft
+      a json file or something.
+    - Going to play around with things before making any final decisions.
+
 * Continue writing tests to improve coverage.
   - Adjust test code to account for new async way of doing things.
   - Create test for login page to make sure it always redirects to setup if
@@ -7,10 +24,6 @@
 
 * Setup Githup actions to run project tests.
   - I want the green badges!
-
-* Add config editor.
-  - Create config page where game server config file is loaded in and user can
-    edit it.
 
 * Take new screenshots of all pages to reflect latest changes for v1.3 release.
 

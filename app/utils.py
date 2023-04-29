@@ -74,7 +74,7 @@ def get_active_servers(all_game_servers):
 
     if out.stderr:
         # For debug.
-        print(out.stderr)
+        #print(out.stderr)
 
         # Stderr is probably the default tmux no servers running msg.
         # But either way if tmux errors just return no servers active.
@@ -94,18 +94,11 @@ def get_active_servers(all_game_servers):
     # server paths.
     for server in all_game_servers:
         for session_path in session_paths:
-            print("### Session Path: " + session_path)
             # If the session_path is beneith the install_path add that server
             # to active servers list.
             path_comparitor = (os.path.realpath(session_path), server.install_path)
-            print(path_comparitor)
             if os.path.commonprefix(path_comparitor) == server.install_path:
                 active_servers[server.install_name] = 'active'
-
-    for server_name, status in active_servers.items():
-        print("### Server Name: " + server_name)
-        print("### Status: " + status)
-
 
     return active_servers
 

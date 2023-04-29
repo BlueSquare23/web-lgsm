@@ -2,6 +2,14 @@ body {
   background-color: black;
 }
 
+h2, h3, h4 {
+  color: white;
+}
+
+p, li {
+  color: white;
+}
+
 #top-button {
   position: fixed;
   left: 40px;

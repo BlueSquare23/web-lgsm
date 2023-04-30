@@ -90,6 +90,11 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
+    config_paths = find_config_paths(server.install_path)
+    for config_path in config_paths:
+        # For debug.
+        print("### Config Path: " + config_path)
+
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False, False)
 
@@ -153,7 +158,7 @@ def controls():
     return render_template("controls.html", user=current_user, \
         server_name=server_name, server_commands=get_commands(), \
         text_color=text_color, text_area_height=text_area_height, \
-                                            bs_colors=bs_colors)
+                      bs_colors=bs_colors, config_paths=config_paths)
 
 
 ######### Install Page #########
@@ -180,7 +185,8 @@ def install():
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
                                                         'info', 'light']
-    ## Make its own function / find better solution.
+    cpcfgsh = "cp_default_cfg.sh"
+
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
     check_and_get_lgsmsh(f"{base_dir}/{lgsmsh}")
@@ -237,6 +243,7 @@ def install():
         # Make a new server dir and copy linuxgsm.sh into it then cd into it.
         os.mkdir(server_full_name)
         shutil.copy(lgsmsh, server_full_name)
+        shutil.copy(cpcfgsh, server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 
@@ -246,7 +253,7 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai'
+        cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai ; ./{cpcfgsh}'
         daemon = Thread(target=shell_exec, args=(install_path, cmd, \
                                 output), daemon=True, name='Command')
         daemon.start()
@@ -491,3 +498,76 @@ def delete():
             del_server(server, remove_files)
 
     return redirect(url_for('views.home'))
+
+
+######### Edit Route #########
+@views.route("/edit", methods=['GET', 'POST'])
+@login_required
+def edit():
+    # Import meta data.
+    meta_data = db.session.get(MetaData, 1)
+    base_dir = meta_data.app_install_path
+
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
+    text_area_height = config['aesthetic']['text_area_height']
+
+    # Collect args from POST request.
+    server_name = request.form.get("server")
+    config_path = request.form.get("config_path")
+    new_file_contents = request.form.get("file_contents")
+
+    # Can't load the edit page without a server specified.
+    if server_name == None or server_name == "":
+        flash("No server specified!", category="error")
+        return redirect(url_for('views.home'))
+
+    # Can't load the edit page without a config specified.
+    if config_path == None or config_path == "":
+        flash("No config file specified!", category="error")
+        return redirect(url_for('views.home'))
+
+    # Check that the submitted server exists in db.
+    server = GameServer.query.filter_by(install_name=server_name).first()
+    # If game server doesn't exist in db, can't load page for it.
+    if server == None:
+        flash("Invalid game server name!", category="error")
+        return redirect(url_for('views.home'))
+
+    # Checks that install dir exists.
+    if not os.path.isdir(server.install_path):
+        flash("No game server installation directory found!", category="error")
+        return redirect(url_for('views.home'))
+
+    # Try to pull script's basename from supplied config_path.
+    try:
+        conf_file = os.path.basename(config_path)
+    except:
+        flash("Error getting config file basename!", category="error")
+        return redirect(url_for('views.home'))
+
+
+    # Validate config_file name is in list of accepted configs.
+    if is_invalid_config_name(conf_file):
+        flash("Invalid config file name!", category="error")
+        return redirect(url_for('views.home'))
+
+    # If new_file_contents supplied in post request, write the new file
+    # contents to the config file.
+    if new_file_contents:
+        flash("Config Updated!", category="success")
+        with open(config_path, 'w') as f:
+            f.write(new_file_contents)
+
+    # Read in file contents from config file.
+    file_contents = ""
+    with open(config_path) as f: 
+        file_contents = f.read()
+    
+    return render_template("edit.html", user=current_user, \
+    text_color=text_color, text_area_height=text_area_height, \
+                server_name=server_name, config_file=config_path, \
+                file_contents=file_contents, conf_file_name=conf_file)
+

@@ -12,8 +12,27 @@
         </div>
         <br />
       
+        {% if config_paths|length %}
+          <div class="row">
+            <h2>Edit Config(s)</h2>
+            <hr />
+            
+            {% for config_path in config_paths %}
+              <div class="col">
+                <form method="POST" id="edit-form" action="/edit">
+                  <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+                  <input type="hidden" id="config_path" name="config_path" value="{{config_path}}" class="form-control" />
+                  {% set conf_file = config_path.split('/')[-1] %}
+                  <input class="btn btn-outline-primary" type="submit" title="{{config_path}}" value="Edit: {{conf_file}}" />
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+          <br />
+        {% endif %}
+
         <br />
-        <h2 style="color: white;">Server Controls for: {{server_name|capitalize}}</h2>
+        <h2>Server Controls for: {{server_name|capitalize}}</h2>
         <hr />
       
         {% for command in server_commands %}

@@ -1,25 +1,5 @@
 ## Beta Version 1.3 Todos
 
-* Add config editor.
-  - Create config page where game server config file is loaded in and user can
-    edit it.
-  - Create an /edit page with a textarea input where file contents are read
-    from and written into.
-  - The problem: I don't want to allow arbitrary file editing!
-    - Some bad actor could get access to the web-lgms admin creds, edit a
-      mcserver, and then send themselves a reverse shell.
-    - I want to avoid that!!!
-  - Solution: I'm going to make a list of acceptable game server configuration
-    files based on the repo below.
-    - https://github.com/GameServerManagers/Game-Server-Configs
-  - I'm going to make another json file, gs_confs.json and specify what confs
-    are acceptable.
-  - I will then use that hardcoded list of acceptable confs to find the
-    config(s) for a paricular game server to populate the edit config buttons
-    on /controls page.
-  - /edit page validation will only allow editing of configs in the accepted
-    conf names list.
-
 * Continue writing tests to improve coverage.
   - Adjust test code to account for new async way of doing things.
   - Write tests for edit page!
@@ -35,6 +15,8 @@
       disjointed.
     - Need to read up on subprocess and test around with best practices because
       as of rn I'm certain I'm doing things wrong.
+    - Standardize naming conventions for html files. Remove jS camel case from
+      name="" flags in html files. Change it to hyphen-separated convention.
 
 * Setup Githup actions to run project tests.
   - I want the green badges!

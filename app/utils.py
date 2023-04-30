@@ -103,6 +103,27 @@ def get_active_servers(all_game_servers):
     return active_servers
 
 
+# Returns list of any game server conf listed in gs_confs.json under the
+# search_path.
+def find_config_paths(search_path):
+    gs_confs = open('gs_confs.json', 'r')
+    json_data = json.load(gs_confs)
+    gs_confs.close()
+    
+    valid_gs_confs = json_data["accepted_confs"]
+
+    config_paths = []
+
+    for root, dirs, files in os.walk(search_path):
+        # Ignore default confs.
+        if 'config-default' in root:
+            continue
+        for file in files:
+            if file in valid_gs_confs:
+                config_paths.append(os.path.join(root, file))
+
+    return config_paths
+
 # Does the actual deletions for the /delete route.
 def del_server(server, remove_files):
     install_path = server.install_path
@@ -132,6 +153,21 @@ def get_tty_ticket(sudo_pass):
     except subprocess.CalledProcessError as e:
         return False
 
+
+# Validates submitted config_file for edit route.
+def is_invalid_config_name(conf_file):
+    gs_confs = open('gs_confs.json', 'r')
+    json_data = json.load(gs_confs)
+    gs_confs.close()
+    
+    valid_gs_confs = json_data["accepted_confs"]
+
+    for config in valid_gs_confs:
+        if conf_file == config:
+            return False
+
+    return True
+    
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
@@ -226,5 +262,4 @@ def contains_bad_chars(i):
     for char in bad_chars:
         if char in i:
             return True
-
 

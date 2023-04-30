@@ -18,7 +18,8 @@
               <div class="list-group-item list-group-item-action">
                 <div class="d-flex align-items-center">
                   <a href="/controls?server={{server_name}}" style="color: black;" class="text-decoration-none flex-grow-1">
-                    <span id="status-circle" style="font-size:150%;color:{{status_color}};">● </span>{{server_name}}
+                    <!-- Glow via text-shadow -->
+                    <span id="status-circle" style="font-size:125%;color:{{status_color}};text-shadow: 0 0 5px {{status_color}}, 0 0 10px {{status_color}}, 0 0 20px {{status_color}}, 0 0 30px {{status_color}}">● </span>&nbsp;&nbsp;{{server_name}}
                   </a>
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server_name}}" />

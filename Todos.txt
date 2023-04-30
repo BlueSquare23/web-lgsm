@@ -5,22 +5,36 @@
     edit it.
   - Create an /edit page with a textarea input where file contents are read
     from and written into.
-  - I'm going to try to use the details menu to get the config file locations
-    for each game server.
-    - https://docs.linuxgsm.com/configuration/game-server-config
-  - This might be tricky to get the parsing 100% correct especially considering
-    I don't know how it handles game servers with multiple configs yet...
-  - So I might be forced to abandon this approach in favor of something of
-    more hardcoded.
-    - Would require a lot more work.
-    - Would have to install every game server and run details to manually craft
-      a json file or something.
-    - Going to play around with things before making any final decisions.
+  - The problem: I don't want to allow arbitrary file editing!
+    - Some bad actor could get access to the web-lgms admin creds, edit a
+      mcserver, and then send themselves a reverse shell.
+    - I want to avoid that!!!
+  - Solution: I'm going to make a list of acceptable game server configuration
+    files based on the repo below.
+    - https://github.com/GameServerManagers/Game-Server-Configs
+  - I'm going to make another json file, gs_confs.json and specify what confs
+    are acceptable.
+  - I will then use that hardcoded list of acceptable confs to find the
+    config(s) for a paricular game server to populate the edit config buttons
+    on /controls page.
+  - /edit page validation will only allow editing of configs in the accepted
+    conf names list.
 
 * Continue writing tests to improve coverage.
   - Adjust test code to account for new async way of doing things.
+  - Write tests for edit page!
+    - Try editing file that doesn't meet validation.
+  - Add tests for maxing out the input length of certain vars that get saved to
+    the DB and adjust route code to guard against it.
   - Create test for login page to make sure it always redirects to setup if
     there's no user created yet.
+
+* Refactor / Cleanup Code!
+  - Determine unified way to do subprocess spawning / communication.
+    - Currently using a bunch of different ways to do it and they're all
+      disjointed.
+    - Need to read up on subprocess and test around with best practices because
+      as of rn I'm certain I'm doing things wrong.
 
 * Setup Githup actions to run project tests.
   - I want the green badges!

@@ -2,6 +2,10 @@
 {% block title %}Web LGSM Config Editor{% endblock %}
 
 {% block content %}
+      <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+      <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"></script>
+      <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"></link>
+      <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/cobalt.css"></link>
 
       <br />
       <div class="container">
@@ -11,13 +15,15 @@
         <hr />
       
         <div class="row">
-          <textarea style="width: 100%; height: 100%; color:{{text_color}}; padding: 5px" rows="{{text_area_height}}" cols="50" name="file_contents" form="edit-form">{{file_contents}}</textarea>
+          <div class="col">
+            <textarea id="edit-text-area" name="file_contents" form="save-edit">{{file_contents}}</textarea>
+          </div>
         </div>
         <br />
 
         <div class="row">
           <div class="col">
-            <form method="POST" id="edit-form" action="/edit">
+            <form method="POST" id="save-edit" action="/edit">
               <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
               <input type="hidden" id="config_path" name="config_path" value="{{config_file}}" class="form-control" />
       
@@ -26,23 +32,27 @@
           </div>
 
           <div class="col">
-            <button class="btn btn-outline-primary" onclick="downloadConfig(`{{file_contents}}`)">Download Config</button>
+            <form method="POST" id="download-config" action="/edit">
+              <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+              <input type="hidden" id="config_path" name="config_path" value="{{config_file}}" class="form-control" />
+              <input type="hidden" id="download" name="download" value="yes" class="form-control" />
+
+              <input class="btn btn-outline-primary" type="submit" value="Download Config File" />
+            </form>
+
           </div>
 
           <div class="col">
             <a href="/controls?server={{server_name}}" class="btn btn-outline-primary" tabindex="-1" role="button" aria-disabled="true">Back to Controls</a>
           </div>
 
-          <!-- Set global fileName for download-conf.js -->
-          <script>var fileName = "{{conf_file_name}}";</script>
-          <script src="/static/js/download-conf.js"></script>
-
-          </div>
         </div>
         <br />
         <br />
-        <b>Please note, specific lgsm instance.cfg's are not supported by the web-lgsm editor at this time.</b> 
-        <p>If you already have an instance.cfg file for your server you'll need to edit it over SSH. Likewise please note, all auto-installed servers will have their _default.cfg's copied to a common.cfg on setup in order to allow the config file to survive lgsm updates. Please see <a href="https://docs.linuxgsm.com/configuration/linuxgsm-config">the official lgsm docs on the subject</a> for more information on this subject.</p>
+        <b><u>Please note, specific lgsm instance.cfg files are not supported by the web-lgsm editor at this time.</u></b> 
+        <p>If you already have an instance.cfg file for your server you'll need to edit it over SSH. Likewise please note, all auto-installed servers will have their _default.cfg's copied to a common.cfg on setup in order to allow the config file to survive lgsm updates. Please see <a href="https://docs.linuxgsm.com/configuration/linuxgsm-config">the official lgsm docs on the subject</a> for more information.</p>
       </div>
       <br />
+
+      <script language="javascript" type="text/javascript" src="/static/js/edit-text-area.js"></script>
 {% endblock %}

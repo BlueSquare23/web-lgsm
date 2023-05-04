@@ -13,10 +13,20 @@
   - Determine unified way to do subprocess spawning / communication.
     - Currently using a bunch of different ways to do it and they're all
       disjointed.
-    - Need to read up on subprocess and test around with best practices because
-      as of rn I'm certain I'm doing things wrong.
-    - Standardize naming conventions for html files. Remove jS camel case from
-      name="" flags in html files. Change it to hyphen-separated convention.
+  - Remove dead whitespace.
+  - Standardize / rethink some naming. For example I have a lot of variations
+    of variables named some variation of something_conf, config, cnf, ect.
+    Instead stick to just one naming convention for example something_cnf and
+    then try to make the var names as specific as possible.
+  - Need to read up on subprocess and test around with best practices because
+    as of rn I'm certain I'm doing things wrong.
+  - Standardize naming conventions for html files. Remove jS camel case from
+    name="" flags in html files. Change it to hyphen-separated convention.
+
+* Improve error handling around reading in json files in case contents within
+  gets mangled by user.
+
+* Spin project up on a blank ubuntu VM to test project setup and deployment.
 
 * Setup Githup actions to run project tests.
   - I want the green badges!

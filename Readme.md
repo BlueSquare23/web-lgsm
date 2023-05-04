@@ -62,9 +62,9 @@ servers.
 
 #### Add Page
 
-If you already have an LGSM game installed and setup your machine and you just
-want to add it to the Web-LGSM interface you can do so by clicking the "Add an
-Existing LGSM Installation" option.
+If you already have an LGSM game server installed and setup on your machine and
+you want to add it to the Web-LGSM interface you can do so by clicking the "Add
+an Existing LGSM Installation" option.
 
 ![Add Page](docs/images/add_existing_server.png)
 

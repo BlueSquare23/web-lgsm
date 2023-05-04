@@ -6,7 +6,7 @@ h2, h3, h4 {
   color: white;
 }
 
-p, li {
+p, li, b {
   color: white;
 }
 
@@ -43,6 +43,12 @@ p, li {
   left: 50%;
 }
 
+.CodeMirror {
+  resize: vertical;
+  height: auto;
+}
+
+/* Animated ... for install page */
 @keyframes blink {50% { color: transparent }}
 .loader__dot { animation: 1s blink infinite }
 .loader__dot:nth-child(2) { animation-delay: 250ms }

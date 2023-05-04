@@ -73,8 +73,6 @@ def get_active_servers(all_game_servers):
     )
 
     if out.stderr:
-        # For debug.
-        #print(out.stderr)
 
         # Stderr is probably the default tmux no servers running msg.
         # But either way if tmux errors just return no servers active.
@@ -235,7 +233,7 @@ def script_name_is_invalid(script_name):
 
 
 # Checks if linuxgsm.sh already exists and if not, wgets it.
-def check_and_get_lgsmsh(lgsmsh):
+def check_and_wget_lgsmsh(lgsmsh):
     if not os.path.isfile(lgsmsh):
         # Temporary solution. Tried using requests for download, didn't work.
         try:

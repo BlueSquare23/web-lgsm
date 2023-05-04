@@ -12,7 +12,7 @@ from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
-                                                    redirect, Response
+                                redirect, Response, send_from_directory
 
 # Globals dictionaries to hold output objects.
 GAME_SERVERS = {}
@@ -91,9 +91,6 @@ def controls():
         return redirect(url_for('views.home'))
 
     config_paths = find_config_paths(server.install_path)
-    for config_path in config_paths:
-        # For debug.
-        print("### Config Path: " + config_path)
 
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False, False)
@@ -189,7 +186,7 @@ def install():
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh(f"{base_dir}/{lgsmsh}")
+    check_and_wget_lgsmsh(f"{base_dir}/{lgsmsh}")
 
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
@@ -518,6 +515,7 @@ def edit():
     server_name = request.form.get("server")
     config_path = request.form.get("config_path")
     new_file_contents = request.form.get("file_contents")
+    download = request.form.get("download")
 
     # Can't load the edit page without a server specified.
     if server_name == None or server_name == "":
@@ -548,7 +546,6 @@ def edit():
         flash("Error getting config file basename!", category="error")
         return redirect(url_for('views.home'))
 
-
     # Validate config_file name is in list of accepted configs.
     if is_invalid_config_name(conf_file):
         flash("Invalid config file name!", category="error")
@@ -557,14 +554,22 @@ def edit():
     # If new_file_contents supplied in post request, write the new file
     # contents to the config file.
     if new_file_contents:
-        flash("Config Updated!", category="success")
-        with open(config_path, 'w') as f:
-            f.write(new_file_contents)
+        try:
+            with open(config_path, 'w') as f:
+                f.write(new_file_contents.replace('\r', ''))
+            flash("Config Updated!", category="success")
+        except:
+            flash("Error writing to conf!", category="error")
 
     # Read in file contents from config file.
     file_contents = ""
     with open(config_path) as f: 
         file_contents = f.read()
+
+    # If is download request.
+    if download == "yes":
+        basedir, basename = os.path.split(config_path)
+        return send_from_directory(basedir, basename)
     
     return render_template("edit.html", user=current_user, \
     text_color=text_color, text_area_height=text_area_height, \

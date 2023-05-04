@@ -1,5 +1,5 @@
 {
-    "accepted_confs": ["acl.xml",
+    "accepted_cfgs": ["acl.xml",
         "Admins.cfg",
         "Bans.cfg",
         "blacklist.cfg",

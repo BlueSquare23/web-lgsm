@@ -2,7 +2,7 @@
 const autoScrollButton = document.getElementById('auto-scroll-button');
 
 // Get the outputTextArea element from the HTML.
-const outputTextArea = document.getElementById('outputTextArea');
+const outputTextArea = document.getElementById('output-textarea');
 
 // Initialize the auto-scrolling state to true.
 let isAutoScrolling = true;

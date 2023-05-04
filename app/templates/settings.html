@@ -3,7 +3,7 @@
 
 {% block content %}
       <br />
-      
+
       <div class="container bg-dark border border-secondary p-2">
         <form method="POST">
           <h3 align="enter" style="color: white;">
@@ -12,31 +12,31 @@
           <div class="form-group" style="color: white;">
             <label for="text_color" class="form-label">Output Text Color</label>
             <input type="color" class="form-control form-control-color" id="text_color" name="text_color" value="{{text_color}}" title="Choose your color" />
-      
+
             <br />
-      
+
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="delFiles" value="true" {% if remove_files == true %}checked{% endif %}>
-              <label class="form-check-label" for="delFiles">
+              <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if remove_files == true %}checked{% endif %}>
+              <label class="form-check-label" for="delete-files">
                 Remove Game Server Files on Delete
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="delFiles2" value="false" {% if remove_files == false %}checked{% endif %}>
-              <label class="form-check-label" for="delFiles2">
+              <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if remove_files == false %}checked{% endif %}>
+              <label class="form-check-label" for="leave-files">
                 Leave Game Server Files on Delete
               </label>
             </div>
-      
+
             <br />
 
             <div class="form-floating mb-3">
-              <input value="{{text_area_height}}" min="5" max="100" class="form-control" type="number" id="textAreaHeight" name="text_area_height" class="form-control">
-              <label for="textAreaHeight" style="color:black;">Default TextArea Height</label>
+              <input value="{{text_area_height}}" min="5" max="100" class="form-control" type="number" id="text-area-height" name="text_area_height" class="form-control">
+              <label for="text-area-height" style="color:black;">Default TextArea Height</label>
             </div>
 
             <br />
-      
+
             <center>
               <button class="btn btn-outline-primary" type="submit">Apply</button>
             </center>

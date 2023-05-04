@@ -65,6 +65,13 @@ def controls():
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 
+
+    # Pull in commands list from commands.json file.
+    commands_list = get_commands()
+    if not commands_list:
+        flash('Error loading commands.json file!', category='error')
+        return redirect(url_for('views.home'))
+
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
                                                         'info', 'light']
@@ -90,10 +97,13 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    config_paths = find_config_paths(server.install_path)
+    cfg_paths = find_cfg_paths(server.install_path)
+    if cfg_paths == "failed":
+        flash("Error reading accepted_cfgs.json!", category="error")
+        cfg_paths = []
 
     # Object to hold output from any running daemon threads.
-    output_obj = OutputContainer([''], False, False)
+    output_obj = OutputContainer([''], False)
 
     # If this is the first time we're ever seeing the server_name then put it
     # and its associated output_obj in the global GAME_SERVERS dictionary.
@@ -117,25 +127,19 @@ def controls():
         # Console option, use tmux capture-pane to get output.
         if script_arg == "c":
             # First check if tmux session is running.
-            cmd = f'/usr/bin/tmux has-session -t {server.script_name}'
-            proc = subprocess.Popen(cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True
-            )
-            stdout, stderr = proc.communicate()
+            cmd = ['/usr/bin/tmux', 'has-session', '-t', f'{server.script_name}']
+            proc = subprocess.run(cmd, capture_output=True, text=True)
 
-            # Return any errors checking tmux session.
-            if len(stderr) > 0:
+            if proc.returncode != 0:
                 # Clear any previous output.
                 output.output_lines.clear()
-                output.output_lines.append(stderr.decode())
+                output.output_lines.append(proc.stderr)
 
                 flash("No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
             # Otherwise, use the `watch` command to keep live console running.
-            cmd = f'/usr/bin/watch -te /usr/bin/tmux capture-pane -pt {server.script_name}'
+            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux capture-pane', '-pt', f'{server.script_name}']
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()
@@ -143,7 +147,7 @@ def controls():
 
         # If its not the console command
         else:
-            cmd = f'{script_path} {script_arg}'
+            cmd = [f'{script_path}', f'{script_arg}']
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Command')
             daemon.start()
@@ -153,9 +157,9 @@ def controls():
     refresh = False
 
     return render_template("controls.html", user=current_user, \
-        server_name=server_name, server_commands=get_commands(), \
+        server_name=server_name, server_commands=commands_list, \
         text_color=text_color, text_area_height=text_area_height, \
-                      bs_colors=bs_colors, config_paths=config_paths)
+                      bs_colors=bs_colors, cfg_paths=cfg_paths)
 
 
 ######### Install Page #########
@@ -173,6 +177,12 @@ def install():
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 
+    # Pull in install server list from game_servers.json file.
+    install_list = get_servers()
+    if not install_list:
+        flash('Error loading game_servers.json file!', category='error')
+        return redirect(url_for('views.home'))
+
     # Initialize blank install_name, used for update-text-area.js.
     install_name = ""
 
@@ -182,7 +192,7 @@ def install():
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
                                                         'info', 'light']
-    cpcfgsh = "cp_default_cfg.sh"
+    aiwrapsh = "auto_install_wrap.sh"
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
@@ -211,7 +221,7 @@ def install():
         install_name = server_full_name
 
         # Object to hold output from any running daemon threads.
-        output_obj = OutputContainer([''], False, False)
+        output_obj = OutputContainer([''], False)
 
         # If this is the first time we're ever seeing the server_name then put it
         # and its associated output_obj in the global INSTALL_SERVERS dictionary.
@@ -240,7 +250,7 @@ def install():
         # Make a new server dir and copy linuxgsm.sh into it then cd into it.
         os.mkdir(server_full_name)
         shutil.copy(lgsmsh, server_full_name)
-        shutil.copy(cpcfgsh, server_full_name)
+        shutil.copy(aiwrapsh, server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 
@@ -250,13 +260,20 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        cmd = f'./{lgsmsh} {server_script_name} ; ./{server_script_name} ai ; ./{cpcfgsh}'
-        daemon = Thread(target=shell_exec, args=(install_path, cmd, \
-                                output), daemon=True, name='Command')
-        daemon.start()
+        cmd = [f'./{lgsmsh}', f'{server_script_name}']
+        proc = subprocess.run(cmd, cwd=install_path, capture_output=True, text=True)
+
+        if proc.returncode != 0:
+            output.output_lines.append(proc.stderr)
+        output.output_lines.append(proc.stdout)
+
+        cmd = [f'./{aiwrapsh}', f'{server_script_name}']
+        install_daemon = Thread(target=shell_exec, args=(install_path, cmd, \
+                                output), daemon=True, name='Install')
+        install_daemon.start()
 
     return render_template("install.html", user=current_user, \
-            servers=get_servers(), text_color=text_color, bs_colors=bs_colors, \
+            servers=install_list, text_color=text_color, bs_colors=bs_colors, \
             install_name=install_name, text_area_height=text_area_height)
 
 
@@ -505,6 +522,10 @@ def edit():
     meta_data = db.session.get(MetaData, 1)
     base_dir = meta_data.app_install_path
 
+    # The abbreviation cfg will be used to refer to any lgsm game server
+    # specific config files. Whereas, the word config will be used to refer to
+    # any web-lgsm config info.
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
@@ -513,7 +534,7 @@ def edit():
 
     # Collect args from POST request.
     server_name = request.form.get("server")
-    config_path = request.form.get("config_path")
+    cfg_path = request.form.get("cfg_path")
     new_file_contents = request.form.get("file_contents")
     download = request.form.get("download")
 
@@ -522,8 +543,8 @@ def edit():
         flash("No server specified!", category="error")
         return redirect(url_for('views.home'))
 
-    # Can't load the edit page without a config specified.
-    if config_path == None or config_path == "":
+    # Can't load the edit page without a cfg specified.
+    if cfg_path == None or cfg_path == "":
         flash("No config file specified!", category="error")
         return redirect(url_for('views.home'))
 
@@ -539,40 +560,53 @@ def edit():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    # Try to pull script's basename from supplied config_path.
+    # Try to pull script's basename from supplied cfg_path.
     try:
-        conf_file = os.path.basename(config_path)
+        cfg_file = os.path.basename(cfg_path)
     except:
         flash("Error getting config file basename!", category="error")
         return redirect(url_for('views.home'))
 
-    # Validate config_file name is in list of accepted configs.
-    if is_invalid_config_name(conf_file):
+    # Validate cfg_file name is in list of accepted cfgs.
+    if is_invalid_cfg_name(cfg_file):
         flash("Invalid config file name!", category="error")
         return redirect(url_for('views.home'))
 
+    # Check that file exists before allowing writes to it. Aka don't allow
+    # arbitrary file creation. Even though the above should block creating
+    # files with arbitrary names, we still don't want to allow arbitrary file
+    # creation just anywhere on the file system we have write perms to.
+    if not os.path.isfile(cfg_path):
+        flash("So such file!", category="error")
+        return redirect(url_for('views.home'))
+
     # If new_file_contents supplied in post request, write the new file
-    # contents to the config file.
+    # contents to the cfg file.
     if new_file_contents:
         try:
-            with open(config_path, 'w') as f:
+            with open(cfg_path, 'w') as f:
                 f.write(new_file_contents.replace('\r', ''))
             flash("Config Updated!", category="success")
         except:
-            flash("Error writing to conf!", category="error")
+            flash("Error writing to config!", category="error")
 
-    # Read in file contents from config file.
+    # Read in file contents from cfg file.
     file_contents = ""
-    with open(config_path) as f: 
-        file_contents = f.read()
+    # Try except incase problem with file.
+    try:
+        with open(cfg_path) as f:
+            file_contents = f.read()
+    except:
+        flash("Error reading config!", category="error")
+        return redirect(url_for('views.home'))
 
     # If is download request.
     if download == "yes":
-        basedir, basename = os.path.split(config_path)
-        return send_from_directory(basedir, basename)
-    
+        basedir, basename = os.path.split(cfg_path)
+        return send_from_directory(basedir, basename, as_attachment=True)
+
     return render_template("edit.html", user=current_user, \
     text_color=text_color, text_area_height=text_area_height, \
-                server_name=server_name, config_file=config_path, \
-                file_contents=file_contents, conf_file_name=conf_file)
+                server_name=server_name, cfg_file=cfg_path, \
+                file_contents=file_contents, cfg_file_name=cfg_file)
 

@@ -12,7 +12,7 @@ from flask import flash
 
 # Holds the output from a running daemon thread.
 class OutputContainer:
-    def __init__(self, output_lines, process_lock, just_finished):
+    def __init__(self, output_lines, process_lock):
         # Lines of output delievered by running daemon threat.
         self.output_lines = output_lines
         # Boolean to act as a lock and tell if process is already running and
@@ -34,7 +34,6 @@ def shell_exec(exec_dir, cmds, output):
 
     proc = subprocess.Popen(cmds,
             cwd=exec_dir,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True
@@ -48,7 +47,6 @@ def shell_exec(exec_dir, cmds, output):
 
     # Reset process_lock flag.
     output.process_lock = False
-    output.just_finished = True
 
 
 # Snips any lingering `watch` processes.
@@ -68,11 +66,11 @@ def get_active_servers(all_game_servers):
 
     # Get's the paths of every active tmux session.
     cmd = ["/usr/bin/tmux", "list-sessions", "-F", "'#{session_path}'"]
-    out = subprocess.run(cmd,
+    proc = subprocess.run(cmd,
         capture_output=True, text=True
     )
 
-    if out.stderr:
+    if proc.stderr:
 
         # Stderr is probably the default tmux no servers running msg.
         # But either way if tmux errors just return no servers active.
@@ -101,26 +99,30 @@ def get_active_servers(all_game_servers):
     return active_servers
 
 
-# Returns list of any game server conf listed in gs_confs.json under the
+# Returns list of any game server cfg listed in accepted_cfgs.json under the
 # search_path.
-def find_config_paths(search_path):
-    gs_confs = open('gs_confs.json', 'r')
-    json_data = json.load(gs_confs)
-    gs_confs.close()
-    
-    valid_gs_confs = json_data["accepted_confs"]
+def find_cfg_paths(search_path):
+    # Try except in case problem with json files.
+    try:
+        cfg_whitelist = open('accepted_cfgs.json', 'r')
+        json_data = json.load(cfg_whitelist)
+        cfg_whitelist.close()
+    except:
+        return "failed"
 
-    config_paths = []
+    cfg_paths = []
+    valid_gs_cfgs = json_data["accepted_cfgs"]
 
+    # Find all cfgs under search_path using os.walk.
     for root, dirs, files in os.walk(search_path):
-        # Ignore default confs.
+        # Ignore default cfgs.
         if 'config-default' in root:
             continue
         for file in files:
-            if file in valid_gs_confs:
-                config_paths.append(os.path.join(root, file))
+            if file in valid_gs_cfgs:
+                cfg_paths.append(os.path.join(root, file))
 
-    return config_paths
+    return cfg_paths
 
 # Does the actual deletions for the /delete route.
 def del_server(server, remove_files):
@@ -140,7 +142,9 @@ def del_server(server, remove_files):
 
 # Uses sudo_pass to get sudo tty ticket.
 def get_tty_ticket(sudo_pass):
-    # Attempt's to get sudo tty ticket.
+    # Attempt's to get sudo tty ticket. Uses try, except becaue subprocess.run
+    # is called with check=True which causes any subproc failures to throw an
+    # exception. This uses that password fail exception to return False.
     try:
         subprocess.run(['/usr/bin/sudo', '-S', 'apt-get', 'check'],
                        check=True,
@@ -152,16 +156,16 @@ def get_tty_ticket(sudo_pass):
         return False
 
 
-# Validates submitted config_file for edit route.
-def is_invalid_config_name(conf_file):
-    gs_confs = open('gs_confs.json', 'r')
-    json_data = json.load(gs_confs)
-    gs_confs.close()
+# Validates submitted cfg_file for edit route.
+def is_invalid_cfg_name(cfg_file):
+    gs_cfgs = open('accepted_cfgs.json', 'r')
+    json_data = json.load(gs_cfgs)
+    gs_cfgs.close()
     
-    valid_gs_confs = json_data["accepted_confs"]
+    valid_gs_cfgs = json_data["accepted_cfgs"]
 
-    for config in valid_gs_confs:
-        if conf_file == config:
+    for cfg in valid_gs_cfgs:
+        if cfg_file == cfg:
             return False
 
     return True
@@ -170,11 +174,16 @@ def is_invalid_config_name(conf_file):
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
 def get_commands():
-    commands_json = open('commands.json', 'r')
-    json_data = json.load(commands_json)
-    commands_json.close()
-
     commands = []
+
+    # Try except in case problem with json files.
+    try:
+        commands_json = open('commands.json', 'r')
+        json_data = json.load(commands_json)
+        commands_json.close()
+    except:
+        return commands
+
     cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
         json_data["descriptions"])
 
@@ -196,10 +205,15 @@ def get_commands():
 
 # Turns data in games_servers.json into servers list for install route.
 def get_servers():
-    servers_json = open('game_servers.json', 'r')
-    json_data = json.load(servers_json)
-    servers_json.close()
-    return dict(zip(json_data['servers'], json_data['server_names']))
+    # Try except in case problem with json files.
+    try:
+        servers_json = open('game_servers.json', 'r')
+        json_data = json.load(servers_json)
+        servers_json.close()
+        return dict(zip(json_data['servers'], json_data['server_names']))
+    except:
+        # Return empty dict triggers error. In python empty dict == False.
+        return {}
 
 
 # Validates short commands.

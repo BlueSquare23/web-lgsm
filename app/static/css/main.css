@@ -22,8 +22,8 @@ p, li, b {
   top: 70px;
 }
 
-/* Adjust textArea to account for autoscroll repositioning */
-#textArea {
+/* Adjust text-area to account for autoscroll repositioning */
+#text-area {
   margin-top: -35px;
   margin-bottom: 35px;
 }

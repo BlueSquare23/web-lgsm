@@ -9,11 +9,11 @@
 
       <br />
       <div class="container">
-      
-        <h2 style="color: white;">Editing Config: {{conf_file_name}}</h2>
-        <b>Full Path: {{config_file}}</b>
+
+        <h2 style="color: white;">Editing Config: {{cfg_file_name}}</h2>
+        <b>Full Path: {{cfg_file}}</b>
         <hr />
-      
+
         <div class="row">
           <div class="col">
             <textarea id="edit-text-area" name="file_contents" form="save-edit">{{file_contents}}</textarea>
@@ -25,16 +25,16 @@
           <div class="col">
             <form method="POST" id="save-edit" action="/edit">
               <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
-              <input type="hidden" id="config_path" name="config_path" value="{{config_file}}" class="form-control" />
-      
+              <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
+
               <input class="btn btn-outline-primary" type="submit" value="Save File" />
             </form>
           </div>
 
           <div class="col">
-            <form method="POST" id="download-config" action="/edit">
+            <form method="POST" id="download-cfg" action="/edit">
               <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
-              <input type="hidden" id="config_path" name="config_path" value="{{config_file}}" class="form-control" />
+              <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
               <input type="hidden" id="download" name="download" value="yes" class="form-control" />
 
               <input class="btn btn-outline-primary" type="submit" value="Download Config File" />
@@ -49,7 +49,7 @@
         </div>
         <br />
         <br />
-        <b><u>Please note, specific lgsm instance.cfg files are not supported by the web-lgsm editor at this time.</u></b> 
+        <b><u>Please note, specific lgsm instance.cfg files are not supported by the web-lgsm editor at this time.</u></b>
         <p>If you already have an instance.cfg file for your server you'll need to edit it over SSH. Likewise please note, all auto-installed servers will have their _default.cfg's copied to a common.cfg on setup in order to allow the config file to survive lgsm updates. Please see <a href="https://docs.linuxgsm.com/configuration/linuxgsm-config">the official lgsm docs on the subject</a> for more information.</p>
       </div>
       <br />

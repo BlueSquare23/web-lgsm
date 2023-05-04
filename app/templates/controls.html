@@ -6,24 +6,24 @@
       <br />
       <div class="container">
         {% include 'spinners.html' %}
-      
+
         <div class="row">
           {% include 'textarea.html' %}
         </div>
         <br />
-      
-        {% if config_paths|length %}
+
+        {% if cfg_paths|length %}
           <div class="row">
             <h2>Edit Config(s)</h2>
             <hr />
-            
-            {% for config_path in config_paths %}
+
+            {% for cfg_path in cfg_paths %}
               <div class="col">
                 <form method="POST" id="edit-form" action="/edit">
                   <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
-                  <input type="hidden" id="config_path" name="config_path" value="{{config_path}}" class="form-control" />
-                  {% set conf_file = config_path.split('/')[-1] %}
-                  <input class="btn btn-outline-primary" type="submit" title="{{config_path}}" value="Edit: {{conf_file}}" />
+                  <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_path}}" class="form-control" />
+                  {% set cfg_file = cfg_path.split('/')[-1] %}
+                  <input class="btn btn-outline-primary" type="submit" title="{{cfg_path}}" value="Edit: {{cfg_file}}" />
                 </form>
               </div>
               <br />
@@ -35,14 +35,14 @@
         <br />
         <h2>Server Controls for: {{server_name|capitalize}}</h2>
         <hr />
-      
+
         {% for command in server_commands %}
           <div class="row">
             <div class="col">
               <form method="GET" id="ctrls-form" action="/controls">
                 <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
                 <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
-      
+
                 <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
               </form>
             </div>
@@ -59,11 +59,11 @@
       <script>var serverName = "{{server_name}}";</script>
       <script src="/static/js/update-text-area.js"></script>
       <script src="/static/js/auto-scroll-button.js"></script>
-      
-      <button id="top-button" onclick="window.scrollTo(0,0);" type="button" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
-        <a href="#top" style="color: white;">/\ Top /\</a>
+
+      <button id="top-button" style="color: white; text-decoration: underline;" onclick="window.scrollTo(0,0);" type="button" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
+        /\ Top /\
       </button>
-      
+
       <a id="del-button" title="Remove server entry from web-lgsm database" onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-outline-danger" href="/delete?server={{server_name}}" role="button">
         Delete Server
       </a>

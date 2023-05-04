@@ -1,6 +1,6 @@
         <div id="spinners" style="display: none;">
           {% if install_name|length %}
-            <h2 style='color:#00ff11'>Installing Game Server<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
+            <h2 style='color:#00ff11'>Installing {{install_name|capitalize}}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
           {% endif %}
 
           {% for bs_color in bs_colors %}
@@ -8,7 +8,7 @@
               <span class="visually-hidden">Loading...</span>
             </div>
           {% endfor %}
-      
+
           <hr style="color: white;" />
         </div>
 

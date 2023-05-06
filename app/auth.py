@@ -17,10 +17,12 @@ auth = Blueprint("auth", __name__)
 def login():
     # Set default return code.
     response_code = 200
+
     if User.query.first() == None:
         flash("Please add a user!", category='success')
         return redirect(url_for('auth.setup'))
 
+    # Post route code for login form submission.
     if request.method == 'POST':
         username = request.form.get("username")
         password = request.form.get("password")
@@ -29,6 +31,11 @@ def login():
         for form_item in (username, password):
             if form_item == None or form_item == "":
                 flash("Missing required form field(s)!", category='error')
+                return redirect(url_for('auth.login'))
+
+            # Check input lengths.
+            if len(form_item) > 150:
+                flash("Form field too long!", category='error')
                 return redirect(url_for('auth.login'))
 
         # Check login info.
@@ -72,12 +79,18 @@ def setup():
                 flash("Missing required form field(s)!", category='error')
                 return redirect(url_for('auth.setup'))
 
+            # Check input lengths.
+            if len(form_item) > 150:
+                flash("Form field too long!", category='error')
+                return redirect(url_for('auth.setup'))
+
         # Check if a user already exists and if so don't allow another user to
         # be created. Right now this is a single user interface. Could possible
         # expand it to mulitiple users in the future.
         if User.query.first() != None:
             flash("User already added. Please sign in!", category='error')
             return redirect(url_for('auth.login'))
+
 
         # Setup rudimentary password strength counter.
         lower_alpha_count = 0

@@ -198,16 +198,23 @@ def install():
     lgsmsh = "linuxgsm.sh"
     check_and_wget_lgsmsh(f"{base_dir}/{lgsmsh}")
 
+    # Post logic only triggered after install form submission.
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
         server_full_name = request.form.get("full_name")
         sudo_pass = request.form.get("sudo_pass")
 
         # Make sure required options are supplied.
-        for item in (server_script_name, server_full_name, sudo_pass):
-            if item == None:
+        for required_form_item in (server_script_name, server_full_name, sudo_pass):
+            if required_form_item == None:
                 flash("Missing Required Form Feild!", category="error")
                 return redirect(url_for('views.install'))
+
+            # Check input lengths.
+            if len(required_form_item) > 150:
+                flash("Form field too long!", category='error')
+                return redirect(url_for('views.install'))
+
 
         # Validate form submission data against install list in json file.
         if install_options_are_invalid(server_script_name, server_full_name):
@@ -431,6 +438,11 @@ def add():
                 flash("Missing required form field(s)!", category="error")
                 return redirect(url_for('views.add'))
 
+            # Check input lengths.
+            if len(required_form_item) > 150:
+                flash("Form field too long!", category='error')
+                return redirect(url_for('views.add'))
+
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
 
@@ -443,6 +455,7 @@ def add():
                 flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
                                                             category="error")
                 return redirect(url_for('views.add'))
+
 
         # Only allow lgsm installs under home dir.
         user_home_dir = os.path.expanduser('~')
@@ -495,7 +508,8 @@ def delete():
     config.read(f'{base_dir}/main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
-    # Delete via POST is for multiple deletions, from toggles on home page.
+    # Delete via POST is for multiple deletions.
+    # Post submissions come from delete toggles on home page.
     if request.method == 'POST':
         for server_id, server_name in request.form.items():
             server = GameServer.query.filter_by(install_name=server_name).first()
@@ -504,7 +518,7 @@ def delete():
     else:
         server_name = request.args.get("server")
         if server_name == None:
-            flash("Missing Required Args!", category=error)
+            flash("Missing Required Args!", category="error")
             return redirect(url_for('views.home'))
 
         server = GameServer.query.filter_by(install_name=server_name).first()

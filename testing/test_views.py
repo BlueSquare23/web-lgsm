@@ -7,6 +7,7 @@ USERNAME = 'test'
 PASSWORD = '**Testing12345'
 TEST_SERVER = 'Minecraft'
 TEST_SERVER_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft'
+CFG_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft/lgsm/config-lgsm/mcserver/common.cfg'
 TEST_SERVER_NAME = 'mcserver'
 VERSION = 1.2
 
@@ -387,3 +388,52 @@ def test_settings(app, client):
         assert b"Leave Game Server Files on Delete" in response.data
         assert b"Apply" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+
+
+# Test Edit page.
+def test_edit(app, client):
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        ## POST Request tests.
+        # Basic page load test.
+        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH})
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        # Check content matches.
+        assert b"Home" in response.data
+        assert b"Settings" in response.data
+        assert b"Logout" in response.data
+        assert b"Editing Config: common.cfg" in response.data
+        assert b"Full Path: " in response.data
+        assert b"#### Game Server Settings ####" in response.data
+        assert b"#### Testing..." in response.data
+        assert b"Save File" in response.data
+        assert b"Download Config File" in response.data
+        assert b"Back to Controls" in response.data
+        assert b"Please note," in response.data
+        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+
+        ## Edit testing.
+        # Test if edits are saved.
+        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'file_contents':'#### Testing...'})
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        # Check content matches.
+        assert b"Home" in response.data
+        assert b"Settings" in response.data
+        assert b"Logout" in response.data
+        assert b"Editing Config: common.cfg" in response.data
+        assert b"Full Path: " in response.data
+        assert b"#### Testing..." in response.data
+        assert b"Save File" in response.data
+        assert b"Download Config File" in response.data
+        assert b"Back to Controls" in response.data
+        assert b"Please note," in response.data
+        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+
+        ## Download testing.
+        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'download':'yes'})
+        assert response.status_code == 200  # Return's 200 to GET requests.

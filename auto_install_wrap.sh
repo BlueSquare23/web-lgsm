@@ -4,7 +4,7 @@
 # server to a common.cfg file the auto installation completes. 
 
 if [[ -z $1 ]]; then
-    /usr/bin/echo "Missing Required Args!"
+    /usr/bin/echo "Missing Required Arg!"
     exit
 fi
 
@@ -13,7 +13,7 @@ lgsm_script="$1"
 # Attempt at basic sanitization.
 bad_chars='\$ \" \\ \# \= \[ \] \! \< \> \| \; \{ \} \( \) \* \, \? \~ \&'
 for char in $bad_chars; do
-    lgsm_script=$(tr -d "$char" <<< $lgsm_script)
+    lgsm_script=$(/usr/bin/tr -d "$char" <<< $lgsm_script)
 done
 
 # Check that first arg is in game_servers.json.

@@ -80,7 +80,7 @@ def get_active_servers(all_game_servers):
 
     # First get list of active session paths.
     session_paths = []
-    for path in out.stdout.split('\n'):
+    for path in proc.stdout.split('\n'):
         # Only allow valid paths.
         if '/' not in path:
             continue

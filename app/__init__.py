@@ -37,7 +37,6 @@ def main():
         db.create_all()
         print(" * Created Database!")
 
-
     # Setup LoginManager
     login_manager = LoginManager()
     # Redirect to auth.login if not already logged in.

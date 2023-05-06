@@ -104,7 +104,7 @@ def get_active_servers(all_game_servers):
 def find_cfg_paths(search_path):
     # Try except in case problem with json files.
     try:
-        cfg_whitelist = open('accepted_cfgs.json', 'r')
+        cfg_whitelist = open('json/accepted_cfgs.json', 'r')
         json_data = json.load(cfg_whitelist)
         cfg_whitelist.close()
     except:
@@ -158,7 +158,7 @@ def get_tty_ticket(sudo_pass):
 
 # Validates submitted cfg_file for edit route.
 def is_invalid_cfg_name(cfg_file):
-    gs_cfgs = open('accepted_cfgs.json', 'r')
+    gs_cfgs = open('json/accepted_cfgs.json', 'r')
     json_data = json.load(gs_cfgs)
     gs_cfgs.close()
     
@@ -178,7 +178,7 @@ def get_commands():
 
     # Try except in case problem with json files.
     try:
-        commands_json = open('commands.json', 'r')
+        commands_json = open('json/commands.json', 'r')
         json_data = json.load(commands_json)
         commands_json.close()
     except:
@@ -207,7 +207,7 @@ def get_commands():
 def get_servers():
     # Try except in case problem with json files.
     try:
-        servers_json = open('game_servers.json', 'r')
+        servers_json = open('json/game_servers.json', 'r')
         json_data = json.load(servers_json)
         servers_json.close()
         return dict(zip(json_data['servers'], json_data['server_names']))

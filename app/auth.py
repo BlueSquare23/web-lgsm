@@ -157,5 +157,5 @@ def setup():
 def logout():
     logout_user()
     flash('Logged out!', category='success')
-    return redirect(url_for("views.home"))
+    return redirect(url_for("auth.login"))
 

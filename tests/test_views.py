@@ -2,44 +2,90 @@ import os
 import pytest
 from flask import url_for, request
 from game_servers import game_servers
+from pathlib import Path
+from dotenv import load_dotenv
 
-USERNAME = 'test'
-PASSWORD = '**Testing12345'
-TEST_SERVER = 'Minecraft'
-TEST_SERVER_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft'
-CFG_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft/lgsm/config-lgsm/mcserver/common.cfg'
-TEST_SERVER_NAME = 'mcserver'
-VERSION = 1.2
+# Source env vars.
+env_path = Path('.') / 'tests/test_data/test.env'
+load_dotenv(dotenv_path=env_path)
 
-# Test home page.
-def test_home(app, client):
+USERNAME = os.environ['USERNAME']
+PASSWORD = os.environ['PASSWORD']
+TEST_SERVER = os.environ['TEST_SERVER']
+TEST_SERVER_PATH = os.environ['TEST_SERVER_PATH']
+TEST_SERVER_NAME = os.environ['TEST_SERVER_NAME']
+CFG_PATH = os.environ['CFG_PATH']
+VERSION = os.environ['VERSION']
+
+def login(app, client):
     with client:
         # Log test user in.
         response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
         assert response.status_code == 302
 
-        ### Home Page GET Request tests.
-        ## Check basic content matches.
-        response = client.get('/home')
-        assert response.status_code == 200  # Return's 200 to GET requests.
+### Home Page tests.
+# Test home responses.
+def test_home_responses(app, client):
+    login(app, client)
+    response = client.get('/home')
+    assert response.status_code == 200  # Return's 200 to GET requests.
 
-        # Check strings on page match.
-        assert b"Home" in response.data
-        assert b"Settings" in response.data
-        assert b"Logout" in response.data
-        assert b"Installed Servers" in response.data
-        assert b"Other Options" in response.data
-        assert b"Install a New Game Server" in response.data
-        assert b"Add an Existing LGSM Installation" in response.data
-        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+    response = client.get('/')
+    assert response.status_code == 200  # Return's 200 to GET requests.
+
+    # Home Page should only accept GET's.
+    response = client.post('/home', data=dict(test=''))
+    assert response.status_code == 405  # Return's 405 to POST requests.
+
+    response = client.post('/', data=dict(test=''))
+    assert response.status_code == 405  # Return's 405 to POST requests.
+
+# Check basic content matches.
+def test_home_content(app, client):
+    login(app, client)
+    response = client.get('/home')
+    assert response.status_code == 200  # Return's 200 to GET requests.
+
+    # Check strings on page match.
+    assert b"Home" in response.data
+    assert b"Settings" in response.data
+    assert b"Logout" in response.data
+    assert b"Installed Servers" in response.data
+    assert b"Other Options" in response.data
+    assert b"Install a New Game Server" in response.data
+    assert b"Add an Existing LGSM Installation" in response.data
+    assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 
 
-        ### Home Page POST Request test (should only accept GET's).
-        response = client.post('/home', data=dict(test=''))
-        assert response.status_code == 405  # Return's 405 to POST requests.
-
-        response = client.post('/', data=dict(test=''))
-        assert response.status_code == 405  # Return's 405 to POST requests.
+## Test home page.
+#def test_home(app, client):
+#    with client:
+#        # Log test user in.
+#        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+#        assert response.status_code == 302
+#
+#        ### Home Page GET Request tests.
+#        ## Check basic content matches.
+#        response = client.get('/home')
+#        assert response.status_code == 200  # Return's 200 to GET requests.
+#
+#        # Check strings on page match.
+#        assert b"Home" in response.data
+#        assert b"Settings" in response.data
+#        assert b"Logout" in response.data
+#        assert b"Installed Servers" in response.data
+#        assert b"Other Options" in response.data
+#        assert b"Install a New Game Server" in response.data
+#        assert b"Add an Existing LGSM Installation" in response.data
+#        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+#
+#
+#        ### Home Page POST Request test (should only accept GET's).
+#        response = client.post('/home', data=dict(test=''))
+#        assert response.status_code == 405  # Return's 405 to POST requests.
+#
+#        response = client.post('/', data=dict(test=''))
+#        assert response.status_code == 405  # Return's 405 to POST requests.
 
 
 # Test add page.

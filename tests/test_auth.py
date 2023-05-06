@@ -1,13 +1,20 @@
+import os
 import pytest
 from flask import url_for, request
 from game_servers import game_servers
+from pathlib import Path
+from dotenv import load_dotenv
 
-USERNAME = 'test'
-PASSWORD = '**Testing12345'
-TEST_SERVER = 'Minecraft'
-TEST_SERVER_PATH = '/home/bluesquare23/Projects/new/web-lgsm/Minecraft'
-TEST_SERVER_NAME = 'mcserver'
-VERSION = 1.2
+# Source env vars.
+env_path = Path('.') / 'tests/test_data/test.env'
+load_dotenv(dotenv_path=env_path)
+
+USERNAME = os.environ['USERNAME']
+PASSWORD = os.environ['PASSWORD']
+TEST_SERVER = os.environ['TEST_SERVER']
+TEST_SERVER_PATH = os.environ['TEST_SERVER_PATH']
+TEST_SERVER_NAME = os.environ['TEST_SERVER_NAME']
+VERSION = os.environ['VERSION']
 
 # Test setup page.
 def test_setup(app, client):

@@ -1,4 +1,4 @@
 tmux
 watch
 wget
-find
+findutils

@@ -15,6 +15,9 @@
   - Create test for login page to make sure it always redirects to setup if
     there's no user created yet.
 
+* Add mechanism to check if output page is still being requested or has been
+  requested recently and if so do not kill the watch process(s).
+
 * Spin project up on a blank ubuntu VM to test project setup and deployment.
 
 * Setup Githup actions to run project tests.

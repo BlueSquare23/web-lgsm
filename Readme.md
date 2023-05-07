@@ -1,5 +1,7 @@
 # Web LGSM
 
+![Build Tests Badge](https://github.com/BlueSquare23/web-lgsm/actions/workflows/test.yml/badge.svg)
+
 ## Main Idea :thought_balloon:
 
 This project is intended to be an easy to use web interface for the [Linux Game

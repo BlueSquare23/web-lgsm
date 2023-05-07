@@ -6,8 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Source env vars.
-env_path = Path('.') / 'tests/test_data/test.env'
-load_dotenv(dotenv_path=env_path)
+#env_path = Path('.') / 'tests/test_data/test.env'
+#load_dotenv(dotenv_path=env_path)
 
 USERNAME = os.environ['USERNAME']
 PASSWORD = os.environ['PASSWORD']
@@ -15,6 +15,7 @@ TEST_SERVER = os.environ['TEST_SERVER']
 TEST_SERVER_PATH = os.environ['TEST_SERVER_PATH']
 TEST_SERVER_NAME = os.environ['TEST_SERVER_NAME']
 CFG_PATH = os.environ['CFG_PATH']
+CFG_PATH = os.path.abspath(CFG_PATH)
 VERSION = os.environ['VERSION']
 
 def login(app, client):
@@ -55,37 +56,6 @@ def test_home_content(app, client):
     assert b"Install a New Game Server" in response.data
     assert b"Add an Existing LGSM Installation" in response.data
     assert f"Web LGSM - Version: {VERSION}".encode() in response.data
-
-
-## Test home page.
-#def test_home(app, client):
-#    with client:
-#        # Log test user in.
-#        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
-#        assert response.status_code == 302
-#
-#        ### Home Page GET Request tests.
-#        ## Check basic content matches.
-#        response = client.get('/home')
-#        assert response.status_code == 200  # Return's 200 to GET requests.
-#
-#        # Check strings on page match.
-#        assert b"Home" in response.data
-#        assert b"Settings" in response.data
-#        assert b"Logout" in response.data
-#        assert b"Installed Servers" in response.data
-#        assert b"Other Options" in response.data
-#        assert b"Install a New Game Server" in response.data
-#        assert b"Add an Existing LGSM Installation" in response.data
-#        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
-#
-#
-#        ### Home Page POST Request test (should only accept GET's).
-#        response = client.post('/home', data=dict(test=''))
-#        assert response.status_code == 405  # Return's 405 to POST requests.
-#
-#        response = client.post('/', data=dict(test=''))
-#        assert response.status_code == 405  # Return's 405 to POST requests.
 
 
 # Test add page.
@@ -177,7 +147,7 @@ def test_add(app, client):
 
         ## Test unauthorized dir.
         response = client.post('/add', data={'install_name':'root_test', \
-            'install_path':'/root', 'script_name':TEST_SERVER_NAME}, \
+            'install_path':'/', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
         check_for_error(response, error_msg, 400)
 

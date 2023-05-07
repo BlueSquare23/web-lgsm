@@ -6,8 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Source env vars.
-env_path = Path('.') / 'tests/test_data/test.env'
-load_dotenv(dotenv_path=env_path)
+#env_path = Path('.') / 'tests/test_data/test.conf'
+#load_dotenv(dotenv_path=env_path)
 
 USERNAME = os.environ['USERNAME']
 PASSWORD = os.environ['PASSWORD']

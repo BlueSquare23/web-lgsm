@@ -32,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Apt & Pip Dependencies
         run: |
-          apt update
+          sudo apt update
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv

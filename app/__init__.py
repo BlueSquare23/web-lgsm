@@ -12,7 +12,7 @@ sys.dont_write_bytecode = True
 db = SQLAlchemy()
 DB_NAME = "database.db"
 
-env_path = Path('.') / '.env'
+env_path = Path('.') / '.secret'
 load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ['SECRET_KEY']
 

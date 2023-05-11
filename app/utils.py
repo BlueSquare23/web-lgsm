@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import time
 import shutil
 import psutil
 import requests
@@ -50,7 +51,19 @@ def shell_exec(exec_dir, cmds, output):
 
 
 # Snips any lingering `watch` processes.
-def kill_watchers():
+def kill_watchers(last_request_for_output):
+    # Add three minutes to last_request_for_output time as a timeout. In other
+    # words, only kill lingering watch processes if output page hasn't been
+    # requested for past three minutes.
+    three_minutes = 180
+    ouput_page_timeout = last_request_for_output + three_minutes
+
+    # Greater than because of the natural flow of time. Epoch time now is a
+    # larger integer than epoch time three minutes ago. So if the page timeout
+    # is great than the now time the timeout has not been hit yet.
+    if ouput_page_timeout > int(time.time()):
+        return
+
     app_proc = psutil.Process(os.getpid())
     for child in app_proc.children(recursive=True):
         if child.name() == "watch":

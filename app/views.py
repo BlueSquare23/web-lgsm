@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import time
 import shutil
 import subprocess
 import configparser
@@ -17,6 +18,9 @@ from flask import Blueprint, render_template, request, flash, url_for, \
 # Globals dictionaries to hold output objects.
 GAME_SERVERS = {}
 INSTALL_SERVERS = {}
+
+# Global last requested output time.
+last_request_for_output = int(time.time())
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -38,7 +42,7 @@ def home():
 
     # Kill any lingering background watch processes
     # Used in case console page is clicked away from.
-    kill_watchers()
+    kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
 
@@ -187,7 +191,7 @@ def install():
     install_name = ""
 
     # Kill any lingering background watch processes if page is reloaded.
-    kill_watchers()
+    kill_watchers(last_request_for_output)
 
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
@@ -300,6 +304,9 @@ def no_output():
     if server_name not in GAME_SERVERS and server_name not in INSTALL_SERVERS:
         return """{ "error" : "eer never heard of em" }"""
 
+    # Reset the last requested output time.
+    last_request_for_output = int(time.time())
+
     # If its a server in the INSTALL_SERVERS dict set the output object to the
     # one from that dictionary.
     if server_name in INSTALL_SERVERS:
@@ -326,7 +333,7 @@ def settings():
 
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
-    kill_watchers()
+    kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -395,7 +402,7 @@ def about():
 
     # Kill any lingering background watch processes.
     # In case console page is clicked away from.
-    kill_watchers()
+    kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -422,7 +429,7 @@ def add():
 
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
-    kill_watchers()
+    kill_watchers(last_request_for_output)
 
     # Set default status_code.
     status_code = 200
@@ -589,9 +596,9 @@ def edit():
     # Check that file exists before allowing writes to it. Aka don't allow
     # arbitrary file creation. Even though the above should block creating
     # files with arbitrary names, we still don't want to allow arbitrary file
-    # creation just anywhere on the file system we have write perms to.
+    # creation anywhere on the file system the app has write perms to.
     if not os.path.isfile(cfg_path):
-        flash("So such file!", category="error")
+        flash("No such file!", category="error")
         return redirect(url_for('views.home'))
 
     # If new_file_contents supplied in post request, write the new file

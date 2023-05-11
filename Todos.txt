@@ -1,31 +1,19 @@
 ## Beta Version 1.3 Todos
 
-* Continue writing tests to improve coverage.
-  - Restructure existing test code to improve granularity.
-    - Instead of having one function per route, break it down more to have more
-      test functions with more specific names.
-      - Already started this with home page tests, continue with rest of tests.
-  - Adjust test code to account for new async way of doing things.
-    - Write code that triggers an output thread to run then check the output
-      route is returning accurate json information.
-  - Write tests for edit page!
-    - Try editing file that doesn't meet validation.
-  - Add tests for maxing out the input length of certain vars that get saved to
-    the DB.
-  - Create test for login page to make sure it always redirects to setup if
-    there's no user created yet.
-
-* Add mechanism to check if output page is still being requested or has been
-  requested recently and if so do not kill the watch process(s).
-
 * Spin project up on a blank ubuntu VM to test project setup and deployment.
-
-* Setup Githup actions to run project tests.
-  - I want the green badges!
 
 * Take new screenshots of all pages to reflect latest changes for v1.3 release.
 
 ## Beta Version 1.4 Todos
+
+* Continue expanding tests.
+  - Write proper tests for a full game server install.
+    - Install Battlefeild 1942 or something small.
+    - Check that daemon thread is running during install.
+    - Check that output api is returning json.
+      - Rinse and repeat for command(s) on controls page.
+      - Can't test daemon thread till real server is installed.
+  - Write unit tests for functions in utils.py file.
 
 * Create mechanism for exempting certain controls for certain game servers.
   - For example, the Update and Console commands for the Battlefield 1942
@@ -36,3 +24,11 @@
   - Instead, I want to somehow hardcode exceptions like that, maybe via another
     json file with a list of game server exceptions. Then those options wont
     even be loaded on the page.
+
+* Think about implementing reaper daemon thread to cleanup lingering watch
+  processes if output route hasn't been requested recently.
+  - Currently I'm using requests for other routes to kill the daemonized watch
+    processes if output hasn't been requested recently.
+    - This has the downside of leaving a watch process running if someone
+      closes app directly by just leaving the live console output on the
+      controls page.

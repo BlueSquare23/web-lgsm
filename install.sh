@@ -71,8 +71,8 @@ echo -e "${green}####### Install Requirements...${reset}"
 python3 -m pip install -r requirements.txt
 
 random_key=$(echo $RANDOM | md5sum | head -c 20)
-echo "SECRET_KEY=\"$random_key\"" > .env
-chmod 600 .env
+echo "SECRET_KEY=\"$random_key\"" > .secret
+chmod 600 .secret
 
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`init.sh\` to start the server.${reset}"

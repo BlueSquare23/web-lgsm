@@ -8,11 +8,6 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
     source venv/bin/activate
 fi
 
-# Check if GITHUB_WORKSPACE var set (aka is gh actions test runner).
-if [[ -z "$GITHUB_WORKSPACE" ]]; then
-    GITHUB_WORKSPACE="."
-fi
- 
 if [[ -f 'app/database.db' ]]; then
     rm 'app/database.db'
 fi
@@ -28,4 +23,4 @@ fi
 # Reset test server cfg.
 cp tests/test_data/common.cfg tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/
 
-python -m pytest -v 
+python -m pytest -v --maxfail=1

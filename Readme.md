@@ -62,6 +62,12 @@ servers.
 
 ![Install Page](docs/images/install_server.png)
 
+Once the installation process is started a set of spinners and an installing...
+message will appear above the live running console output of the ongoing
+installation.
+
+![Installing A Game Server](docs/images/installing_a_game_server.png)
+
 #### Add Page
 
 If you already have an LGSM game server installed and setup on your machine and
@@ -87,6 +93,15 @@ The console page also includes a **live** output feed from the command being
 executed in a python subprocess shell on the system.
 
 ![Running Command](docs/images/running_cmd.png)
+
+#### Config Editor
+
+You can click one of the edit config buttons on a given game server's controls
+page to access the config editor. From the config editor you can change any of
+the necessary game server settings and save them. You can also download a copy
+of the config file.
+
+![Editing A Game Server Config](docs/images/config_editor.png)
 
 #### Settings Page
 

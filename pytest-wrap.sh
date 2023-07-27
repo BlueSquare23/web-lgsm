@@ -3,6 +3,17 @@
 
 set -e
 
+export HOME=$(pwd)
+export USERNAME='test'
+export PASSWORD='**Testing12345'
+export APP_PATH=$(pwd)
+export TEST_SERVER='Minecraft'
+export TEST_SERVER_PATH="tests/test_data/Minecraft"
+export CFG_DIR="tests/test_data/Minecraft/lgsm/config-lgsm/mcserver"
+export CFG_PATH="tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/common.cfg"
+export TEST_SERVER_NAME='mcserver'
+export VERSION='1.3'
+
 # Source virtural env.
 if [[ -z "$VIRTUAL_ENV" ]]; then
     source venv/bin/activate

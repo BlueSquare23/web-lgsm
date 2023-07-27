@@ -1,21 +1,3 @@
-## Hotfix Open Issue #1
-
-* Fix LGSM tmux list session and get console output.
-  - The LGSM slightly changed the way their tmux sessions are setup.
-    - They're now running sessions in socket files.
-    - This change to the base LGSM breaks my apps glowy red / green status
-      lights on the home page and the console output button.
-  - So I've got to change the way this app gets information about what tmux
-    session sockets are available.
-    - This sorta works: `tmux -L l4d2server list-session`.
-      - Not a drop in replacment, will need to adapt get_active_servers in
-        utils.py.
-    - Will keep investigating, trying to come up with a good solution.
-  - Likewise, I also have to change the way I dump the tmux session in
-    question.
-    - Again this, `tmux -L l4d2server capture-pane -pt l4d2server` sorta works.
-    - Will workshop it and come up with something working.
-
 ## Beta Version 1.4 Todos
 
 * Continue expanding tests.
@@ -48,7 +30,9 @@
 * Setup automatic update system.
   - Create optional toggle for auto updates in the config file and on the
     settings page.
-  - Then setup means by which to check once daily (or upon request) for new
+  - Then setup means by which to check once weekly (or upon request) for new
     updates.
     - If the version number is different from the most recent release version
       then pull in & install the most recent changes.
+  - Create update script for running the updates manually.
+    - Remember to not clobber existing user main.conf files during updates. 

@@ -131,7 +131,7 @@ def controls():
         # Console option, use tmux capture-pane to get output.
         if script_arg == "c":
             # First check if tmux session is running.
-            cmd = ['/usr/bin/tmux', 'has-session', '-t', f'{server.script_name}']
+            cmd = ['/usr/bin/tmux', '-L', server.script_name, 'list-session']
             proc = subprocess.run(cmd, capture_output=True, text=True)
 
             if proc.returncode != 0:
@@ -143,7 +143,7 @@ def controls():
                 return redirect(url_for('views.controls', server=server_name))
 
             # Otherwise, use the `watch` command to keep live console running.
-            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux capture-pane', '-pt', f'{server.script_name}']
+            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', server.script_name, 'capture-pane', '-pt', server.script_name]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()

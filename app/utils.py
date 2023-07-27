@@ -72,42 +72,17 @@ def kill_watchers(last_request_for_output):
 
 # Get's the list of servers that are currently turnned on.
 def get_active_servers(all_game_servers):
-    # Initialize active_servers dict as all inactive to begin with.
+    # Loops over all installed game servers and check which of them are active.
     active_servers = {}
     for server in all_game_servers:
+        # Check if tmux session is running.
+        cmd = ['/usr/bin/tmux', '-L', server.script_name, 'list-session']
+        proc = subprocess.run(cmd)
+
         active_servers[server.install_name] = 'inactive'
 
-    # Get's the paths of every active tmux session.
-    cmd = ["/usr/bin/tmux", "list-sessions", "-F", "'#{session_path}'"]
-    proc = subprocess.run(cmd,
-        capture_output=True, text=True
-    )
-
-    if proc.stderr:
-
-        # Stderr is probably the default tmux no servers running msg.
-        # But either way if tmux errors just return no servers active.
-        return active_servers
-
-    # Find out which game server the session path(s) belong to.
-
-    # First get list of active session paths.
-    session_paths = []
-    for path in proc.stdout.split('\n'):
-        # Only allow valid paths.
-        if '/' not in path:
-            continue
-        session_paths.append(path.strip("'"))
-
-    # Next compare the current tmux session paths against the installed game
-    # server paths.
-    for server in all_game_servers:
-        for session_path in session_paths:
-            # If the session_path is beneith the install_path add that server
-            # to active servers list.
-            path_comparitor = (os.path.realpath(session_path), server.install_path)
-            if os.path.commonprefix(path_comparitor) == server.install_path:
-                active_servers[server.install_name] = 'active'
+        if proc.returncode == 0:
+            active_servers[server.install_name] = 'active'
 
     return active_servers
 

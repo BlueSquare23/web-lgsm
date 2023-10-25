@@ -31,8 +31,8 @@ fi
 
 sys_name=$(grep -w 'NAME' /etc/os-release|cut -d= -f2|tr -d '"')
 
-if [[ $sys_name != 'Ubuntu' ]]; then
-    echo -e "${red}Only run on Ubuntu Linux!${reset}"
+if [[ ! $sys_name =~ Ubuntu|Debian ]]; then
+    echo -e "${red}Only Supported on Debian & Ubuntu Linux!${reset}"
     exit 3
 fi
 
@@ -54,17 +54,31 @@ fi
 if ! which pip3 &>/dev/null; then
     echo -e "${green}####### Installing \`pip3\`...${reset}"
     sudo apt install -y python3-pip
-    echo -e "${green}####### Upgrading \`pip3\`...${reset}"
-    python3 -m pip install --upgrade pip
+
+    if [[ $sys_name =~ Ubuntu ]]; then
+        echo -e "${green}####### Upgrading \`pip3\`...${reset}"
+        python3 -m pip install --upgrade pip
+    fi
 fi
 
 if ! python3 -c "import virtualenv"; then
-    echo -e "${green}####### Installing \`virtualenv\`...${reset}"
-    python3 -m pip install --user virtualenv
+    if [[ $sys_name =~ Ubuntu ]]; then
+        echo -e "${green}####### Installing \`virtualenv\`...${reset}"
+        python3 -m pip install --user virtualenv
+    fi
+
+    if [[ $sys_name =~ Debian ]]; then
+        sudo apt install -y python3-venv
+    fi
 fi
 
 echo -e "${green}####### Setting up Virtual Env...${reset}"
-python3 -m virtualenv venv
+if [[ $sys_name =~ Ubuntu ]]; then
+    python3 -m virtualenv venv
+fi
+if [[ $sys_name =~ Debian ]]; then
+    python3 -m venv venv
+fi
 source venv/bin/activate
 
 echo -e "${green}####### Install Requirements...${reset}"

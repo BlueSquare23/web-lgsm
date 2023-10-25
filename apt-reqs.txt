@@ -1,4 +1,5 @@
 tmux
+curl
 watch
 wget
 findutils

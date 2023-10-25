@@ -39,13 +39,8 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
     source venv/bin/activate
 fi
 
-## Start the Gunicorn server!
-# Uses gevent concurrent networking library with gunicorn to allow async
-# support so shell subprocs are handled properly. Otherwise, apt dependancy
-# installs during auto game server install process fails. More info,
-# https://flask.palletsprojects.com/en/2.2.x/deploying/gunicorn/#async-with-gevent-or-eventlet
+# Start the Gunicorn server!
 gunicorn --access-logfile "web-lgsm.log" \
-    --workers=4 \
     --bind="$HOST:$PORT" \
     --daemon \
     --worker-class gevent 'app:main()'

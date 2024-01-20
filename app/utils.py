@@ -72,17 +72,20 @@ def kill_watchers(last_request_for_output):
 
 # Get's the list of servers that are currently turnned on.
 def get_active_servers(all_game_servers):
-    # Loops over all installed game servers and check which of them are active.
+    # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
     active_servers = {}
+    uid = os.getuid()
+    user_tmux_sockets = os.listdir(f"/tmp/tmux-{uid}")
     for server in all_game_servers:
-        # Check if tmux session is running.
-        cmd = ['/usr/bin/tmux', '-L', server.script_name, 'list-session']
-        proc = subprocess.run(cmd)
+        for socket in user_tmux_sockets:
+            if server.script_name in socket:
+                cmd = ['/usr/bin/tmux', '-L', socket, 'list-session']
+                proc = subprocess.run(cmd)
 
-        active_servers[server.install_name] = 'inactive'
+                active_servers[server.install_name] = 'inactive'
 
-        if proc.returncode == 0:
-            active_servers[server.install_name] = 'active'
+                if proc.returncode == 0:
+                    active_servers[server.install_name] = 'active'
 
     return active_servers
 

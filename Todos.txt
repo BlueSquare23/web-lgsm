@@ -1,5 +1,16 @@
 ## Beta Version 1.4 Todos
 
+* Make config editor optional and disabled by default!
+  - Right now config editor is gateway for RCE since lots of game server
+    configs allow arbitrary shell code to be embedded within.
+  - To negate this risk I'm going turn the config editor off by default and
+    then only allow it to be enabled via the config file, with no web settings
+    page option for it.
+
+* Solve SSL issue.
+  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
+  - Write up documentation, possible make setup video.
+
 * Continue expanding tests.
   - Write proper tests for a full game server install.
     - Install Battlefeild 1942 or something small.
@@ -36,3 +47,23 @@
       then pull in & install the most recent changes.
   - Create update script for running the updates manually.
     - Remember to not clobber existing user main.conf files during updates. 
+
+* Update Readme.
+  - Include gifs instead of images for each of the pictures.
+
+* Improve documentation.
+  - Write up more detailed documentation about:
+    - Editing the config
+    - Editing the json files
+  - Create video tutorials for install
+    - Possible make one for hooking into Nginx Proxy Manager
+
+## Beta Version 1.5 Todos
+
+* Allow web interface to work with lgsm installations owned by different users.
+  - Add config / settings option to "allow installs owned by other users".
+  - I'm thinking doing this by creating a web-lgsm group and chowning the
+    necessary game server dir to be `other_user:web-lgsm`.
+
+* Explore if containerizing project with docker is at all feezable /
+  worthwhile.

@@ -17,7 +17,7 @@
   </a>
 </p>
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :thought_balloon: Main Idea
 
@@ -30,7 +30,7 @@ interface. That is what this project attempts to be.
 > :round_pushpin: _Note: The web-lgsm is a fan project, and **NOT** affiliated
 > in any way with the official [LSGM Project](https://linuxgsm.com/)_
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :arrow_double_down: Installation
 
@@ -59,7 +59,7 @@ cd web-lgsm
 ./init.sh stop
 ```
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ### :wrench: Setup & Basic Usage
 
@@ -139,7 +139,7 @@ And if you log out or are logged out, there's also a basic login page.
 
 ![Login Page](docs/images/login.png)
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :bangbang: A Note on Deployment Security
 
@@ -150,7 +150,7 @@ encryption!
 
 More information about that coming soon in the docs folder.
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :books: Stack Technologies
 
@@ -162,7 +162,7 @@ More information about that coming soon in the docs folder.
 * Testing: [Pytest](https://docs.pytest.org/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :bug: Bugs
 
@@ -171,7 +171,7 @@ bugs or security issues to me via [my site's contact form](https://johnlradford.
 Or if you're interested in contributing to the project feel free to submit a
 pull request!
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :closed_lock_with_key: Security & Liability
 
@@ -189,13 +189,13 @@ application security than me and I make no claims that this is 100% unhackable.
 I will try to patch any security vulnerabilities I find as time goes on. If you
 find any and want to help feel free to submit them!
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :free: License MIT
 
 [MIT License Text](license.txt)
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ## :writing_hand: Author
 

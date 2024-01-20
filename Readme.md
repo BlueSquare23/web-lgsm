@@ -1,8 +1,25 @@
-# Web LGSM
+<h1 align="center">Web LGSM</h1>
 
-![Build Tests Badge](https://github.com/BlueSquare23/web-lgsm/actions/workflows/test.yml/badge.svg)
+<h3 align="center">🐧 A simple web interface for the <a href="https://linuxgsm.com/">LGSM</a>! 🕹️ </h3>
 
-## Main Idea :thought_balloon:
+</p>
+
+<p align="center">
+  <a href="./license.txt">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
+  </a>
+  <img src="https://github.com/BlueSquare23/web-lgsm/actions/workflows/test.yml/badge.svg">
+  <a href="https://github.com/BlueSquare23/web-lgsm/stargazers">
+    <img src="https://img.shields.io/github/stars/BlueSquare23/web-lgsm">
+  </a>
+  <a href="https://github.com/BlueSquare23/web-lgsm/network">
+    <img src="https://img.shields.io/github/forks/BlueSquare23/web-lgsm">
+  </a>
+</p>
+
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :thought_balloon: Main Idea
 
 This project is intended to be an easy to use web interface for the [Linux Game
 Server Manager (LGSM)](https://linuxgsm.com/) command line tool. The LGSM is a
@@ -10,7 +27,12 @@ fantastic tool for installing and administering game servers via the CLI.
 However, some users would rather manage their game server through a web
 interface. That is what this project attempts to be.
 
-## Installation :arrow_double_down:
+> :round_pushpin: _Note: The web-lgsm is a fan project, and **NOT** affiliated
+> in any way with the official [LSGM Project](https://linuxgsm.com/)_
+
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :arrow_double_down: Installation
 
 * First clone this repo:
 
@@ -37,7 +59,9 @@ cd web-lgsm
 ./init.sh stop
 ```
 
-### Setup & Basic Usage :wrench:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+### :wrench: Setup & Basic Usage
 
 #### Setup Page
 
@@ -115,7 +139,9 @@ And if you log out or are logged out, there's also a basic login page.
 
 ![Login Page](docs/images/login.png)
 
-## A Note on Deployment Security :bangbang:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :bangbang: A Note on Deployment Security
 
 If you're going to run the Web-LGSM exposed to the public internet you should
 firewall off the port for this app (defaults to 12357) and proxy connections to
@@ -124,7 +150,9 @@ encryption!
 
 More information about that coming soon in the docs folder.
 
-## Stack Technologies :books:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :books: Stack Technologies
 
 * Language: [Python 3](https://www.python.org/)
 * Web Framework: [Flask](https://palletsprojects.com/p/flask/)
@@ -134,13 +162,18 @@ More information about that coming soon in the docs folder.
 * Testing: [Pytest](https://docs.pytest.org/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 
-## Bugs :bug:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :bug: Bugs
 
 I want to try to keep up with this as a pet project so feel free to report any
-bugs or security issues to me at <info@bluesquare23.sh>. Or if you're
-interested in contributing to the project feel free to submit a pull request!
+bugs or security issues to me via [my site's contact form](https://johnlradford.io/contact.php).
+Or if you're interested in contributing to the project feel free to submit a
+pull request!
 
-## Security & Liability :closed_lock_with_key:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
+
+## :closed_lock_with_key: Security & Liability
 
 I claim no liability for any injury or damages that may result from the use or
 abuse of this piece of software. Use at your own risk! I have tried to take
@@ -156,12 +189,14 @@ application security than me and I make no claims that this is 100% unhackable.
 I will try to patch any security vulnerabilities I find as time goes on. If you
 find any and want to help feel free to submit them!
 
-## License MIT :free:
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## :free: License MIT
 
 [MIT License Text](license.txt)
 
-## Author
+![-----------------------------------------------------](https://johnlradford.io/static/img/arrows.gif)
 
-John L. Radford (Aka [BlueSquare23](https://johnlradford.io/))
+## :writing_hand: Author
+
+[John L. Radford](https://johnlradford.io/)

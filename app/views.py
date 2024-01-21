@@ -68,7 +68,7 @@ def controls():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
-
+    cfg_editor = config['settings']['cfg_editor']
 
     # Pull in commands list from commands.json file.
     commands_list = get_commands()
@@ -101,10 +101,14 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    cfg_paths = find_cfg_paths(server.install_path)
-    if cfg_paths == "failed":
-        flash("Error reading accepted_cfgs.json!", category="error")
+    # If config editor disabled in main.conf.
+    if cfg_editor == 'no':
         cfg_paths = []
+    else:
+        cfg_paths = find_cfg_paths(server.install_path)
+        if cfg_paths == "failed":
+            flash("Error reading accepted_cfgs.json!", category="error")
+            cfg_paths = []
 
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False)
@@ -554,6 +558,10 @@ def edit():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
+
+    if config['settings']['cfg_editor'] == 'no':
+        flash("Config Editor Disabled", category="error")
+        return redirect(url_for('views.home'))
 
     # Collect args from POST request.
     server_name = request.form.get("server")

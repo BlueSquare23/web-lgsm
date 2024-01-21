@@ -78,7 +78,9 @@ def get_active_servers(all_game_servers):
     socket_dir = f"/tmp/tmux-{uid}"
     # Handle no sockets yet.
     if not os.path.exists(socket_dir):
-        active_servers[server.install_name] = 'inactive'
+        # Mark all inactive.
+        for server in all_game_servers:
+            active_servers[server.install_name] = 'inactive'
         return
 
     user_tmux_sockets = os.listdir(socket_dir)

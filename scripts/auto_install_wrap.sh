@@ -17,7 +17,7 @@ for char in $bad_chars; do
 done
 
 # Check that first arg is in game_servers.json.
-if ! /usr/bin/grep -wq "$lgsm_script" ../game_servers.json 2>/dev/null; then
+if ! /usr/bin/grep -wq "$lgsm_script" ../json/game_servers.json 2>/dev/null; then
     /usr/bin/echo "Invalid Script Arg!"
     exit
 fi

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Wraps pytest to setup testing env.
 
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+# Change dir context in case invoked from outside of web-lgsm dir.
+cd "$SCRIPTPATH/.."
+
 set -e
 
 export HOME=$(pwd)

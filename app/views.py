@@ -206,7 +206,7 @@ def install():
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_wget_lgsmsh(f"{base_dir}/{lgsmsh}")
+    check_and_wget_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -264,10 +264,10 @@ def install():
             flash('Problem with sudo password!', category='error')
             return redirect(url_for('views.install'))
 
-        # Make a new server dir and copy linuxgsm.sh into it then cd into it.
+        # Make a new server dir and copy linuxgsm.sh into it.
         os.mkdir(server_full_name)
-        shutil.copy(lgsmsh, server_full_name)
-        shutil.copy(aiwrapsh, server_full_name)
+        shutil.copy(f"scripts/{lgsmsh}", server_full_name)
+        shutil.copy(f"scripts/{aiwrapsh}", server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 

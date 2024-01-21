@@ -23,12 +23,13 @@ LOCAL=$(git rev-parse @)
 REMOTE=$(git rev-parse "$UPSTREAM")
 BASE=$(git merge-base @ "$UPSTREAM")
 
-echo $UPSTREAM
-echo $LOCAL
-echo $REMOTE
-echo $BASE
+# For Debug.
+#echo $UPSTREAM
+#echo $LOCAL
+#echo $REMOTE
+#echo $BASE
+#set -x
 
-set -x
 if [ $LOCAL = $REMOTE ]; then
     echo "Already Up-to-date!"
     exit
@@ -76,7 +77,11 @@ elif [ $LOCAL = $BASE ]; then
     patch $conf $conf.path
 elif [ $REMOTE = $BASE ]; then
     echo "Local ahead of remote, need push?" >&2
+    echo "Note: Normal users should not see this." >&2
+    exit 1
 fi
 
 # Should never get to this line.
-echo "Somethings gone wrong, its possible your local repo has diverged." >&2
+echo "Something has gone horribly wrong!" >&2
+echo "Its possible your local repo has diverged." >&2
+exit 2

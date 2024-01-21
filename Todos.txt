@@ -1,24 +1,22 @@
 ## Beta Version 1.4 Todos
 
-* Make config editor optional and disabled by default!
-  - Right now config editor is gateway for RCE since lots of game server
-    configs allow arbitrary shell code to be embedded within.
-  - To negate this risk I'm going turn the config editor off by default and
-    then only allow it to be enabled via the config file, with no web settings
-    page option for it.
+* Setup automatic update system.
+  - Create optional toggle for auto updates in the config file and on the
+    settings page.
+  - Then setup means by which to check once weekly (or upon request) for new
+    updates.
+    - If the version number is different from the most recent release version
+      then pull in & install the most recent changes.
+  - Create update script for running the updates manually.
+    - Remember to not clobber existing user main.conf files during updates. 
 
-* Solve SSL issue.
-  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
-  - Write up documentation, possible make setup video.
-
-* Continue expanding tests.
-  - Write proper tests for a full game server install.
-    - Install Battlefeild 1942 or something small.
-    - Check that daemon thread is running during install.
-    - Check that output api is returning json.
-      - Rinse and repeat for command(s) on controls page.
-      - Can't test daemon thread till real server is installed.
-  - Write unit tests for functions in utils.py file.
+* Think about implementing reaper daemon thread to cleanup lingering watch
+  processes if output route hasn't been requested recently.
+  - Currently I'm using requests for other routes to kill the daemonized watch
+    processes if output hasn't been requested recently.
+    - This has the downside of leaving a watch process running if someone
+      closes app directly by just leaving the live console output on the
+      controls page.
 
 * Create mechanism for exempting certain controls for certain game servers.
   - For example, the Update and Console commands for the Battlefield 1942
@@ -30,23 +28,9 @@
     json file with a list of game server exceptions. Then those options wont
     even be loaded on the page.
 
-* Think about implementing reaper daemon thread to cleanup lingering watch
-  processes if output route hasn't been requested recently.
-  - Currently I'm using requests for other routes to kill the daemonized watch
-    processes if output hasn't been requested recently.
-    - This has the downside of leaving a watch process running if someone
-      closes app directly by just leaving the live console output on the
-      controls page.
-
-* Setup automatic update system.
-  - Create optional toggle for auto updates in the config file and on the
-    settings page.
-  - Then setup means by which to check once weekly (or upon request) for new
-    updates.
-    - If the version number is different from the most recent release version
-      then pull in & install the most recent changes.
-  - Create update script for running the updates manually.
-    - Remember to not clobber existing user main.conf files during updates. 
+* Solve SSL issue.
+  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
+  - Write up documentation, possible make setup video.
 
 * Update Readme.
   - Include gifs instead of images for each of the pictures.
@@ -57,6 +41,15 @@
     - Editing the json files
   - Create video tutorials for install
     - Possible make one for hooking into Nginx Proxy Manager
+
+* Continue expanding tests.
+  - Write proper tests for a full game server install.
+    - Install Battlefeild 1942 or something small.
+    - Check that daemon thread is running during install.
+    - Check that output api is returning json.
+      - Rinse and repeat for command(s) on controls page.
+      - Can't test daemon thread till real server is installed.
+  - Write unit tests for functions in utils.py file.
 
 ## Beta Version 1.5 Todos
 

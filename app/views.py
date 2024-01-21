@@ -48,7 +48,7 @@ def home():
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
-    server_status_dict = get_active_servers(installed_servers)
+    server_status_dict = get_server_statuses(installed_servers)
 
     return render_template("home.html", user=current_user, \
                         server_status_dict=server_status_dict)
@@ -68,7 +68,7 @@ def controls():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
-
+    cfg_editor = config['settings']['cfg_editor']
 
     # Pull in commands list from commands.json file.
     commands_list = get_commands()
@@ -101,10 +101,14 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    cfg_paths = find_cfg_paths(server.install_path)
-    if cfg_paths == "failed":
-        flash("Error reading accepted_cfgs.json!", category="error")
+    # If config editor disabled in main.conf.
+    if cfg_editor == 'no':
         cfg_paths = []
+    else:
+        cfg_paths = find_cfg_paths(server.install_path)
+        if cfg_paths == "failed":
+            flash("Error reading accepted_cfgs.json!", category="error")
+            cfg_paths = []
 
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False)
@@ -134,7 +138,7 @@ def controls():
             installed_servers = GameServer.query.all()
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
-            server_status_dict = get_active_servers(installed_servers)
+            server_status_dict = get_server_statuses(installed_servers)
             if server_status_dict[server_name] == 'inactive':
                 flash("Server is Off! No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
@@ -202,7 +206,7 @@ def install():
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_wget_lgsmsh(f"{base_dir}/{lgsmsh}")
+    check_and_wget_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -260,10 +264,10 @@ def install():
             flash('Problem with sudo password!', category='error')
             return redirect(url_for('views.install'))
 
-        # Make a new server dir and copy linuxgsm.sh into it then cd into it.
+        # Make a new server dir and copy linuxgsm.sh into it.
         os.mkdir(server_full_name)
-        shutil.copy(lgsmsh, server_full_name)
-        shutil.copy(aiwrapsh, server_full_name)
+        shutil.copy(f"scripts/{lgsmsh}", server_full_name)
+        shutil.copy(f"scripts/{aiwrapsh}", server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 
@@ -348,6 +352,11 @@ def settings():
         color_pref = request.form.get("text_color")
         file_pref = request.form.get("delete_files")
         height_pref = request.form.get("text_area_height")
+        purge_socks = request.form.get("purge_socks")
+
+        # Purge user's tmux socket files.
+        if purge_socks != None:
+            purge_user_tmux_sockets()
 
         # Set Remove files setting.
         config['settings']['remove_files'] = 'yes'
@@ -554,6 +563,10 @@ def edit():
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
+
+    if config['settings']['cfg_editor'] == 'no':
+        flash("Config Editor Disabled", category="error")
+        return redirect(url_for('views.home'))
 
     # Collect args from POST request.
     server_name = request.form.get("server")

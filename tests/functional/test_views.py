@@ -473,6 +473,9 @@ def test_settings_responses(app, client):
         response = client.post('/settings', data={'text_area_height':'10'}, follow_redirects=True)
         check_for_error(response, error_msg, resp_code, 'views.settings')
 
+    # Re-disable remove_files for the sake of idempotency.
+    os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
+
 
 ### Edit page tests.
 # Test edit page basic content.
@@ -482,9 +485,16 @@ def test_edit_content(app, client):
         response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
         assert response.status_code == 302
 
+        # Default should be cfg_editor off, so page should 302 to home.
+        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH})
+        assert response.status_code == 302
+
+        # Edit main.conf to enable edit page for basic test.
+        os.system("sed -i 's/cfg_editor = no/cfg_editor = yes/g' main.conf")
+
         # Basic page load test.
         response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH})
-        assert response.status_code == 200  # Return's 200 to GET requests.
+        assert response.status_code == 200
 
         # Check content matches.
         assert b"Home" in response.data
@@ -514,8 +524,8 @@ def test_edit_responses(app, client):
 
         ## Edit testing.
         # Test if edits are saved.
-        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'file_contents':'#### Testing...'})
-        assert response.status_code == 200  # Return's 200 to GET requests.
+        response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'file_contents':'#### Testing...'})
+        assert response.status_code == 200
 
         # Check content matches.
         assert b"Home" in response.data
@@ -531,8 +541,8 @@ def test_edit_responses(app, client):
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 
         ## Download testing.
-        response = client.get('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'download':'yes'})
-        assert response.status_code == 200  # Return's 200 to GET requests.
+        response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH, 'download':'yes'})
+        assert response.status_code == 200
 
         # No server specified tests.
         resp_code = 200
@@ -580,3 +590,6 @@ def test_edit_responses(app, client):
         error_msg = b'No such file!'
         response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':'/test' + CFG_PATH}, follow_redirects=True)
         check_for_error(response, error_msg, resp_code, 'views.home')
+
+    # Re-disable the cfg_editor for the sake of idempotency.
+    os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")

@@ -1,14 +1,12 @@
 ## Beta Version 1.4 Todos
 
-* Setup automatic update system.
-  - Create optional toggle for auto updates in the config file and on the
-    settings page.
-  - Then setup means by which to check once weekly (or upon request) for new
-    updates.
-    - If the version number is different from the most recent release version
-      then pull in & install the most recent changes.
-  - Create update script for running the updates manually.
-    - Remember to not clobber existing user main.conf files during updates. 
+* Override css to enfore true dark mode.
+  - No choice with my app, force darkmode!
+  - See example from intra site.
+
+* Add check for update on sucessful user login.
+  - Make update.sh take a -n check dryrun flag to bail out if an update is
+    available but don't actually update.
 
 * Think about implementing reaper daemon thread to cleanup lingering watch
   processes if output route hasn't been requested recently.

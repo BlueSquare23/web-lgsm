@@ -295,3 +295,27 @@ def contains_bad_chars(i):
         if char in i:
             return True
 
+def update_self(base_dir):
+    update_cmd = [f'{base_dir}/scripts/update.sh', '-a']
+    proc = subprocess.run(update_cmd,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.PIPE,
+            universal_newlines=True)
+
+    if proc.returncode != 0:
+        return f"Error: {proc.stderr}"
+
+    if 'Up-to-date' in proc.stdout:
+        return 'Already Up-to-date!'
+
+    if 'Update Required' in proc.stdout:
+        return 'Web LGSM Upgraded! Restarting momentarially...'
+
+# Sleep's 5 seconds then restarts the app.
+def restart_self(restart_cmd):
+    time.sleep(5)
+    proc = subprocess.run(restart_cmd,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.PIPE,
+            universal_newlines=True)
+

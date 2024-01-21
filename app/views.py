@@ -348,58 +348,76 @@ def settings():
     text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
 
-    if request.method == 'POST':
-        color_pref = request.form.get("text_color")
-        file_pref = request.form.get("delete_files")
-        height_pref = request.form.get("text_area_height")
-        purge_socks = request.form.get("purge_socks")
+    if request.method == 'GET':
+        return render_template("settings.html", user=current_user, \
+                text_color=text_color, remove_files=remove_files, \
+                               text_area_height=text_area_height)
 
-        # Purge user's tmux socket files.
-        if purge_socks != None:
-            purge_user_tmux_sockets()
+    color_pref = request.form.get("text_color")
+    file_pref = request.form.get("delete_files")
+    height_pref = request.form.get("text_area_height")
+    purge_socks = request.form.get("purge_socks")
+    update_weblgsm = request.form.get("update_weblgsm")
 
-        # Set Remove files setting.
-        config['settings']['remove_files'] = 'yes'
-        if file_pref == "false":
-            config['settings']['remove_files'] = 'no'
+    # Purge user's tmux socket files.
+    if purge_socks != None:
+        purge_user_tmux_sockets()
 
-        # Set text color setting.
-        config['aesthetic']['text_color'] = text_color
-        if color_pref != None:
-            # Validate color code with regular expression.
-            if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
-                flash('Invalid color!', category='error')
-                return redirect(url_for('views.settings'))
+    # Set Remove files setting.
+    config['settings']['remove_files'] = 'yes'
+    if file_pref == "false":
+        config['settings']['remove_files'] = 'no'
 
-            config['aesthetic']['text_color'] = color_pref
+    # Set text color setting.
+    config['aesthetic']['text_color'] = text_color
+    if color_pref != None:
+        # Validate color code with regular expression.
+        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
+            flash('Invalid color!', category='error')
+            return redirect(url_for('views.settings'))
 
-        # Set default text area height setting.
-        config['aesthetic']['text_area_height'] = text_area_height
-        if height_pref != None:
-            # Validate textarea height is int.
-            try:
-                height_pref = int(height_pref)
-            except ValueError:
-                flash('Invalid Textarea Height!', category='error')
-                return redirect(url_for('views.settings'))
+        config['aesthetic']['text_color'] = color_pref
 
-            # Check if height pref is in valid range.
-            if height_pref > 100 or height_pref < 5:
-                flash('Invalid Textarea Height!', category='error')
-                return redirect(url_for('views.settings'))
+    # Set default text area height setting.
+    config['aesthetic']['text_area_height'] = text_area_height
+    if height_pref != None:
+        # Validate textarea height is int.
+        try:
+            height_pref = int(height_pref)
+        except ValueError:
+            flash('Invalid Textarea Height!', category='error')
+            return redirect(url_for('views.settings'))
 
-            # Have to cast back to string to save in config.
-            config['aesthetic']['text_area_height'] = str(height_pref)
+        # Check if height pref is in valid range.
+        if height_pref > 100 or height_pref < 5:
+            flash('Invalid Textarea Height!', category='error')
+            return redirect(url_for('views.settings'))
 
-        with open(f'{base_dir}/main.conf', 'w') as configfile:
-             config.write(configfile)
+        # Have to cast back to string to save in config.
+        config['aesthetic']['text_area_height'] = str(height_pref)
 
+    with open(f'{base_dir}/main.conf', 'w') as configfile:
+         config.write(configfile)
+
+    # Update's the weblgsm.
+    if update_weblgsm != None:
+        status = update_self(base_dir)
         flash("Settings Updated!")
+        if 'Error:' in status:
+            flash(status, category='error')
+            return redirect(url_for('views.settings'))
+
+        flash(status)
+
+        # Restart daemon thread sleeps for 5 seconds then restarts app.
+        cmd = ['./init.sh', 'restart']
+        restart_daemon = Thread(target=restart_self, args=(cmd,), 
+                                    daemon=True, name='restart')
+        restart_daemon.start()
         return redirect(url_for('views.settings'))
 
-    return render_template("settings.html", user=current_user, \
-            text_color=text_color, remove_files=remove_files, \
-                           text_area_height=text_area_height)
+    flash("Settings Updated!")
+    return redirect(url_for('views.settings'))
 
 
 ######### About Page #########

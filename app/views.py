@@ -48,7 +48,7 @@ def home():
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
-    server_status_dict = get_active_servers(installed_servers)
+    server_status_dict = get_server_statuses(installed_servers)
 
     return render_template("home.html", user=current_user, \
                         server_status_dict=server_status_dict)
@@ -138,7 +138,7 @@ def controls():
             installed_servers = GameServer.query.all()
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
-            server_status_dict = get_active_servers(installed_servers)
+            server_status_dict = get_server_statuses(installed_servers)
             if server_status_dict[server_name] == 'inactive':
                 flash("Server is Off! No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
@@ -352,6 +352,11 @@ def settings():
         color_pref = request.form.get("text_color")
         file_pref = request.form.get("delete_files")
         height_pref = request.form.get("text_area_height")
+        purge_socks = request.form.get("purge_socks")
+
+        # Purge user's tmux socket files.
+        if purge_socks != None:
+            purge_user_tmux_sockets()
 
         # Set Remove files setting.
         config['settings']['remove_files'] = 'yes'

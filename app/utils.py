@@ -71,9 +71,13 @@ def kill_watchers(last_request_for_output):
 
 
 # Get's the list of servers that are currently turnned on.
-def get_active_servers(all_game_servers):
+def get_server_statuses(all_game_servers):
+    # Initialize all servers inactive to start with.
+    server_statuses = {}
+    for server in all_game_servers:
+        server_statuses[server.install_name] = 'inactive'
+
     # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
-    active_servers = {}
     uid = os.getuid()
     socket_dir = f"/tmp/tmux-{uid}"
     # Handle no sockets yet.
@@ -89,12 +93,10 @@ def get_active_servers(all_game_servers):
                         stdout = subprocess.DEVNULL,
                         stderr = subprocess.DEVNULL)
 
-                active_servers[server.install_name] = 'inactive'
-
                 if proc.returncode == 0:
-                    active_servers[server.install_name] = 'active'
+                    server_statuses[server.install_name] = 'active'
 
-    return active_servers
+    return server_statuses
 
 
 # Get socket file for given game server. (Have yet to consider case of two
@@ -105,6 +107,16 @@ def get_socket_for_gs(server):
     for socket in user_tmux_sockets:
         if server in socket:
             return socket
+
+# Cleans up old dead tmux socket files.
+def purge_user_tmux_sockets():
+    uid = os.getuid()
+    socket_dir = f"/tmp/tmux-{uid}"
+    # Handle no sockets yet.
+    if os.path.exists(socket_dir):
+        user_tmux_sockets = os.listdir(socket_dir)
+        for socket in user_tmux_sockets:
+            os.remove(socket_dir + '/' + socket)
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the

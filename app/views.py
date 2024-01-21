@@ -131,19 +131,21 @@ def controls():
         # Console option, use tmux capture-pane to get output.
         if script_arg == "c":
             # First check if tmux session is running.
-            cmd = ['/usr/bin/tmux', '-L', server.script_name, 'list-session']
-            proc = subprocess.run(cmd, capture_output=True, text=True)
-
-            if proc.returncode != 0:
-                # Clear any previous output.
-                output.output_lines.clear()
-                output.output_lines.append(proc.stderr)
-
-                flash("No Console Output!", category='error')
+            installed_servers = GameServer.query.all()
+            # Fetch dict containing all servers and flag specifying if they're running
+            # or not via a util function.
+            server_status_dict = get_active_servers(installed_servers)
+            if server_status_dict[server_name] == 'inactive':
+                flash("Server is Off! No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
-            # Otherwise, use the `watch` command to keep live console running.
-            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', server.script_name, 'capture-pane', '-pt', server.script_name]
+            tmux_socket = get_socket_for_gs(server.script_name)
+            if tmux_socket == None:
+                flash("Cannot find socket for server!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            # Use daemonized `watch` command to keep live console running.
+            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, 'capture-pane', '-pt', server.script_name]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()

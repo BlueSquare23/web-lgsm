@@ -80,7 +80,9 @@ def get_active_servers(all_game_servers):
         for socket in user_tmux_sockets:
             if server.script_name in socket:
                 cmd = ['/usr/bin/tmux', '-L', socket, 'list-session']
-                proc = subprocess.run(cmd)
+                proc = subprocess.run(cmd,
+                        stdout = subprocess.DEVNULL,
+                        stderr = subprocess.DEVNULL)
 
                 active_servers[server.install_name] = 'inactive'
 
@@ -88,6 +90,16 @@ def get_active_servers(all_game_servers):
                     active_servers[server.install_name] = 'active'
 
     return active_servers
+
+
+# Get socket file for given game server. (Have yet to consider case of two
+# installs of the same game server. Am lazy, will address that l8tr.)
+def get_socket_for_gs(server):
+    uid = os.getuid()
+    user_tmux_sockets = os.listdir(f"/tmp/tmux-{uid}")
+    for socket in user_tmux_sockets:
+        if server in socket:
+            return socket
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the

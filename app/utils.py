@@ -75,7 +75,13 @@ def get_active_servers(all_game_servers):
     # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
     active_servers = {}
     uid = os.getuid()
-    user_tmux_sockets = os.listdir(f"/tmp/tmux-{uid}")
+    socket_dir = f"/tmp/tmux-{uid}"
+    # Handle no sockets yet.
+    if not os.path.exists(socket_dir):
+        active_servers[server.install_name] = 'inactive'
+        return
+
+    user_tmux_sockets = os.listdir(socket_dir)
     for server in all_game_servers:
         for socket in user_tmux_sockets:
             if server.script_name in socket:

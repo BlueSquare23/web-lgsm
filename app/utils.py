@@ -72,19 +72,39 @@ def kill_watchers(last_request_for_output):
 
 # Get's the list of servers that are currently turnned on.
 def get_active_servers(all_game_servers):
-    # Loops over all installed game servers and check which of them are active.
+    # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
     active_servers = {}
+    uid = os.getuid()
+    socket_dir = f"/tmp/tmux-{uid}"
+    # Handle no sockets yet.
+    if not os.path.exists(socket_dir):
+        return
+
+    user_tmux_sockets = os.listdir(socket_dir)
     for server in all_game_servers:
-        # Check if tmux session is running.
-        cmd = ['/usr/bin/tmux', '-L', server.script_name, 'list-session']
-        proc = subprocess.run(cmd)
+        for socket in user_tmux_sockets:
+            if server.script_name in socket:
+                cmd = ['/usr/bin/tmux', '-L', socket, 'list-session']
+                proc = subprocess.run(cmd,
+                        stdout = subprocess.DEVNULL,
+                        stderr = subprocess.DEVNULL)
 
-        active_servers[server.install_name] = 'inactive'
+                active_servers[server.install_name] = 'inactive'
 
-        if proc.returncode == 0:
-            active_servers[server.install_name] = 'active'
+                if proc.returncode == 0:
+                    active_servers[server.install_name] = 'active'
 
     return active_servers
+
+
+# Get socket file for given game server. (Have yet to consider case of two
+# installs of the same game server. Am lazy, will address that l8tr.)
+def get_socket_for_gs(server):
+    uid = os.getuid()
+    user_tmux_sockets = os.listdir(f"/tmp/tmux-{uid}")
+    for socket in user_tmux_sockets:
+        if server in socket:
+            return socket
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the

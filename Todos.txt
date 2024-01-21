@@ -1,9 +1,5 @@
 ## Beta Version 1.4 Todos
 
-* Add check for update on sucessful user login.
-  - Make update.sh take a -n check dryrun flag to bail out if an update is
-    available but don't actually update.
-
 * Think about implementing reaper daemon thread to cleanup lingering watch
   processes if output route hasn't been requested recently.
   - Currently I'm using requests for other routes to kill the daemonized watch

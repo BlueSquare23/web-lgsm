@@ -18,12 +18,25 @@
     json file with a list of game server exceptions. Then those options wont
     even be loaded on the page.
 
-* Solve SSL issue.
-  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
-  - Write up documentation, possible make setup video.
+* Continue expanding tests.
+  - Update tests for new content on settings page.
+  - Look into full tests for ci/cd purposes vs short tests for pre-commit.
+  - Write proper tests for a full game server install.
+    - Install Battlefeild 1942 or something small.
+    - Check that daemon thread is running during install.
+    - Check that output api is returning json.
+      - Rinse and repeat for command(s) on controls page.
+      - Can't test daemon thread till real server is installed.
+    - Write tests for status indicators.
+    - Write tests for console output.
+  - Write unit tests for functions in utils.py file.
 
 * Update Readme.
   - Include gifs instead of images for each of the pictures.
+
+* Solve SSL issue.
+  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
+  - Write up documentation, possible make setup video.
 
 * Improve documentation.
   - Write up more detailed documentation about:
@@ -31,15 +44,6 @@
     - Editing the json files
   - Create video tutorials for install
     - Possible make one for hooking into Nginx Proxy Manager
-
-* Continue expanding tests.
-  - Write proper tests for a full game server install.
-    - Install Battlefeild 1942 or something small.
-    - Check that daemon thread is running during install.
-    - Check that output api is returning json.
-      - Rinse and repeat for command(s) on controls page.
-      - Can't test daemon thread till real server is installed.
-  - Write unit tests for functions in utils.py file.
 
 ## Beta Version 1.5 Todos
 

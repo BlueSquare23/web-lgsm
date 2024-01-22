@@ -23,19 +23,32 @@ servers_list = os.popen(f"./{lgsmsh} list").read()
 
 short_names = []
 long_names = []
+gs_mapping = dict()
 
 for line in servers_list.split('\n'):
     if len(line.strip()) == 0:
         continue
     if "serverlist.csv" in line:
         continue
-    short_names.append(line.split()[0])
-    long_names.append(' '.join(line.split()[1:]).strip("'"))
+    short_name = line.split()[0]
+    long_name = ' '.join(line.split()[1:]).replace("'", "").replace("&", "and")
+
+    short_names.append(short_name)
+    long_names.append(long_name)
+    gs_mapping[short_name] = long_name
+
+print("Writing new test_data.json file.")
+map_json = open("test_data.json", "w")
+map_json.write(json.dumps(gs_mapping, indent = 4))
+map_json.close()
 
 gs_dict = {
     "servers": short_names,
     "server_names": long_names
 }
 
-print(json.dumps(gs_dict, indent = 4))
+print("Writing new game_servers.json file.")
+gs_json = open("game_servers.json", "w")
+gs_json.write(json.dumps(gs_dict, indent = 4))
+gs_json.close()
 

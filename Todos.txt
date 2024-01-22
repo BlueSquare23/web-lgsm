@@ -25,6 +25,8 @@
     - Write tests for console output.
   - Write unit tests for functions in utils.py file.
 
+* Add close X to sudo password popup modal on install page.
+
 * Update Readme.
   - Include gifs instead of images for each of the pictures.
 

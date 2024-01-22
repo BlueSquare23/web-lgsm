@@ -1,12 +1,6 @@
 ## Beta Version 1.4 Todos
 
-* Think about implementing reaper daemon thread to cleanup lingering watch
-  processes if output route hasn't been requested recently.
-  - Currently I'm using requests for other routes to kill the daemonized watch
-    processes if output hasn't been requested recently.
-    - This has the downside of leaving a watch process running if someone
-      closes app directly by just leaving the live console output on the
-      controls page.
+* Check for and add any new games servers to json/game_servers.json.
 
 * Create mechanism for exempting certain controls for certain game servers.
   - For example, the Update and Console commands for the Battlefield 1942
@@ -46,6 +40,9 @@
     - Possible make one for hooking into Nginx Proxy Manager
 
 ## Beta Version 1.5 Todos
+
+* Perhaps think of way to do watch thread timeout. Not terribly important
+  - kill_watchers gets the job done alright for rn.
 
 * Allow web interface to work with lgsm installations owned by different users.
   - Add config / settings option to "allow installs owned by other users".

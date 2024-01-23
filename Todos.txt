@@ -16,16 +16,12 @@
 * Update Readme.
   - Include gifs instead of images for each of the pictures.
 
+* Create video tutorials for install
+  - Possible make one for hooking into Nginx Proxy Manager
+
 * Solve SSL issue.
   - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
   - Write up documentation, possible make setup video.
-
-* Improve documentation.
-  - Write up more detailed documentation about:
-    - Editing the config
-    - Editing the json files
-  - Create video tutorials for install
-    - Possible make one for hooking into Nginx Proxy Manager
 
 ## Beta Version 1.5 Todos
 

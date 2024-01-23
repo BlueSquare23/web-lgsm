@@ -1,15 +1,5 @@
 ## Beta Version 1.4 Todos
 
-* Create mechanism for exempting certain controls for certain game servers.
-  - For example, the Update and Console commands for the Battlefield 1942
-    server don't do anything.
-    - They're not recognized by that lgsm server and so they just print the
-      help menu.
-      - Not terrible but just not polished.
-  - Instead, I want to somehow hardcode exceptions like that, maybe via another
-    json file with a list of game server exceptions. Then those options wont
-    even be loaded on the page.
-
 * Continue expanding tests.
   - Update tests for new content on settings page.
   - Look into full tests for ci/cd purposes vs short tests for pre-commit.
@@ -22,8 +12,6 @@
     - Write tests for status indicators.
     - Write tests for console output.
   - Write unit tests for functions in utils.py file.
-
-* Add close X to sudo password popup modal on install page.
 
 * Update Readme.
   - Include gifs instead of images for each of the pictures.

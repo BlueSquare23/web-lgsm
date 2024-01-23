@@ -70,16 +70,6 @@ def controls():
     text_area_height = config['aesthetic']['text_area_height']
     cfg_editor = config['settings']['cfg_editor']
 
-    # Pull in commands list from commands.json file.
-    commands_list = get_commands()
-    if not commands_list:
-        flash('Error loading commands.json file!', category='error')
-        return redirect(url_for('views.home'))
-
-    # Bootstrap spinner colors.
-    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
-                                                        'info', 'light']
-
     # Collect args from GET request.
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
@@ -110,6 +100,16 @@ def controls():
             flash("Error reading accepted_cfgs.json!", category="error")
             cfg_paths = []
 
+    # Pull in commands list from commands.json file.
+    commands_list = get_commands(server.script_name)
+    if not commands_list:
+        flash('Error loading commands.json file!', category='error')
+        return redirect(url_for('views.home'))
+
+    # Bootstrap spinner colors.
+    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
+                                                        'info', 'light']
+
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False)
 
@@ -126,9 +126,9 @@ def controls():
     # This code block is only triggered in the event the script_arg param is
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
-    if script_arg != None:
+    if script_arg:
         # Validate script_arg against contents of commands.json file.
-        if is_invalid_command(script_arg):
+        if is_invalid_command(script_arg, server.script_name):
             flash("Invalid Command!", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
@@ -360,7 +360,7 @@ def settings():
     update_weblgsm = request.form.get("update_weblgsm")
 
     # Purge user's tmux socket files.
-    if purge_socks != None:
+    if purge_socks:
         purge_user_tmux_sockets()
 
     # Set Remove files setting.
@@ -370,7 +370,7 @@ def settings():
 
     # Set text color setting.
     config['aesthetic']['text_color'] = text_color
-    if color_pref != None:
+    if color_pref:
         # Validate color code with regular expression.
         if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
             flash('Invalid color!', category='error')
@@ -380,7 +380,7 @@ def settings():
 
     # Set default text area height setting.
     config['aesthetic']['text_area_height'] = text_area_height
-    if height_pref != None:
+    if height_pref:
         # Validate textarea height is int.
         try:
             height_pref = int(height_pref)
@@ -400,7 +400,7 @@ def settings():
          config.write(configfile)
 
     # Update's the weblgsm.
-    if update_weblgsm != None:
+    if update_weblgsm:
         status = update_self(base_dir)
         flash("Settings Updated!")
         if 'Error:' in status:
@@ -549,7 +549,7 @@ def delete():
     if request.method == 'POST':
         for server_id, server_name in request.form.items():
             server = GameServer.query.filter_by(install_name=server_name).first()
-            if server != None:
+            if server:
                 del_server(server, remove_files)
     else:
         server_name = request.args.get("server")
@@ -558,7 +558,7 @@ def delete():
             return redirect(url_for('views.home'))
 
         server = GameServer.query.filter_by(install_name=server_name).first()
-        if server != None:
+        if server:
             del_server(server, remove_files)
 
     return redirect(url_for('views.home'))

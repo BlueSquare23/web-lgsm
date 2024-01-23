@@ -1,4 +1,4 @@
-# Automatic Updates
+# How to Enable Automatic Updates
 
 You can enable automatic updates for this project by adding a cronjob like the
 one below to your users crontab.

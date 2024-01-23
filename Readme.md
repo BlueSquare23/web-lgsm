@@ -34,7 +34,8 @@ interface. That is what this project attempts to be.
 
 ## :arrow_double_down: Installation
 
-* First clone this repo:
+* First `SSH` to the server where you're running the LGSM and clone this repo
+  as your user (NOT root):
 
 ```
 git clone https://github.com/BlueSquare23/web-lgsm.git

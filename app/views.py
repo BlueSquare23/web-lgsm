@@ -101,7 +101,7 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    # If config editor disabled in main.conf.
+    # If config editor is disabled in the main.conf.
     if cfg_editor == 'no':
         cfg_paths = []
     else:

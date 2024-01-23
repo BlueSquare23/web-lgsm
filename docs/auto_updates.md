@@ -3,7 +3,7 @@
 You can enable automatic updates for this project by adding a cronjob like the
 one below to your users crontab.
 
-At 02:30 AM on Sunday.
+Will run at 02:30 AM on Sundays.
 
 ```
 2 30 * * 0  /home/$USER/web-lgsm/scripts/update.sh -a

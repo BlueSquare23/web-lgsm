@@ -1,7 +1,5 @@
 ## Beta Version 1.4 Todos
 
-* Check for and add any new games servers to json/game_servers.json.
-
 * Create mechanism for exempting certain controls for certain game servers.
   - For example, the Update and Console commands for the Battlefield 1942
     server don't do anything.

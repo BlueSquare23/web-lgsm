@@ -6,6 +6,13 @@
 # Strict mode, close on any non-zero exit status.
 set -eo pipefail
 
+# In case script is invokes from outside of web-lgsm dir.
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd $SCRIPTPATH
+
+# Debug mode.
+[[ $1 =~ '-d' ]] && set -x && echo $EUID && ls -lah && printenv
+
 # Colors!!!
 red="\001\e[31m\002"
 green="\001\e[32m\002"

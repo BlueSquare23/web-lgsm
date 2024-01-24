@@ -12,6 +12,7 @@ if [[ "$@" =~ '-h' ]]; then
     echo
     echo " -h     Print this help menu"
     echo " -a     Auto mode, no prompts"
+    echo " -c     check mode, does NOT update"
     exit
 fi
 
@@ -22,10 +23,21 @@ LOCAL=$(git rev-parse @)
 REMOTE=$(git rev-parse "$UPSTREAM")
 BASE=$(git merge-base @ "$UPSTREAM")
 
+# For Debug.
+#echo $UPSTREAM
+#echo $LOCAL
+#echo $REMOTE
+#echo $BASE
+#set -x
+
 if [ $LOCAL = $REMOTE ]; then
     echo "Already Up-to-date!"
+    exit
 elif [ $LOCAL = $BASE ]; then
     echo "Update Required!"
+    [[ "$@" =~ '-c' ]] && exit
+
+    # If not in auto mode, prompt user.
     if ! [[ "$@" =~ '-a' ]]; then
         echo -n "Would you like to update now? (y/n): "
         read resp
@@ -63,5 +75,13 @@ elif [ $LOCAL = $BASE ]; then
     # This way user keeps their settings but get's new updates.
     diff -u $conf $conf.$epoc.bak > $conf.path
     patch $conf $conf.path
+elif [ $REMOTE = $BASE ]; then
+    echo "Local ahead of remote, need push?" >&2
+    echo "Note: Normal users should not see this." >&2
+    exit 1
 fi
 
+# Should never get to this line.
+echo "Something has gone horribly wrong!" >&2
+echo "Its possible your local repo has diverged." >&2
+exit 2

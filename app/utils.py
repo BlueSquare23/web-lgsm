@@ -193,7 +193,7 @@ def is_invalid_cfg_name(cfg_file):
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
-def get_commands():
+def get_commands(server):
     commands = []
 
     # Try except in case problem with json files.
@@ -201,8 +201,21 @@ def get_commands():
         commands_json = open('json/commands.json', 'r')
         json_data = json.load(commands_json)
         commands_json.close()
+
+        exemptions_json = open('json/ctrl_exemptions.json', 'r')
+        exemptions_data = json.load(exemptions_json)
+        exemptions_json.close()
     except:
         return commands
+
+    # Remove exempted cmds.
+    if server in exemptions_data:
+        for short_cmd in exemptions_data[server]['short_cmds']:
+            json_data["short_cmds"].remove(short_cmd)
+        for long_cmd in exemptions_data[server]['long_cmds']:
+            json_data["long_cmds"].remove(long_cmd)
+        for desc in exemptions_data[server]['descriptions']:
+            json_data["descriptions"].remove(desc)
 
     cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
         json_data["descriptions"])
@@ -237,8 +250,8 @@ def get_servers():
 
 
 # Validates short commands.
-def is_invalid_command(cmd):
-    commands = get_commands()
+def is_invalid_command(cmd, server):
+    commands = get_commands(server)
     for command in commands:
         # If cmd is in list of short_cmds return False.
         # Aka is not invalid command.
@@ -294,4 +307,30 @@ def contains_bad_chars(i):
     for char in bad_chars:
         if char in i:
             return True
+
+    return False
+
+def update_self(base_dir):
+    update_cmd = [f'{base_dir}/scripts/update.sh', '-a']
+    proc = subprocess.run(update_cmd,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.PIPE,
+            universal_newlines=True)
+
+    if proc.returncode != 0:
+        return f"Error: {proc.stderr}"
+
+    if 'Up-to-date' in proc.stdout:
+        return 'Already Up-to-date!'
+
+    if 'Update Required' in proc.stdout:
+        return 'Web LGSM Upgraded! Restarting momentarially...'
+
+# Sleep's 5 seconds then restarts the app.
+def restart_self(restart_cmd):
+    time.sleep(5)
+    proc = subprocess.run(restart_cmd,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.PIPE,
+            universal_newlines=True)
 

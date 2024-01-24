@@ -3,6 +3,9 @@
 # script mainly exists to copy the lgsm _default.cfg file for a given game
 # server to a common.cfg file the auto installation completes. 
 
+export COLUMNS=80
+export LINES=50
+
 if [[ -z $1 ]]; then
     /usr/bin/echo "Missing Required Arg!"
     exit

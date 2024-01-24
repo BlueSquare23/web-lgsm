@@ -420,6 +420,10 @@ def test_settings_content(app, client):
         assert b"Output Text Color" in response.data
         assert b"Remove Game Server Files on Delete" in response.data
         assert b"Leave Game Server Files on Delete" in response.data
+        assert b"Purge user tmux socket files" in response.data
+        assert b"Make sure your servers are turned off first" in response.data
+        assert b"Check for and update the Web LGSM" in response.data
+        assert b"Note: Checking this box will restart your Web LGSM instance" in response.data
         assert b"Apply" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 

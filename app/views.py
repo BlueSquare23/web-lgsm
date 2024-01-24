@@ -70,16 +70,6 @@ def controls():
     text_area_height = config['aesthetic']['text_area_height']
     cfg_editor = config['settings']['cfg_editor']
 
-    # Pull in commands list from commands.json file.
-    commands_list = get_commands()
-    if not commands_list:
-        flash('Error loading commands.json file!', category='error')
-        return redirect(url_for('views.home'))
-
-    # Bootstrap spinner colors.
-    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
-                                                        'info', 'light']
-
     # Collect args from GET request.
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
@@ -101,7 +91,7 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
-    # If config editor disabled in main.conf.
+    # If config editor is disabled in the main.conf.
     if cfg_editor == 'no':
         cfg_paths = []
     else:
@@ -109,6 +99,16 @@ def controls():
         if cfg_paths == "failed":
             flash("Error reading accepted_cfgs.json!", category="error")
             cfg_paths = []
+
+    # Pull in commands list from commands.json file.
+    commands_list = get_commands(server.script_name)
+    if not commands_list:
+        flash('Error loading commands.json file!', category='error')
+        return redirect(url_for('views.home'))
+
+    # Bootstrap spinner colors.
+    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
+                                                        'info', 'light']
 
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False)
@@ -126,9 +126,9 @@ def controls():
     # This code block is only triggered in the event the script_arg param is
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
-    if script_arg != None:
+    if script_arg:
         # Validate script_arg against contents of commands.json file.
-        if is_invalid_command(script_arg):
+        if is_invalid_command(script_arg, server.script_name):
             flash("Invalid Command!", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
@@ -348,58 +348,76 @@ def settings():
     text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
 
-    if request.method == 'POST':
-        color_pref = request.form.get("text_color")
-        file_pref = request.form.get("delete_files")
-        height_pref = request.form.get("text_area_height")
-        purge_socks = request.form.get("purge_socks")
+    if request.method == 'GET':
+        return render_template("settings.html", user=current_user, \
+                text_color=text_color, remove_files=remove_files, \
+                               text_area_height=text_area_height)
 
-        # Purge user's tmux socket files.
-        if purge_socks != None:
-            purge_user_tmux_sockets()
+    color_pref = request.form.get("text_color")
+    file_pref = request.form.get("delete_files")
+    height_pref = request.form.get("text_area_height")
+    purge_socks = request.form.get("purge_socks")
+    update_weblgsm = request.form.get("update_weblgsm")
 
-        # Set Remove files setting.
-        config['settings']['remove_files'] = 'yes'
-        if file_pref == "false":
-            config['settings']['remove_files'] = 'no'
+    # Purge user's tmux socket files.
+    if purge_socks:
+        purge_user_tmux_sockets()
 
-        # Set text color setting.
-        config['aesthetic']['text_color'] = text_color
-        if color_pref != None:
-            # Validate color code with regular expression.
-            if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
-                flash('Invalid color!', category='error')
-                return redirect(url_for('views.settings'))
+    # Set Remove files setting.
+    config['settings']['remove_files'] = 'yes'
+    if file_pref == "false":
+        config['settings']['remove_files'] = 'no'
 
-            config['aesthetic']['text_color'] = color_pref
+    # Set text color setting.
+    config['aesthetic']['text_color'] = text_color
+    if color_pref:
+        # Validate color code with regular expression.
+        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
+            flash('Invalid color!', category='error')
+            return redirect(url_for('views.settings'))
 
-        # Set default text area height setting.
-        config['aesthetic']['text_area_height'] = text_area_height
-        if height_pref != None:
-            # Validate textarea height is int.
-            try:
-                height_pref = int(height_pref)
-            except ValueError:
-                flash('Invalid Textarea Height!', category='error')
-                return redirect(url_for('views.settings'))
+        config['aesthetic']['text_color'] = color_pref
 
-            # Check if height pref is in valid range.
-            if height_pref > 100 or height_pref < 5:
-                flash('Invalid Textarea Height!', category='error')
-                return redirect(url_for('views.settings'))
+    # Set default text area height setting.
+    config['aesthetic']['text_area_height'] = text_area_height
+    if height_pref:
+        # Validate textarea height is int.
+        try:
+            height_pref = int(height_pref)
+        except ValueError:
+            flash('Invalid Textarea Height!', category='error')
+            return redirect(url_for('views.settings'))
 
-            # Have to cast back to string to save in config.
-            config['aesthetic']['text_area_height'] = str(height_pref)
+        # Check if height pref is in valid range.
+        if height_pref > 100 or height_pref < 5:
+            flash('Invalid Textarea Height!', category='error')
+            return redirect(url_for('views.settings'))
 
-        with open(f'{base_dir}/main.conf', 'w') as configfile:
-             config.write(configfile)
+        # Have to cast back to string to save in config.
+        config['aesthetic']['text_area_height'] = str(height_pref)
 
+    with open(f'{base_dir}/main.conf', 'w') as configfile:
+         config.write(configfile)
+
+    # Update's the weblgsm.
+    if update_weblgsm:
+        status = update_self(base_dir)
         flash("Settings Updated!")
+        if 'Error:' in status:
+            flash(status, category='error')
+            return redirect(url_for('views.settings'))
+
+        flash(status)
+
+        # Restart daemon thread sleeps for 5 seconds then restarts app.
+        cmd = ['./init.sh', 'restart']
+        restart_daemon = Thread(target=restart_self, args=(cmd,), 
+                                    daemon=True, name='restart')
+        restart_daemon.start()
         return redirect(url_for('views.settings'))
 
-    return render_template("settings.html", user=current_user, \
-            text_color=text_color, remove_files=remove_files, \
-                           text_area_height=text_area_height)
+    flash("Settings Updated!")
+    return redirect(url_for('views.settings'))
 
 
 ######### About Page #########
@@ -531,7 +549,7 @@ def delete():
     if request.method == 'POST':
         for server_id, server_name in request.form.items():
             server = GameServer.query.filter_by(install_name=server_name).first()
-            if server != None:
+            if server:
                 del_server(server, remove_files)
     else:
         server_name = request.args.get("server")
@@ -540,7 +558,7 @@ def delete():
             return redirect(url_for('views.home'))
 
         server = GameServer.query.filter_by(install_name=server_name).first()
-        if server != None:
+        if server:
             del_server(server, remove_files)
 
     return redirect(url_for('views.home'))

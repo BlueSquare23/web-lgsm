@@ -10,6 +10,23 @@ p, li, b {
   color: white;
 }
 
+.list-group-item {
+  background-color: #181a1b;
+  color: white;
+}
+
+.list-group-item:hover, .list-group-item:focus {
+  color: black;
+}
+
+.game_server_link {
+  color: white;
+}
+
+.game_server_link:hover, .game_server_link:focus {
+  color: black;
+}
+
 #top-button {
   position: fixed;
   left: 40px;

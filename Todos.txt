@@ -1,57 +1,30 @@
 ## Beta Version 1.4 Todos
 
-* Setup automatic update system.
-  - Create optional toggle for auto updates in the config file and on the
-    settings page.
-  - Then setup means by which to check once weekly (or upon request) for new
-    updates.
-    - If the version number is different from the most recent release version
-      then pull in & install the most recent changes.
-  - Create update script for running the updates manually.
-    - Remember to not clobber existing user main.conf files during updates. 
-
-* Think about implementing reaper daemon thread to cleanup lingering watch
-  processes if output route hasn't been requested recently.
-  - Currently I'm using requests for other routes to kill the daemonized watch
-    processes if output hasn't been requested recently.
-    - This has the downside of leaving a watch process running if someone
-      closes app directly by just leaving the live console output on the
-      controls page.
-
-* Create mechanism for exempting certain controls for certain game servers.
-  - For example, the Update and Console commands for the Battlefield 1942
-    server don't do anything.
-    - They're not recognized by that lgsm server and so they just print the
-      help menu.
-      - Not terrible but just not polished.
-  - Instead, I want to somehow hardcode exceptions like that, maybe via another
-    json file with a list of game server exceptions. Then those options wont
-    even be loaded on the page.
-
-* Solve SSL issue.
-  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
-  - Write up documentation, possible make setup video.
-
-* Update Readme.
-  - Include gifs instead of images for each of the pictures.
-
-* Improve documentation.
-  - Write up more detailed documentation about:
-    - Editing the config
-    - Editing the json files
-  - Create video tutorials for install
-    - Possible make one for hooking into Nginx Proxy Manager
-
 * Continue expanding tests.
+  - Look into full tests for ci/cd purposes vs short tests for pre-commit.
   - Write proper tests for a full game server install.
     - Install Battlefeild 1942 or something small.
     - Check that daemon thread is running during install.
     - Check that output api is returning json.
       - Rinse and repeat for command(s) on controls page.
       - Can't test daemon thread till real server is installed.
-  - Write unit tests for functions in utils.py file.
+    - Write tests for status indicators.
+    - Write tests for console output.
+
+* Update Readme.
+  - Include gifs instead of images for each of the pictures.
+
+* Create video tutorials for install
+  - Possible make one for hooking into Nginx Proxy Manager
+
+* Solve SSL issue.
+  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
+  - Write up documentation, possible make setup video.
 
 ## Beta Version 1.5 Todos
+
+* Perhaps think of way to do watch thread timeout. Not terribly important
+  - kill_watchers gets the job done alright for rn.
 
 * Allow web interface to work with lgsm installations owned by different users.
   - Add config / settings option to "allow installs owned by other users".

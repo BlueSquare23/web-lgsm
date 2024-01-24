@@ -308,6 +308,8 @@ def contains_bad_chars(i):
         if char in i:
             return True
 
+    return False
+
 def update_self(base_dir):
     update_cmd = [f'{base_dir}/scripts/update.sh', '-a']
     proc = subprocess.run(update_cmd,

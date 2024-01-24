@@ -55,7 +55,6 @@ server, cd to the web-lgsm installation directory, and then run:
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
  * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:5000
- * Running on http://45.33.77.9:5000
 Press CTRL+C to quit
  * Restarting with stat
  * Created Database!

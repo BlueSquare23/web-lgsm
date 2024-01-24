@@ -1,7 +1,6 @@
 ## Beta Version 1.4 Todos
 
 * Continue expanding tests.
-  - Update tests for new content on settings page.
   - Look into full tests for ci/cd purposes vs short tests for pre-commit.
   - Write proper tests for a full game server install.
     - Install Battlefeild 1942 or something small.
@@ -11,7 +10,6 @@
       - Can't test daemon thread till real server is installed.
     - Write tests for status indicators.
     - Write tests for console output.
-  - Write unit tests for functions in utils.py file.
 
 * Update Readme.
   - Include gifs instead of images for each of the pictures.

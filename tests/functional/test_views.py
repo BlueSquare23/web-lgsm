@@ -15,14 +15,14 @@ CFG_PATH = os.environ['CFG_PATH']
 CFG_PATH = os.path.abspath(CFG_PATH)
 VERSION = os.environ['VERSION']
 
-# Checks response contains correct error msg.
-def check_for_error(response, error_msg, resp_code, url):
-    # Is 200 bc follow_redirects=True.
+# Checks response contains correct msg.
+def check_response(response, msg, resp_code, url):
+    # Any request with follow_redirects=True, will have a 200.
     assert response.status_code == resp_code
 
     # Check redirect by seeing if path changed.
     assert response.request.path == url_for(url)
-    assert error_msg in response.data
+    assert msg in response.data
 
 
 ### Home Page tests.
@@ -118,22 +118,22 @@ def test_add_responses(app, client):
         error_msg = b"Missing required form field(s)!"
         response = client.post('/add', data={'install_name':'', \
             'install_path':'', 'script_name':''}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         response = client.post('/add', data={'install_name':'', \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':TEST_SERVER_PATH, 'script_name':''}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':'', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
 
         ## Test empty parameters.
@@ -142,17 +142,17 @@ def test_add_responses(app, client):
         response = client.post('/add', data={'install_name':'', \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':TEST_SERVER_PATH, 'script_name':''}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         response = client.post('/add', data={'install_name':TEST_SERVER, \
                      'install_path':'', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
 
         ## Test upward directory traversal.
@@ -161,13 +161,13 @@ def test_add_responses(app, client):
         response = client.post('/add', data={'install_name':'upup_test', \
             'install_path':'../../../../../..', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
         ## Test unauthorized dir.
         response = client.post('/add', data={'install_name':'root_test', \
             'install_path':'/', 'script_name':TEST_SERVER_NAME}, \
                                                     follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.add')
+        check_response(response, error_msg, resp_code, 'views.add')
 
 
         ## Test legit server add.
@@ -378,24 +378,24 @@ def test_install_responses(app, client):
         resp_code = 200
         error_msg = b"Missing Required Form Feild!"
         response = client.post('/install', follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.install')
+        check_response(response, error_msg, resp_code, 'views.install')
 
         # Test no server_name.
         response = client.post('/install', data={'full_name':'', \
                         'sudo_pass':''}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.install')
+        check_response(response, error_msg, resp_code, 'views.install')
 
         # Test no full_name.
         response = client.post('/install', data={'server_name':'', \
                         'sudo_pass':''}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.install')
+        check_response(response, error_msg, resp_code, 'views.install')
 
         # Test for empty form fields.
         error_msg = b"Invalid Installation Option(s)!"
         response = client.post('/install', data={'server_name':'', \
                 'full_name':'', 'sudo_pass':''}, follow_redirects=True)
 
-        check_for_error(response, error_msg, resp_code, 'views.install')
+        check_response(response, error_msg, resp_code, 'views.install')
 
 
 ### Settings page tests.
@@ -442,38 +442,38 @@ def test_settings_responses(app, client):
         resp_code = 200
         error_msg = b'Invalid color!'
         response = client.post('/settings', data={'text_color':'test'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_color':'red'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_color':'#aaaaaaaaaaaaaaaa'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         # Legit color change test.
         error_msg = b'Settings Updated!'
         response = client.post('/settings', data={'text_color':'#0ed0fc'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         # Test text area height change.
         # App only accepts textarea height between 5 and 100.
         error_msg = b'Invalid Textarea Height!'
         response = client.post('/settings', data={'text_area_height':'-20'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_area_height':'test'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_area_height':'99999'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_area_height':'-e^(i*3.14)'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
         # Legit textarea height test.
         error_msg = b'Settings Updated!'
         response = client.post('/settings', data={'text_area_height':'10'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.settings')
+        check_response(response, error_msg, resp_code, 'views.settings')
 
     # Re-disable remove_files for the sake of idempotency.
     os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
@@ -551,34 +551,34 @@ def test_edit_responses(app, client):
         error_msg = b'No server specified!'
         # Test is none.
         response = client.post('/edit', data={'cfg_path':CFG_PATH}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # Test is null.
         response = client.post('/edit', data={'server':'', 'cfg_path':CFG_PATH}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # No cfg specified tests.
         error_msg = b'No config file specified!'
         # Test is none.
         response = client.post('/edit', data={'server':TEST_SERVER}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # Test is null.
         response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':''}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # Invalid game server name test.
         error_msg = b'Invalid game server name!'
         response = client.post('/edit', data={'server':'test', 'cfg_path':CFG_PATH}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # No game server installation directory found test.
         # First move the installation directory to .bak.
         os.rename(TEST_SERVER_PATH, TEST_SERVER_PATH + ".bak")
 
         error_msg = b'No game server installation directory found!'
-        response = client.post('/edit', data={'server':'Mockcraft', 'cfg_path':CFG_PATH}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # Finally move the installation back into place.
         os.rename(TEST_SERVER_PATH + ".bak", TEST_SERVER_PATH)
@@ -586,15 +586,27 @@ def test_edit_responses(app, client):
         # Invalid config file name test.
         error_msg = b'Invalid config file name!'
         response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':CFG_PATH + 'test'}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
         # No such file test.
         error_msg = b'No such file!'
         response = client.post('/edit', data={'server':TEST_SERVER, 'cfg_path':'/test' + CFG_PATH}, follow_redirects=True)
-        check_for_error(response, error_msg, resp_code, 'views.home')
+        check_response(response, error_msg, resp_code, 'views.home')
 
     # Re-disable the cfg_editor for the sake of idempotency.
     os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
+
+
+def test_delete_game_server(app, client):
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        response = client.get('/delete?server=' + TEST_SERVER, follow_redirects=True)
+        msg = b'Game server, Mockcraft deleted'
+        check_response(response, msg, 200, 'views.home')
 
 
 def test_full_game_server_install(app, client):
@@ -624,6 +636,11 @@ def test_full_game_server_install(app, client):
             assert response.status_code == 200
             assert b'output_lines' in response.data
 
+            # Check that the output lines are not empty.
+            empty_resp = '{"output_lines": [""], "process_lock": false}'
+            json_data = json.loads(response.data.decode('utf8'))
+            assert empty_resp != json.dumps(json_data)
+
             time.sleep(5)
 
         # Test that install was observed to be running.
@@ -639,3 +656,95 @@ def test_full_game_server_install(app, client):
         expected_resp = '{"output_lines": [""], "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
         assert expected_resp == json.dumps(json_data)
+
+
+def test_game_server_start_stop(app, client):
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Test starting the server.
+        response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
+        assert response.status_code == 200
+
+        time.sleep(5)
+
+        # Check output lines are there.
+        response = client.get('/output?server=Minecraft')
+        assert response.status_code == 200
+        assert b'output_lines' in response.data
+
+        # Check that the output lines are not empty.
+        empty_resp = '{"output_lines": [""], "process_lock": false}'
+        json_data = json.loads(response.data.decode('utf8'))
+        assert empty_resp != json.dumps(json_data)
+
+        time.sleep(3)
+
+        # Check status indicator color on home page.
+        # Green hex color means on.
+        expected_color = b'00FF11'
+        response = client.get('/home')
+        assert response.status_code == 200
+        assert expected_color in response.data
+
+        # Test stopping the server
+        response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)
+        assert response.status_code == 200
+        
+        # Run until "process_lock": false (aka proc stopped).
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            time.sleep(3)
+
+        # For good measure.
+        os.system("killall -9 java")
+
+        # Check if status indicator is red.
+        response = client.get('/home')
+        assert response.status_code == 200
+        assert b'red' in response.data
+
+
+def test_console_output(app, client):
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Test starting the server.
+        response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
+        assert response.status_code == 200
+
+        time.sleep(5)
+
+        # Check output lines are there.
+        response = client.get('/output?server=Minecraft')
+        assert response.status_code == 200
+        assert b'output_lines' in response.data
+
+        # Check that the output lines are not empty.
+        empty_resp = '{"output_lines": [""], "process_lock": false}'
+        json_data = json.loads(response.data.decode('utf8'))
+        assert empty_resp != json.dumps(json_data)
+
+        # Run until "process_lock": false (aka proc stopped).
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            time.sleep(3)
+
+        # Check that console button is working and console is outputting.
+        response = client.get('/controls?server=Minecraft&command=c', follow_redirects=True)
+        assert response.status_code == 200
+
+        time.sleep(5)
+
+        # Check watch process is running and output is flowing.
+        for i in range(1, 5):
+            assert os.system("ps auxww|grep -q '[w]atch -te /usr/bin/tmux'") == 0
+            assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
+            time.sleep(1)
+
+        # Cleanup
+        os.system("killall -9 java watch")

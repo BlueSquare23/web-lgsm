@@ -45,12 +45,12 @@ if [[ $1 =~ '-f' ]]; then
         echo "Must have an active sudo tty ticket or can't run in full mode!"
         exit 1
     fi
-    python -m pytest -v --maxfail=1
-else
     # Cleanup any old installs.
     if [[ -d Minecraft ]]; then
         rm -rf Minecraft
     fi
-    python -m pytest -v -k 'not test_full_game_server_install' --maxfail=1
+    python -m pytest -v --maxfail=1
+else
+    python -m pytest -v -k 'not test_full_game_server_install and not test_game_server_start_stop and not test_console_output' --maxfail=1
 fi
 

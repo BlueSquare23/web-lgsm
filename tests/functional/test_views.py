@@ -685,6 +685,7 @@ def test_game_server_start_stop(app, client):
 
         # Sleep until process is finished.
         while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            print(client.get('/output?server=Minecraft').data.decode('utf8'))
             time.sleep(3)
 
         # Check status indicator color on home page.

@@ -12,10 +12,10 @@ export HOME=$(pwd)
 export USERNAME='test'
 export PASSWORD='**Testing12345'
 export APP_PATH=$(pwd)
-export TEST_SERVER='Minecraft'
-export TEST_SERVER_PATH="tests/test_data/Minecraft"
-export CFG_DIR="tests/test_data/Minecraft/lgsm/config-lgsm/mcserver"
-export CFG_PATH="tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/common.cfg"
+export TEST_SERVER='Mockcraft'
+export TEST_SERVER_PATH="tests/test_data/Mockcraft"
+export CFG_DIR="tests/test_data/Mockraft/lgsm/config-lgsm/mcserver"
+export CFG_PATH="tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
 export TEST_SERVER_NAME='mcserver'
 export VERSION='1.3'
 
@@ -28,15 +28,29 @@ if [[ -f 'app/database.db' ]]; then
     rm 'app/database.db'
 fi
 
-## If there's no Minecraft dir then setup dummy Minecraft install.
-if ! [[ -d "tests/test_data/Minecraft" ]]; then
-    mkdir -p "tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/"
-    cd "tests/test_data/Minecraft"
+## If there's no Mockcraft dir then setup dummy Mockcraft install.
+if ! [[ -d "tests/test_data/Mockcraft" ]]; then
+    mkdir -p "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/"
+    cd "tests/test_data/Mockcraft"
     wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && ./linuxgsm.sh mcserver
-    cd ../../..
+    cd "$SCRIPTPATH/.."
 fi
 
 # Reset test server cfg.
-cp tests/test_data/common.cfg tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/
+cp tests/test_data/common.cfg tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/
 
-python -m pytest -v --maxfail=1
+# Full test mode vs short test mode for git pre-commit hook.
+if [[ $1 =~ '-f' ]]; then
+    if ! echo fart|sudo -l -S 2>/dev/null|grep -q tty_tickets; then
+        echo "Must have an active sudo tty ticket or can't run in full mode!"
+        exit 1
+    fi
+    python -m pytest -v --maxfail=1
+else
+    # Cleanup any old installs.
+    if [[ -d Minecraft ]]; then
+        rm -rf Minecraft
+    fi
+    python -m pytest -v -k 'not test_full_game_server_install' --maxfail=1
+fi
+

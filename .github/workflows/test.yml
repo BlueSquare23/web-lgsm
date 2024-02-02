@@ -7,10 +7,10 @@ env:
   USERNAME: 'test'
   PASSWORD: '**Testing12345'
   APP_PATH: ${{ github.workspace }}
-  TEST_SERVER: 'Minecraft'
-  TEST_SERVER_PATH: "tests/test_data/Minecraft"
-  CFG_DIR: "tests/test_data/Minecraft/lgsm/config-lgsm/mcserver"
-  CFG_PATH: "tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/common.cfg"
+  TEST_SERVER: 'Mockcraft'
+  TEST_SERVER_PATH: "tests/test_data/Mockcraft"
+  CFG_DIR: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver"
+  CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
   TEST_SERVER_NAME: 'mcserver'
   VERSION: 1.3
 
@@ -37,7 +37,7 @@ jobs:
           python3 -m virtualenv venv
           source venv/bin/activate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Setup Testing Minecraft Install
+      - name: Setup Testing Mockcraft Install
         run: |
           set -x
           # Delete any old test data.

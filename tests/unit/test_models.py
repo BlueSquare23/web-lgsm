@@ -1,7 +1,6 @@
 import os
 import pytest
 from app.models import User, MetaData, GameServer
-from pathlib import Path
 
 USERNAME = os.environ['USERNAME']
 PASSWORD = os.environ['PASSWORD']

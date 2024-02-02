@@ -1,4 +1,6 @@
 import os
+import time
+import json
 import pytest
 from flask import url_for, request
 from game_servers import game_servers
@@ -388,10 +390,6 @@ def test_install_responses(app, client):
                         'sudo_pass':''}, follow_redirects=True)
         check_for_error(response, error_msg, resp_code, 'views.install')
 
-        # Test no sudo_pass.
-        response = client.post('/install', data={'server_name':'', \
-                'full_name':''}, follow_redirects=True)
-
         # Test for empty form fields.
         error_msg = b"Invalid Installation Option(s)!"
         response = client.post('/install', data={'server_name':'', \
@@ -579,7 +577,7 @@ def test_edit_responses(app, client):
         os.rename(TEST_SERVER_PATH, TEST_SERVER_PATH + ".bak")
 
         error_msg = b'No game server installation directory found!'
-        response = client.post('/edit', data={'server':'Minecraft', 'cfg_path':CFG_PATH}, follow_redirects=True)
+        response = client.post('/edit', data={'server':'Mockcraft', 'cfg_path':CFG_PATH}, follow_redirects=True)
         check_for_error(response, error_msg, resp_code, 'views.home')
 
         # Finally move the installation back into place.
@@ -597,3 +595,47 @@ def test_edit_responses(app, client):
 
     # Re-disable the cfg_editor for the sake of idempotency.
     os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
+
+
+def test_full_game_server_install(app, client):
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Do an install.
+        response = client.post('/install', data={'server_name':'mcserver', \
+            'full_name':'Minecraft', 'sudo_pass':'fake-sudo-pass'}, follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Installing' in response.data
+
+        # Some buffer time.
+        time.sleep(3)
+
+        observed_running = False
+        # While process is running check output route is producing output.
+        while os.system("ps auxww|grep -q '[a]uto_install_wrap.sh'") == 0:
+            observed_running = True
+
+            # Test to make sure output route is returning stuff for gs while
+            # game server install is running.
+            response = client.get('/output?server=Minecraft')
+            assert response.status_code == 200
+            assert b'output_lines' in response.data
+
+            time.sleep(5)
+
+        # Test that install was observed to be running.
+        assert observed_running
+
+        # Test output route says its done.
+        # Have to request new server page first.
+        response = client.get('/controls?server=Minecraft')
+        assert response.status_code == 200
+
+        response = client.get('/output?server=Minecraft')
+        assert response.status_code == 200
+        expected_resp = '{"output_lines": [""], "process_lock": false}'
+        json_data = json.loads(response.data.decode('utf8'))
+        assert expected_resp == json.dumps(json_data)

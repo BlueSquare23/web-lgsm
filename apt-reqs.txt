@@ -1,6 +1,6 @@
 curl
 findutils
-psutil
+procps
 tmux
 watch
 wget

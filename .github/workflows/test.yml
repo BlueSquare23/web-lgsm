@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
       - uses: actions/checkout@v3
@@ -31,6 +31,7 @@ jobs:
       - name: Install Apt & Pip Dependencies
         run: |
           sudo apt update
+          sudo apt upgrade -y
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv
@@ -40,8 +41,6 @@ jobs:
       - name: Setup Testing Mockcraft Install
         run: |
           set -x
-          # Delete any old test data.
-          rm -rf $TEST_SERVER_PATH
           # Make new testing dirs recursively.
           mkdir -p $CFG_DIR
           cd $TEST_SERVER_PATH

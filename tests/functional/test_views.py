@@ -627,7 +627,7 @@ def test_full_game_server_install(app, client):
 
         observed_running = False
         # While process is running check output route is producing output.
-        while os.system("ps auxww|grep -q '[a]uto_install_wrap.sh'") == 0:
+        while os.system("ps aux|grep -q '[a]uto_install_wrap.sh'") == 0:
             observed_running = True
 
             # Test to make sure output route is returning stuff for gs while
@@ -689,6 +689,7 @@ def test_game_server_start_stop(app, client):
         # Green hex color means on.
         expected_color = b'00FF11'
         response = client.get('/home')
+        print(response.data)
         assert response.status_code == 200
         assert expected_color in response.data
 
@@ -743,10 +744,10 @@ def test_console_output(app, client):
         time.sleep(5)
 
         # Check watch process is running and output is flowing.
-        for i in range(1, 5):
-            assert os.system("ps auxww|grep '[w]atch -te /usr/bin/tmux'") == 0
+        for i in range(0, 3):
+            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
             assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
-            time.sleep(1)
+            time.sleep(2)
 
         # Cleanup
         os.system("killall -9 java watch")

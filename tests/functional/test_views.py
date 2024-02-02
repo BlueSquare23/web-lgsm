@@ -681,7 +681,9 @@ def test_game_server_start_stop(app, client):
         json_data = json.loads(response.data.decode('utf8'))
         assert empty_resp != json.dumps(json_data)
 
-        time.sleep(3)
+        # Sleep until process is finished.
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            time.sleep(3)
 
         # Check status indicator color on home page.
         # Green hex color means on.
@@ -742,7 +744,7 @@ def test_console_output(app, client):
 
         # Check watch process is running and output is flowing.
         for i in range(1, 5):
-            assert os.system("ps auxww|grep -q '[w]atch -te /usr/bin/tmux'") == 0
+            assert os.system("ps auxww|grep '[w]atch -te /usr/bin/tmux'") == 0
             assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
             time.sleep(1)
 

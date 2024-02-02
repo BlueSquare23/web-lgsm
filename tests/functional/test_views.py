@@ -671,6 +671,8 @@ def test_game_server_start_stop(app, client):
         print("######################## START CMD RESPONSE\n" + response.data.decode('utf8'))
 
         time.sleep(2)
+        response = client.get('/controls?server=Minecraft', follow_redirects=True)
+        print("######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n" + response.data.decode('utf8'))
 
         # Check output lines are there.
         response = client.get('/output?server=Minecraft')
@@ -687,6 +689,8 @@ def test_game_server_start_stop(app, client):
         while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
             print(client.get('/output?server=Minecraft').data.decode('utf8'))
             time.sleep(3)
+
+        print(client.get('/output?server=Minecraft').data.decode('utf8'))
 
         # Check status indicator color on home page.
         # Green hex color means on.

@@ -668,13 +668,15 @@ def test_game_server_start_stop(app, client):
         # Test starting the server.
         response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
         assert response.status_code == 200
+        print("######################## START CMD RESPONSE\n" + response.data.decode('utf8'))
 
-        time.sleep(5)
+        time.sleep(2)
 
         # Check output lines are there.
         response = client.get('/output?server=Minecraft')
         assert response.status_code == 200
         assert b'output_lines' in response.data
+        print("######################## OUTPUT ROUTE STDOUT\n" + response.data.decode('utf8'))
 
         # Check that the output lines are not empty.
         empty_resp = '{"output_lines": [""], "process_lock": false}'
@@ -689,7 +691,7 @@ def test_game_server_start_stop(app, client):
         # Green hex color means on.
         expected_color = b'00FF11'
         response = client.get('/home')
-        print(response.data)
+        print("######################## HOME PAGE RESPONSE\n" + response.data.decode('utf8'))
         assert response.status_code == 200
         assert expected_color in response.data
 
@@ -740,11 +742,13 @@ def test_console_output(app, client):
         # Check that console button is working and console is outputting.
         response = client.get('/controls?server=Minecraft&command=c', follow_redirects=True)
         assert response.status_code == 200
+        print("######################## CONSOLE ROUTE OUTPUT\n" + response.data.decode('utf8'))
 
-        time.sleep(5)
+        time.sleep(2)
 
         # Check watch process is running and output is flowing.
         for i in range(0, 3):
+            os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'")
             assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
             assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
             time.sleep(2)

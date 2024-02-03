@@ -694,6 +694,8 @@ def test_game_server_start_stop(app, client):
 
         print("######################## Minecraft Start Log\n")
         os.system("cat Minecraft/logs/script/mcserver-script.log")
+        os.system("cat Minecraft/log/server/latest.log")
+        os.system("cat Minecraft/log/console/mcserver-console.log")
 
         # Check status indicator color on home page.
         # Green hex color means on.

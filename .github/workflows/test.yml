@@ -31,7 +31,7 @@ jobs:
       - name: Install Apt & Pip Dependencies
         run: |
           sudo apt update
-          sudo apt install openjdk-18-jdk
+          sudo apt install openjdk-17-jdk
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv
@@ -47,6 +47,8 @@ jobs:
           wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && ./linuxgsm.sh mcserver
           cd ../../..
           cp tests/test_data/common.cfg $CFG_DIR
+          /usr/libexec/java_home -V
+          java -v
       - name: Run Pytest Tests
         run: |
           source venv/bin/activate

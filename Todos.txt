@@ -1,7 +1,5 @@
 ## Beta Version 1.4 Todos
 
-* Javascript to disable Auto-Scroll Toggle on mouse scroll up.
-
 * Add check to make sure linuxgsm.sh is up-to-date.
   - Maybe older than 3 weeks, auto download new one.
 

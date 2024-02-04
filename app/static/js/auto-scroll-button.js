@@ -26,6 +26,18 @@ function doAnAutoScoll(isAutoScrolling){
   }
 }
 
+// Break auto scroll on mouse move.
+// IE9, Chrome, Safari, Opera
+outputTextArea.addEventListener("mousewheel", function(){
+    isAutoScrolling = false;
+    doAnAutoScoll(false);
+  }, false);
+// Firefox
+outputTextArea.addEventListener("DOMMouseScroll", function(){
+    isAutoScrolling = false;
+    doAnAutoScoll(isAutoScrolling);
+  }, false);
+
 // Function to handle clicking the button.
 autoScrollButton.onclick = function(){
   // Toggle the auto-scrolling state.

@@ -13,6 +13,7 @@ env:
   CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
   TEST_SERVER_NAME: 'mcserver'
   VERSION: 1.3
+  TERM: 'xterm-256color'
 
 jobs:
   build:
@@ -47,8 +48,6 @@ jobs:
           wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && ./linuxgsm.sh mcserver
           cd ../../..
           cp tests/test_data/common.cfg $CFG_DIR
-          java -version
-          javac -version
           sudo update-alternatives --list java
           sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
           java -version

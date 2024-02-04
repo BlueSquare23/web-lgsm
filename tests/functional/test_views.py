@@ -754,13 +754,13 @@ def test_console_output(app, client):
         assert response.status_code == 200
         print("######################## CONSOLE ROUTE OUTPUT\n" + response.data.decode('utf8'))
 
-        time.sleep(2)
+        time.sleep(5)
 
         # Check watch process is running and output is flowing.
         for i in range(0, 3):
-            os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'")
-            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
             assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
+            os.system("ps aux|grep '[w]atch -te /usr/bin/tmux'")
+            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
             time.sleep(2)
 
         # Cleanup

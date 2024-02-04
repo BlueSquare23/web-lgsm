@@ -1,8 +1,5 @@
 ## Beta Version 1.4 Todos
 
-* Add check to make sure linuxgsm.sh is up-to-date.
-  - Maybe older than 3 weeks, auto download new one.
-
 * Update Readme.
   - Include gifs instead of images for each of the pictures.
 

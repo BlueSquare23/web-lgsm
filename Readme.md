@@ -69,7 +69,7 @@ cd web-lgsm
 After starting the server you can browse to the web address in a browser and
 you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 
-![Setup Page](docs/images/add_user.png)
+![Setup Page](docs/images/setup.gif)
 
 #### Home Page
 
@@ -85,7 +85,7 @@ From the home page you can do several things!
 You can auto install a new LGSM server from their entire list of available game
 servers.
 
-![Install Page](docs/images/install_server.png)
+![Install Page](docs/images/install.gif)
 
 Once the installation process is started a set of spinners and an installing...
 message will appear above the live running console output of the ongoing

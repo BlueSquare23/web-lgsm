@@ -199,3 +199,5 @@ find any and want to help feel free to submit them!
 ## :writing_hand: Author
 
 [John L. Radford](https://johnlradford.io/)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)

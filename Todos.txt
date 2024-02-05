@@ -1,10 +1,8 @@
 ## Beta Version 1.4 Todos
 
-* Update Readme.
-  - Include gifs instead of images for each of the pictures.
-
 * Create video tutorials for install
   - Possible make one for hooking into Nginx Proxy Manager
+  - Link to video in Readme
 
 * Solve SSL issue.
   - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).

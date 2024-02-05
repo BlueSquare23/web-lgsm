@@ -17,7 +17,7 @@ export TEST_SERVER_PATH="tests/test_data/Mockcraft"
 export CFG_DIR="tests/test_data/Mockraft/lgsm/config-lgsm/mcserver"
 export CFG_PATH="tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
 export TEST_SERVER_NAME='mcserver'
-export VERSION='1.3'
+export VERSION='1.4'
 
 # Source virtural env.
 if [[ -z "$VIRTUAL_ENV" ]]; then

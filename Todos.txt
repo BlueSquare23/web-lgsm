@@ -1,13 +1,3 @@
-## Beta Version 1.4 Todos
-
-* Create video tutorials for install
-  - Possible make one for hooking into Nginx Proxy Manager
-  - Link to video in Readme
-
-* Solve SSL issue.
-  - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).
-  - Write up documentation, possible make setup video.
-
 ## Beta Version 1.5 Todos
 
 * Perhaps think of way to do watch thread timeout. Not terribly important

@@ -61,7 +61,10 @@ cd web-lgsm
 ```
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
-### :film_strip: Installation Setup & Overview Video
+### :film_strip: Installation Setup & Overview Video Tutorial
+
+Check out the YouTube video tutorial linked below for information about
+installation, setup, and usage!
 
 [![Web LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 

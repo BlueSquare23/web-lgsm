@@ -1,21 +1,8 @@
 ## Beta Version 1.4 Todos
 
-* Continue expanding tests.
-  - Look into full tests for ci/cd purposes vs short tests for pre-commit.
-  - Write proper tests for a full game server install.
-    - Install Battlefeild 1942 or something small.
-    - Check that daemon thread is running during install.
-    - Check that output api is returning json.
-      - Rinse and repeat for command(s) on controls page.
-      - Can't test daemon thread till real server is installed.
-    - Write tests for status indicators.
-    - Write tests for console output.
-
-* Update Readme.
-  - Include gifs instead of images for each of the pictures.
-
 * Create video tutorials for install
   - Possible make one for hooking into Nginx Proxy Manager
+  - Link to video in Readme
 
 * Solve SSL issue.
   - Direct users to [Nginx Proxy Manager](https://nginxproxymanager.com/).

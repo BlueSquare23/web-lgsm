@@ -69,14 +69,14 @@ cd web-lgsm
 After starting the server you can browse to the web address in a browser and
 you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 
-![Setup Page](docs/images/add_user.png)
+![Setup Page](docs/images/setup.gif)
 
 #### Home Page
 
 After creating a user, you'll be automatically logged in and redirected to the
 home page.
 
-![Home Page](docs/images/home_page.png)
+[:framed_picture: Home Page Image](docs/images/home_page.png)
 
 From the home page you can do several things!
 
@@ -85,13 +85,11 @@ From the home page you can do several things!
 You can auto install a new LGSM server from their entire list of available game
 servers.
 
-![Install Page](docs/images/install_server.png)
+![Install Page](docs/images/install.gif)
 
 Once the installation process is started a set of spinners and an installing...
 message will appear above the live running console output of the ongoing
 installation.
-
-![Installing A Game Server](docs/images/installing_a_game_server.png)
 
 #### Add Page
 
@@ -99,7 +97,7 @@ If you already have an LGSM game server installed and setup on your machine and
 you want to add it to the Web-LGSM interface you can do so by clicking the "Add
 an Existing LGSM Installation" option.
 
-![Add Page](docs/images/add_existing_server.png)
+![Add Page](docs/images/add.gif)
 
 #### Controls Page
 
@@ -110,14 +108,14 @@ page.
 The console menu includes most of the common LGSM script commands, besides the
 ones that require additional user input.
 
-![Controls Page](docs/images/server_controls.png)
+[:framed_picture: Controls Page Image](docs/images/server_controls.png)
 
 #### Running a Command
 
 The console page also includes a **live** output feed from the command being
 executed in a python subprocess shell on the system.
 
-![Running Command](docs/images/running_cmd.png)
+![Running Command](docs/images/start_stop.gif)
 
 #### Config Editor
 
@@ -126,19 +124,19 @@ page to access the config editor. From the config editor you can change any of
 the necessary game server settings and save them. You can also download a copy
 of the config file.
 
-![Editing A Game Server Config](docs/images/config_editor.png)
+[:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
 
 #### Settings Page
 
 There's a basic app settings page.
 
-![Settings Page](docs/images/settings_page.png)
+![Settings Page](docs/images/settings.gif)
 
 #### Login Page
 
 And if you log out or are logged out, there's also a basic login page.
 
-![Login Page](docs/images/login.png)
+[:framed_picture: Login Page Image](docs/images/login.png)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
@@ -201,3 +199,5 @@ find any and want to help feel free to submit them!
 ## :writing_hand: Author
 
 [John L. Radford](https://johnlradford.io/)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)

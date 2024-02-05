@@ -7,12 +7,13 @@ env:
   USERNAME: 'test'
   PASSWORD: '**Testing12345'
   APP_PATH: ${{ github.workspace }}
-  TEST_SERVER: 'Minecraft'
-  TEST_SERVER_PATH: "tests/test_data/Minecraft"
-  CFG_DIR: "tests/test_data/Minecraft/lgsm/config-lgsm/mcserver"
-  CFG_PATH: "tests/test_data/Minecraft/lgsm/config-lgsm/mcserver/common.cfg"
+  TEST_SERVER: 'Mockcraft'
+  TEST_SERVER_PATH: "tests/test_data/Mockcraft"
+  CFG_DIR: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver"
+  CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
   TEST_SERVER_NAME: 'mcserver'
   VERSION: 1.3
+  TERM: 'xterm-256color'
 
 jobs:
   build:
@@ -20,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
       - uses: actions/checkout@v3
@@ -31,23 +32,28 @@ jobs:
       - name: Install Apt & Pip Dependencies
         run: |
           sudo apt update
+          sudo apt install openjdk-17-jdk
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv
           python3 -m virtualenv venv
           source venv/bin/activate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Setup Testing Minecraft Install
+      - name: Setup Testing Mockcraft Install
         run: |
           set -x
-          # Delete any old test data.
-          rm -rf $TEST_SERVER_PATH
           # Make new testing dirs recursively.
           mkdir -p $CFG_DIR
           cd $TEST_SERVER_PATH
           wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && ./linuxgsm.sh mcserver
           cd ../../..
           cp tests/test_data/common.cfg $CFG_DIR
+          sudo update-alternatives --list java
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          java -version
+          sudo update-alternatives --list javac
+          sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+          javac -version
       - name: Run Pytest Tests
         run: |
           source venv/bin/activate

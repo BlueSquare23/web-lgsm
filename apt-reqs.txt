@@ -1,5 +1,6 @@
-tmux
 curl
+findutils
+procps
+tmux
 watch
 wget
-findutils

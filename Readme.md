@@ -76,7 +76,7 @@ you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 After creating a user, you'll be automatically logged in and redirected to the
 home page.
 
-![Home Page](docs/images/home_page.png)
+[:framed_picture: Home Page Image](docs/images/home_page.png)
 
 From the home page you can do several things!
 
@@ -91,15 +91,13 @@ Once the installation process is started a set of spinners and an installing...
 message will appear above the live running console output of the ongoing
 installation.
 
-![Installing A Game Server](docs/images/installing_a_game_server.png)
-
 #### Add Page
 
 If you already have an LGSM game server installed and setup on your machine and
 you want to add it to the Web-LGSM interface you can do so by clicking the "Add
 an Existing LGSM Installation" option.
 
-![Add Page](docs/images/add_existing_server.png)
+![Add Page](docs/images/add.gif)
 
 #### Controls Page
 
@@ -110,14 +108,14 @@ page.
 The console menu includes most of the common LGSM script commands, besides the
 ones that require additional user input.
 
-![Controls Page](docs/images/server_controls.png)
+[:framed_picture: Controls Page Image](docs/images/server_controls.png)
 
 #### Running a Command
 
 The console page also includes a **live** output feed from the command being
 executed in a python subprocess shell on the system.
 
-![Running Command](docs/images/running_cmd.png)
+![Running Command](docs/images/stop_start.gif)
 
 #### Config Editor
 
@@ -126,19 +124,19 @@ page to access the config editor. From the config editor you can change any of
 the necessary game server settings and save them. You can also download a copy
 of the config file.
 
-![Editing A Game Server Config](docs/images/config_editor.png)
+[:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
 
 #### Settings Page
 
 There's a basic app settings page.
 
-![Settings Page](docs/images/settings_page.png)
+![Settings Page](docs/images/settings.gif)
 
 #### Login Page
 
 And if you log out or are logged out, there's also a basic login page.
 
-![Login Page](docs/images/login.png)
+![:framed_picture: Login Page Image](docs/images/login.png)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

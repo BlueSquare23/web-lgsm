@@ -115,7 +115,7 @@ ones that require additional user input.
 The console page also includes a **live** output feed from the command being
 executed in a python subprocess shell on the system.
 
-![Running Command](docs/images/stop_start.gif)
+![Running Command](docs/images/start_stop.gif)
 
 #### Config Editor
 
@@ -136,7 +136,7 @@ There's a basic app settings page.
 
 And if you log out or are logged out, there's also a basic login page.
 
-![:framed_picture: Login Page Image](docs/images/login.png)
+[:framed_picture: Login Page Image](docs/images/login.png)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

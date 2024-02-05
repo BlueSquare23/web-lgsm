@@ -59,6 +59,14 @@ cd web-lgsm
 ```
 ./init.sh stop
 ```
+![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
+
+### :film_strip: Installation Setup & Overview Video Tutorial
+
+Check out the YouTube video tutorial linked below for information about
+installation, setup, and usage!
+
+[![Web LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
@@ -125,6 +133,9 @@ the necessary game server settings and save them. You can also download a copy
 of the config file.
 
 [:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
+
+_Note: the config editor is disabled by default and can only be enabled by
+editing the `main.conf` file directly._
 
 #### Settings Page
 

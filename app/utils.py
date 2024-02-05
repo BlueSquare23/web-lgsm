@@ -82,7 +82,7 @@ def get_server_statuses(all_game_servers):
     socket_dir = f"/tmp/tmux-{uid}"
     # Handle no sockets yet.
     if not os.path.exists(socket_dir):
-        return
+        return server_statuses
 
     user_tmux_sockets = os.listdir(socket_dir)
     for server in all_game_servers:

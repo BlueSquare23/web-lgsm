@@ -4,11 +4,6 @@
   - send          sd   | Send command to game server console.
   - Create popup model like with sudo pass form for accpeting input.
 
-* Figure out soultion for adding web-lgsm as systemd service.
-  - Can use existing `init.sh` script.
-  - Just need unit file for auto start, restart.
-  - Maybe just provide a unit file and a doc explaining how to set it up.
-
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.
   - Not everything has to be python, install and init scripts will probably

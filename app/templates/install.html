@@ -19,7 +19,7 @@
         <hr />
 
         <!-- Sudo pass form hidden until openForm onclick -->
-        <div class="container bg-dark border border-secondary p-2 form-group form-popup" id="sudo_pass_form" style="color: white;">
+        <div class="container bg-dark border border-secondary p-2 form-group form-popup rounded-3" id="sudo_pass_form" style="color: white;">
           <button type="button" class="btn-close p-2 btn-close-white position-absolute top-0 end-0" aria-label="Close" onclick="document.getElementById('sudo_pass_form').style.display = 'none'"></button>
           <form method="POST" class="form-group" id="sudo_pass_form" action="/install">
             <input type="hidden" id="server_name" name="server_name" value="" class="form-control" />
@@ -27,14 +27,14 @@
             <label for="sudo_pass" class="pb-2" style="color: white;">Sudo Password</label>
             <input type="password" id="sudo_pass" name="sudo_pass" class="form-control" title="Sudo password is required to install necessary LGSM dependancies." placeholder="Please Enter Sudo Password" required />
 
-            <input onclick="window.scrollTo(0,0);closeForm();" id="install_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
+            <input onclick="window.scrollTo(0,0);closeForm('sudo_pass_form');" id="install_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
           </form>
         </div>
 
         {% for script_name, full_name in servers.items() %}
         <div class="row">
           <div class="col">
-            <button id="ai_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{script_name}}', '{{full_name}}');">Install {{script_name}}</button>
+            <button id="ai_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{script_name}}', '{{full_name}}', 'sudo_pass_form');">Install {{script_name}}</button>
           </div>
           <div class="col text-primary">
             {{full_name}}

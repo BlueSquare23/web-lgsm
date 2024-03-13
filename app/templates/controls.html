@@ -12,6 +12,21 @@
         </div>
         <br />
 
+        <script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
+
+        <!-- Send game server cmd form hidden until openForm onclick -->
+        <div class="container bg-dark border border-secondary p-2 form-group form-popup rounded-3" id="send_cmd_form" style="color: white;">
+          <button type="button" class="btn-close p-2 btn-close-white position-absolute top-0 end-0" aria-label="Close" onclick="document.getElementById('send_cmd_form').style.display = 'none'"></button>
+          <form method="GET" class="form-group" id="send_cmd_form" action="/controls">
+            <input type="hidden" id="server" name="server" value="" class="form-control" />
+            <input type="hidden" id="command" name="command" value="" class="form-control" />
+            <label for="send_cmd" class="pb-2" style="color: white;">Send Command</label>
+            <input type="text" id="cmd" name="cmd" class="form-control" title="Send cmd to running game server." placeholder="Please Enter Command" required />
+
+            <input onclick="window.scrollTo(0,0);closeForm('send_cmd_form');" id="send_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
+          </form>
+        </div>
+
         {% if cfg_paths|length %}
           <div class="row">
             <h2>Edit Config(s)</h2>
@@ -37,6 +52,12 @@
         <hr />
 
         {% for command in server_commands %}
+          {% if command.short_cmd == 'sd' %}
+          <div class="row">
+            <div class="col">
+              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_name}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
+            </div>
+          {% else %}
           <div class="row">
             <div class="col">
               <form method="GET" id="ctrls-form" action="/controls">
@@ -46,6 +67,7 @@
                 <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
               </form>
             </div>
+          {% endif %}
             <div class="col text-primary">
               {{command.description}}
             </div>

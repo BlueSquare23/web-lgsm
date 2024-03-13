@@ -64,6 +64,7 @@ def controls():
     base_dir = meta_data.app_install_path
 
     # Import config data.
+    # TODO: Make disable send toggable via main.conf.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
@@ -73,6 +74,7 @@ def controls():
     # Collect args from GET request.
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
+    console_cmd = request.args.get("cmd")
 
     # Can't load the controls page without a server specified.
     if server_name == None:
@@ -155,7 +157,29 @@ def controls():
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
-        # If its not the console command
+        elif script_arg == "sd":
+            if console_cmd == None:
+                flash("No command provided!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            # TODO: Make disable send toggable via main.conf.
+
+            # First check if tmux session is running.
+            installed_servers = GameServer.query.all()
+            # Fetch dict containing all servers and flag specifying if they're running
+            # or not via a util function.
+            server_status_dict = get_server_statuses(installed_servers)
+            if server_status_dict[server_name] == 'inactive':
+                flash("Server is Off! Cannot send commands to console!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            cmd = [f'{script_path}', f'{script_arg}', f'{console_cmd}']
+            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+                                    output), daemon=True, name='ConsoleCMD')
+            daemon.start()
+            return redirect(url_for('views.controls', server=server_name))
+            
+        # If its not the console or send command
         else:
             cmd = [f'{script_path}', f'{script_arg}']
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \

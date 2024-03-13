@@ -245,13 +245,13 @@ def test_controls_content(app, client):
         assert b"" in response.data
 
         # Check all cmds are there.
-        short_cmds = ["st", "sp", "r", "m", "ta", "dt", "pd", "ul", "u", "b", "c", "do"]
+        short_cmds = ["st", "sp", "r", "m", "ta", "dt", "pd", "ul", "u", "b", "c", "sd"]
         for cmd in short_cmds:
             assert f"{cmd}".encode() in response.data
 
         long_cmds = ["start", "stop", "restart", "monitor", "test-alert", \
         "details", "postdetails", "update-lgsm", "update", "backup", "console", \
-        "donate"]
+        "send"]
         for cmd in long_cmds:
             assert f"{cmd}".encode() in response.data
 
@@ -267,7 +267,7 @@ def test_controls_content(app, client):
           "Check and apply any server updates.",
           "Create backup archives of the server.",
           "Access server console.",
-          "Donation options."
+          "Send command to game server console."
         ]
 
         for description in descriptions:

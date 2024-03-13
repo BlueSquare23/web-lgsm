@@ -1,8 +1,8 @@
 ## Beta Version 1.5 Todos
 
-* Add `send` command to game server controls page.
-  - send          sd   | Send command to game server console.
-  - Create popup model like with sudo pass form for accpeting input.
+* Adjust existing tests for new send button.
+
+* Create new tests for new send button.
 
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.

@@ -134,8 +134,8 @@ of the config file.
 
 [:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
 
-_Note: the config editor is disabled by default and can only be enabled by
-editing the `main.conf` file directly._
+> :round_pushpin: _Note: the config editor is disabled by default and can only be enabled by
+> editing the `main.conf` file directly._
 
 #### Settings Page
 

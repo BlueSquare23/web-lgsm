@@ -1,5 +1,7 @@
 ## Beta Version 1.5 Todos
 
+* Add main.conf setting to disable send command by default.
+
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.
   - Not everything has to be python, install and init scripts will probably

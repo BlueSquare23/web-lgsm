@@ -24,7 +24,7 @@ def test_get_commands():
     json_data = json.load(commands_json)
     commands_json.close()
 
-    for command in get_commands('mcserver'):
+    for command in get_commands('mcserver', 'no'):
         assert command.short_cmd in json_data["short_cmds"]
         assert len(command.short_cmd) < 3
         assert command.long_cmd in json_data["long_cmds"]
@@ -57,11 +57,12 @@ def test_is_invalid_command():
 
     valid_cmds = json_data["short_cmds"]
     for cmd in valid_cmds:
-        assert is_invalid_command(cmd, 'mcserver') == False
+        assert is_invalid_command(cmd, 'mcserver', 'yes') == False
 
-    invalid_cmds = ["fart", "blah", 777777, None, "---------"]
+    # Send should be invalid when no is supplied to is_invalid_command().
+    invalid_cmds = ["fart", "blah", 777777, None, "---------", 'send']
     for cmd in invalid_cmds:
-        assert is_invalid_command(cmd, 'mcserver') == True
+        assert is_invalid_command(cmd, 'mcserver', 'no') == True
     
 
 def test_install_options_are_invalid():

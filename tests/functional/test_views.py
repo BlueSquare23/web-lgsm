@@ -692,10 +692,10 @@ def test_game_server_start_stop(app, client):
 
         print(client.get('/output?server=Minecraft').data.decode('utf8'))
 
-        print("######################## Minecraft Start Log\n")
-        os.system("cat Minecraft/logs/script/mcserver-script.log")
-        os.system("cat Minecraft/log/server/latest.log")
-        os.system("cat Minecraft/log/console/mcserver-console.log")
+#        print("######################## Minecraft Start Log\n")
+#        os.system("cat Minecraft/logs/script/mcserver-script.log")
+#        os.system("cat Minecraft/log/server/latest.log")
+#        os.system("cat Minecraft/log/console/mcserver-console.log")
 
         # Check status indicator color on home page.
         # Green hex color means on.
@@ -704,6 +704,18 @@ def test_game_server_start_stop(app, client):
         print("######################## HOME PAGE RESPONSE\n" + response.data.decode('utf8'))
         assert response.status_code == 200
         assert expected_color in response.data
+
+        # Test sending command to game server console
+        response = client.get('/controls?server=Minecraft&command=sd&cmd=test', follow_redirects=True)
+        assert response.status_code == 200
+
+        # Sleep until process is finished.
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            print(client.get('/output?server=Minecraft').data.decode('utf8'))
+            time.sleep(3)
+
+        print(client.get('/output?server=Minecraft').data.decode('utf8'))
+        assert b'Sending command to console' in client.get('/output?server=Minecraft').data
 
         # Test stopping the server
         response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)

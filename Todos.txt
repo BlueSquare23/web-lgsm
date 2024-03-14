@@ -1,23 +1,26 @@
 ## Beta Version 1.5 Todos
 
-* Adjust existing tests for new send button.
-
-* Create new tests for new send button.
-
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.
   - Not everything has to be python, install and init scripts will probably
     remain shell because they're not very complex.
+
+* Do a thorough refactor.
+  - Spend some time just re-reading my own code looking for bugs / improments.
+  - More unit testing will probably help with this.
+
+## In Idea Phase...
 
 * Perhaps think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
 
 * Allow web interface to work with lgsm installations owned by different users.
   - Add config / settings option to "allow installs owned by other users".
-  - I'm thinking doing this by creating a web-lgsm group and chowning the
-    necessary game server dir to be `other_user:web-lgsm`.
-
-## In Idea Phase...
+  - Possible use sudo to accomplish this.
+    - I'm thinking add sudoers rule allowing web-lgms user to run cmds as other
+      user without a password.
+    - Then if the game server is owned by another user cmds would be wrapped in:
+      `sudo -u otheruser "cmd"`
 
 * Explore if containerizing project with docker is at all feezable /
   worthwhile.

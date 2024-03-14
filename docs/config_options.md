@@ -34,9 +34,20 @@ These settings control basic app behaviors.
 * `cfg_editor`: Controls whether the game server cfg file editor is enabled
   or disabled.
   - Default: No (aka cfg file editor disabled)
-  - Warning: Enabling this feature has inherent security risks! If you're going
-    to enable this just be sure to have a strong password, have SSL, and trust
-    who you give web-lgsm access too!
+  - Warning: Enabling this feature has inherent security risks! Certain game
+    server cfgs allow for arbitrary shell code to be inserted and run once the
+    game server is started. If you're going to enable this feature just be sure
+    to have a strong password, have SSL, and trust who you give web-lgsm access
+    too!
+
+* `send_cmd`: Controls if "Send command to running game server console" button
+  on /controls page is enabled or disabled.
+  - Default: No (aka send button is disabled)
+  - Warning: Similarly to the `cfg_editor` option, there are some risks
+    associated with enabling the `send_cmd` setting. Certain game server
+    consoles allow arbitray code execution. If you're going to enable this
+    feature just be sure to have a strong password, have SSL, and trust who you
+    give web-lgsm access too!
 
 ## A Subtle Distinction in Nomenclature
 
@@ -44,5 +55,11 @@ For the purposes of keeping things straight I've tried to stick to calling game
 server configuration files *cfg* files (as is the convention used by the folks
 at the LGSM) and the main Web LGSM configuration file a *config* file.
 
-You'll notice this distinction used throughout the code, comments, and
+Likewise, I've made a similar distinction between *controls* or *commands* and
+*cmds*. When I use the three letter *cmd* I'm referring to a command that is run
+via the send button within a running game server console. Whereas, when the
+web-lgsm app itself executes a command via a shell process I'm calling that a
+*command*.
+
+You'll notice these distinctions used throughout the code, comments, and
 documentation.

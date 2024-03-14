@@ -1,6 +1,7 @@
 ## Beta Version 1.5 Todos
 
-* Add main.conf setting to disable send command by default.
+~* Add main.conf setting to disable send command by default.~
+  - Add tests for this!
 
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.

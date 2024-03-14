@@ -193,7 +193,7 @@ def is_invalid_cfg_name(cfg_file):
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
-def get_commands(server):
+def get_commands(server, send_cmd):
     commands = []
 
     # Try except in case problem with json files.
@@ -207,6 +207,12 @@ def get_commands(server):
         exemptions_json.close()
     except:
         return commands
+
+    # Remove send cmd if option disabled in main.conf.
+    if send_cmd == "no":
+        json_data["short_cmds"].remove("sd")
+        json_data["long_cmds"].remove("send")
+        json_data["descriptions"].remove("Send command to game server console.")
 
     # Remove exempted cmds.
     if server in exemptions_data:
@@ -250,8 +256,8 @@ def get_servers():
 
 
 # Validates short commands.
-def is_invalid_command(cmd, server):
-    commands = get_commands(server)
+def is_invalid_command(cmd, server, send_cmd):
+    commands = get_commands(server, send_cmd)
     for command in commands:
         # If cmd is in list of short_cmds return False.
         # Aka is not invalid command.

@@ -721,17 +721,27 @@ def test_game_server_start_stop(app, client):
         assert response.status_code == 200
         assert expected_color in response.data
 
+        # Enable the send_cmd setting.
+        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+        time.sleep(1)
+
         # Test sending command to game server console
         response = client.get('/controls?server=Minecraft&command=sd&cmd=test', follow_redirects=True)
         assert response.status_code == 200
 
         # Sleep until process is finished.
         while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            print("######################## SEND COMMAND OUTPUT\n")
             print(client.get('/output?server=Minecraft').data.decode('utf8'))
             time.sleep(3)
 
+        time.sleep(1)
         print(client.get('/output?server=Minecraft').data.decode('utf8'))
         assert b'Sending command to console' in client.get('/output?server=Minecraft').data
+
+        # Set send_cmd back to default state for sake of idempotency.
+        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+        time.sleep(1)
 
         # Test stopping the server
         response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)

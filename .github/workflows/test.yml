@@ -1,6 +1,14 @@
 name: Web-LGSM
 
-on: [push]
+on:
+  push:
+    paths:
+    - '**.py'
+    - '**.sh'
+    - '**.html'
+    - '**.css'
+    - '**.js'
+    - '**.json'
 
 env:
   HOME: ${{ github.workspace }}

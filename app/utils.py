@@ -350,3 +350,4 @@ def restart_self(restart_cmd):
             stderr = subprocess.PIPE,
             universal_newlines=True)
 
+

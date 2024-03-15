@@ -1,13 +1,5 @@
 ## Beta Version 1.5 Todos
 
-* Make boxes rounded.
-  - Ex) Apply corrner rounding to about page box and login form boxes.
-
-* See if there is a way to configure github actions playbook to only fire off
-  tests if changed file(s) ends in *py, *sh, *html, *css, *js, *json.
-  - No need to spin up five containers and run all the project tests because I
-    updated and pushed changes to the Readme.
-
 * Convert as much shell code as possible to python.
   - This includes both shell code within the app and stand alone scripts.
   - Not everything has to be python, install and init scripts will probably

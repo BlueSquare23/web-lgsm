@@ -231,7 +231,7 @@ def install():
                                                         'info', 'light']
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_wget_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':

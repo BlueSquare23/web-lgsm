@@ -308,26 +308,30 @@ def script_name_is_invalid(script_name):
     return True
 
 
-# Checks if linuxgsm.sh already exists and if not, wgets it.
-def check_and_wget_lgsmsh(lgsmsh):
+# Checks if linuxgsm.sh already exists and if not, gets it.
+def check_and_get_lgsmsh(lgsmsh):
     if not os.path.isfile(lgsmsh):
-        wget_lgsmsh(lgsmsh)
+        get_lgsmsh(lgsmsh)
         return
 
     three_weeks_in_seconds = 1814400
     if int(time.time() - os.path.getmtime(lgsmsh)) > three_weeks_in_seconds:
-        wget_lgsmsh(lgsmsh)
+        get_lgsmsh(lgsmsh)
 
 
 # Wget's newest lgsm script.
-def wget_lgsmsh(lgsmsh):
-    # Temporary solution. Tried using requests for download, didn't work.
+def get_lgsmsh(lgsmsh):
+    # Pretend to be wget to fetch linuxgsm.sh.
     try:
-        out = os.popen(f"/usr/bin/wget -O {lgsmsh} https://linuxgsm.sh").read()
+        headers = {'User-Agent': 'Wget/1.20.3 (linux-gnu)'}
+        response = requests.get('https://linuxgsm.sh', headers=headers)
+        with open(lgsmsh, 'wb') as f:
+            f.write(response.content)
         os.chmod(lgsmsh, 0o755)
-    except:
+    except Exception as e:
         # For debug.
-        print(sys.exc_info()[0])
+        print(e)
+    print("Got linuxgsm.sh!")
 
 
 # Removes color codes from cmd line output.

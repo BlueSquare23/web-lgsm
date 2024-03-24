@@ -1,10 +1,5 @@
 ## Beta Version 1.5 Todos
 
-* Convert as much shell code as possible to python.
-  - Update the following:
-    - auto_install_wrap.sh
-    - try alternative to wget
-
 * Do a thorough refactor.
   - Spend some time just re-reading my own code looking for bugs / improments.
   - More unit testing will probably help with this.

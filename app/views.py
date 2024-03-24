@@ -64,7 +64,6 @@ def controls():
     base_dir = meta_data.app_install_path
 
     # Import config data.
-    # TODO: Make disable send toggable via main.conf.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
     text_color = config['aesthetic']['text_color']
@@ -230,8 +229,6 @@ def install():
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
                                                         'info', 'light']
-    aiwrapsh = "auto_install_wrap.sh"
-
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
     check_and_wget_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
@@ -295,7 +292,6 @@ def install():
         # Make a new server dir and copy linuxgsm.sh into it.
         os.mkdir(server_full_name)
         shutil.copy(f"scripts/{lgsmsh}", server_full_name)
-        shutil.copy(f"scripts/{aiwrapsh}", server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 
@@ -305,14 +301,14 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        cmd = [f'./{lgsmsh}', f'{server_script_name}']
+        cmd = [f'./{lgsmsh}', server_script_name]
         proc = subprocess.run(cmd, cwd=install_path, capture_output=True, text=True)
 
         if proc.returncode != 0:
             output.output_lines.append(proc.stderr)
         output.output_lines.append(proc.stdout)
 
-        cmd = [f'./{aiwrapsh}', f'{server_script_name}']
+        cmd = [f'./{server_script_name}', 'auto-install']
         install_daemon = Thread(target=shell_exec, args=(install_path, cmd, \
                                 output), daemon=True, name='Install')
         install_daemon.start()

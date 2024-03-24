@@ -643,7 +643,7 @@ def test_full_game_server_install(app, client):
 
         observed_running = False
         # While process is running check output route is producing output.
-        while os.system("ps aux|grep -q '[a]uto_install_wrap.sh'") == 0:
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
             observed_running = True
 
             # Test to make sure output route is returning stuff for gs while

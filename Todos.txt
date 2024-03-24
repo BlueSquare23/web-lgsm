@@ -1,4 +1,4 @@
-## Beta Version 1.5 Todos
+## Beta Version 1.6 Todos
 
 * Do a thorough refactor.
   - Spend some time just re-reading my own code looking for bugs / improments.

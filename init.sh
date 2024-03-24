@@ -5,6 +5,10 @@
 PORT=12357
 HOST="127.0.0.1"
 
+export COLUMNS=80
+export LINES=50
+export TERM='xterm-256color'
+
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 # Change dir context in case invoked from outside of web-lgsm dir.

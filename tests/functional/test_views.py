@@ -245,13 +245,12 @@ def test_controls_content(app, client):
         assert b"" in response.data
 
         # Check all cmds are there.
-        short_cmds = ["st", "sp", "r", "m", "ta", "dt", "pd", "ul", "u", "b", "c", "do"]
+        short_cmds = ["st", "sp", "r", "m", "ta", "dt", "pd", "ul", "u", "b", "c"]
         for cmd in short_cmds:
             assert f"{cmd}".encode() in response.data
 
         long_cmds = ["start", "stop", "restart", "monitor", "test-alert", \
-        "details", "postdetails", "update-lgsm", "update", "backup", "console", \
-        "donate"]
+        "details", "postdetails", "update-lgsm", "update", "backup", "console"]
         for cmd in long_cmds:
             assert f"{cmd}".encode() in response.data
 
@@ -267,13 +266,30 @@ def test_controls_content(app, client):
           "Check and apply any server updates.",
           "Create backup archives of the server.",
           "Access server console.",
-          "Donation options."
         ]
 
         for description in descriptions:
             assert f"{description}".encode() in response.data
 
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+
+        # Test send_cmd setting (disabled by default).
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        assert b'Send command to game server console' not in response.data
+
+        # Enable the send_cmd setting.
+        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+
+        # Check send cmd is there after main.conf setting is enabled.
+        response = client.get(f'/controls?server={TEST_SERVER}')
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        assert b'sd' in response.data
+        assert b'send' in response.data
+        assert b'Send command to game server console' in response.data
+
+        # Set it back to default state for sake of idempotency.
+        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+
 
 # Test add responses.
 def test_controls_responses(app, client):
@@ -627,7 +643,7 @@ def test_full_game_server_install(app, client):
 
         observed_running = False
         # While process is running check output route is producing output.
-        while os.system("ps aux|grep -q '[a]uto_install_wrap.sh'") == 0:
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
             observed_running = True
 
             # Test to make sure output route is returning stuff for gs while
@@ -692,10 +708,10 @@ def test_game_server_start_stop(app, client):
 
         print(client.get('/output?server=Minecraft').data.decode('utf8'))
 
-        print("######################## Minecraft Start Log\n")
-        os.system("cat Minecraft/logs/script/mcserver-script.log")
-        os.system("cat Minecraft/log/server/latest.log")
-        os.system("cat Minecraft/log/console/mcserver-console.log")
+#        print("######################## Minecraft Start Log\n")
+#        os.system("cat Minecraft/logs/script/mcserver-script.log")
+#        os.system("cat Minecraft/log/server/latest.log")
+#        os.system("cat Minecraft/log/console/mcserver-console.log")
 
         # Check status indicator color on home page.
         # Green hex color means on.
@@ -704,6 +720,28 @@ def test_game_server_start_stop(app, client):
         print("######################## HOME PAGE RESPONSE\n" + response.data.decode('utf8'))
         assert response.status_code == 200
         assert expected_color in response.data
+
+        # Enable the send_cmd setting.
+        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+        time.sleep(1)
+
+        # Test sending command to game server console
+        response = client.get('/controls?server=Minecraft&command=sd&cmd=test', follow_redirects=True)
+        assert response.status_code == 200
+
+        # Sleep until process is finished.
+        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+            print("######################## SEND COMMAND OUTPUT\n")
+            print(client.get('/output?server=Minecraft').data.decode('utf8'))
+            time.sleep(3)
+
+        time.sleep(1)
+        print(client.get('/output?server=Minecraft').data.decode('utf8'))
+        assert b'Sending command to console' in client.get('/output?server=Minecraft').data
+
+        # Set send_cmd back to default state for sake of idempotency.
+        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+        time.sleep(1)
 
         # Test stopping the server
         response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)

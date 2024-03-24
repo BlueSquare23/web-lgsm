@@ -1,12 +1,20 @@
-function openForm(server, fullName){
-  document.getElementById("sudo_pass_form").style.display = "block";
-  if (server){
-    document.getElementById('server_name').value=server;
-    document.getElementById('full_name').value=fullName;
-    document.getElementById('install_btn').value="Install " + fullName;
+function openForm(server, opt, formName) {
+  document.getElementById(formName).style.display = "block";
+  if ('sudo_pass_form'.localeCompare(formName) === 0) {
+    if (server) {
+      document.getElementById('server_name').value=server;
+      document.getElementById('full_name').value=opt;
+      document.getElementById('install_btn').value="Install " + opt;
+    }
+  } else if ('send_cmd_form'.localeCompare(formName) === 0) {
+    if (server) {
+      document.getElementById('server').value=server;
+      document.getElementById('command').value=opt;
+      document.getElementById('send_btn').value="Send";
+    }
   }
 }
 
-function closeForm(){
-  document.getElementById("sudo_pass_form").style.display = "none";
+function closeForm(formName){
+  document.getElementById(formName).style.display = "none";
 }

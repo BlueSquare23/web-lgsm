@@ -69,10 +69,12 @@ def controls():
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     cfg_editor = config['settings']['cfg_editor']
+    send_cmd = config['settings']['send_cmd']
 
     # Collect args from GET request.
     server_name = request.args.get("server")
     script_arg = request.args.get("command")
+    console_cmd = request.args.get("cmd")
 
     # Can't load the controls page without a server specified.
     if server_name == None:
@@ -101,7 +103,7 @@ def controls():
             cfg_paths = []
 
     # Pull in commands list from commands.json file.
-    commands_list = get_commands(server.script_name)
+    commands_list = get_commands(server.script_name, send_cmd)
     if not commands_list:
         flash('Error loading commands.json file!', category='error')
         return redirect(url_for('views.home'))
@@ -128,7 +130,7 @@ def controls():
     # control button.
     if script_arg:
         # Validate script_arg against contents of commands.json file.
-        if is_invalid_command(script_arg, server.script_name):
+        if is_invalid_command(script_arg, server.script_name, send_cmd):
             flash("Invalid Command!", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
@@ -155,7 +157,32 @@ def controls():
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
-        # If its not the console command
+        elif script_arg == "sd":
+            # Check if send_cmd is enabled in main.conf.
+            if send_cmd == 'no':
+                flash("Send console command button disabled!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            if console_cmd == None:
+                flash("No command provided!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            # First check if tmux session is running.
+            installed_servers = GameServer.query.all()
+            # Fetch dict containing all servers and flag specifying if they're running
+            # or not via a util function.
+            server_status_dict = get_server_statuses(installed_servers)
+            if server_status_dict[server_name] == 'inactive':
+                flash("Server is Off! Cannot send commands to console!", category='error')
+                return redirect(url_for('views.controls', server=server_name))
+
+            cmd = [f'{script_path}', f'{script_arg}', f'{console_cmd}']
+            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+                                    output), daemon=True, name='ConsoleCMD')
+            daemon.start()
+            return redirect(url_for('views.controls', server=server_name))
+            
+        # If its not the console or send command
         else:
             cmd = [f'{script_path}', f'{script_arg}']
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
@@ -202,11 +229,9 @@ def install():
     # Bootstrap spinner colors.
     bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
                                                         'info', 'light']
-    aiwrapsh = "auto_install_wrap.sh"
-
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_wget_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -267,7 +292,6 @@ def install():
         # Make a new server dir and copy linuxgsm.sh into it.
         os.mkdir(server_full_name)
         shutil.copy(f"scripts/{lgsmsh}", server_full_name)
-        shutil.copy(f"scripts/{aiwrapsh}", server_full_name)
 
         install_path = base_dir + '/' + server_full_name
 
@@ -277,14 +301,14 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        cmd = [f'./{lgsmsh}', f'{server_script_name}']
+        cmd = [f'./{lgsmsh}', server_script_name]
         proc = subprocess.run(cmd, cwd=install_path, capture_output=True, text=True)
 
         if proc.returncode != 0:
             output.output_lines.append(proc.stderr)
         output.output_lines.append(proc.stdout)
 
-        cmd = [f'./{aiwrapsh}', f'{server_script_name}']
+        cmd = [f'./{server_script_name}', 'auto-install']
         install_daemon = Thread(target=shell_exec, args=(install_path, cmd, \
                                 output), daemon=True, name='Install')
         install_daemon.start()

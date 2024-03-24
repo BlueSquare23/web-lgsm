@@ -1,12 +1,21 @@
-## Beta Version 1.5 Todos
+## Beta Version 1.6 Todos
+
+* Do a thorough refactor.
+  - Spend some time just re-reading my own code looking for bugs / improments.
+  - More unit testing will probably help with this.
+
+## In Idea Phase...
 
 * Perhaps think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
 
 * Allow web interface to work with lgsm installations owned by different users.
   - Add config / settings option to "allow installs owned by other users".
-  - I'm thinking doing this by creating a web-lgsm group and chowning the
-    necessary game server dir to be `other_user:web-lgsm`.
+  - Possible use sudo to accomplish this.
+    - I'm thinking add sudoers rule allowing web-lgms user to run cmds as other
+      user without a password.
+    - Then if the game server is owned by another user cmds would be wrapped in:
+      `sudo -u otheruser "cmd"`
 
 * Explore if containerizing project with docker is at all feezable /
   worthwhile.

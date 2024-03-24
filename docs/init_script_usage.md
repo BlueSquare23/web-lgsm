@@ -1,8 +1,10 @@
-# How to Stop, Start, Restart, & Monitor the Web LGSM
+# Managing the Web LGSM via the init.sh Script
 
 You can use the `init.sh` script in the project's main directory to manage the
-web-lgsm itself. That script supports a number of optional arguments. If you
-ever need to see them you can run `init.sh -h` to see them.
+web-lgsm itself (aka stop, start, restart, check status).
+
+That script supports a number of optional arguments. If you ever need to see
+them you can run `init.sh -h` to see them.
 
 ```
 » ./init.sh --help

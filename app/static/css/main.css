@@ -10,6 +10,14 @@ p, li, b {
   color: white;
 }
 
+/* Style for textarea to mimic pre tag appearance */
+textarea {
+  font-family: monospace;  /* Use a monospaced font for uniform character width */
+  white-space: pre;        /* Preserve white spaces and line breaks */
+  border: 1px solid #ccc;  /* Border for visual separation */
+  padding: 10px;           /* Padding for better readability */
+}
+
 .list-group-item {
   background-color: #181a1b;
   color: white;

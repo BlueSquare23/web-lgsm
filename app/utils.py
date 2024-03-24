@@ -46,6 +46,10 @@ def shell_exec(exec_dir, cmds, output):
     for stderr_line in iter(proc.stderr.readline, ""):
         output.output_lines.append(escape_ansi(stderr_line))
 
+    # If run in auto-install mode, do cfg fix after install finishes.
+    if ('auto-install' in cmds):
+        post_install_cfg_fix(exec_dir)
+
     # Reset process_lock flag.
     output.process_lock = False
 
@@ -118,6 +122,24 @@ def purge_user_tmux_sockets():
         for socket in user_tmux_sockets:
             os.remove(socket_dir + '/' + socket)
 
+# After installation fixes lgsm cfg files.
+def post_install_cfg_fix(gs_dir):
+    # Find the default and common configs.
+    default_cfg = next(os.path.join(root, name) \
+        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
+            for name in files if name == "_default.cfg")
+    common_cfg = next(os.path.join(root, name) \
+        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
+            for name in files if name == "common.cfg")
+
+    # Strip the first 9 lines of warning comments from _default.cfg and write
+    # the rest to the common.cfg.
+    with open(default_cfg, 'r') as default_file, open(common_cfg, 'w') as common_file:
+        for _ in range(9):
+            next(default_file)  # Skip the first 9 lines
+        for line in default_file:
+            common_file.write(line)
+
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the
 # search_path.
@@ -143,6 +165,7 @@ def find_cfg_paths(search_path):
                 cfg_paths.append(os.path.join(root, file))
 
     return cfg_paths
+
 
 # Does the actual deletions for the /delete route.
 def del_server(server, remove_files):
@@ -193,7 +216,7 @@ def is_invalid_cfg_name(cfg_file):
 
 # Turns data in commands.json into list of command objects that implement the
 # CmdDescriptor class.
-def get_commands(server):
+def get_commands(server, send_cmd):
     commands = []
 
     # Try except in case problem with json files.
@@ -207,6 +230,12 @@ def get_commands(server):
         exemptions_json.close()
     except:
         return commands
+
+    # Remove send cmd if option disabled in main.conf.
+    if send_cmd == "no":
+        json_data["short_cmds"].remove("sd")
+        json_data["long_cmds"].remove("send")
+        json_data["descriptions"].remove("Send command to game server console.")
 
     # Remove exempted cmds.
     if server in exemptions_data:
@@ -250,8 +279,8 @@ def get_servers():
 
 
 # Validates short commands.
-def is_invalid_command(cmd, server):
-    commands = get_commands(server)
+def is_invalid_command(cmd, server, send_cmd):
+    commands = get_commands(server, send_cmd)
     for command in commands:
         # If cmd is in list of short_cmds return False.
         # Aka is not invalid command.
@@ -279,26 +308,30 @@ def script_name_is_invalid(script_name):
     return True
 
 
-# Checks if linuxgsm.sh already exists and if not, wgets it.
-def check_and_wget_lgsmsh(lgsmsh):
+# Checks if linuxgsm.sh already exists and if not, gets it.
+def check_and_get_lgsmsh(lgsmsh):
     if not os.path.isfile(lgsmsh):
-        wget_lgsmsh(lgsmsh)
+        get_lgsmsh(lgsmsh)
         return
 
     three_weeks_in_seconds = 1814400
     if int(time.time() - os.path.getmtime(lgsmsh)) > three_weeks_in_seconds:
-        wget_lgsmsh(lgsmsh)
+        get_lgsmsh(lgsmsh)
 
 
 # Wget's newest lgsm script.
-def wget_lgsmsh(lgsmsh):
-    # Temporary solution. Tried using requests for download, didn't work.
+def get_lgsmsh(lgsmsh):
+    # Pretend to be wget to fetch linuxgsm.sh.
     try:
-        out = os.popen(f"/usr/bin/wget -O {lgsmsh} https://linuxgsm.sh").read()
+        headers = {'User-Agent': 'Wget/1.20.3 (linux-gnu)'}
+        response = requests.get('https://linuxgsm.sh', headers=headers)
+        with open(lgsmsh, 'wb') as f:
+            f.write(response.content)
         os.chmod(lgsmsh, 0o755)
-    except:
+    except Exception as e:
         # For debug.
-        print(sys.exc_info()[0])
+        print(e)
+    print("Got linuxgsm.sh!")
 
 
 # Removes color codes from cmd line output.
@@ -343,4 +376,5 @@ def restart_self(restart_cmd):
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
             universal_newlines=True)
+
 

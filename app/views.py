@@ -41,6 +41,7 @@ def home():
     config.read(f'{base_dir}/main.conf')
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
+    show_stats = config['aesthetic'].getboolean('show_stats')
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -59,7 +60,8 @@ def home():
     return render_template("home.html", user=current_user, \
                         server_status_dict=server_status_dict, \
                         graphs_primary=graphs_primary, \
-                        graphs_secondary=graphs_secondary)
+                        graphs_secondary=graphs_secondary, \
+                        show_stats=show_stats)
 
 
 ######### Controls Page #########

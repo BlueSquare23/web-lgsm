@@ -40,7 +40,7 @@ jobs:
       - name: Install Apt & Pip Dependencies
         run: |
           sudo apt update
-          sudo apt install openjdk-17-jdk
+          sudo apt install openjdk-21-jdk
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv
@@ -57,10 +57,10 @@ jobs:
           cd ../../..
           cp tests/test_data/common.cfg $CFG_DIR
           sudo update-alternatives --list java
-          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
           java -version
           sudo update-alternatives --list javac
-          sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+          sudo update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
           javac -version
       - name: Run Pytest Tests
         run: |

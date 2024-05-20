@@ -4,18 +4,14 @@
   - Spend some time just re-reading my own code looking for bugs / improvements.
   - More unit testing will probably help with this.
 
-* Add in basic game server stats interface.
-  - Just basic metrics like:
-    - Mem Usage
-    - Disk Usage
-    - CPU Usage
-  - Real time graphs would be cool eventually, but lets start small and just
-    focus on getting the values piped to the frontend.
+* Test around with realtime networking stats more.
+  - Right now the disk cpu and mem pie charts are fine. Those metrics don't
+    really change a lot second by second. However, network data is different.
+  - For the network data I would really like to have a psuedo realtime graph.
+    and if I can figure it out for the network data might do it with the other
+    metrics as well.
 
 ## In Idea Phase...
-
-* Perhaps think of way to do watch thread timeout. Not terribly important
-  - kill_watchers gets the job done alright for rn.
 
 * Allow web interface to work with lgsm installations owned by different users.
   - Add config / settings option to "allow installs owned by other users".
@@ -27,3 +23,8 @@
 
 * Explore if containerizing project with docker is at all feezable /
   worthwhile.
+
+## Backlog
+
+* Think of way to do watch thread timeout. Not terribly important
+  - kill_watchers gets the job done alright for rn.

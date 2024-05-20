@@ -47,7 +47,7 @@ echo -e "${green}####### Pulling in apt updates...${reset}"
 sudo apt update
 
 for req in $(cat 'apt-reqs.txt'); do
-    if ! which $req &>/dev/null; then
+    if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"
         sudo apt install -y $req
     fi
@@ -68,24 +68,8 @@ if ! which pip3 &>/dev/null; then
     fi
 fi
 
-if ! python3 -c "import virtualenv"; then
-    if [[ $sys_name =~ Ubuntu ]]; then
-        echo -e "${green}####### Installing \`virtualenv\`...${reset}"
-        python3 -m pip install --user virtualenv
-    fi
-
-    if [[ $sys_name =~ Debian ]]; then
-        sudo apt install -y python3-venv
-    fi
-fi
-
 echo -e "${green}####### Setting up Virtual Env...${reset}"
-if [[ $sys_name =~ Ubuntu ]]; then
-    python3 -m virtualenv venv
-fi
-if [[ $sys_name =~ Debian ]]; then
-    python3 -m venv venv
-fi
+python3 -m venv venv
 source venv/bin/activate
 
 echo -e "${green}####### Install Requirements...${reset}"

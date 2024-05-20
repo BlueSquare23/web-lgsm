@@ -2,6 +2,12 @@
 {% block title %}Web LGSM Home{% endblock %}
 
 {% block content %}
+{# TESTING PASSING STATS THROUGH
+{% for stat in server_stats %}
+  {{ stat }}: {{ server_stats[stat] }}<br>
+{% endfor %}
+#}
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
       <br />
       <h2 style="color: white;">Installed Servers</h2>
@@ -9,7 +15,7 @@
       {% if server_status_dict is not none %}
         {% if server_status_dict|length > 0 %}
           <form method="POST" action="/delete">
-            <div class="list-group form-check form-switch">
+            <div class="list-group form-check form-switch border border-secondary">
               {% for server_name, status in server_status_dict.items() %}
                 {% if status == "active" %}
                   {% set status_color = '#00FF11' %}
@@ -33,12 +39,12 @@
             <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
           </form>
         {% else %}
-          <ul class="list-group">
+          <ul class="list-group border border-secondary">
             <li class="list-group-item">No Servers Currently Installed</li>
           </ul>
         {% endif %}
       {% else %}
-        <ul class="list-group">
+        <ul class="list-group border border-secondary">
           <li class="list-group-item">No Servers Currently Installed</li>
         </ul>
       {% endif %}
@@ -46,8 +52,53 @@
       <br />
 
       <h2 style="color: white;">Other Options</h2>
-      <div class="list-group">
+      <div class="list-group border border-secondary">
         <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server </a>
         <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation </a>
       </div>
+
+      <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
+      <div class="container bg-dark border border-secondary rounded-3" id="game-server-stats">
+        <div class="row">
+          <div class="pt-2 col">
+            <h4>Disk</h4>
+            <canvas id="diskChart"></canvas>
+          </div>
+          <div class="pt-2 col">
+            <h4>CPU</h4>
+            <canvas id="cpuChart"></canvas>
+            <canvas id="loadChart"></canvas>
+          </div>
+          <div class="pt-2 col">
+            <h4>Mem</h4>
+            <canvas id="memChart"></canvas>
+          </div>
+        </div>
+
+        <script>
+          const usedColor = "{{graphs_primary}}";
+          const freeColor = "{{graphs_secondary}}";
+          const stats = document.getElementById('game-server-stats');
+          const chevron = document.getElementById('chevron');
+          function toggleStats() {
+            if (stats.style.display === 'none'){
+                stats.style.display = 'block';
+                chevron.src = '/static/img/chevron-up.png'
+            } else {
+                stats.style.display = 'none';
+                chevron.src = '/static/img/chevron-down.png'
+            }
+          }
+        </script>
+      </div>
+
+      <div class="container-flex bg-dark my-3 p-3 border border-secondary rounded">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked>
+          <label style='color:white;' class="form-check-label" for="flexSwitchCheckChecked">Auto Refresh Page (5 minutes)</label>
+        </div>
+      </div>
+
+      <script src="/static/js/stats_to_charts.js"></script>
+      <script src="/static/js/auto_refresh.js"></script>
 {% endblock %}

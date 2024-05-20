@@ -378,3 +378,42 @@ def restart_self(restart_cmd):
             universal_newlines=True)
 
 
+def get_server_stats():
+    stats = dict() 
+
+    # Disk
+    total, used, free = shutil.disk_usage("/")
+    # Add ~4% for ext4 filesystem metadata usage.
+    percent_used = (((total * .04) + used) / total) * 100
+    stats["disk"] = {
+        'total': total, 
+        'used': used, 
+        'free': free, 
+        'percent_used': percent_used
+    }
+
+    # CPU
+    load1, load5, load15 = psutil.getloadavg()
+    cpu_usage = (load1/os.cpu_count()) * 100
+    stats["cpu"] = {
+        'load1': load1,
+        'load5': load5,
+        'load15': load15,
+        'cpu_usage': cpu_usage
+    }
+
+    # Mem
+    mem = psutil.virtual_memory()
+    # Total, used, available, percent_used.
+    stats["mem"] = {
+        'total': mem[0], 
+        'used': mem[3],
+        'free': mem[1],
+        'percent_used': mem[2]
+    }
+
+    return stats
+
+
+
+

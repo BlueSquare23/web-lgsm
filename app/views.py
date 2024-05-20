@@ -39,6 +39,12 @@ def home():
     # Import config data.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
+    graphs_primary = config['aesthetic']['graphs_primary']
+    graphs_secondary = config['aesthetic']['graphs_secondary']
+
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read(f'{base_dir}/main.conf')
 
     # Kill any lingering background watch processes
     # Used in case console page is clicked away from.
@@ -51,7 +57,9 @@ def home():
     server_status_dict = get_server_statuses(installed_servers)
 
     return render_template("home.html", user=current_user, \
-                        server_status_dict=server_status_dict)
+                        server_status_dict=server_status_dict, \
+                        graphs_primary=graphs_primary, \
+                        graphs_secondary=graphs_secondary)
 
 
 ######### Controls Page #########
@@ -317,6 +325,13 @@ def install():
             servers=install_list, text_color=text_color, bs_colors=bs_colors, \
             install_name=install_name, text_area_height=text_area_height)
 
+
+######### Stats Page #########
+@views.route("/stats", methods=['GET'])
+@login_required
+def get_stats():
+    server_stats = get_server_stats()
+    return json.dumps(server_stats, indent=4)
 
 ######### Output Page #########
 

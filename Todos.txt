@@ -1,8 +1,16 @@
 ## Beta Version 1.6 Todos
 
 * Do a thorough refactor.
-  - Spend some time just re-reading my own code looking for bugs / improments.
+  - Spend some time just re-reading my own code looking for bugs / improvements.
   - More unit testing will probably help with this.
+
+* Add in basic game server stats interface.
+  - Just basic metrics like:
+    - Mem Usage
+    - Disk Usage
+    - CPU Usage
+  - Real time graphs would be cool eventually, but lets start small and just
+    focus on getting the values piped to the frontend.
 
 ## In Idea Phase...
 

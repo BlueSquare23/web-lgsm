@@ -177,9 +177,9 @@ More information about that coming soon in the docs folder.
 ## :bug: Bugs
 
 I want to try to keep up with this as a pet project so feel free to report any
-bugs or security issues to me via [my site's contact form](https://johnlradford.io/contact.php).
-Or if you're interested in contributing to the project feel free to submit a
-pull request!
+bugs or security issues to me via [this project's github issues page](https://github.com/BlueSquare23/web-lgsm/issues/new) 
+or [my site's contact form](https://johnlradford.io/contact.php).  Or if you're interested in
+contributing to the project feel free to submit a pull request!
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

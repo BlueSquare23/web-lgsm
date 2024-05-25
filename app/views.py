@@ -13,11 +13,16 @@ from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
-                                redirect, Response, send_from_directory
+                                redirect, Response, send_from_directory, jsonify
 
 # Globals dictionaries to hold output objects.
 GAME_SERVERS = {}
 INSTALL_SERVERS = {}
+
+# Network stats globals.
+PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
+PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
+PREV_TIME = time.time()
 
 # Global last requested output time.
 last_request_for_output = int(time.time())
@@ -333,7 +338,30 @@ def install():
 @login_required
 def get_stats():
     server_stats = get_server_stats()
-    return json.dumps(server_stats, indent=4)
+    response = Response(json.dumps(server_stats, indent=4), status=200, mimetype='application/json')
+    return response
+
+@views.route('/stats/network-usage', methods=['GET'])
+def network_usage():
+    global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
+
+    # Get current counters and timestamp.
+    net_io = psutil.net_io_counters()
+    current_bytes_sent = net_io.bytes_sent
+    current_bytes_recv = net_io.bytes_recv
+    current_time = time.time()
+
+    # Calculate the rate of bytes sent and received per second.
+    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
+    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
+
+    # Update previous counters and timestamp.
+    PREV_BYTES_SENT = current_bytes_sent
+    PREV_BYTES_RECV = current_bytes_recv
+    PREV_TIME = current_time
+
+    return jsonify(bytes_sent_rate=bytes_sent_rate, bytes_recv_rate=bytes_recv_rate)
+
 
 ######### Output Page #########
 

@@ -7,6 +7,7 @@
   {{ stat }}: {{ server_stats[stat] }}<br>
 {% endfor %}
 #}
+
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
       <br />
@@ -61,21 +62,26 @@
         <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
         <div class="container bg-dark border border-secondary rounded-3" id="game-server-stats">
           <div class="row">
-            <div class="pt-2 col">
+            <div class="p-2 col">
               <h4>Disk</h4>
               <canvas id="diskChart"></canvas>
             </div>
-            <div class="pt-2 col">
+            <div class="p-2 col">
               <h4>CPU</h4>
               <canvas id="cpuChart"></canvas>
-              <canvas id="loadChart"></canvas>
             </div>
-            <div class="pt-2 col">
+            <div class="p-2 col">
               <h4>Mem</h4>
               <canvas id="memChart"></canvas>
             </div>
+            <div class="p-2 col">
+              <h4>Network</h4>
+              <canvas id="networkChart"></canvas>
+              <canvas id="loadChart"></canvas>
+            </div>
           </div>
 
+          <a href="/stats">View JSON</a>
           <script>
             const usedColor = "{{graphs_primary}}";
             const freeColor = "{{graphs_secondary}}";
@@ -101,6 +107,10 @@
         </div>
 
         <script src="/static/js/stats_to_charts.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+        <script src="/static/js/draw_network_chart.js"></script>
         <script src="/static/js/auto_refresh.js"></script>
       {% endif %}
 {% endblock %}

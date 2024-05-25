@@ -377,6 +377,23 @@ def restart_self(restart_cmd):
             stderr = subprocess.PIPE,
             universal_newlines=True)
 
+def get_network_stats(interval=1):
+    net_io_1 = psutil.net_io_counters()
+    time.sleep(interval)
+    net_io_2 = psutil.net_io_counters()
+
+    net_stats = {
+        'bytes_sent_per_sec': (net_io_2.bytes_sent - net_io_1.bytes_sent) / interval,
+        'bytes_recv_per_sec': (net_io_2.bytes_recv - net_io_1.bytes_recv) / interval,
+        'packets_sent_per_sec': (net_io_2.packets_sent - net_io_1.packets_sent) / interval,
+        'packets_recv_per_sec': (net_io_2.packets_recv - net_io_1.packets_recv) / interval,
+        'errin': net_io_2.errin - net_io_1.errin,
+        'errout': net_io_2.errout - net_io_1.errout,
+        'dropin': net_io_2.dropin - net_io_1.dropin,
+        'dropout': net_io_2.dropout - net_io_1.dropout
+    }
+
+    return net_stats
 
 def get_server_stats():
     stats = dict() 
@@ -411,6 +428,9 @@ def get_server_stats():
         'free': mem[1],
         'percent_used': mem[2]
     }
+
+    # Network
+#    stats["network"] = get_network_stats()
 
     return stats
 

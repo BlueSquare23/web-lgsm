@@ -56,11 +56,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 }]
             };
 
+/*
+            const networkData = {
+                labels: ['Bytes Sent', 'Bytes Received'],
+                datasets: [{
+                    label: 'Network Usage',
+                    data: [
+                        data.network.bytes_sent_per_sec,
+                        data.network.bytes_recv_per_sec,
+                    ],
+                    backgroundColor: [usedColor, freeColor]
+                }]
+            };
+*/
+
             // Create the charts
             const ctxDisk = document.getElementById('diskChart').getContext('2d');
             const ctxCpu = document.getElementById('cpuChart').getContext('2d');
             const ctxLoad = document.getElementById('loadChart').getContext('2d');
             const ctxMem = document.getElementById('memChart').getContext('2d');
+            const ctxNetwork = document.getElementById('networkChart').getContext('2d');
 
             new Chart(ctxDisk, {
                 type: 'pie',
@@ -93,6 +108,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     responsive: true,
                 }
             });
+
+/*
+            new Chart(ctxNetwork, {
+                type: 'bar',
+                data: networkData,
+                options: {
+                    responsive: true,
+                }
+            });
+*/
         })
         .catch(error => console.error('Error fetching data:', error));
 });

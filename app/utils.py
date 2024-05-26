@@ -11,6 +11,11 @@ from . import db
 from .models import GameServer
 from flask import flash
 
+# Network stats globals.
+PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
+PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
+PREV_TIME = time.time()
+
 # Holds the output from a running daemon thread.
 class OutputContainer:
     def __init__(self, output_lines, process_lock):
@@ -377,23 +382,29 @@ def restart_self(restart_cmd):
             stderr = subprocess.PIPE,
             universal_newlines=True)
 
-def get_network_stats(interval=1):
-    net_io_1 = psutil.net_io_counters()
-    time.sleep(interval)
-    net_io_2 = psutil.net_io_counters()
 
-    net_stats = {
-        'bytes_sent_per_sec': (net_io_2.bytes_sent - net_io_1.bytes_sent) / interval,
-        'bytes_recv_per_sec': (net_io_2.bytes_recv - net_io_1.bytes_recv) / interval,
-        'packets_sent_per_sec': (net_io_2.packets_sent - net_io_1.packets_sent) / interval,
-        'packets_recv_per_sec': (net_io_2.packets_recv - net_io_1.packets_recv) / interval,
-        'errin': net_io_2.errin - net_io_1.errin,
-        'errout': net_io_2.errout - net_io_1.errout,
-        'dropin': net_io_2.dropin - net_io_1.dropin,
-        'dropout': net_io_2.dropout - net_io_1.dropout
+def get_network_stats():
+    global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
+
+    # Get current counters and timestamp.
+    net_io = psutil.net_io_counters()
+    current_bytes_sent = net_io.bytes_sent
+    current_bytes_recv = net_io.bytes_recv
+    current_time = time.time()
+
+    # Calculate the rate of bytes sent and received per second.
+    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
+    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
+
+    # Update previous counters and timestamp.
+    PREV_BYTES_SENT = current_bytes_sent
+    PREV_BYTES_RECV = current_bytes_recv
+    PREV_TIME = current_time
+
+    return {
+        'bytes_sent_rate': bytes_sent_rate,
+        'bytes_recv_rate': bytes_recv_rate
     }
-
-    return net_stats
 
 def get_server_stats():
     stats = dict() 
@@ -430,7 +441,7 @@ def get_server_stats():
     }
 
     # Network
-#    stats["network"] = get_network_stats()
+    stats["network"] = get_network_stats()
 
     return stats
 

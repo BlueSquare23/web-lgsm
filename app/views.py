@@ -19,11 +19,6 @@ from flask import Blueprint, render_template, request, flash, url_for, \
 GAME_SERVERS = {}
 INSTALL_SERVERS = {}
 
-# Network stats globals.
-PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
-PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
-PREV_TIME = time.time()
-
 # Global last requested output time.
 last_request_for_output = int(time.time())
 
@@ -44,6 +39,7 @@ def home():
     # Import config data.
     config = configparser.ConfigParser()
     config.read(f'{base_dir}/main.conf')
+    text_color = config['aesthetic']['text_color']
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
     show_stats = config['aesthetic'].getboolean('show_stats')
@@ -66,7 +62,7 @@ def home():
                         server_status_dict=server_status_dict, \
                         graphs_primary=graphs_primary, \
                         graphs_secondary=graphs_secondary, \
-                        show_stats=show_stats)
+                        show_stats=show_stats, text_color=text_color)
 
 
 ######### Controls Page #########
@@ -333,34 +329,31 @@ def install():
             install_name=install_name, text_area_height=text_area_height)
 
 
-######### Stats Page #########
-@views.route("/stats", methods=['GET'])
+######### API System Usage #########
+@views.route("/api/system-usage", methods=['GET'])
 @login_required
 def get_stats():
     server_stats = get_server_stats()
     response = Response(json.dumps(server_stats, indent=4), status=200, mimetype='application/json')
     return response
 
-@views.route('/stats/network-usage', methods=['GET'])
-def network_usage():
-    global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
 
-    # Get current counters and timestamp.
-    net_io = psutil.net_io_counters()
-    current_bytes_sent = net_io.bytes_sent
-    current_bytes_recv = net_io.bytes_recv
-    current_time = time.time()
-
-    # Calculate the rate of bytes sent and received per second.
-    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
-    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
-
-    # Update previous counters and timestamp.
-    PREV_BYTES_SENT = current_bytes_sent
-    PREV_BYTES_RECV = current_bytes_recv
-    PREV_TIME = current_time
-
-    return jsonify(bytes_sent_rate=bytes_sent_rate, bytes_recv_rate=bytes_recv_rate)
+#    # Get current counters and timestamp.
+#    net_io = psutil.net_io_counters()
+#    current_bytes_sent = net_io.bytes_sent
+#    current_bytes_recv = net_io.bytes_recv
+#    current_time = time.time()
+#
+#    # Calculate the rate of bytes sent and received per second.
+#    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
+#    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
+#
+#    # Update previous counters and timestamp.
+#    PREV_BYTES_SENT = current_bytes_sent
+#    PREV_BYTES_RECV = current_bytes_recv
+#    PREV_TIME = current_time
+#
+#    return jsonify(bytes_sent_rate=bytes_sent_rate, bytes_recv_rate=bytes_recv_rate)
 
 
 ######### Output Page #########

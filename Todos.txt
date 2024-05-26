@@ -4,22 +4,38 @@
   - Spend some time just re-reading my own code looking for bugs / improvements.
   - More unit testing will probably help with this.
 
-* Test around with realtime networking stats more.
-  - Right now the disk cpu and mem pie charts are fine. Those metrics don't
-    really change a lot second by second. However, network data is different.
-  - For the network data I would really like to have a psuedo realtime graph.
-    and if I can figure it out for the network data might do it with the other
-    metrics as well.
+* Test new code.
+  - Test api route is returning valid json.
+  - Unit test new get_server_stats() functions.
+  - Investigate if frontend testing to see if its worth it for the new graphs.
+    - If they're robust enough on their own and people don't report any issues
+      with them then they might just sorta remain untested.
+    - ¯\_(ツ)_/¯
+
+* Impliment allow users to add existing installations owned by different system
+  users.
+  - Use sudo rule like the following to accomplish this:
+    user1 ALL=(user2) NOPASSWD: /home/mcserver/mcserver
+  - Add python code to accomplish this into utils function.
+    - Already have example code for this in the form of `sudoers.py`
+    - Just need to stitch it into utils.py
+  - Will need to remove restriction for installing outside of users home dir.
+  - Will need to expand database model to allow user field.
+    - This might break backward compatability with earlier versions :(
+    - For now I'll try to be smart about it and perhaps the app can support
+      databases where the installs are missing a user field, and it'll just
+      assume that's the system users the web app is running as.
+  - Will need to tweak controls page logic to check if web-lgsm user is not the
+    same as game server install user and if so run server cmds through sudo.
 
 ## In Idea Phase...
 
-* Allow web interface to work with lgsm installations owned by different users.
-  - Add config / settings option to "allow installs owned by other users".
-  - Possible use sudo to accomplish this.
-    - I'm thinking add sudoers rule allowing web-lgms user to run cmds as other
-      user without a password.
-    - Then if the game server is owned by another user cmds would be wrapped in:
-      `sudo -u otheruser "cmd"`
+* Explore putting new installations in their own user directory like the LGSM
+  reccomends to begin with.
+  - Yeah its a good point for process isolation game servers should be running
+    as their own user.
+  - Ngl, I've always just kept all of my game servers under the same user but
+    I should probably make this a bit more legit and up to spec.
 
 * Explore if containerizing project with docker is at all feezable /
   worthwhile.

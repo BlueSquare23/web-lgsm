@@ -1,18 +1,23 @@
 ## Beta Version 1.6 Todos
 
-* Do a thorough refactor.
-  - Spend some time just re-reading my own code looking for bugs / improvements.
-  - More unit testing will probably help with this.
+* Add new aesthetic config options to /settings page.
+  - Just like the existing settings, we'll want to setup a pass through so the
+    settings page will change the config file which will intern change the
+    appearance / behavior of the app.
+  - Need new setting form input fields for:
+    - graphs_primary: Color picker
+    - graphs_secondary: Color picker
+    - show_stats: Toggle / Checkbox (Bool)
+  - Add tests for these new settings dialog options.
 
 * Test new code.
   - Test api route is returning valid json.
-  - Unit test new get_server_stats() functions.
   - Investigate if frontend testing to see if its worth it for the new graphs.
     - If they're robust enough on their own and people don't report any issues
       with them then they might just sorta remain untested.
     - ¯\_(ツ)_/¯
 
-* Impliment allow users to add existing installations owned by different system
+* Implement allow users to add existing installations owned by different system
   users.
   - Use sudo rule like the following to accomplish this:
     user1 ALL=(user2) NOPASSWD: /home/mcserver/mcserver
@@ -21,26 +26,35 @@
     - Just need to stitch it into utils.py
   - Will need to remove restriction for installing outside of users home dir.
   - Will need to expand database model to allow user field.
-    - This might break backward compatability with earlier versions :(
+    - This might break backward compatibility with earlier versions :(
     - For now I'll try to be smart about it and perhaps the app can support
       databases where the installs are missing a user field, and it'll just
       assume that's the system users the web app is running as.
   - Will need to tweak controls page logic to check if web-lgsm user is not the
     same as game server install user and if so run server cmds through sudo.
+  - Will need to tweak add existing game server page 
+
+* Do light refactor of new code and old code. Look over some core parts with
+  fresh eyes to see if I'm doing anything obviously stupid anywhere or just
+  tweak around and make small improvements.
 
 ## In Idea Phase...
 
 * Explore putting new installations in their own user directory like the LGSM
-  reccomends to begin with.
+  recommends to begin with.
   - Yeah its a good point for process isolation game servers should be running
     as their own user.
   - Ngl, I've always just kept all of my game servers under the same user but
     I should probably make this a bit more legit and up to spec.
 
-* Explore if containerizing project with docker is at all feezable /
+* Explore if containerizing project with docker is at all feasible /
   worthwhile.
 
 ## Backlog
+
+* Do a thorough refactor.
+  - Spend some time just re-reading my own code looking for bugs / improvements.
+  - More unit testing will probably help with this.
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.

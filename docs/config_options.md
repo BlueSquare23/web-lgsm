@@ -23,6 +23,17 @@ These parameters control something about the way the app looks.
   text area for the install & controls pages.
   - Default: 10
 
+* `graphs_primary`: Controls the color of the %Used for the stats graphs.
+
+* `graphs_secondary`: Controls the color of the %Free for the stats graphs.
+
+* `show_stats`: Controls whether or not to show the Game Server Stats. The
+  stats and graphs are cool but they do generate a lot of requests to the web
+  server. If someone doesn't want to use them I wanted to make it easy to turn
+  them off.
+  - Default: Yes
+
+
 ### General Settings
 
 These settings control basic app behaviors.

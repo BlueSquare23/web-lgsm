@@ -225,19 +225,26 @@ $(document).ready(function() {
         }
     });
 
-    const diskCtx = document.getElementById('diskChart').getContext('2d');
-    const diskChart = createPieChart(diskCtx);
-    const bytesToGB = bytes => (bytes / (1024 ** 3)).toFixed(2);
+    $(document).ready(function() {
+        updateDiskChart(); // Call the function once when the document is ready.
 
-    setInterval(function() {
-        $.ajax({
-            url: '/api/system-usage',
-            method: 'GET',
-            success: function(data) {
-                diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used);
-                diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free);
-                diskChart.update();
-            }
-        });
-    }, 5000);
+        const diskCtx = document.getElementById('diskChart').getContext('2d');
+        const diskChart = createPieChart(diskCtx);
+        const bytesToGB = bytes => (bytes / (1024 ** 3)).toFixed(2);
+
+        // Set up the interval to update the chart every 5 seconds.
+        setInterval(updateDiskChart, 5000);
+
+        function updateDiskChart() {
+            $.ajax({
+                url: '/api/system-usage',
+                method: 'GET',
+                success: function(data) {
+                    diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used);
+                    diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free);
+                    diskChart.update();
+                }
+            });
+        }
+    });
 });

@@ -27,12 +27,13 @@ fantastic tool for installing and administering game servers via the CLI.
 However, some users would rather manage their game server through a web
 interface. That is what this project attempts to be.
 
-> :round_pushpin: _Note: The web-lgsm is a fan project, and **NOT** affiliated
-> in any way with the official [LSGM Project](https://linuxgsm.com/)_
+> :round_pushpin: _<span style="color: orange;">Note</span>: The web-lgsm is a
+> fan project, and <span style="color: red;">**NOT**</span> affiliated in any
+> way with the official [LSGM Project](https://linuxgsm.com/)_
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
-## :arrow_double_down: Installation
+## :arrow_double_down: Installation (Debian & Ubuntu Only)
 
 * First `SSH` to the server where you're running the LGSM and clone this repo
   as your user (NOT root):
@@ -59,6 +60,17 @@ cd web-lgsm
 ```
 ./init.sh stop
 ```
+
+> :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
+> `install.sh` script only supports Debian & Ubuntu Linux. However, technically
+> all the project needs to run is python3.7 or greater and some common shell
+> utilites._
+> 
+> _If you're able to install the required dependacnies through your
+> distributions package manager and install the required python modules then
+> you should be able to run this on basically any flavor of Linux that is
+> supported by the base LGSM project._
+
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ### :film_strip: Installation Setup & Overview Video Tutorial
@@ -134,8 +146,9 @@ of the config file.
 
 [:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
 
-> :round_pushpin: _Note: the config editor is disabled by default and can only be enabled by
-> editing the `main.conf` file directly._
+> :round_pushpin: _<span style="color: orange;">Note</span>: the config editor
+> is disabled by default and can only be enabled by editing the `main.conf`
+> file directly._
 
 #### Settings Page
 

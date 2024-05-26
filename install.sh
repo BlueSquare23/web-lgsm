@@ -26,20 +26,21 @@ if [[ "$EUID" -eq 0 ]]; then
 fi
 
 if [[ $(uname) != "Linux" ]]; then
-    echo -e "${red}Only run on Ubuntu Linux!"
+    echo -e "${red}Only run install script on Debian or Ubuntu Linux!"
     exit 3
 fi
 
 if [[ ! -f '/etc/os-release' ]]; then
     echo -e "${red}No /etc/os-release file found!${reset}"
-    echo -e "${red}Only run on Ubuntu Linux!${reset}"
+    echo -e "${red}Only run install script on Debian or Ubuntu Linux!${reset}"
     exit 3
 fi
 
 sys_name=$(grep -w 'NAME' /etc/os-release|cut -d= -f2|tr -d '"')
 
 if [[ ! $sys_name =~ Ubuntu|Debian ]]; then
-    echo -e "${red}Only Supported on Debian & Ubuntu Linux!${reset}"
+    echo -e "${red}Install Script Only Supports Debian & Ubuntu Linux!${reset}"
+    echo -e "${yellow}See Readme.md for more info.${reset}"
     exit 3
 fi
 

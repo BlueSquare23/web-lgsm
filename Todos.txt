@@ -38,6 +38,10 @@
   fresh eyes to see if I'm doing anything obviously stupid anywhere or just
   tweak around and make small improvements.
 
+* Add a new gifs for the home & controls page and update Readme.
+  - Replace old home page png with new imbeded gif.
+  - Replace old install page gif with new one that includes user.
+
 ## In Idea Phase...
 
 * Explore putting new installations in their own user directory like the LGSM

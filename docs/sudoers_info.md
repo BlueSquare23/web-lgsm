@@ -24,3 +24,15 @@ bottom of it.
 Then your web-lgsm process should be able to manage game servers owned by other
 users!
 
+## With Live Console
+
+Note: Technically, if you want the console to work for game servers owned by
+other users the line you'll actually want to use should look something like
+this.
+
+```
+user1 ALL=(user2) NOPASSWD: /home/user2/gameserver_script, /usr/bin/tmux, /usr/bin/watch
+```
+
+As those other two utilities are also require to allow the live web console
+output to work.

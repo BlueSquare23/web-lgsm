@@ -144,6 +144,8 @@ def controls():
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
     if script_arg:
+        system_user = getpass.getuser()
+
         # Validate script_arg against contents of commands.json file.
         if is_invalid_command(script_arg, server.script_name, send_cmd):
             flash("Invalid Command!", category="error")
@@ -165,8 +167,13 @@ def controls():
                 flash("Cannot find socket for server!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
+            cmd = []
+            # If gs not owned by system user, prepend sudo -u user to cmd.
+            if server.username != system_user:
+                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+
             # Use daemonized `watch` command to keep live console running.
-            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, 'capture-pane', '-pt', server.script_name]
+            cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, 'capture-pane', '-pt', server.script_name]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()
@@ -191,7 +198,12 @@ def controls():
                 flash("Server is Off! Cannot send commands to console!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
-            cmd = [f'{script_path}', f'{script_arg}', f'{console_cmd}']
+            cmd = []
+            # If gs not owned by system user, prepend sudo -u user to cmd.
+            if server.username != system_user:
+                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+
+            cmd += [script_path, script_arg, console_cmd]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='ConsoleCMD')
             daemon.start()
@@ -201,7 +213,7 @@ def controls():
         else:
             cmd = []
             # If gs not owned by system user, prepend sudo -u user to cmd.
-            if server.username != getpass.getuser():
+            if server.username != system_user:
                 cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
 
             cmd += [script_path, script_arg]

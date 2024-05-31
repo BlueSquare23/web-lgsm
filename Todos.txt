@@ -1,18 +1,8 @@
 ## Beta Version 1.6 Todos
 
-* Move JS out of home page into its own files.
-  - Also audit existing js files to make sure I'm still using them all.
-    - I honestly forget.
-
-* Add new aesthetic config options to /settings page.
-  - Just like the existing settings, we'll want to setup a pass through so the
-    settings page will change the config file which will intern change the
-    appearance / behavior of the app.
-  - Need new setting form input fields for:
-    - graphs_primary: Color picker
-    - graphs_secondary: Color picker
-    - show_stats: Toggle / Checkbox (Bool)
-  - Add tests for these new settings dialog options.
+* Add tests for new settings page options.
+  - Need to test two new color pickers for stats_primary and stats_secondary.
+  - Also need to add tests for live server stats checkbox.
 
 * Test new code.
   - Test api route is returning valid json.

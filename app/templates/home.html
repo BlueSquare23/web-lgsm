@@ -81,15 +81,6 @@
             const freeColor = "{{config_options.graphs_secondary}}";
             const stats = document.getElementById('game-server-stats');
             const chevron = document.getElementById('chevron');
-            function toggleStats() {
-              if (stats.style.display === 'none'){
-                  stats.style.display = 'block';
-                  chevron.src = '/static/img/chevron-up.png'
-              } else {
-                  stats.style.display = 'none';
-                  chevron.src = '/static/img/chevron-down.png'
-              }
-            }
           </script>
         </div>
 
@@ -98,16 +89,12 @@
         <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
         <script src="/static/js/graph-charts.js"></script>
+        <script src="/static/js/toggle-stats.js"></script>
 
 
         {% if config_options.show_barrel_roll %}
           <!-- Mission Critical Barrel-Roll Code -->
-          <script>
-              function doBarrelRoll() {
-                document.body.classList.add('barrel-roll');
-                setTimeout(() => document.body.classList.remove('barrel-roll'), 1000);
-              }
-          </script>
+          <script src="/static/js/do-a-barrel-roll.js"></script>
           <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
         {% endif %}
 

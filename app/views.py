@@ -4,6 +4,7 @@ import sys
 import json
 import time
 import shutil
+import getpass
 import subprocess
 import configparser
 from . import db
@@ -198,7 +199,12 @@ def controls():
             
         # If its not the console or send command
         else:
-            cmd = [f'{script_path}', f'{script_arg}']
+            cmd = []
+            # If gs not owned by system user, prepend sudo -u user to cmd.
+            if server.username != getpass.getuser():
+                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+
+            cmd += [script_path, script_arg]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Command')
             daemon.start()
@@ -311,7 +317,8 @@ def install():
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
-                install_path=install_path, script_name=server_script_name)
+                install_path=install_path, script_name=server_script_name, \
+                username=getpass.getuser())
         db.session.add(new_game_server)
         db.session.commit()
 
@@ -339,24 +346,6 @@ def get_stats():
     server_stats = get_server_stats()
     response = Response(json.dumps(server_stats, indent=4), status=200, mimetype='application/json')
     return response
-
-
-#    # Get current counters and timestamp.
-#    net_io = psutil.net_io_counters()
-#    current_bytes_sent = net_io.bytes_sent
-#    current_bytes_recv = net_io.bytes_recv
-#    current_time = time.time()
-#
-#    # Calculate the rate of bytes sent and received per second.
-#    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
-#    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
-#
-#    # Update previous counters and timestamp.
-#    PREV_BYTES_SENT = current_bytes_sent
-#    PREV_BYTES_RECV = current_bytes_recv
-#    PREV_TIME = current_time
-#
-#    return jsonify(bytes_sent_rate=bytes_sent_rate, bytes_recv_rate=bytes_recv_rate)
 
 
 ######### API CMD Output Page #########
@@ -567,6 +556,7 @@ def add():
         install_name = request.form.get("install_name")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
+        username = request.form.get("username")
 
         # Check all required args are submitted.
         for required_form_item in (install_name, install_path, script_name):
@@ -578,6 +568,15 @@ def add():
             if len(required_form_item) > 150:
                 flash("Form field too long!", category='error')
                 return redirect(url_for('views.add'))
+
+        system_user = getpass.getuser()
+        # Set default user if none provided.
+        if username == None or username == '':
+            username = system_user
+
+        if len(username) > 150:
+            flash("Form field too long!", category='error')
+            return redirect(url_for('views.add'))
 
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
@@ -604,10 +603,6 @@ def add():
             flash('Directory path does not exist.', category='error')
             status_code = 400
 
-        elif os.path.commonprefix((os.path.realpath(install_path),user_home_dir)) != user_home_dir:
-            flash(f'Only dirs under {user_home_dir} allowed!', category='error')
-            status_code = 400
-
         elif script_name_is_invalid(script_name):
             flash('Invalid game server script file name!', category='error')
             status_code = 400
@@ -620,11 +615,20 @@ def add():
         else:
             # Add the install to the database, then redirect home.
             new_game_server = GameServer(install_name=install_name, \
-                        install_path=install_path, script_name=script_name)
+                        install_path=install_path, script_name=script_name, \
+                        username=username)
             db.session.add(new_game_server)
             db.session.commit()
 
             flash('Game server added!')
+            if username != system_user:
+                flash(f'''
+                    NOTE: You will need to add a sudoers rule like the following in
+                    order for game servers owned by other users to function
+                    properly. You can edit your sudoers file using: "sudo visudo".
+                    Add this line: 
+                    {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}
+                ''')
             return redirect(url_for('views.home'))
 
     return render_template("add.html", user=current_user), status_code

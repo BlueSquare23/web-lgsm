@@ -1,24 +1,5 @@
 ## Beta Version 1.6 Todos
 
-* Implement allow users to add existing installations owned by different system
-  users.
-  - Use sudo rule like the following to accomplish this:
-    user1 ALL=(user2) NOPASSWD: /home/mcserver/mcserver
-    - I've decided against adding this automatically for the user. I don't like
-      the idea of monkeying with random peoples suoders files for them.
-      - Plus you have to get the sudo pass again, I don't like any of that.
-    - Instead after you add a game server that different from the web-lgsm user
-      its just going to direct the you to run visudo and put a line in there.
-  - Will need to remove restriction for installing outside of users home dir.
-  - Will need to expand database model to allow user field.
-    - This might break backward compatibility with earlier versions :(
-    - For now I'll try to be smart about it and perhaps the app can support
-      databases where the installs are missing a user field, and it'll just
-      assume that's the system users the web app is running as.
-  - Will need to tweak controls page logic to check if web-lgsm user is not the
-    same as game server install user and if so run server cmds through sudo.
-  - Will need to tweak add existing game server page 
-
 * Do light refactor of new code and old code. Look over some core parts with
   fresh eyes to see if I'm doing anything obviously stupid anywhere or just
   tweak around and make small improvements.
@@ -46,6 +27,8 @@
     as their own user.
   - Ngl, I've always just kept all of my game servers under the same user but
     I should probably make this a bit more legit and up to spec.
+  - I might make this an optional config param. Something like
+    `default_install_new_user = yes` or something idk.
 
 * Explore if containerizing project with docker is at all feasible /
   worthwhile.

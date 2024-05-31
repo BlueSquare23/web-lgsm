@@ -445,6 +445,3 @@ def get_server_stats():
 
     return stats
 
-
-
-

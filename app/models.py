@@ -13,8 +13,11 @@ class MetaData(db.Model):
 
 class GameServer(db.Model):
     id =  db.Column(db.Integer, primary_key=True)
-    # User supplied unique name.
+    # Unique name.
     install_name = db.Column(db.String(150), unique=True)
+    # Install path.
     install_path = db.Column(db.String(150))
     # The name of the lgsm game server script. For example, 'gmodserver'.
     script_name = db.Column(db.String(150))
+    # Username of game server user.
+    username = db.Column(db.String(150))

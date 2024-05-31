@@ -154,22 +154,6 @@ def test_add_responses(app, client):
                                                     follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.add')
 
-
-        ## Test upward directory traversal.
-        error_msg = b"Only dirs under"
-        resp_code = 400
-        response = client.post('/add', data={'install_name':'upup_test', \
-            'install_path':'../../../../../..', 'script_name':TEST_SERVER_NAME}, \
-                                                    follow_redirects=True)
-        check_response(response, error_msg, resp_code, 'views.add')
-
-        ## Test unauthorized dir.
-        response = client.post('/add', data={'install_name':'root_test', \
-            'install_path':'/', 'script_name':TEST_SERVER_NAME}, \
-                                                    follow_redirects=True)
-        check_response(response, error_msg, resp_code, 'views.add')
-
-
         ## Test legit server add.
         response = client.post('/add', data={'install_name':TEST_SERVER, \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \

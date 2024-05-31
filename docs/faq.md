@@ -27,3 +27,9 @@
       If you want to do that use SSH. This option is only for sending game
       server specific console commands to the running tmux session for your
       game server.
+
+4. Question: Why am I getting permission denied when trying to start my newly
+   added game server?
+  - Answer: Game servers owned by other users require that you add a special
+    sudoers rule in order to make the web-lgsm work properly. For more
+    information please see, `docs/sudoers_info.md`.

@@ -182,6 +182,7 @@ More information about that coming soon in the docs folder.
 * Database: [SQLite](https://www.sqlite.org/index.html)
 * ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
 * CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
+* JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
 * Testing: [Pytest](https://docs.pytest.org/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 

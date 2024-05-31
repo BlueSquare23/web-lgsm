@@ -43,10 +43,15 @@ def home():
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
     show_stats = config['aesthetic'].getboolean('show_stats')
+    show_barrel_roll = config['aesthetic'].getboolean('show_barrel_roll')
 
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config_options = {
+        "text_color": text_color,
+        "graphs_primary": graphs_primary,
+        "graphs_secondary": graphs_secondary,
+        "show_stats": show_stats,
+        "show_barrel_roll": show_barrel_roll,
+    }
 
     # Kill any lingering background watch processes
     # Used in case console page is clicked away from.
@@ -60,9 +65,7 @@ def home():
 
     return render_template("home.html", user=current_user, \
                         server_status_dict=server_status_dict, \
-                        graphs_primary=graphs_primary, \
-                        graphs_secondary=graphs_secondary, \
-                        show_stats=show_stats, text_color=text_color)
+                        config_options=config_options)
 
 
 ######### Controls Page #########
@@ -409,17 +412,31 @@ def settings():
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
+    graphs_primary = config['aesthetic']['graphs_primary']
+    graphs_secondary = config['aesthetic']['graphs_secondary']
+    show_stats = config['aesthetic'].getboolean('show_stats')
+
+    config_options = {
+        "text_color": text_color,
+        "text_area_height": text_area_height,
+        "remove_files": remove_files,
+        "graphs_primary": graphs_primary,
+        "graphs_secondary": graphs_secondary,
+        "show_stats": show_stats
+    }
 
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
-                text_color=text_color, remove_files=remove_files, \
-                               text_area_height=text_area_height)
+                                    config_options=config_options)
 
-    color_pref = request.form.get("text_color")
+    text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
     height_pref = request.form.get("text_area_height")
     purge_socks = request.form.get("purge_socks")
     update_weblgsm = request.form.get("update_weblgsm")
+    graphs_primary_pref = request.form.get("graphs_primary")
+    graphs_secondary_pref = request.form.get("graphs_secondary")
+    show_stats_pref = request.form.get("show_stats")
 
     # Purge user's tmux socket files.
     if purge_socks:
@@ -430,15 +447,29 @@ def settings():
     if file_pref == "false":
         config['settings']['remove_files'] = 'no'
 
-    # Set text color setting.
-    config['aesthetic']['text_color'] = text_color
-    if color_pref:
+    # Text color settings.
+    def validate_color(color):
         # Validate color code with regular expression.
-        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
+        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color):
             flash('Invalid color!', category='error')
             return redirect(url_for('views.settings'))
 
-        config['aesthetic']['text_color'] = color_pref
+    if text_color_pref:
+        validate_color(text_color_pref)
+        config['aesthetic']['text_color'] = text_color_pref
+
+    if graphs_primary_pref:
+        validate_color(graphs_primary_pref)
+        config['aesthetic']['graphs_primary'] = graphs_primary_pref
+
+    if graphs_secondary_pref:
+        validate_color(graphs_secondary)
+        config['aesthetic']['graphs_secondary'] = graphs_secondary_pref
+
+    # Default to no, if checkbox is unchecked.
+    config['aesthetic']['show_stats'] = 'no'
+    if show_stats_pref == 'true':
+        config['aesthetic']['show_stats'] = 'yes'
 
     # Set default text area height setting.
     config['aesthetic']['text_area_height'] = text_area_height

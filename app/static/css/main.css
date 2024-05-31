@@ -10,6 +10,14 @@ p, li, b {
   color: white;
 }
 
+@keyframes barrel-roll {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.barrel-roll {
+  animation: barrel-roll 1s linear;
+}
+
 /* Style for textarea to mimic pre tag appearance */
 textarea {
   font-family: monospace;  /* Use a monospaced font for uniform character width */

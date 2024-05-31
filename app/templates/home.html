@@ -2,11 +2,6 @@
 {% block title %}Web LGSM Home{% endblock %}
 
 {% block content %}
-{# TESTING PASSING STATS THROUGH
-{% for stat in server_stats %}
-  {{ stat }}: {{ server_stats[stat] }}<br>
-{% endfor %}
-#}
 
       <br />
       <h2 style="color: white;">Installed Servers</h2>
@@ -56,7 +51,7 @@
         <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation </a>
       </div>
 
-      {% if show_stats %}
+      {% if config_options.show_stats %}
         <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
         <div class="container bg-dark border border-secondary rounded-3" id="game-server-stats">
           <div class="row">
@@ -81,9 +76,9 @@
 
           <a href="/api/system-usage">View JSON</a>
           <script>
-            const userColor = "{{text_color}}";
-            const usedColor = "{{graphs_primary}}";
-            const freeColor = "{{graphs_secondary}}";
+            const userColor = "{{config_options.text_color}}";
+            const usedColor = "{{config_options.graphs_primary}}";
+            const freeColor = "{{config_options.graphs_secondary}}";
             const stats = document.getElementById('game-server-stats');
             const chevron = document.getElementById('chevron');
             function toggleStats() {
@@ -103,5 +98,18 @@
         <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
         <script src="/static/js/graph-charts.js"></script>
+
+
+        {% if config_options.show_barrel_roll %}
+          <!-- Mission Critical Barrel-Roll Code -->
+          <script>
+              function doBarrelRoll() {
+                document.body.classList.add('barrel-roll');
+                setTimeout(() => document.body.classList.remove('barrel-roll'), 1000);
+              }
+          </script>
+          <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
+        {% endif %}
+
       {% endif %}
 {% endblock %}

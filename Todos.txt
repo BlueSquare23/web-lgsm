@@ -1,5 +1,9 @@
 ## Beta Version 1.6 Todos
 
+* Move JS out of home page into its own files.
+  - Also audit existing js files to make sure I'm still using them all.
+    - I honestly forget.
+
 * Add new aesthetic config options to /settings page.
   - Just like the existing settings, we'll want to setup a pass through so the
     settings page will change the config file which will intern change the
@@ -41,6 +45,7 @@
 * Add a new gifs for the home & controls page and update Readme.
   - Replace old home page png with new imbeded gif.
   - Replace old install page gif with new one that includes user.
+  - Replace old setting page gif with one that shows new settings.
 
 ## In Idea Phase...
 

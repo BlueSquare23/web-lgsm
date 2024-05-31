@@ -33,6 +33,11 @@ These parameters control something about the way the app looks.
   them off.
   - Default: Yes
 
+* `show_barrel_roll`: Controls whether or not to show the "Do a Barrel Roll"
+  button. Hidden feature, just for you if you're reading this. Set it to yes
+  and then click do a barrel roll on the home page!
+  - Default: Hidden Feature
+
 
 ### General Settings
 
@@ -46,19 +51,20 @@ These settings control basic app behaviors.
   or disabled.
   - Default: No (aka cfg file editor disabled)
   - Warning: Enabling this feature has inherent security risks! Certain game
-    server cfgs allow for arbitrary shell code to be inserted and run once the
-    game server is started. If you're going to enable this feature just be sure
-    to have a strong password, have SSL, and trust who you give web-lgsm access
-    too!
+    server cfgs may allow for arbitrary shell code to be inserted and run once
+    the game server is started. If you're going to enable this feature just be
+    sure to have a strong password, have SSL, and trust who you give web-lgsm
+    access too!
 
 * `send_cmd`: Controls if "Send command to running game server console" button
   on /controls page is enabled or disabled.
   - Default: No (aka send button is disabled)
   - Warning: Similarly to the `cfg_editor` option, there are some risks
     associated with enabling the `send_cmd` setting. Certain game server
-    consoles allow arbitray code execution. If you're going to enable this
+    consoles may allow arbitray code execution. If you're going to enable this
     feature just be sure to have a strong password, have SSL, and trust who you
     give web-lgsm access too!
+
 
 ## A Subtle Distinction in Nomenclature
 

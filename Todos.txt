@@ -39,6 +39,16 @@
 
 ## In Idea Phase...
 
+* Create a single point of entry script for whole project.
+  - So right now I have the init script and the debug script and the setup as a
+    systemd service script and I was thinking of adding another script for
+    resetting the web portal login pass.
+  - Instead of having all these be differnt scripts, roll them all into one,
+    single point of entry, `web-lgsm` script.
+  - The `install.sh` script can still be its own thing.
+  - But pretty much everything else in the script dir can be controlled by one
+    main script for the whole project.
+
 * Explore putting new installations in their own user directory like the LGSM
   recommends to begin with.
   - Yeah its a good point for process isolation game servers should be running

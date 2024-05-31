@@ -3,7 +3,7 @@
 function updateTextArea(){
   return $.ajax({
     dataType: 'json',
-    url: '/output',  // URL of output json api.
+    url: '/api/cmd-output',  // URL of output json api.
     type: 'GET',
     data: {
       'server': serverName

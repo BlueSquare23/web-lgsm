@@ -359,9 +359,9 @@ def get_stats():
 #    return jsonify(bytes_sent_rate=bytes_sent_rate, bytes_recv_rate=bytes_recv_rate)
 
 
-######### Output Page #########
+######### API CMD Output Page #########
 
-@views.route("/output", methods=['GET'])
+@views.route("/api/cmd-output", methods=['GET'])
 @login_required
 def no_output():
     # Collect args from GET request.
@@ -448,22 +448,29 @@ def settings():
         config['settings']['remove_files'] = 'no'
 
     # Text color settings.
-    def validate_color(color):
+    def valid_color(color):
         # Validate color code with regular expression.
-        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color):
-            flash('Invalid color!', category='error')
-            return redirect(url_for('views.settings'))
+        if re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color):
+            return True
+
+        return False
 
     if text_color_pref:
-        validate_color(text_color_pref)
+        if not valid_color(text_color_pref):
+            flash('Invalid text color!', category='error')
+            return redirect(url_for('views.settings'))
         config['aesthetic']['text_color'] = text_color_pref
 
     if graphs_primary_pref:
-        validate_color(graphs_primary_pref)
+        if not valid_color(graphs_primary_pref):
+            flash('Invalid primary color!', category='error')
+            return redirect(url_for('views.settings'))
         config['aesthetic']['graphs_primary'] = graphs_primary_pref
 
     if graphs_secondary_pref:
-        validate_color(graphs_secondary)
+        if not valid_color(graphs_secondary_pref):
+            flash('Invalid secondary color!', category='error')
+            return redirect(url_for('views.settings'))
         config['aesthetic']['graphs_secondary'] = graphs_secondary_pref
 
     # Default to no, if checkbox is unchecked.

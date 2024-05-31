@@ -1,16 +1,5 @@
 ## Beta Version 1.6 Todos
 
-* Add tests for new settings page options.
-  - Need to test two new color pickers for stats_primary and stats_secondary.
-  - Also need to add tests for live server stats checkbox.
-
-* Test new code.
-  - Test api route is returning valid json.
-  - Investigate if frontend testing to see if its worth it for the new graphs.
-    - If they're robust enough on their own and people don't report any issues
-      with them then they might just sorta remain untested.
-    - ¯\_(ツ)_/¯
-
 * Implement allow users to add existing installations owned by different system
   users.
   - Use sudo rule like the following to accomplish this:

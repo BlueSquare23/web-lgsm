@@ -622,7 +622,7 @@ def add():
                     order for game servers owned by other users to function
                     properly. You can edit your sudoers file using: "sudo visudo".
                     Add this line: 
-                    {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}
+                    {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
                 ''')
             return redirect(url_for('views.home'))
 

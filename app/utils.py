@@ -407,6 +407,7 @@ def contains_bad_chars(i):
 
     return False
 
+
 # Run's self update script.
 def update_self():
     update_cmd = ['./scripts/update.sh', '-a']

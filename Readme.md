@@ -63,7 +63,7 @@ cd web-lgsm
 
 > :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
 > `install.sh` script only supports Debian & Ubuntu Linux. However, technically
-> all the project needs to run is python3.7 or greater and some common shell
+> all the project needs to run is python3.8 or greater and some common shell
 > utilites._
 > 
 > _If you're able to install the required dependacnies through your

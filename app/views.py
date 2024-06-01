@@ -165,7 +165,8 @@ def controls():
                 cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
 
             # Use daemonized `watch` command to keep live console running.
-            cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, 'capture-pane', '-pt', server.script_name]
+            cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, \
+                                        'capture-pane', '-pt', server.script_name]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()
@@ -251,7 +252,7 @@ def install():
                                                         'info', 'light']
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh("./scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"./scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -269,7 +270,6 @@ def install():
             if len(required_form_item) > 150:
                 flash("Form field too long!", category='error')
                 return redirect(url_for('views.install'))
-
 
         # Validate form submission data against install list in json file.
         if install_options_are_invalid(server_script_name, server_full_name):
@@ -578,10 +578,6 @@ def add():
                 flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
                                                             category="error")
                 return redirect(url_for('views.add'))
-
-
-        # Only allow lgsm installs under home dir.
-        user_home_dir = os.path.expanduser('~')
 
         if install_exists:
             flash('An installation by that name already exits.', category='error')

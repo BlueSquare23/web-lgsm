@@ -117,6 +117,7 @@ def get_socket_for_gs(server):
         if server in socket:
             return socket
 
+
 # Cleans up old dead tmux socket files.
 def purge_user_tmux_sockets():
     uid = os.getuid()
@@ -126,6 +127,7 @@ def purge_user_tmux_sockets():
         user_tmux_sockets = os.listdir(socket_dir)
         for socket in user_tmux_sockets:
             os.remove(socket_dir + '/' + socket)
+
 
 # After installation fixes lgsm cfg files.
 def post_install_cfg_fix(gs_dir):
@@ -358,6 +360,7 @@ def contains_bad_chars(i):
 
     return False
 
+# Run's self update script.
 def update_self():
     update_cmd = ['./scripts/update.sh', '-a']
     proc = subprocess.run(update_cmd,
@@ -374,6 +377,7 @@ def update_self():
     if 'Update Required' in proc.stdout:
         return 'Web LGSM Upgraded! Restarting momentarially...'
 
+
 # Sleep's 5 seconds then restarts the app.
 def restart_self(restart_cmd):
     time.sleep(5)
@@ -383,6 +387,7 @@ def restart_self(restart_cmd):
             universal_newlines=True)
 
 
+# Gets bytes in/out per second. Stores last value in global.
 def get_network_stats():
     global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
 
@@ -406,6 +411,9 @@ def get_network_stats():
         'bytes_recv_rate': bytes_recv_rate
     }
 
+
+# Returns disk, cpu, mem, and network stats. Later turned into json for home
+# page resource usage charts.
 def get_server_stats():
     stats = dict() 
 

@@ -57,6 +57,10 @@ def home():
     installed_servers = GameServer.query.all()
     servers_to_users = {}
     for server in installed_servers:
+        # Account for legacy db's that don't have a user field.
+        if server.username == None:
+            server.username = getpass.getuser()
+
         servers_to_users[server.install_name] = server.username
 
     # Fetch dict containing all servers and flag specifying if they're running

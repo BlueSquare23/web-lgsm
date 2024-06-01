@@ -7,10 +7,6 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
 
-class MetaData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    app_install_path = db.Column(db.String(150), unique=True)
-
 class GameServer(db.Model):
     id =  db.Column(db.Integer, primary_key=True)
     # Unique name.

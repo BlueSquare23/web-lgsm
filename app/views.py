@@ -33,13 +33,9 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=['GET'])
 @login_required
 def home():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
@@ -74,13 +70,9 @@ def home():
 @views.route("/controls", methods=['GET'])
 @login_required
 def controls():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     cfg_editor = config['settings']['cfg_editor']
@@ -236,13 +228,9 @@ def controls():
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 
@@ -263,7 +251,7 @@ def install():
                                                         'info', 'light']
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
+    check_and_get_lgsmsh("./scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -325,7 +313,7 @@ def install():
         os.mkdir(server_full_name)
         shutil.copy(f"scripts/{lgsmsh}", server_full_name)
 
-        install_path = base_dir + '/' + server_full_name
+        install_path = os.getcwd() + '/' + server_full_name
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
@@ -399,17 +387,13 @@ def no_output():
 @views.route("/settings", methods=['GET', 'POST'])
 @login_required
 def settings():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
@@ -497,12 +481,12 @@ def settings():
         # Have to cast back to string to save in config.
         config['aesthetic']['text_area_height'] = str(height_pref)
 
-    with open(f'{base_dir}/main.conf', 'w') as configfile:
+    with open('main.conf', 'w') as configfile:
          config.write(configfile)
 
     # Update's the weblgsm.
     if update_weblgsm:
-        status = update_self(base_dir)
+        status = update_self()
         flash("Settings Updated!")
         if 'Error:' in status:
             flash(status, category='error')
@@ -526,17 +510,13 @@ def settings():
 @views.route("/about", methods=['GET'])
 @login_required
 def about():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Kill any lingering background watch processes.
     # In case console page is clicked away from.
     kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
 
     return render_template("about.html", user=current_user, \
@@ -548,13 +528,9 @@ def about():
 @views.route("/add", methods=['GET', 'POST'])
 @login_required
 def add():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
     # Kill any lingering background watch processes in case console page is
@@ -651,13 +627,9 @@ def add():
 @views.route("/delete", methods=['GET', 'POST'])
 @login_required
 def delete():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
     # Delete via POST is for multiple deletions.
@@ -684,17 +656,13 @@ def delete():
 @views.route("/edit", methods=['GET', 'POST'])
 @login_required
 def edit():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 

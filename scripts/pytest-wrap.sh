@@ -25,7 +25,10 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
 fi
 
 if [[ -f 'app/database.db' ]]; then
-    rm 'app/database.db'
+    epoch=$(date +%s)
+    dbbackup="app/database.$epoch.db.bak"
+    echo "Backing database up to: $dbbackup"
+    mv 'app/database.db' $dbbackup
 fi
 
 ## If there's no Mockcraft dir then setup dummy Mockcraft install.

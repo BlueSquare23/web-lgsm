@@ -4,6 +4,7 @@
 *.misc
 *.swp
 *.pem
+*.bak
 linuxgsm.sh
 lgsm
 venv

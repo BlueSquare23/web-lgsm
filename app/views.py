@@ -572,13 +572,18 @@ def add():
             flash("Form field too long!", category='error')
             return redirect(url_for('views.add'))
 
+        # Returns None if invalid username.
+        if get_uid(username) == None:
+            flash("User not found on system!", category='error')
+            return redirect(url_for('views.add'))
+
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
 
         install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
         # Try to prevent arbitrary bad input.
-        for input_item in (install_name, install_path, script_name):
+        for input_item in (install_name, install_path, script_name, username):
             if contains_bad_chars(input_item):
                 flash("Illegal Character Entered!", category="error")
                 flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \

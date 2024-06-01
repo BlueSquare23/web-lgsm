@@ -129,7 +129,7 @@ def setup():
         else:
             # Add the new_user to the database, then redirect home.
             new_user = User(username=username, \
-                    password=generate_password_hash(password1, method='sha256'))
+                    password=generate_password_hash(password1, method='pbkdf2:sha256'))
             db.session.add(new_user)
             db.session.commit()
 

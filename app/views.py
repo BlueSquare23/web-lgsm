@@ -55,13 +55,16 @@ def home():
     kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
-    print(installed_servers[0].username)
+    servers_to_users = {}
+    for server in installed_servers:
+        servers_to_users[server.install_name] = server.username
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
     return render_template("home.html", user=current_user, \
+                        servers_to_users=servers_to_users, \
                         server_status_dict=server_status_dict, \
                         config_options=config_options)
 
@@ -157,7 +160,7 @@ def controls():
                 flash("Server is Off! No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
-            tmux_socket = get_socket_for_gs(server.script_name)
+            tmux_socket = get_socket_for_gs(server)
             if tmux_socket == None:
                 flash("Cannot find socket for server!", category='error')
                 return redirect(url_for('views.controls', server=server_name))

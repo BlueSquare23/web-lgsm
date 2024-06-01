@@ -1,9 +1,12 @@
 import os
 import re
 import sys
+import pwd
 import json
+import glob
 import time
 import shutil
+import getpass
 import psutil
 import requests
 import subprocess
@@ -79,31 +82,103 @@ def kill_watchers(last_request_for_output):
             child.kill()
 
 
+# Translates a username to a uid using pwd module.
+def get_uid(username):
+    try:
+        user_info = pwd.getpwnam(username)
+        return user_info.pw_uid
+    except KeyError:
+        return None
+
+
+# In order for the status indicators to work the /tmp/tmux-{uid} directory has
+# to be listable. The dir has 600 perms so ls needs run through sudo -u ls.
+def sudo_socket_ls(command):
+    try:
+        # Execute and capture output.
+        result = subprocess.run(command, check=True, text=True, \
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Split output into list of dirs.
+        dirs = result.stdout.splitlines()
+
+        return dirs
+    except subprocess.CalledProcessError as e:
+# Potential debug mode later on.
+#        print(f"Error executing command '{command}': {e.stderr}")
+        return []
+
+
 # Get's the list of servers that are currently turnned on.
 def get_server_statuses(all_game_servers):
+    # Used to check if gs is owned by web-lgsm proc or not.
+    system_user = getpass.getuser()
     # Initialize all servers inactive to start with.
     server_statuses = {}
-    for server in all_game_servers:
-        server_statuses[server.install_name] = 'inactive'
+    # Setup main game server dict.
+    game_servers = {}
 
-    # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
-    uid = os.getuid()
-    socket_dir = f"/tmp/tmux-{uid}"
+    for server in all_game_servers:
+        print(f"############## {server.install_name}")
+        server_statuses[server.install_name] = 'inactive'
+        game_servers[server.install_name] = [server.install_name, \
+            server.install_path, server.script_name, server.username] 
+
+    # List all tmux sessions for all users.
+    tmux_socdir_regex = '/tmp/tmux-*'
+    socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
+
     # Handle no sockets yet.
-    if not os.path.exists(socket_dir):
+    if not socket_dirs:
         return server_statuses
 
-    user_tmux_sockets = os.listdir(socket_dir)
+    # List comprehension to get all users.
+    all_gs_users = [server.username for server in all_game_servers] 
+
+    user_socket_files = {}
+    for user in all_gs_users:
+        for socket_dir in socket_dirs:
+            if str(get_uid(user)) in socket_dir:
+                ls_cmd = []
+                if user != system_user:
+                    ls_cmd += ['/usr/bin/sudo', '-n', '-u', user]
+                ls_cmd += ['/usr/bin/ls', socket_dir]
+                user_tmux_sockets = sudo_socket_ls(ls_cmd)
+                user_socket_files[user] = user_tmux_sockets
+
     for server in all_game_servers:
-        for socket in user_tmux_sockets:
+        for socket in user_socket_files[server.username]:
             if server.script_name in socket:
-                cmd = ['/usr/bin/tmux', '-L', socket, 'list-session']
+                cmd = []
+                if user != system_user:
+                    cmd += ['/usr/bin/sudo', '-n', '-u', server.username]
+
+                cmd += ['/usr/bin/tmux', '-L', socket, 'list-session']
                 proc = subprocess.run(cmd,
                         stdout = subprocess.DEVNULL,
                         stderr = subprocess.DEVNULL)
 
                 if proc.returncode == 0:
                     server_statuses[server.install_name] = 'active'
+                
+
+#    for socket_dir in socket_dirs:
+#        ls_cmd = [ , socket_dir]
+#        user_tmux_sockets = sudo_list_dir()
+#        for server in all_game_servers:
+#            for socket in user_tmux_sockets:
+#                if server.script_name in socket:
+#                    cmd = []
+#                    if server.username != getpass.getuser():
+#                        cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+#
+#                    cmd += ['/usr/bin/tmux', '-L', socket, 'list-session']
+#                    proc = subprocess.run(cmd,
+#                            stdout = subprocess.DEVNULL,
+#                            stderr = subprocess.DEVNULL)
+#
+#                    if proc.returncode == 0:
+#                        server_statuses[server.install_name] = 'active'
 
     return server_statuses
 

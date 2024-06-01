@@ -1,15 +1,27 @@
 ## Beta Version 1.6 Todos
 
+* Re-check requirements.txt with pipreqs make sure its got everything and its
+  all up to date.
+
 * Fix status indicators for game servers owned by other users.
   - Generally, all that status indicator code kinda needs looked at. It was
     hacked together by me quickly after the last time they (LGSM) changed
     things and broke the way I was getting that info.
 
-* When there are two tmux socket files go with the newer one.
+* Just discovered the existance of the `lgsm/data/server.uid` file and that
+  changes the whole way I'm doing the tmux status indicators.
+  - I've made some progress and there is code I want to keep just in case,
+    before switching approaches. So going to commit first.
+
+* Validate new username with new get_uid util function.
 
 * Do light refactor of new code and old code. Look over some core parts with
   fresh eyes to see if I'm doing anything obviously stupid anywhere or just
   tweak around and make small improvements.
+
+## Beta Version 1.7 Todos
+
+* Look into make config editor work through sudo.
 
 ## In Idea Phase...
 
@@ -31,6 +43,10 @@
     I should probably make this a bit more legit and up to spec.
   - I might make this an optional config param. Something like
     `default_install_new_user = yes` or something idk.
+
+* Look into adding a debug mode to conf / app.
+  - So if debug in conf is set to true it would just enable debug logging which
+    could be used to output what functions are doing n'@.
 
 * Explore if containerizing project with docker is at all feasible /
   worthwhile.

@@ -55,6 +55,7 @@ def home():
     kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
+    print(installed_servers[0].username)
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
@@ -136,7 +137,9 @@ def controls():
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
     if script_arg:
+        # For running cmds as alt users.
         system_user = getpass.getuser()
+        sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
 
         # Validate script_arg against contents of commands.json file.
         if is_invalid_command(script_arg, server.script_name, send_cmd):
@@ -160,9 +163,9 @@ def controls():
                 return redirect(url_for('views.controls', server=server_name))
 
             cmd = []
-            # If gs not owned by system user, prepend sudo -u user to cmd.
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
             if server.username != system_user:
-                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+                cmd += sudo_prepend
 
             # Use daemonized `watch` command to keep live console running.
             cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, \
@@ -192,9 +195,9 @@ def controls():
                 return redirect(url_for('views.controls', server=server_name))
 
             cmd = []
-            # If gs not owned by system user, prepend sudo -u user to cmd.
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
             if server.username != system_user:
-                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+                cmd += sudo_prepend
 
             cmd += [script_path, script_arg, console_cmd]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
@@ -205,9 +208,9 @@ def controls():
         # If its not the console or send command
         else:
             cmd = []
-            # If gs not owned by system user, prepend sudo -u user to cmd.
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
             if server.username != system_user:
-                cmd += ['/usr/bin/sudo', '-u', f'{server.username}']
+                cmd += sudo_prepend
 
             cmd += [script_path, script_arg]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \

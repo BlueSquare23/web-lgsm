@@ -37,5 +37,5 @@
 5. Question: I just updated to version 1.6 (or greater) from v1.5 (or below)
    and now my web-lgsm instance wont start. How do I fix this?
   - Answer: The database changed slightly with the release of v1.6. If you've
-    just updated to v1.6 (or greater) you can run the `scripts/update-db.sh`
-    script to update your database to be compatible with v1.6 and beyond.
+    just updated to v1.6 (or greater) from v1.5 (or below) you can run the
+    `update-db.sh` script to update your database to be compatible with v1.6.

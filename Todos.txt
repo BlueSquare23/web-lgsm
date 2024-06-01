@@ -1,13 +1,15 @@
 ## Beta Version 1.6 Todos
 
+* Fix status indicators for game servers owned by other users.
+  - Generally, all that status indicator code kinda needs looked at. It was
+    hacked together by me quickly after the last time they (LGSM) changed
+    things and broke the way I was getting that info.
+
+* When there are two tmux socket files go with the newer one.
+
 * Do light refactor of new code and old code. Look over some core parts with
   fresh eyes to see if I'm doing anything obviously stupid anywhere or just
   tweak around and make small improvements.
-
-* Add a new gifs for the home & controls page and update Readme.
-  - Replace old home page png with new imbeded gif.
-  - Replace old add page gif with new one that includes user.
-  - Replace old setting page gif with one that shows new settings.
 
 ## In Idea Phase...
 

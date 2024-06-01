@@ -6,7 +6,7 @@
 
 * Add a new gifs for the home & controls page and update Readme.
   - Replace old home page png with new imbeded gif.
-  - Replace old install page gif with new one that includes user.
+  - Replace old add page gif with new one that includes user.
   - Replace old setting page gif with one that shows new settings.
 
 ## In Idea Phase...

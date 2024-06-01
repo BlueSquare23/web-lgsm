@@ -96,7 +96,7 @@ you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 After creating a user, you'll be automatically logged in and redirected to the
 home page.
 
-[:framed_picture: Home Page Image](docs/images/home_page.png)
+![Home Page](docs/images/homepage.gif)
 
 From the home page you can do several things!
 

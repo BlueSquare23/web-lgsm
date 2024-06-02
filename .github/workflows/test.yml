@@ -20,7 +20,7 @@ env:
   CFG_DIR: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver"
   CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
   TEST_SERVER_NAME: 'mcserver'
-  VERSION: 1.5
+  VERSION: 1.6
   TERM: 'xterm-256color'
 
 jobs:

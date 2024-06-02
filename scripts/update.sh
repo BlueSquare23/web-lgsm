@@ -49,6 +49,7 @@ elif [ $LOCAL = $BASE ]; then
         modified=$(git status|grep modified|awk '{print $2}'|grep -Ev '.secret')
         if [[ -n $modified ]]; then
             echo "!!! The following files have been modified and will be overwritten by an update !!!"
+            echo "The main.conf will be backed up"
             for file in $modified; do
                 echo "    Modified: $file"
             done
@@ -64,13 +65,25 @@ elif [ $LOCAL = $BASE ]; then
     epoc=$(date +"%s")
     conf="main.conf"
     cp $conf $conf.$epoc.bak
-    echo "Copied existing $conf to $conf.$epoc.bak"
+    echo "Backing up $conf to $conf.$epoc.bak"
+
     # Git restore anything that needs it.
     for file in $modified; do
         git restore $file
     done
+
     # Git pull.
+    echo "Pulling in new code from github..."
     git pull
+
+    # Update pip modules.
+    echo "Backing up venv to venv.$epoc.bak and creating new one"
+    mv venv venv.$epoc.bak
+    python3 -m venv venv
+    source venv/bin/activate
+    echo "Installing new pip reqs..."
+    python3 -m pip install -r requirements.txt
+
     echo "Update completed!"
     exit
 elif [ $REMOTE = $BASE ]; then

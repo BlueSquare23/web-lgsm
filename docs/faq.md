@@ -1,13 +1,10 @@
 # Frequently Asked Questions
 
 1. Question: I forgot my web-lgsm password, how do I reset it?
-  - Answer: Unfortunately, as of right now (v1.6) there is no official password
-    reset mechanism. While it is technically possible to update the password
-    hash stored in the database with a sqlite cli command, for most users I
-    reccomend just deleting the `app/database.db` file and restarting the app
-    to set up the login fresh again. This has the downside of removing any
-    entries stored in the web-lgsm already. But once logged back in you can
-    simply re-add them using the "Add an Existing LGSM Installation" page.
+  - Answer: There is now a `change_pass.py` script that can be used to update
+    the web portal login pass. From the web-lgsm dir you can run:
+    `source venv/bin/activate && ./scripts/change_pass.py` Then enter the
+    required prompts, for user and password to update the web login password.
 
 2. Question: How do I enable the game server cfg file editor?
   - Answer: The cfg file editor editor can be enabled by setting `cfg_editor`
@@ -39,3 +36,6 @@
   - Answer: The database changed slightly with the release of v1.6. If you've
     just updated to v1.6 (or greater) from v1.5 (or below) you can run the
     `update-db.sh` script to update your database to be compatible with v1.6.
+    You may also need to run the `change_pass.py` script as the hash format for
+    the password in the database changed slightly. You can change it to the
+    same password as what it already was, the hash just needs regenerated.

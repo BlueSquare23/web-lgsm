@@ -148,6 +148,10 @@ def controls():
         system_user = getpass.getuser()
         sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
 
+        # Account for legacy db's that don't have a user field.
+        if server.username == None:
+            server.username = getpass.getuser()
+
         # Validate script_arg against contents of commands.json file.
         if is_invalid_command(script_arg, server.script_name, send_cmd):
             flash("Invalid Command!", category="error")
@@ -157,6 +161,12 @@ def controls():
         if script_arg == "c":
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
+
+            # Account for legacy db's that don't have a user field.
+            for server in installed_servers:
+                if server.username == None:
+                    server.username = getpass.getuser()
+
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
             server_status_dict = get_server_statuses(installed_servers)
@@ -194,6 +204,12 @@ def controls():
 
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
+
+            # Account for legacy db's that don't have a user field.
+            for server in installed_servers:
+                if server.username == None:
+                    server.username = getpass.getuser()
+
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
             server_status_dict = get_server_statuses(installed_servers)

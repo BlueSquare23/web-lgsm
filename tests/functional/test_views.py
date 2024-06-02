@@ -154,22 +154,6 @@ def test_add_responses(app, client):
                                                     follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.add')
 
-
-        ## Test upward directory traversal.
-        error_msg = b"Only dirs under"
-        resp_code = 400
-        response = client.post('/add', data={'install_name':'upup_test', \
-            'install_path':'../../../../../..', 'script_name':TEST_SERVER_NAME}, \
-                                                    follow_redirects=True)
-        check_response(response, error_msg, resp_code, 'views.add')
-
-        ## Test unauthorized dir.
-        response = client.post('/add', data={'install_name':'root_test', \
-            'install_path':'/', 'script_name':TEST_SERVER_NAME}, \
-                                                    follow_redirects=True)
-        check_response(response, error_msg, resp_code, 'views.add')
-
-
         ## Test legit server add.
         response = client.post('/add', data={'install_name':TEST_SERVER, \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
@@ -432,10 +416,13 @@ def test_settings_content(app, client):
         assert b"Logout" in response.data
         assert b"Web LGSM Settings" in response.data
         assert b"Output Text Color" in response.data
+        assert b"Stats Primary Color" in response.data
+        assert b"Stats Secondary Color" in response.data
         assert b"Remove Game Server Files on Delete" in response.data
         assert b"Leave Game Server Files on Delete" in response.data
+        assert b"Show Live Server Stats on Home Page" in response.data
         assert b"Purge user tmux socket files" in response.data
-        assert b"Make sure your servers are turned off first" in response.data
+        assert b"Make sure your game servers are turned off first" in response.data
         assert b"Check for and update the Web LGSM" in response.data
         assert b"Note: Checking this box will restart your Web LGSM instance" in response.data
         assert b"Apply" in response.data
@@ -456,7 +443,7 @@ def test_settings_responses(app, client):
         # Text color change tests.
         # Only accepts hexcode as text color.
         resp_code = 200
-        error_msg = b'Invalid color!'
+        error_msg = b'Invalid text color!'
         response = client.post('/settings', data={'text_color':'test'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
@@ -464,6 +451,26 @@ def test_settings_responses(app, client):
         check_response(response, error_msg, resp_code, 'views.settings')
 
         response = client.post('/settings', data={'text_color':'#aaaaaaaaaaaaaaaa'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        error_msg = b'Invalid primary color!'
+        response = client.post('/settings', data={'graphs_primary':'test'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        response = client.post('/settings', data={'graphs_primary':'red'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        response = client.post('/settings', data={'graphs_primary':'#aaaaaaaaaaaaaaaa'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        error_msg = b'Invalid secondary color!'
+        response = client.post('/settings', data={'graphs_secondary':'test'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        response = client.post('/settings', data={'graphs_secondary':'red'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        response = client.post('/settings', data={'graphs_secondary':'#aaaaaaaaaaaaaaaa'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
         # Legit color change test.
@@ -493,6 +500,61 @@ def test_settings_responses(app, client):
 
     # Re-disable remove_files for the sake of idempotency.
     os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
+
+### API system-usage tests.
+# Test system usage content & responses.
+def test_system_usage(app, client):
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        response = client.get('/api/system-usage')
+
+        # Test json can be de-serialized to python dict.
+        resp_json = response.data.decode()
+        assert isinstance(resp_json, str)
+        system_usage_data = json.loads(resp_json)
+        assert isinstance(system_usage_data, dict)
+
+        # Check json data is of appropriate form.
+        assert 'disk' in system_usage_data
+        assert 'cpu' in system_usage_data
+        assert 'mem' in system_usage_data
+        assert 'network' in system_usage_data
+
+        assert isinstance(system_usage_data['disk'], dict)
+        assert isinstance(system_usage_data['cpu'], dict)
+        assert isinstance(system_usage_data['mem'], dict)
+        assert isinstance(system_usage_data['network'], dict)
+
+        # Check types of values in 'disk' dictionary.
+        disk = system_usage_data['disk']
+        assert isinstance(disk['total'], int)
+        assert isinstance(disk['used'], int)
+        assert isinstance(disk['free'], int)
+        assert isinstance(disk['percent_used'], float)
+
+        # Check types of values in 'cpu' dictionary, excluding 'cpu_usage'.
+        cpu = system_usage_data['cpu']
+        assert isinstance(cpu['load1'], float)
+        assert isinstance(cpu['load5'], float)
+        assert isinstance(cpu['load15'], float)
+
+        # Check type of 'cpu_usage'
+        assert isinstance(cpu['cpu_usage'], float)
+
+        # Check types of values in 'mem' dictionary.
+        mem = system_usage_data['mem']
+        assert isinstance(mem['total'], int)
+        assert isinstance(mem['used'], int)
+        assert isinstance(mem['free'], int)
+        assert isinstance(mem['percent_used'], float)
+
+        # Check types of values in 'network' dictionary.
+        network = system_usage_data['network']
+        assert isinstance(network['bytes_sent_rate'], float)
+        assert isinstance(network['bytes_recv_rate'], float)
 
 
 ### Edit page tests.
@@ -643,12 +705,12 @@ def test_full_game_server_install(app, client):
 
         observed_running = False
         # While process is running check output route is producing output.
-        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             observed_running = True
 
             # Test to make sure output route is returning stuff for gs while
             # game server install is running.
-            response = client.get('/output?server=Minecraft')
+            response = client.get('/api/cmd-output?server=Minecraft')
             assert response.status_code == 200
             assert b'output_lines' in response.data
 
@@ -667,7 +729,7 @@ def test_full_game_server_install(app, client):
         response = client.get('/controls?server=Minecraft')
         assert response.status_code == 200
 
-        response = client.get('/output?server=Minecraft')
+        response = client.get('/api/cmd-output?server=Minecraft')
         assert response.status_code == 200
         expected_resp = '{"output_lines": [""], "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
@@ -691,7 +753,7 @@ def test_game_server_start_stop(app, client):
         print("######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n" + response.data.decode('utf8'))
 
         # Check output lines are there.
-        response = client.get('/output?server=Minecraft')
+        response = client.get('/api/cmd-output?server=Minecraft')
         assert response.status_code == 200
         assert b'output_lines' in response.data
         print("######################## OUTPUT ROUTE STDOUT\n" + response.data.decode('utf8'))
@@ -702,11 +764,11 @@ def test_game_server_start_stop(app, client):
         assert empty_resp != json.dumps(json_data)
 
         # Sleep until process is finished.
-        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
-            print(client.get('/output?server=Minecraft').data.decode('utf8'))
+        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
+            print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
             time.sleep(3)
 
-        print(client.get('/output?server=Minecraft').data.decode('utf8'))
+        print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
 
 #        print("######################## Minecraft Start Log\n")
 #        os.system("cat Minecraft/logs/script/mcserver-script.log")
@@ -730,14 +792,14 @@ def test_game_server_start_stop(app, client):
         assert response.status_code == 200
 
         # Sleep until process is finished.
-        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             print("######################## SEND COMMAND OUTPUT\n")
-            print(client.get('/output?server=Minecraft').data.decode('utf8'))
+            print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
             time.sleep(3)
 
         time.sleep(1)
-        print(client.get('/output?server=Minecraft').data.decode('utf8'))
-        assert b'Sending command to console' in client.get('/output?server=Minecraft').data
+        print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
+        assert b'Sending command to console' in client.get('/api/cmd-output?server=Minecraft').data
 
         # Set send_cmd back to default state for sake of idempotency.
         os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
@@ -748,7 +810,7 @@ def test_game_server_start_stop(app, client):
         assert response.status_code == 200
         
         # Run until "process_lock": false (aka proc stopped).
-        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             time.sleep(3)
 
         # For good measure.
@@ -774,7 +836,7 @@ def test_console_output(app, client):
         time.sleep(5)
 
         # Check output lines are there.
-        response = client.get('/output?server=Minecraft')
+        response = client.get('/api/cmd-output?server=Minecraft')
         assert response.status_code == 200
         assert b'output_lines' in response.data
 
@@ -784,7 +846,7 @@ def test_console_output(app, client):
         assert empty_resp != json.dumps(json_data)
 
         # Run until "process_lock": false (aka proc stopped).
-        while b'"process_lock": true' in client.get('/output?server=Minecraft').data:
+        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             time.sleep(3)
 
         # Check that console button is working and console is outputting.
@@ -796,7 +858,7 @@ def test_console_output(app, client):
 
         # Check watch process is running and output is flowing.
         for i in range(0, 3):
-            assert b'"process_lock": true' in client.get('/output?server=Minecraft').data
+            assert b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data
             os.system("ps aux|grep '[w]atch -te /usr/bin/tmux'")
             assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
             time.sleep(2)

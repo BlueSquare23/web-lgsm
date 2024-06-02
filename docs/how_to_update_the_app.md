@@ -29,3 +29,10 @@ Usage:
 You can also use this script on a cronjob to enable auto updates for the
 project if you would like. More info about that can be found in the [How to
 Enable Auto Updates](how_to_enable_auto_updates.md) doc on the subject.
+
+## Updating the Database
+
+The database changed slightly with the release of v1.6. If you've just updated
+to v1.6 (or greater) from v1.5 (or below) you can run the `update-db.sh` script
+to update your database to be compatible with v1.6.
+

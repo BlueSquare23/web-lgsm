@@ -26,20 +26,21 @@ if [[ "$EUID" -eq 0 ]]; then
 fi
 
 if [[ $(uname) != "Linux" ]]; then
-    echo -e "${red}Only run on Ubuntu Linux!"
+    echo -e "${red}Only run install script on Debian or Ubuntu Linux!"
     exit 3
 fi
 
 if [[ ! -f '/etc/os-release' ]]; then
     echo -e "${red}No /etc/os-release file found!${reset}"
-    echo -e "${red}Only run on Ubuntu Linux!${reset}"
+    echo -e "${red}Only run install script on Debian or Ubuntu Linux!${reset}"
     exit 3
 fi
 
 sys_name=$(grep -w 'NAME' /etc/os-release|cut -d= -f2|tr -d '"')
 
 if [[ ! $sys_name =~ Ubuntu|Debian ]]; then
-    echo -e "${red}Only Supported on Debian & Ubuntu Linux!${reset}"
+    echo -e "${red}Install Script Only Supports Debian & Ubuntu Linux!${reset}"
+    echo -e "${yellow}See Readme.md for more info.${reset}"
     exit 3
 fi
 
@@ -47,7 +48,7 @@ echo -e "${green}####### Pulling in apt updates...${reset}"
 sudo apt update
 
 for req in $(cat 'apt-reqs.txt'); do
-    if ! which $req &>/dev/null; then
+    if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"
         sudo apt install -y $req
     fi
@@ -68,24 +69,8 @@ if ! which pip3 &>/dev/null; then
     fi
 fi
 
-if ! python3 -c "import virtualenv"; then
-    if [[ $sys_name =~ Ubuntu ]]; then
-        echo -e "${green}####### Installing \`virtualenv\`...${reset}"
-        python3 -m pip install --user virtualenv
-    fi
-
-    if [[ $sys_name =~ Debian ]]; then
-        sudo apt install -y python3-venv
-    fi
-fi
-
 echo -e "${green}####### Setting up Virtual Env...${reset}"
-if [[ $sys_name =~ Ubuntu ]]; then
-    python3 -m virtualenv venv
-fi
-if [[ $sys_name =~ Debian ]]; then
-    python3 -m venv venv
-fi
+python3 -m venv venv
 source venv/bin/activate
 
 echo -e "${green}####### Install Requirements...${reset}"

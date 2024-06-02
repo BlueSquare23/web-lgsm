@@ -1,21 +1,46 @@
 ## Beta Version 1.6 Todos
 
-* Do a thorough refactor.
-  - Spend some time just re-reading my own code looking for bugs / improments.
-  - More unit testing will probably help with this.
+* Do light refactor of new code and old code. Look over some core parts with
+  fresh eyes to see if I'm doing anything obviously stupid anywhere or just
+  tweak around and make small improvements.
+
+## Beta Version 1.7 Todos
+
+* Look into make config editor work through sudo.
 
 ## In Idea Phase...
 
-* Perhaps think of way to do watch thread timeout. Not terribly important
-  - kill_watchers gets the job done alright for rn.
+* Create a single point of entry script for whole project.
+  - So right now I have the init script and the debug script and the setup as a
+    systemd service script and I was thinking of adding another script for
+    resetting the web portal login pass.
+  - Instead of having all these be differnt scripts, roll them all into one,
+    single point of entry, `web-lgsm` script.
+  - The `install.sh` script can still be its own thing.
+  - But pretty much everything else in the script dir can be controlled by one
+    main script for the whole project.
 
-* Allow web interface to work with lgsm installations owned by different users.
-  - Add config / settings option to "allow installs owned by other users".
-  - Possible use sudo to accomplish this.
-    - I'm thinking add sudoers rule allowing web-lgms user to run cmds as other
-      user without a password.
-    - Then if the game server is owned by another user cmds would be wrapped in:
-      `sudo -u otheruser "cmd"`
+* Explore putting new installations in their own user directory like the LGSM
+  recommends to begin with.
+  - Yeah its a good point for process isolation game servers should be running
+    as their own user.
+  - Ngl, I've always just kept all of my game servers under the same user but
+    I should probably make this a bit more legit and up to spec.
+  - I might make this an optional config param. Something like
+    `default_install_new_user = yes` or something idk.
 
-* Explore if containerizing project with docker is at all feezable /
+* Look into adding a debug mode to conf / app.
+  - So if debug in conf is set to true it would just enable debug logging which
+    could be used to output what functions are doing n'@.
+
+* Explore if containerizing project with docker is at all feasible /
   worthwhile.
+
+## Backlog
+
+* Do a thorough refactor.
+  - Spend some time just re-reading my own code looking for bugs / improvements.
+  - More unit testing will probably help with this.
+
+* Think of way to do watch thread timeout. Not terribly important
+  - kill_watchers gets the job done alright for rn.

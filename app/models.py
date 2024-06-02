@@ -7,14 +7,13 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
 
-class MetaData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    app_install_path = db.Column(db.String(150), unique=True)
-
 class GameServer(db.Model):
     id =  db.Column(db.Integer, primary_key=True)
-    # User supplied unique name.
+    # Unique name.
     install_name = db.Column(db.String(150), unique=True)
+    # Install path.
     install_path = db.Column(db.String(150))
     # The name of the lgsm game server script. For example, 'gmodserver'.
     script_name = db.Column(db.String(150))
+    # Username of game server user.
+    username = db.Column(db.String(150))

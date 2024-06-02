@@ -20,7 +20,7 @@ env:
   CFG_DIR: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver"
   CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
   TEST_SERVER_NAME: 'mcserver'
-  VERSION: 1.5
+  VERSION: 1.6
   TERM: 'xterm-256color'
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v3
@@ -40,7 +40,7 @@ jobs:
       - name: Install Apt & Pip Dependencies
         run: |
           sudo apt update
-          sudo apt install openjdk-17-jdk
+          sudo apt install openjdk-21-jdk
           for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
           python3 -m pip install --upgrade pip
           python3 -m pip install --user virtualenv
@@ -57,10 +57,10 @@ jobs:
           cd ../../..
           cp tests/test_data/common.cfg $CFG_DIR
           sudo update-alternatives --list java
-          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
           java -version
           sudo update-alternatives --list javac
-          sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+          sudo update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
           javac -version
       - name: Run Pytest Tests
         run: |

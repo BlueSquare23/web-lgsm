@@ -17,7 +17,7 @@ export TEST_SERVER_PATH="tests/test_data/Mockcraft"
 export CFG_DIR="tests/test_data/Mockraft/lgsm/config-lgsm/mcserver"
 export CFG_PATH="tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
 export TEST_SERVER_NAME='mcserver'
-export VERSION='1.5'
+export VERSION='1.6'
 
 # Source virtural env.
 if [[ -z "$VIRTUAL_ENV" ]]; then
@@ -25,7 +25,10 @@ if [[ -z "$VIRTUAL_ENV" ]]; then
 fi
 
 if [[ -f 'app/database.db' ]]; then
-    rm 'app/database.db'
+    epoch=$(date +%s)
+    dbbackup="app/database.$epoch.db.bak"
+    echo "Backing database up to: $dbbackup"
+    mv 'app/database.db' $dbbackup
 fi
 
 ## If there's no Mockcraft dir then setup dummy Mockcraft install.

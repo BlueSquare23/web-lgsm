@@ -32,7 +32,7 @@ def main():
     app.register_blueprint(auth, url_prefix="/")
 
     # Initialize DB.
-    from .models import User, MetaData, GameServer
+    from .models import User, GameServer
     with app.app_context():
         db.create_all()
         print(" * Created Database!")

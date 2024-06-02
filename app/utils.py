@@ -1,15 +1,23 @@
 import os
 import re
 import sys
+import pwd
 import json
+import glob
 import time
 import shutil
+import getpass
 import psutil
 import requests
 import subprocess
 from . import db
 from .models import GameServer
 from flask import flash
+
+# Network stats globals.
+PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
+PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
+PREV_TIME = time.time()
 
 # Holds the output from a running daemon thread.
 class OutputContainer:
@@ -68,10 +76,44 @@ def kill_watchers(last_request_for_output):
     if ouput_page_timeout > int(time.time()):
         return
 
-    app_proc = psutil.Process(os.getpid())
-    for child in app_proc.children(recursive=True):
-        if child.name() == "watch":
-            child.kill()
+    # Get all processes named 'watch'
+    watch_processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'username']):
+        if proc.info['name'] == 'watch':
+            watch_processes.append((proc.pid, proc.username()))
+    
+    for pid, user in watch_processes:
+        cmd = []
+        if user != getpass.getuser():
+            cmd += ['/usr/bin/sudo', '-n', '-u', user]
+        cmd += ['/usr/bin/kill', '-9', str(pid)]
+
+        proc = subprocess.run(cmd,
+                stdout = subprocess.DEVNULL,
+                stderr = subprocess.DEVNULL)
+
+        if proc.returncode != 0:
+#            print("Cant kill proc")
+            pass
+
+
+# Translates a username to a uid using pwd module.
+def get_uid(username):
+    try:
+        user_info = pwd.getpwnam(username)
+        return user_info.pw_uid
+    except KeyError:
+        return None
+
+
+# Get's game server ids from id file path, if id file exists. If it doesn't
+# returns empty string.
+def get_gs_id(id_file_path):
+    if os.path.isfile(id_file_path):
+        with open(id_file_path, 'r') as file:
+            return file.read()
+    else:
+        return ""
 
 
 # Get's the list of servers that are currently turnned on.
@@ -81,36 +123,47 @@ def get_server_statuses(all_game_servers):
     for server in all_game_servers:
         server_statuses[server.install_name] = 'inactive'
 
-    # List all tmux sessions for the given user by looking at /tmp/tmux-UID.
-    uid = os.getuid()
-    socket_dir = f"/tmp/tmux-{uid}"
+    # List all tmux sessions for all users.
+    tmux_socdir_regex = '/tmp/tmux-*'
+    socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
+
     # Handle no sockets yet.
-    if not os.path.exists(socket_dir):
+    if not socket_dirs:
         return server_statuses
 
-    user_tmux_sockets = os.listdir(socket_dir)
+    # Find all unique server ids.
+    gs_ids = {}
     for server in all_game_servers:
-        for socket in user_tmux_sockets:
-            if server.script_name in socket:
-                cmd = ['/usr/bin/tmux', '-L', socket, 'list-session']
-                proc = subprocess.run(cmd,
-                        stdout = subprocess.DEVNULL,
-                        stderr = subprocess.DEVNULL)
+        id_file_path = server.install_path + f'/lgsm/data/{server.script_name}.uid'
+        gs_id = get_gs_id(id_file_path).strip()
+        gs_ids[server.install_name] = gs_id
 
-                if proc.returncode == 0:
-                    server_statuses[server.install_name] = 'active'
+    # Now that we have all gs_ids, we can check if those tmux socket sessions
+    # are running.
+    for server in all_game_servers:
+        socket = server.script_name + '-' + gs_ids[server.install_name]
+        cmd = []
+        if server.username != getpass.getuser():
+            cmd += ['/usr/bin/sudo', '-n', '-u', server.username]
+
+        cmd += ['/usr/bin/tmux', '-L', socket, 'list-session']
+        proc = subprocess.run(cmd,
+                stdout = subprocess.DEVNULL,
+                stderr = subprocess.DEVNULL)
+
+        if proc.returncode == 0:
+            server_statuses[server.install_name] = 'active'
 
     return server_statuses
 
 
-# Get socket file for given game server. (Have yet to consider case of two
-# installs of the same game server. Am lazy, will address that l8tr.)
+# Get's socket file name for a given game server name.
 def get_socket_for_gs(server):
-    uid = os.getuid()
-    user_tmux_sockets = os.listdir(f"/tmp/tmux-{uid}")
-    for socket in user_tmux_sockets:
-        if server in socket:
-            return socket
+    id_file_path = server.install_path + f'/lgsm/data/{server.script_name}.uid'
+    gs_id = get_gs_id(id_file_path).strip()
+    socket = server.script_name + '-' + gs_id
+    return socket
+
 
 # Cleans up old dead tmux socket files.
 def purge_user_tmux_sockets():
@@ -121,6 +174,7 @@ def purge_user_tmux_sockets():
         user_tmux_sockets = os.listdir(socket_dir)
         for socket in user_tmux_sockets:
             os.remove(socket_dir + '/' + socket)
+
 
 # After installation fixes lgsm cfg files.
 def post_install_cfg_fix(gs_dir):
@@ -353,8 +407,10 @@ def contains_bad_chars(i):
 
     return False
 
-def update_self(base_dir):
-    update_cmd = [f'{base_dir}/scripts/update.sh', '-a']
+
+# Run's self update script.
+def update_self():
+    update_cmd = ['./scripts/update.sh', '-a']
     proc = subprocess.run(update_cmd,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
@@ -369,6 +425,7 @@ def update_self(base_dir):
     if 'Update Required' in proc.stdout:
         return 'Web LGSM Upgraded! Restarting momentarially...'
 
+
 # Sleep's 5 seconds then restarts the app.
 def restart_self(restart_cmd):
     time.sleep(5)
@@ -377,4 +434,70 @@ def restart_self(restart_cmd):
             stderr = subprocess.PIPE,
             universal_newlines=True)
 
+
+# Gets bytes in/out per second. Stores last value in global.
+def get_network_stats():
+    global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
+
+    # Get current counters and timestamp.
+    net_io = psutil.net_io_counters()
+    current_bytes_sent = net_io.bytes_sent
+    current_bytes_recv = net_io.bytes_recv
+    current_time = time.time()
+
+    # Calculate the rate of bytes sent and received per second.
+    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
+    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
+
+    # Update previous counters and timestamp.
+    PREV_BYTES_SENT = current_bytes_sent
+    PREV_BYTES_RECV = current_bytes_recv
+    PREV_TIME = current_time
+
+    return {
+        'bytes_sent_rate': bytes_sent_rate,
+        'bytes_recv_rate': bytes_recv_rate
+    }
+
+
+# Returns disk, cpu, mem, and network stats. Later turned into json for home
+# page resource usage charts.
+def get_server_stats():
+    stats = dict() 
+
+    # Disk
+    total, used, free = shutil.disk_usage("/")
+    # Add ~4% for ext4 filesystem metadata usage.
+    percent_used = (((total * .04) + used) / total) * 100
+    stats["disk"] = {
+        'total': total, 
+        'used': used, 
+        'free': free, 
+        'percent_used': percent_used
+    }
+
+    # CPU
+    load1, load5, load15 = psutil.getloadavg()
+    cpu_usage = (load1/os.cpu_count()) * 100
+    stats["cpu"] = {
+        'load1': load1,
+        'load5': load5,
+        'load15': load15,
+        'cpu_usage': cpu_usage
+    }
+
+    # Mem
+    mem = psutil.virtual_memory()
+    # Total, used, available, percent_used.
+    stats["mem"] = {
+        'total': mem[0], 
+        'used': mem[3],
+        'free': mem[1],
+        'percent_used': mem[2]
+    }
+
+    # Network
+    stats["network"] = get_network_stats()
+
+    return stats
 

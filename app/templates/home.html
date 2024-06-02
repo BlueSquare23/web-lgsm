@@ -9,7 +9,7 @@
       {% if server_status_dict is not none %}
         {% if server_status_dict|length > 0 %}
           <form method="POST" action="/delete">
-            <div class="list-group form-check form-switch">
+            <div class="list-group form-check form-switch border border-secondary">
               {% for server_name, status in server_status_dict.items() %}
                 {% if status == "active" %}
                   {% set status_color = '#00FF11' %}
@@ -20,7 +20,7 @@
                   <div class="d-flex align-items-center">
                     <a href="/controls?server={{server_name}}" class="game_server_link text-decoration-none flex-grow-1">
                       <!-- Glow via text-shadow -->
-                      <span id="status-circle" style="font-size:125%;color:{{status_color}};text-shadow: 0 0 5px {{status_color}}, 0 0 10px {{status_color}}, 0 0 20px {{status_color}}, 0 0 30px {{status_color}}">● </span>&nbsp;&nbsp;{{server_name}}
+                      <span id="status-circle" style="font-size:125%;color:{{status_color}};text-shadow: 0 0 5px {{status_color}}, 0 0 10px {{status_color}}, 0 0 20px {{status_color}}, 0 0 30px {{status_color}}">● </span>&nbsp;&nbsp;{{server_name}} - {{servers_to_users[server_name]}}
                     </a>
                     <div class="form-check">
                       <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server_name}}" />
@@ -33,12 +33,12 @@
             <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
           </form>
         {% else %}
-          <ul class="list-group">
+          <ul class="list-group border border-secondary">
             <li class="list-group-item">No Servers Currently Installed</li>
           </ul>
         {% endif %}
       {% else %}
-        <ul class="list-group">
+        <ul class="list-group border border-secondary">
           <li class="list-group-item">No Servers Currently Installed</li>
         </ul>
       {% endif %}
@@ -46,8 +46,57 @@
       <br />
 
       <h2 style="color: white;">Other Options</h2>
-      <div class="list-group">
+      <div class="list-group border border-secondary">
         <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server </a>
         <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation </a>
       </div>
+
+      {% if config_options.show_stats %}
+        <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
+        <div class="container bg-dark border border-secondary rounded-3" id="game-server-stats">
+          <div class="row">
+            <div class="p-2 col">
+              <h4>Disk</h4>
+              <canvas id="diskChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>CPU</h4>
+              <canvas id="cpuChart"></canvas>
+              <canvas id="loadChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>Mem</h4>
+              <canvas id="memChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>Network</h4>
+              <canvas id="networkChart"></canvas>
+            </div>
+          </div>
+
+          <a href="/api/system-usage">View JSON</a>
+          <script>
+            const userColor = "{{config_options.text_color}}";
+            const usedColor = "{{config_options.graphs_primary}}";
+            const freeColor = "{{config_options.graphs_secondary}}";
+            const stats = document.getElementById('game-server-stats');
+            const chevron = document.getElementById('chevron');
+          </script>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+        <script src="/static/js/graph-charts.js"></script>
+        <script src="/static/js/toggle-stats.js"></script>
+
+
+        {% if config_options.show_barrel_roll %}
+          <!-- Mission Critical Barrel-Roll Code -->
+          <script src="/static/js/do-a-barrel-roll.js"></script>
+          <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
+        {% endif %}
+
+      {% endif %}
 {% endblock %}

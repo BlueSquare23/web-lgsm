@@ -10,19 +10,31 @@
             Web LGSM Settings
           </h3>
           <div class="form-group" style="color: white;">
-            <label for="text_color" class="form-label">Output Text Color</label>
-            <input type="color" class="form-control form-control-color" id="text_color" name="text_color" value="{{text_color}}" title="Choose your color" />
+            <div class="row">
+              <div class="col">
+                <label for="text_color" class="form-label">Output Text Color</label>
+                <input type="color" class="form-control form-control-color" id="text_color" name="text_color" value="{{config_options.text_color}}" title="Choose your color" />
+              </div>
+              <div class="col">
+                <label for="graphs_primary" class="form-label">Stats Primary Color</label>
+                <input type="color" class="form-control form-control-color" id="graphs_primary" name="graphs_primary" value="{{config_options.graphs_primary}}" title="Choose your color" />
+              </div>
+              <div class="col">
+                <label for="graphs_secondary" class="form-label">Stats Secondary Color</label>
+                <input type="color" class="form-control form-control-color" id="graphs_secondary" name="graphs_secondary" value="{{config_options.graphs_secondary}}" title="Choose your color" />
+              </div>
+            </div>
 
             <br />
 
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if remove_files == true %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
               <label class="form-check-label" for="delete-files">
                 Remove Game Server Files on Delete
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if remove_files == false %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if config_options.remove_files == false %}checked{% endif %}>
               <label class="form-check-label" for="leave-files">
                 Leave Game Server Files on Delete
               </label>
@@ -31,17 +43,28 @@
             <br />
 
             <div class="form-floating mb-3">
-              <input value="{{text_area_height}}" min="5" max="100" class="form-control" type="number" id="text-area-height" name="text_area_height" class="form-control">
+              <input value="{{config_options.text_area_height}}" min="5" max="100" class="form-control" type="number" id="text-area-height" name="text_area_height" class="form-control">
               <label for="text-area-height" style="color:black;">Default TextArea Height</label>
             </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="true" id="show_stats" name="show_stats" {% if config_options.show_stats == true %}checked{% endif %}>
+              <label class="form-check-label" for="show_stats">
+                Show Live Server Stats on Home Page 📈
+              </label>
+            </div>
+
+            <br />
 
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="purge" id="purge_socks" name="purge_socks">
               <label class="form-check-label" for="purge_socks">
                 Purge user tmux socket files - Helps fix broken status indicators / console output<br>
-                ⚠️  <span style="color:red">!!! Make sure your servers are turned off first !!!</span> ⚠️
+                ⚠️  <span style="color:red">!!! Make sure your game servers are turned off first or you might confuse tmux !!!</span> ⚠️
               </label>
             </div>
+
+            <br />
 
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="update" id="update_weblgsm" name="update_weblgsm">

@@ -27,12 +27,13 @@ fantastic tool for installing and administering game servers via the CLI.
 However, some users would rather manage their game server through a web
 interface. That is what this project attempts to be.
 
-> :round_pushpin: _Note: The web-lgsm is a fan project, and **NOT** affiliated
-> in any way with the official [LSGM Project](https://linuxgsm.com/)_
+> :round_pushpin: _<span style="color: orange;">Note</span>: The web-lgsm is a
+> fan project, and <span style="color: red;">**NOT**</span> affiliated in any
+> way with the official [LSGM Project](https://linuxgsm.com/)_
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
-## :arrow_double_down: Installation
+## :arrow_double_down: Installation (Debian & Ubuntu Only)
 
 * First `SSH` to the server where you're running the LGSM and clone this repo
   as your user (NOT root):
@@ -59,6 +60,17 @@ cd web-lgsm
 ```
 ./init.sh stop
 ```
+
+> :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
+> `install.sh` script only supports Debian & Ubuntu Linux. However, technically
+> all the project needs to run is python3.8 or greater and some common shell
+> utilites._
+> 
+> _If you're able to install the required dependacnies through your
+> distributions package manager and install the required python modules then
+> you should be able to run this on basically any flavor of Linux that is
+> supported by the base LGSM project._
+
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 
 ### :film_strip: Installation Setup & Overview Video Tutorial
@@ -84,7 +96,7 @@ you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
 After creating a user, you'll be automatically logged in and redirected to the
 home page.
 
-[:framed_picture: Home Page Image](docs/images/home_page.png)
+![Home Page](docs/images/homepage.gif)
 
 From the home page you can do several things!
 
@@ -134,8 +146,9 @@ of the config file.
 
 [:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
 
-> :round_pushpin: _Note: the config editor is disabled by default and can only be enabled by
-> editing the `main.conf` file directly._
+> :round_pushpin: _<span style="color: orange;">Note</span>: the config editor
+> is disabled by default and can only be enabled by editing the `main.conf`
+> file directly._
 
 #### Settings Page
 
@@ -169,6 +182,7 @@ More information about that coming soon in the docs folder.
 * Database: [SQLite](https://www.sqlite.org/index.html)
 * ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
 * CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
+* JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
 * Testing: [Pytest](https://docs.pytest.org/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 
@@ -177,9 +191,9 @@ More information about that coming soon in the docs folder.
 ## :bug: Bugs
 
 I want to try to keep up with this as a pet project so feel free to report any
-bugs or security issues to me via [my site's contact form](https://johnlradford.io/contact.php).
-Or if you're interested in contributing to the project feel free to submit a
-pull request!
+bugs or security issues to me via [this project's github issues page](https://github.com/BlueSquare23/web-lgsm/issues/new) 
+or [my site's contact form](https://johnlradford.io/contact.php).  Or if you're interested in
+contributing to the project feel free to submit a pull request!
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

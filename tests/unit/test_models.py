@@ -1,6 +1,6 @@
 import os
 import pytest
-from app.models import User, MetaData, GameServer
+from app.models import User, GameServer
 
 USERNAME = os.environ['USERNAME']
 PASSWORD = os.environ['PASSWORD']
@@ -17,13 +17,6 @@ def new_user():
 def test_new_user(new_user):
     assert new_user.username == USERNAME
     assert new_user.password == PASSWORD
-
-@pytest.fixture
-def new_metadata():
-    return MetaData(app_install_path=APP_PATH)
-
-def test_new_metadata(new_metadata):
-    assert new_metadata.app_install_path == APP_PATH
 
 @pytest.fixture
 def new_game_server():

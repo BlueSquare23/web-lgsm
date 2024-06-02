@@ -2,5 +2,5 @@ curl
 findutils
 procps
 tmux
-watch
 wget
+python3-venv

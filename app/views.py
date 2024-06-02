@@ -4,6 +4,7 @@ import sys
 import json
 import time
 import shutil
+import getpass
 import subprocess
 import configparser
 from . import db
@@ -13,7 +14,7 @@ from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
-                                redirect, Response, send_from_directory
+                                redirect, Response, send_from_directory, jsonify
 
 # Globals dictionaries to hold output objects.
 GAME_SERVERS = {}
@@ -32,26 +33,44 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=['GET'])
 @login_required
 def home():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
+    text_color = config['aesthetic']['text_color']
+    graphs_primary = config['aesthetic']['graphs_primary']
+    graphs_secondary = config['aesthetic']['graphs_secondary']
+    show_stats = config['aesthetic'].getboolean('show_stats')
+    show_barrel_roll = config['aesthetic'].getboolean('show_barrel_roll')
+
+    config_options = {
+        "text_color": text_color,
+        "graphs_primary": graphs_primary,
+        "graphs_secondary": graphs_secondary,
+        "show_stats": show_stats,
+        "show_barrel_roll": show_barrel_roll,
+    }
 
     # Kill any lingering background watch processes
     # Used in case console page is clicked away from.
     kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
+    servers_to_users = {}
+    for server in installed_servers:
+        # Account for legacy db's that don't have a user field.
+        if server.username == None:
+            server.username = getpass.getuser()
+
+        servers_to_users[server.install_name] = server.username
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
     return render_template("home.html", user=current_user, \
-                        server_status_dict=server_status_dict)
+                        servers_to_users=servers_to_users, \
+                        server_status_dict=server_status_dict, \
+                        config_options=config_options)
 
 
 ######### Controls Page #########
@@ -59,13 +78,9 @@ def home():
 @views.route("/controls", methods=['GET'])
 @login_required
 def controls():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     cfg_editor = config['settings']['cfg_editor']
@@ -129,6 +144,10 @@ def controls():
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
     if script_arg:
+        # For running cmds as alt users.
+        system_user = getpass.getuser()
+        sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
+
         # Validate script_arg against contents of commands.json file.
         if is_invalid_command(script_arg, server.script_name, send_cmd):
             flash("Invalid Command!", category="error")
@@ -145,13 +164,19 @@ def controls():
                 flash("Server is Off! No Console Output!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
-            tmux_socket = get_socket_for_gs(server.script_name)
+            tmux_socket = get_socket_for_gs(server)
             if tmux_socket == None:
                 flash("Cannot find socket for server!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
+            cmd = []
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
+            if server.username != system_user:
+                cmd += sudo_prepend
+
             # Use daemonized `watch` command to keep live console running.
-            cmd = ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, 'capture-pane', '-pt', server.script_name]
+            cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, \
+                                        'capture-pane', '-pt', server.script_name]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Console')
             daemon.start()
@@ -176,7 +201,12 @@ def controls():
                 flash("Server is Off! Cannot send commands to console!", category='error')
                 return redirect(url_for('views.controls', server=server_name))
 
-            cmd = [f'{script_path}', f'{script_arg}', f'{console_cmd}']
+            cmd = []
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
+            if server.username != system_user:
+                cmd += sudo_prepend
+
+            cmd += [script_path, script_arg, console_cmd]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='ConsoleCMD')
             daemon.start()
@@ -184,7 +214,12 @@ def controls():
             
         # If its not the console or send command
         else:
-            cmd = [f'{script_path}', f'{script_arg}']
+            cmd = []
+            # If gs not owned by system user, prepend sudo -n -u user to cmd.
+            if server.username != system_user:
+                cmd += sudo_prepend
+
+            cmd += [script_path, script_arg]
             daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
                                     output), daemon=True, name='Command')
             daemon.start()
@@ -204,13 +239,9 @@ def controls():
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 
@@ -231,7 +262,7 @@ def install():
                                                         'info', 'light']
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh(f"{base_dir}/scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"./scripts/{lgsmsh}")
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
@@ -249,7 +280,6 @@ def install():
             if len(required_form_item) > 150:
                 flash("Form field too long!", category='error')
                 return redirect(url_for('views.install'))
-
 
         # Validate form submission data against install list in json file.
         if install_options_are_invalid(server_script_name, server_full_name):
@@ -293,11 +323,12 @@ def install():
         os.mkdir(server_full_name)
         shutil.copy(f"scripts/{lgsmsh}", server_full_name)
 
-        install_path = base_dir + '/' + server_full_name
+        install_path = os.getcwd() + '/' + server_full_name
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
-                install_path=install_path, script_name=server_script_name)
+                install_path=install_path, script_name=server_script_name, \
+                username=getpass.getuser())
         db.session.add(new_game_server)
         db.session.commit()
 
@@ -318,9 +349,18 @@ def install():
             install_name=install_name, text_area_height=text_area_height)
 
 
-######### Output Page #########
+######### API System Usage #########
+@views.route("/api/system-usage", methods=['GET'])
+@login_required
+def get_stats():
+    server_stats = get_server_stats()
+    response = Response(json.dumps(server_stats, indent=4), status=200, mimetype='application/json')
+    return response
 
-@views.route("/output", methods=['GET'])
+
+######### API CMD Output Page #########
+
+@views.route("/api/cmd-output", methods=['GET'])
 @login_required
 def no_output():
     # Collect args from GET request.
@@ -357,31 +397,41 @@ def no_output():
 @views.route("/settings", methods=['GET', 'POST'])
 @login_required
 def settings():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
     remove_files = config['settings'].getboolean('remove_files')
+    graphs_primary = config['aesthetic']['graphs_primary']
+    graphs_secondary = config['aesthetic']['graphs_secondary']
+    show_stats = config['aesthetic'].getboolean('show_stats')
+
+    config_options = {
+        "text_color": text_color,
+        "text_area_height": text_area_height,
+        "remove_files": remove_files,
+        "graphs_primary": graphs_primary,
+        "graphs_secondary": graphs_secondary,
+        "show_stats": show_stats
+    }
 
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
-                text_color=text_color, remove_files=remove_files, \
-                               text_area_height=text_area_height)
+                                    config_options=config_options)
 
-    color_pref = request.form.get("text_color")
+    text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
     height_pref = request.form.get("text_area_height")
     purge_socks = request.form.get("purge_socks")
     update_weblgsm = request.form.get("update_weblgsm")
+    graphs_primary_pref = request.form.get("graphs_primary")
+    graphs_secondary_pref = request.form.get("graphs_secondary")
+    show_stats_pref = request.form.get("show_stats")
 
     # Purge user's tmux socket files.
     if purge_socks:
@@ -392,15 +442,36 @@ def settings():
     if file_pref == "false":
         config['settings']['remove_files'] = 'no'
 
-    # Set text color setting.
-    config['aesthetic']['text_color'] = text_color
-    if color_pref:
+    # Text color settings.
+    def valid_color(color):
         # Validate color code with regular expression.
-        if not re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color_pref):
-            flash('Invalid color!', category='error')
-            return redirect(url_for('views.settings'))
+        if re.search('^#(?:[0-9a-fA-F]{1,2}){3}$', color):
+            return True
 
-        config['aesthetic']['text_color'] = color_pref
+        return False
+
+    if text_color_pref:
+        if not valid_color(text_color_pref):
+            flash('Invalid text color!', category='error')
+            return redirect(url_for('views.settings'))
+        config['aesthetic']['text_color'] = text_color_pref
+
+    if graphs_primary_pref:
+        if not valid_color(graphs_primary_pref):
+            flash('Invalid primary color!', category='error')
+            return redirect(url_for('views.settings'))
+        config['aesthetic']['graphs_primary'] = graphs_primary_pref
+
+    if graphs_secondary_pref:
+        if not valid_color(graphs_secondary_pref):
+            flash('Invalid secondary color!', category='error')
+            return redirect(url_for('views.settings'))
+        config['aesthetic']['graphs_secondary'] = graphs_secondary_pref
+
+    # Default to no, if checkbox is unchecked.
+    config['aesthetic']['show_stats'] = 'no'
+    if show_stats_pref == 'true':
+        config['aesthetic']['show_stats'] = 'yes'
 
     # Set default text area height setting.
     config['aesthetic']['text_area_height'] = text_area_height
@@ -420,12 +491,12 @@ def settings():
         # Have to cast back to string to save in config.
         config['aesthetic']['text_area_height'] = str(height_pref)
 
-    with open(f'{base_dir}/main.conf', 'w') as configfile:
+    with open('main.conf', 'w') as configfile:
          config.write(configfile)
 
     # Update's the weblgsm.
     if update_weblgsm:
-        status = update_self(base_dir)
+        status = update_self()
         flash("Settings Updated!")
         if 'Error:' in status:
             flash(status, category='error')
@@ -449,17 +520,13 @@ def settings():
 @views.route("/about", methods=['GET'])
 @login_required
 def about():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Kill any lingering background watch processes.
     # In case console page is clicked away from.
     kill_watchers(last_request_for_output)
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
 
     return render_template("about.html", user=current_user, \
@@ -471,13 +538,9 @@ def about():
 @views.route("/add", methods=['GET', 'POST'])
 @login_required
 def add():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
     # Kill any lingering background watch processes in case console page is
@@ -491,6 +554,7 @@ def add():
         install_name = request.form.get("install_name")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
+        username = request.form.get("username")
 
         # Check all required args are submitted.
         for required_form_item in (install_name, install_path, script_name):
@@ -503,22 +567,32 @@ def add():
                 flash("Form field too long!", category='error')
                 return redirect(url_for('views.add'))
 
+        system_user = getpass.getuser()
+        # Set default user if none provided.
+        if username == None or username == '':
+            username = system_user
+
+        if len(username) > 150:
+            flash("Form field too long!", category='error')
+            return redirect(url_for('views.add'))
+
+        # Returns None if invalid username.
+        if get_uid(username) == None:
+            flash("User not found on system!", category='error')
+            return redirect(url_for('views.add'))
+
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
 
         install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
         # Try to prevent arbitrary bad input.
-        for input_item in (install_name, install_path, script_name):
+        for input_item in (install_name, install_path, script_name, username):
             if contains_bad_chars(input_item):
                 flash("Illegal Character Entered!", category="error")
                 flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
                                                             category="error")
                 return redirect(url_for('views.add'))
-
-
-        # Only allow lgsm installs under home dir.
-        user_home_dir = os.path.expanduser('~')
 
         if install_exists:
             flash('An installation by that name already exits.', category='error')
@@ -526,10 +600,6 @@ def add():
 
         elif not os.path.exists(install_path) or not os.path.isdir(install_path):
             flash('Directory path does not exist.', category='error')
-            status_code = 400
-
-        elif os.path.commonprefix((os.path.realpath(install_path),user_home_dir)) != user_home_dir:
-            flash(f'Only dirs under {user_home_dir} allowed!', category='error')
             status_code = 400
 
         elif script_name_is_invalid(script_name):
@@ -544,11 +614,20 @@ def add():
         else:
             # Add the install to the database, then redirect home.
             new_game_server = GameServer(install_name=install_name, \
-                        install_path=install_path, script_name=script_name)
+                        install_path=install_path, script_name=script_name, \
+                        username=username)
             db.session.add(new_game_server)
             db.session.commit()
 
             flash('Game server added!')
+            if username != system_user:
+                flash(f'''
+                    NOTE: You will need to add a sudoers rule like the following in
+                    order for game servers owned by other users to function
+                    properly. You can edit your sudoers file using: "sudo visudo".
+                    Add this line: 
+                    {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
+                ''')
             return redirect(url_for('views.home'))
 
     return render_template("add.html", user=current_user), status_code
@@ -559,13 +638,9 @@ def add():
 @views.route("/delete", methods=['GET', 'POST'])
 @login_required
 def delete():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
     # Delete via POST is for multiple deletions.
@@ -592,17 +667,13 @@ def delete():
 @views.route("/edit", methods=['GET', 'POST'])
 @login_required
 def edit():
-    # Import meta data.
-    meta_data = db.session.get(MetaData, 1)
-    base_dir = meta_data.app_install_path
-
     # The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
     # Import config data.
     config = configparser.ConfigParser()
-    config.read(f'{base_dir}/main.conf')
+    config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
 

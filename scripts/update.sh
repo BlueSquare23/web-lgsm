@@ -46,7 +46,7 @@ elif [ $LOCAL = $BASE ]; then
         fi
 
         # Check for modified files and warn.
-        modified=$(git status|grep modified|awk '{print $2}'|grep -Ev '.secret|main.conf')
+        modified=$(git status|grep modified|awk '{print $2}'|grep -Ev '.secret')
         if [[ -n $modified ]]; then
             echo "!!! The following files have been modified and will be overwritten by an update !!!"
             for file in $modified; do
@@ -64,17 +64,15 @@ elif [ $LOCAL = $BASE ]; then
     epoc=$(date +"%s")
     conf="main.conf"
     cp $conf $conf.$epoc.bak
+    echo "Copied existing $conf to $conf.$epoc.bak"
     # Git restore anything that needs it.
-    git restore $conf
     for file in $modified; do
         git restore $file
     done
     # Git pull.
     git pull
-    # Manually diff and path main.conf.
-    # This way user keeps their settings but get's new updates.
-    diff -u $conf $conf.$epoc.bak > $conf.path
-    patch $conf $conf.path
+    echo "Update completed!"
+    exit
 elif [ $REMOTE = $BASE ]; then
     echo "Local ahead of remote, need push?" >&2
     echo "Note: Normal users should not see this." >&2

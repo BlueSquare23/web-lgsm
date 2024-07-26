@@ -1,12 +1,19 @@
-## Beta Version 1.6 Todos
-
-* Do light refactor of new code and old code. Look over some core parts with
-  fresh eyes to see if I'm doing anything obviously stupid anywhere or just
-  tweak around and make small improvements.
-
 ## Beta Version 1.7 Todos
 
+* Fillout missing parts of github "Community Standards" 
+  - Things like Code of Conduct, Contrbuting Guide, Security Policy etc.
+  - Partially because they'd be good to have, partially to make the project
+    look nicer to prospective downloaders.
+  - I would call it marketing alost, except this thing is free, so really just
+    want to convince people to use it.
+  - https://github.com/BlueSquare23/web-lgsm/community
+
 * Look into make config editor work through sudo.
+
+* Work on Idea Phase ideas.
+
+* With v1.7.0 release, introduce a proper Semantic Versioning schema.
+  - More info: https://semver.org/
 
 ## In Idea Phase...
 
@@ -44,3 +51,8 @@
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
+
+* Add support for containerized game server instances.
+  - See issue: https://github.com/BlueSquare23/web-lgsm/issues/16
+
+

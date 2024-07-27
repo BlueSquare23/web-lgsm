@@ -1,10 +1,9 @@
 # Frequently Asked Questions
 
 1. Question: I forgot my web-lgsm password, how do I reset it?
-  - Answer: There is now a `change_pass.py` script that can be used to update
-    the web portal login pass. From the web-lgsm dir you can run:
-    `source venv/bin/activate && ./scripts/change_pass.py` Then enter the
-    required prompts, for user and password to update the web login password.
+  - Answer: You can now run `./web-lgsm.py --passwd` to change the web admin
+    user password for the web-lgsm. Simply run the script then enter the
+    required prompts to update the web login password.
 
 2. Question: How do I enable the game server cfg file editor?
   - Answer: The cfg file editor editor can be enabled by setting `cfg_editor`

@@ -171,7 +171,7 @@ firewall off the port for this app (defaults to 12357) and proxy connections to
 this app through a **real** web server such as Apache or Nginx with SSL
 encryption!
 
-More information about that coming soon in the docs folder.
+For more information see: `docs/suggested_deployment.md`.
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

@@ -49,16 +49,16 @@ cd web-lgsm
 ./install.sh
 ```
 
-* Once the install completes, start the server using the `init.sh` script.
+* Once the install completes, start the server using the `web-lgsm.py` script.
 
 ```
-./init.sh
+./web-lgsm.py
 ```
 
-* You can also stop the server with the `init.sh` script.
+* You can also stop the server with the `web-lgsm.py` script.
 
 ```
-./init.sh stop
+./web-lgsm.py --stop
 ```
 
 > :round_pushpin: _<span style="color: orange;">Note:</span> At this point the

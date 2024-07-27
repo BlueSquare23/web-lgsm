@@ -41,7 +41,7 @@ install the python packages within a virtual environment (venv).
 
 ## Trouble Starting the Web LGSM
 
-If you're having trouble starting the app with the `init.sh` script or having
+If you're having trouble starting the app with the `web-lgsm.py` script or having
 trouble with some feature of the app, then you can investigate further by
 starting the app in debug mode in your terminal. To do so simply ssh to the
 server, cd to the web-lgsm installation directory, and then run: 
@@ -64,7 +64,7 @@ Press CTRL+C to quit
 
 That will bypass Gunicorn and use Flask's builtin debug web server. Please note,
 running the app this way is only recommended for debugging / troubleshooting
-purposes. For production deployments always use the `init.sh` script.
+purposes. For production deployments always use the `web-lgsm.py` script.
 
 ## Feel Free to Reach Out!
 

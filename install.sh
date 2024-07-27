@@ -81,5 +81,5 @@ echo "SECRET_KEY=\"$random_key\"" > .secret
 chmod 600 .secret
 
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
-echo -e "${green}Run the \`init.sh\` to start the server.${reset}"
+echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"
 

@@ -1,14 +1,13 @@
 ## Beta Version 1.7 Todos
 
-* Fillout missing parts of github "Community Standards" 
-  - Things like Code of Conduct, Contrbuting Guide, Security Policy etc.
-  - Partially because they'd be good to have, partially to make the project
-    look nicer to prospective downloaders.
-  - I would call it marketing alost, except this thing is free, so really just
-    want to convince people to use it.
-  - https://github.com/BlueSquare23/web-lgsm/community
-
 * Look into make config editor work through sudo.
+
+* Make jQuery for charts more efficient.
+  - Right now its generating hella requests because its requesting the api
+    endpoint 4 times a second (each chart getting its own copy of the json).
+  - This is because I'm not any good at javascript and it works. But yeah can
+    probably be refactored to not be so inefficient.
+  - With 1 request to get the json for all of the charts that need it.
 
 * Work on Idea Phase ideas.
 

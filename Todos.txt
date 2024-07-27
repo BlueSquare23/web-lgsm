@@ -1,5 +1,12 @@
 ## Beta Version 1.7.0 Todos
 
+* Make it so that home page somehow shows if can't connect to backend server
+  cause its down.
+  - With recent changes to js, no longer goes flatline when cant connect.
+  - So I'm thinking some other sort of indicator to say backend offline, in
+    case someone just leaves the homepage up and then the backend gunicorn
+    server gets shutoff or crashes.
+
 * Look into make config editor work through sudo.
 
 * Work on Idea Phase ideas.

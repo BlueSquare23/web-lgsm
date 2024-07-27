@@ -60,15 +60,17 @@ if os.getenv('VIRTUAL_ENV') is None:
     exit(0)
 
 # Continue imports once we know we're in a venv.
+import json
 import time
 import getopt
+import shutil
 import string
 import getpass
 import configparser
 from werkzeug.security import generate_password_hash
 from app import db, main as appmain
 from app.models import User
-from app.utils import contains_bad_chars
+from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
 config = configparser.ConfigParser()
@@ -214,6 +216,70 @@ def change_password():
     print("Password updated successfully!")
 
 
+def update_gs_list():
+    """Updates game server json by parsing latest `linuxgsm.sh list` output"""
+    lgsmsh = SCRIPTPATH + '/scripts/linuxgsm.sh'
+    check_and_get_lgsmsh(lgsmsh)
+
+    servers_list = os.popen(f"{lgsmsh} list").read()
+
+    short_names = []
+    long_names = []
+    gs_mapping = dict()
+
+    for line in servers_list.split('\n'):
+        if len(line.strip()) == 0:
+            continue
+        if "serverlist.csv" in line:
+            continue
+        short_name = line.split()[0]
+        long_name = ' '.join(line.split()[1:]).replace("'", "").replace("&", "and")
+
+        short_names.append(short_name)
+        long_names.append(long_name)
+        gs_mapping[short_name] = long_name
+
+    test_json = 'test_data.json'
+    test_src = os.path.join(SCRIPTPATH, test_json)
+    test_dst = os.path.join(SCRIPTPATH, f'json/{test_json}')
+    map_json = open(test_json, "w")
+    map_json.write(json.dumps(gs_mapping, indent = 4))
+    map_json.close()
+    compare_and_move(test_src, test_dst)
+
+    gs_dict = {
+        "servers": short_names,
+        "server_names": long_names
+    }
+
+    servers_json = 'game_servers.json'
+    gs_src = os.path.join(SCRIPTPATH, servers_json)
+    gs_dst = os.path.join(SCRIPTPATH, f'json/{servers_json}')
+    gs_json = open(servers_json, "w")
+    gs_json.write(json.dumps(gs_dict, indent = 4))
+    gs_json.close()
+    compare_and_move(gs_src, gs_dst)
+
+def compare_and_move(src_file, dst_file):
+    """Diff's two files and moves src to dst if they differ."""
+    file_name = os.path.basename(src_file)
+    try:
+        with open(src_file, 'r') as file1, open(dst_file, 'r') as file2:
+            src_content = file1.read()
+            dst_content = file2.read()
+
+        if src_content != dst_content:
+            print(f" [*] Backing up {file_name} to {file_name}.bak")
+            shutil.copy(dst_file, dst_file+'.bak')
+            shutil.move(src_file, dst_file)
+            print(f" [!] File {file_name} JSON updated!")
+        else:
+            os.remove(src_file)
+            print(f" [*] File {file_name} JSON already up to date.")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+    except IOError as e:
+        print(f"Error: {e}")
 
 def print_help():
     """Prints help menu"""
@@ -230,13 +296,14 @@ def print_help():
   ║   -m, --status      Show server status                   ║
   ║   -d, --debug       Start server in debug mode           ║
   ║   -p, --passwd      Change web user password             ║
+  ║   -f, --fetch_json  Fetch latest game servers json       ║
   ╚══════════════════════════════════════════════════════════╝
     """)
     exit()
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hsmrqdp", ["help", "start", "stop", "status", "restart", "debug", "passwd"])
+        opts, args = getopt.getopt(argv, "hsmrqdpuf", ["help", "start", "stop", "status", "restart", "debug", "passwd", "update", "fetch_json"])
     except getopt.GetoptError:
         print_help()
 
@@ -269,6 +336,13 @@ def main(argv):
             app = appmain()
             with app.app_context():
                 change_password()
+            return
+        elif opt in ("-u", "--update"):
+            print("not implemented yet")
+#            update_weblgsm()
+            return
+        elif opt in ("-f", "--fetch_json"):
+            update_gs_list()
             return
 
 if __name__ == "__main__":

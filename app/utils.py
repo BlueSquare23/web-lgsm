@@ -410,7 +410,7 @@ def contains_bad_chars(i):
 
 # Run's self update script.
 def update_self():
-    update_cmd = ['./scripts/update.sh', '-a']
+    update_cmd = ['./web-lgsm.py', '--auto']
     proc = subprocess.run(update_cmd,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
@@ -423,7 +423,7 @@ def update_self():
         return 'Already Up-to-date!'
 
     if 'Update Required' in proc.stdout:
-        return 'Web LGSM Upgraded! Restarting momentarially...'
+        return 'Web LGSM Upgraded! Restarting momentarily...'
 
 
 # Sleep's 5 seconds then restarts the app.

@@ -75,12 +75,18 @@ from app.utils import contains_bad_chars, check_and_get_lgsmsh
 # Import config data.
 config = configparser.ConfigParser()
 config.read(os.path.join(SCRIPTPATH, 'main.conf'))
+# TODO: Put try except around this to catch case where config settings not set.
 HOST = config['server']['host']
 PORT = config['server']['port']
 
 os.environ['COLUMNS'] = '80'
 os.environ['LINES'] = '50'
 os.environ['TERM'] = 'xterm-256color'
+
+# Global options hash.
+O = { "verbose" : False,
+        "check" : False,
+         "auto" : False }
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -281,6 +287,89 @@ def compare_and_move(src_file, dst_file):
     except IOError as e:
         print(f"Error: {e}")
 
+def run_command(command):
+    if O['verbose']:
+        print(f" [*] Running command: {command}")
+
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+    if O['verbose']:
+        print(result.stdout.strip())
+
+    return result.stdout.strip()
+
+def get_git_info():
+    upstream = '@{u}'
+    local = run_command('git rev-parse @')
+    remote = run_command(f'git rev-parse {upstream}')
+    base = run_command(f'git merge-base @ {upstream}')
+    return local, remote, base
+
+def backup_file(filename):
+    if not os.path.isfile(filename):
+        print(f" [!] Warning: The file '{filename}' does not exist. No backup created!")
+        return None
+
+    epoc = int(time.time())
+    backup_filename = f"/tmp/{filename}.{epoc}.bak"
+    os.rename(filename, backup_filename)
+    print(f" [*] Backing up {filename} to {backup_filename}")
+    return backup_filename
+
+def backup_dir(dirname):
+    if not os.path.isdir(dirname):
+        print(f" [!] Warning: The directory '{dirname}' does not exist. No backup created!")
+        return None
+
+    epoc = int(time.time())
+    backup_dirname = f"{dirname}.{epoc}.bak"
+    shutil.copytree(dirname, backup_dirname)
+    print(f" [*] Backing up {dirname} to {backup_dirname}")
+    return backup_dirname
+
+def update_weblgsm():
+    local, remote, base = get_git_info()
+
+    if local == remote:
+        print(" [*] Web LGSM already up-to-date!")
+        return
+
+    elif local == base:
+        print(" [!] Update Required!")
+        if O["check"]:
+            return
+
+        if not O["auto"]:
+            resp = input(" [*] Would you like to update now? (y/n): ")
+            if resp.lower() != 'y':
+                exit()
+
+        backup_file('main.conf')
+
+        run_command('git clean -f')
+
+        print(" [*] Pulling update from github...")
+        run_command('git pull')
+
+        epoc = int(time.time())
+        print(f" [*] Backing up venv to venv.{epoc}.bak and creating a new one.")
+        backup_dir('venv')
+        run_command('python3 -m venv venv')
+        run_command('source venv/bin/activate')
+        print(" [*] Installing new pip reqs...")
+        run_command('python3 -m pip install -r requirements.txt')
+        print(" [*] Update completed!")
+        return
+
+    elif remote == base:
+        print(" [!] Local ahead of remote, need push?", file=sys.stderr)
+        print(" [-] Note: Normal users should not see this.", file=sys.stderr)
+        sys.exit(1)
+
+    print(" [!] Something has gone horribly wrong!", file=sys.stderr)
+    print(" [-] It's possible your local repo has diverged.", file=sys.stderr)
+    sys.exit(2)
+
 def print_help():
     """Prints help menu"""
     print("""
@@ -295,7 +384,11 @@ def print_help():
   ║   -r, --restart     Restart the server                   ║
   ║   -m, --status      Show server status                   ║
   ║   -d, --debug       Start server in debug mode           ║
+  ║   -v, --verbose     More verbose output                  ║
   ║   -p, --passwd      Change web user password             ║
+  ║   -u, --update      Update web-lgsm version              ║
+  ║   -c, --check       Check if an update is available      ║
+  ║   -a, --auto        Run an auto update                   ║
   ║   -f, --fetch_json  Fetch latest game servers json       ║
   ╚══════════════════════════════════════════════════════════╝
     """)
@@ -303,14 +396,27 @@ def print_help():
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hsmrqdpuf", ["help", "start", "stop", "status", "restart", "debug", "passwd", "update", "fetch_json"])
+        longopts = ["help", "start", "stop", "status", "restart", "debug",
+                    "verbose", "passwd", "update", "check", "auto", "fetch_json"]
+        opts, args = getopt.getopt(argv, "hsmrqdvpucaf", longopts)
     except getopt.GetoptError:
         print_help()
 
+    # If no args, start the server.
     if not opts and not args:
         start_server()
         return
 
+    # Push required opts to global dict.
+    for opt, _ in opts:
+        if opt in ("-v", "--verbose"):
+            O["verbose"] = True
+        if opt in ("-c", "--check"):
+            O["check"] = True
+        if opt in ("-a", "--auto"):
+            O["auto"] = True
+
+    # Do the needful based on opts.
     for opt, _ in opts:
         if opt in ("-h", "--help"):
             print_help()
@@ -331,15 +437,14 @@ def main(argv):
         elif opt in ("-d", "--debug"):
             start_debug()
             return
+        elif opt in ("-u", "--update", "-c", "--check", "-a", "--auto"):
+            update_weblgsm()
+            return
         elif opt in ("-p", "--passwd"):
             # Technically, needs run in app context.
             app = appmain()
             with app.app_context():
                 change_password()
-            return
-        elif opt in ("-u", "--update"):
-            print("not implemented yet")
-#            update_weblgsm()
             return
         elif opt in ("-f", "--fetch_json"):
             update_gs_list()

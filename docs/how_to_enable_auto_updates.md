@@ -6,10 +6,10 @@ one below to your users crontab.
 Will run at 02:30 AM on Sundays.
 
 ```
-2 30 * * 0  /home/$USER/web-lgsm/scripts/update.sh -a
+2 30 * * 0  /path/to/web-lgsm/web-lgsm.py --auto
 ```
 
-Be sure to replace `/home/$USER/web-lgsm/` with the path to your web-lgsm
+Be sure to replace `/path/to/web-lgsm/` with the path to your web-lgsm
 installation.
 
 ## More Info on Using Cron on Linux

@@ -2,13 +2,6 @@
 
 * Look into make config editor work through sudo.
 
-* Make jQuery for charts more efficient.
-  - Right now its generating hella requests because its requesting the api
-    endpoint 4 times a second (each chart getting its own copy of the json).
-  - This is because I'm not any good at javascript and it works. But yeah can
-    probably be refactored to not be so inefficient.
-  - With 1 request to get the json for all of the charts that need it.
-
 * Work on Idea Phase ideas.
 
 * With v1.7.0 release, introduce a proper Semantic Versioning schema.

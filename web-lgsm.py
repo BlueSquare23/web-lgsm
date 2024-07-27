@@ -4,10 +4,21 @@
 
 import os
 import sys
+import signal
 import subprocess
 
 # Where we at with it, Ali?
 SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
+
+def signalint_handler(sig, frame):
+    # Suppress stderr for debug ctrl + c stack trace.
+    with open(os.devnull, 'w') as fnull:
+        sys.stdout = fnull
+        sys.stderr = fnull
+        sys.stdout = sys.__stdout__
+        print('\r [!] Ctrl + C received. Shutting down...')
+
+    exit(0)
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
@@ -19,12 +30,34 @@ def relaunch_in_venv():
 
     # Activate the virtual environment and re-run the script.
     activate_command = f'source {venv_path} && exec python3 {" ".join(sys.argv)}'
-    subprocess.run(activate_command, shell=True, executable='/bin/bash')
+    signal.signal(signal.SIGINT, signalint_handler)
+
+    # Use subprocess.Popen for real-time output
+    process = subprocess.Popen(
+        activate_command,
+        shell=True,
+        executable='/bin/bash',
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
+
+    # Read the output in real-time.
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print(output.strip())
+
+    # Wait for the process to complete.
+    process.wait()
 
 # Protection in case user is not in venv.
 if os.getenv('VIRTUAL_ENV') is None:
     relaunch_in_venv()
-    sys.exit(0)
+    exit(0)
 
 # Continue imports once we know we're in a venv.
 import time
@@ -59,7 +92,7 @@ def start_server():
     status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
     if status_result.returncode == 0:
         print("Server Already Running!")
-        sys.exit()
+        exit()
 
     print(f"""
  ╔═══════════════════════════════════════════════════════╗
@@ -96,6 +129,16 @@ def start_server():
     except Exception as e:
         print(f" [!] Failed to launch Gunicorn server: {e}")
 
+
+def start_debug():
+    print(" [*] Press Ctrl + C to exit!")
+    from app import main
+    # For clean ctrl + c handling.
+    signal.signal(signal.SIGINT, signalint_handler)
+    app = main()
+    app.run(debug=True, host=HOST, port=PORT)
+    
+
 def print_help():
     print("""
   ╔══════════════════════════════════════════════════════════╗  
@@ -108,13 +151,14 @@ def print_help():
   ║   -q, --stop        Stop the server                      ║
   ║   -r, --restart     Restart the server                   ║
   ║   -m, --status      Show server status                   ║
+  ║   -d, --debug       Start server in debug mode           ║
   ╚══════════════════════════════════════════════════════════╝
     """)
-    sys.exit()
+    exit()
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hsmrq", ["help", "start", "stop", "status", "restart"])
+        opts, args = getopt.getopt(argv, "hsmrqd", ["help", "start", "stop", "status", "restart", "debug"])
     except getopt.GetoptError:
         print_help()
 
@@ -138,6 +182,9 @@ def main(argv):
             return
         elif opt in ("-q", "--stop"):
             stop_server()
+            return
+        elif opt in ("-d", "--debug"):
+            start_debug()
             return
 
 if __name__ == "__main__":

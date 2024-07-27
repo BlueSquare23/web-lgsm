@@ -4,13 +4,32 @@
 
 import os
 import sys
-import getopt
 import subprocess
-import time
-import configparser
 
-# Setup Globals.
+# Where we at with it, Ali?
 SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
+
+def relaunch_in_venv():
+    """Activate the virtual environment and relaunch the script."""
+    venv_path = SCRIPTPATH + '/venv/bin/activate'
+    if not os.path.isfile(venv_path):
+        exit(f" [!] Virtual environment not found at {venv_path}\n" +
+             "Create a virtual environment using the following command:\n" +
+             "\tpython3 -m venv venv")
+
+    # Activate the virtual environment and re-run the script.
+    activate_command = f'source {venv_path} && exec python3 {" ".join(sys.argv)}'
+    subprocess.run(activate_command, shell=True, executable='/bin/bash')
+
+# Protection in case user is not in venv.
+if os.getenv('VIRTUAL_ENV') is None:
+    relaunch_in_venv()
+    sys.exit(0)
+
+# Continue imports once we know we're in a venv.
+import time
+import getopt
+import configparser
 
 # Import config data.
 config = configparser.ConfigParser()
@@ -25,16 +44,16 @@ os.environ['TERM'] = 'xterm-256color'
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
     if result.returncode == 0:
-        print("Server Killed!")
+        print(" [*] Server Killed!")
     else:
-        print("Server Not Running.")
+        print(" [!] Server Not Running!")
 
 def check_status():
     result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
     if result.returncode == 0:
-        print("Server Already Running!")
+        print(" [*] Server Currently Running.")
     else:
-        print("Server Not Running.")
+        print(" [*] Server Not Running.")
 
 def start_server():
     status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
@@ -43,44 +62,53 @@ def start_server():
         sys.exit()
 
     print(f"""
-    Welcome to the Web LGSM!
-
-    You can access the web-lgsm via the url below!
-
-    http://{HOST}:{PORT}/
-
-    You can kill the web server with:
-
-    {SCRIPTPATH}/web-lgsm.py --stop
-
-    Please Note: It is strongly advisable to firewall off port {PORT} to the
-    outside world and then proxy this server to a real web server such as
-    Apache or Nginx with SSL encryption! See the Readme for more info.
+ ╔═══════════════════════════════════════════════════════╗
+ ║ Welcome to the Web LGSM! ☁️  🕹️                         ║
+ ║                                                       ║
+ ║ You can access the web-lgsm via the url below!        ║
+ ║                                                       ║
+ ║ http://{HOST}:{PORT}/                               ║
+ ║                                                       ║
+ ║ You can kill the web server with:                     ║
+ ║                                                       ║
+ ║ ./web-lgsm.py --stop                                  ║
+ ║                                                       ║
+ ║ Please Note: It is strongly advisable to firewall off ║
+ ║ port {PORT} to the outside world and then proxy this   ║
+ ║ server to a real web server such as Apache or Nginx   ║
+ ║ with SSL encryption! See the Readme for more info.    ║
+ ╚═══════════════════════════════════════════════════════╝
     """)
 
-    # Activate virtual environment
-    activate_script = os.path.join(SCRIPTPATH, "venv", "bin", "activate")
-    if "VIRTUAL_ENV" not in os.environ:
-        command = f"source {activate_script} && gunicorn --access-logfile web-lgsm.log --bind={HOST}:{PORT} --daemon --worker-class gevent 'app:main()'"
-        subprocess.run(command, shell=True, executable='/bin/bash')
-    else:
-        subprocess.run(["gunicorn", "--access-logfile", os.path.join(SCRIPTPATH, "web-lgsm.log"),
-                        "--bind={}:{}".format(HOST, PORT),
-                        "--daemon",
-                        "--worker-class", "gevent", "'app:main()'"])
+    # Try to start the gunicorn server as a detached proc.
+    try:
+        process = subprocess.Popen(
+            ["gunicorn", 
+             "--access-logfile", f"{SCRIPTPATH}/web-lgsm.log",
+             f"--bind={HOST}:{PORT}",
+             "--daemon",
+             "--worker-class", "gevent",
+             "app:main()"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        print(f" [*] Launched Gunicorn server with PID: {process.pid}")
+    except Exception as e:
+        print(f" [!] Failed to launch Gunicorn server: {e}")
 
 def print_help():
     print("""
-    Usage: web-lgsm.py [options]
-
-      Options:
-
-      -h, --help        Prints this help menu
-      -s, --start       Starts the server (default no args)
-      -q, --stop        Stop the server
-      -r, --restart     Restart the server
-      -m, --status      Show server status
-
+  ╔══════════════════════════════════════════════════════════╗  
+  ║ Usage: web-lgsm.py [options]                             ║
+  ║                                                          ║
+  ║   Options:                                               ║
+  ║                                                          ║
+  ║   -h, --help        Prints this help menu                ║
+  ║   -s, --start       Starts the server (default no args)  ║
+  ║   -q, --stop        Stop the server                      ║
+  ║   -r, --restart     Restart the server                   ║
+  ║   -m, --status      Show server status                   ║
+  ╚══════════════════════════════════════════════════════════╝
     """)
     sys.exit()
 

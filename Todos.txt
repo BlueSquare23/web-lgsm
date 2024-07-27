@@ -1,16 +1,11 @@
 ## Beta Version 1.7.0 Todos
 
-* Fix having to change versioning in 3 files. Make one version.txt file that
-  they all pull from.
-
 * Look into make config editor work through sudo.
 
 * Work on Idea Phase ideas.
 
 * With v1.7.0 release, introduce a proper Semantic Versioning schema.
   - More info: https://semver.org/
-
-## In Idea Phase...
 
 * Create a single point of entry script for whole project.
   - So right now I have the init script and the debug script and the setup as a
@@ -21,6 +16,8 @@
   - The `install.sh` script can still be its own thing.
   - But pretty much everything else in the script dir can be controlled by one
     main script for the whole project.
+
+## In Idea Phase...
 
 * Explore putting new installations in their own user directory like the LGSM
   recommends to begin with.

@@ -419,8 +419,8 @@ def update_self():
     if proc.returncode != 0:
         return f"Error: {proc.stderr}"
 
-    if 'Up-to-date' in proc.stdout:
-        return 'Already Up-to-date!'
+    if 'up to date' in proc.stdout:
+        return 'Already up to date!'
 
     if 'Update Required' in proc.stdout:
         return 'Web LGSM Upgraded! Restarting momentarily...'

@@ -331,7 +331,7 @@ def update_weblgsm():
     local, remote, base = get_git_info()
 
     if local == remote:
-        print(" [*] Web LGSM already up-to-date!")
+        print(" [*] Web LGSM already up to date!")
         return
 
     elif local == base:

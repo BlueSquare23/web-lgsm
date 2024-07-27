@@ -1,4 +1,7 @@
-## Beta Version 1.7 Todos
+## Beta Version 1.7.0 Todos
+
+* Fix having to change versioning in 3 files. Make one version.txt file that
+  they all pull from.
 
 * Look into make config editor work through sudo.
 

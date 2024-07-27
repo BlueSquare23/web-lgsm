@@ -1,5 +1,14 @@
 $(document).ready(function() {
-    function createLineChart(ctx, label, color) {
+    // Define global variables to store the data
+    let networkBytesSentRate = 0;
+    let networkBytesRecvRate = 0;
+    let cpuUsage = 0;
+    let memPercentUsed = 0;
+    let load1 = 0;
+    let load5 = 0;
+    let load15 = 0;
+
+    function createLineChart(ctx, label, color, dataKey) {
         return new Chart(ctx, {
             type: 'line',
             data: {
@@ -20,47 +29,12 @@ $(document).ready(function() {
                         realtime: {
                             delay: 2000,
                             onRefresh: function(chart) {
-                                $.ajax({
-                                    url: '/api/system-usage',
-                                    method: 'GET',
-                                    success: function(data) {
-                                        const now = Date.now();
-                                        if (chart.canvas.id === 'networkChart') {
-                                            chart.data.datasets[0].data.push({
-                                                x: now,
-                                                y: data.network.bytes_sent_rate
-                                            });
-                                            chart.data.datasets[1].data.push({
-                                                x: now,
-                                                y: data.network.bytes_recv_rate
-                                            });
-                                        } else if (chart.canvas.id === 'cpuChart') {
-                                            chart.data.datasets[0].data.push({
-                                                x: now,
-                                                y: data.cpu.cpu_usage
-                                            });
-                                        } else if (chart.canvas.id === 'memChart') {
-                                            chart.data.datasets[0].data.push({
-                                                x: now,
-                                                y: data.mem.percent_used
-                                            });
-                                        } else if (chart.canvas.id === 'loadChart') {
-                                            chart.data.datasets[0].data.push({
-                                                x: now,
-                                                y: data.cpu.load1
-                                            });
-                                            chart.data.datasets[1].data.push({
-                                                x: now,
-                                                y: data.cpu.load5
-                                            });
-                                            chart.data.datasets[2].data.push({
-                                                x: now,
-                                                y: data.cpu.load15
-                                            });
-                                        }
-                                        chart.update('quiet');
-                                    }
+                                const now = Date.now();
+                                chart.data.datasets[0].data.push({
+                                    x: now,
+                                    y: typeof dataKey === 'function' ? dataKey() : dataKey
                                 });
+                                chart.update('quiet');
                             }
                         }
                     },
@@ -120,22 +94,16 @@ $(document).ready(function() {
                     realtime: {
                         delay: 2000,
                         onRefresh: function(chart) {
-                            $.ajax({
-                                url: '/api/system-usage',
-                                method: 'GET',
-                                success: function(data) {
-                                    const now = Date.now();
-                                    chart.data.datasets[0].data.push({
-                                        x: now,
-                                        y: data.network.bytes_sent_rate
-                                    });
-                                    chart.data.datasets[1].data.push({
-                                        x: now,
-                                        y: data.network.bytes_recv_rate
-                                    });
-                                    chart.update('quiet');
-                                }
+                            const now = Date.now();
+                            chart.data.datasets[0].data.push({
+                                x: now,
+                                y: networkBytesSentRate
                             });
+                            chart.data.datasets[1].data.push({
+                                x: now,
+                                y: networkBytesRecvRate
+                            });
+                            chart.update('quiet');
                         }
                     }
                 },
@@ -151,10 +119,10 @@ $(document).ready(function() {
     });
 
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-    createLineChart(cpuCtx, 'CPU Usage (%)', usedColor);
+    const cpuChart = createLineChart(cpuCtx, 'CPU Usage (%)', usedColor, () => cpuUsage);
 
     const memCtx = document.getElementById('memChart').getContext('2d');
-    createLineChart(memCtx, 'Memory Usage (%)', freeColor);
+    const memChart = createLineChart(memCtx, 'Memory Usage (%)', freeColor, () => memPercentUsed);
 
     const loadCtx = document.getElementById('loadChart').getContext('2d');
     const loadChart = new Chart(loadCtx, {
@@ -191,26 +159,20 @@ $(document).ready(function() {
                     realtime: {
                         delay: 2000,
                         onRefresh: function(chart) {
-                            $.ajax({
-                                url: '/api/system-usage',
-                                method: 'GET',
-                                success: function(data) {
-                                    const now = Date.now();
-                                    chart.data.datasets[0].data.push({
-                                        x: now,
-                                        y: data.cpu.load1
-                                    });
-                                    chart.data.datasets[1].data.push({
-                                        x: now,
-                                        y: data.cpu.load5
-                                    });
-                                    chart.data.datasets[2].data.push({
-                                        x: now,
-                                        y: data.cpu.load15
-                                    });
-                                    chart.update('quiet');
-                                }
+                            const now = Date.now();
+                            chart.data.datasets[0].data.push({
+                                x: now,
+                                y: load1
                             });
+                            chart.data.datasets[1].data.push({
+                                x: now,
+                                y: load5
+                            });
+                            chart.data.datasets[2].data.push({
+                                x: now,
+                                y: load15
+                            });
+                            chart.update('quiet');
                         }
                     }
                 },
@@ -225,26 +187,40 @@ $(document).ready(function() {
         }
     });
 
-    $(document).ready(function() {
-        updateDiskChart(); // Call the function once when the document is ready.
+    const diskCtx = document.getElementById('diskChart').getContext('2d');
+    const diskChart = createPieChart(diskCtx);
 
-        const diskCtx = document.getElementById('diskChart').getContext('2d');
-        const diskChart = createPieChart(diskCtx);
-        const bytesToGB = bytes => (bytes / (1024 ** 3)).toFixed(2);
+    function updateCharts(data) {
+        const now = Date.now();
 
-        // Set up the interval to update the chart every 5 seconds.
-        setInterval(updateDiskChart, 5000);
+        networkBytesSentRate = data.network.bytes_sent_rate;
+        networkBytesRecvRate = data.network.bytes_recv_rate;
+        cpuUsage = data.cpu.cpu_usage;
+        memPercentUsed = data.mem.percent_used;
+        load1 = data.cpu.load1;
+        load5 = data.cpu.load5;
+        load15 = data.cpu.load15;
 
-        function updateDiskChart() {
-            $.ajax({
-                url: '/api/system-usage',
-                method: 'GET',
-                success: function(data) {
-                    diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used);
-                    diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free);
-                    diskChart.update();
-                }
-            });
-        }
-    });
+        diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used);
+        diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free);
+        diskChart.update();
+    }
+
+    function fetchData() {
+        $.ajax({
+            url: '/api/system-usage',
+            method: 'GET',
+            success: function(data) {
+                updateCharts(data);
+            }
+        });
+    }
+
+    fetchData();
+    setInterval(fetchData, 1000);
+
+    function bytesToGB(bytes) {
+        return (bytes / (1024 ** 3)).toFixed(2);
+    }
 });
+

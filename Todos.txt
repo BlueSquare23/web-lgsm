@@ -1,5 +1,22 @@
 ## Beta Version 1.7.0 Todos
 
+* Write some tests for new `web-lgsm.py` script.
+  - Not exactly sure how to best do this because this is also going to be the
+    script that launches the tests, and it already calls itself once and runs
+    the tests through a series of subprocess shells.
+    - I assume it will involve much forking and perhaps some acts of computer
+      heresy...
+      - Its tests, who gives a shit as long as they run and fail when they're
+        supposed to.
+
+* Replace test running logic in `.github/workflows/test.yml` with a call to
+  `web-lgsm.py --test_full`.
+  - I want to run all tests through this main script.
+  - Then I can ditch the env vars in the test.yml file.
+    - Aka just two places where the version number is kept, needs updated. Once
+      in the project files and one in the test files.
+  - Really should've done this from the beginning, but ehh live and learn.
+
 * Make it so that home page somehow shows if can't connect to backend server
   cause its down.
   - With recent changes to js, no longer goes flatline when cant connect.
@@ -14,15 +31,6 @@
 * With v1.7.0 release, introduce a proper Semantic Versioning schema.
   - More info: https://semver.org/
 
-* Create a single point of entry script for whole project.
-  - So right now I have the init script and the debug script and the setup as a
-    systemd service script and I was thinking of adding another script for
-    resetting the web portal login pass.
-  - Instead of having all these be differnt scripts, roll them all into one,
-    single point of entry, `web-lgsm` script.
-  - The `install.sh` script can still be its own thing.
-  - But pretty much everything else in the script dir can be controlled by one
-    main script for the whole project.
 
 ## In Idea Phase...
 

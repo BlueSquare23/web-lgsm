@@ -22,19 +22,20 @@ def signalint_handler(sig, frame):
 
 def run_command_popen(command):
     """Runs a command through a subprocess.Popen shell"""
-    process = subprocess.Popen(
-        command,
-        shell=True,
-        executable='/bin/bash',
-        stdin=subprocess.PIPE,
-        stdout=None,  # Direct output to the terminal.
-        stderr=None,  # Direct error output to the terminal.
-        text=True,
-        env=os.environ
-    )
-
-    # Wait for the process to complete.
-    process.wait()
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            executable='/bin/bash',
+            stdin=subprocess.PIPE,
+            stdout=None,  # Direct output to the terminal.
+            stderr=None,  # Direct error output to the terminal.
+            text=True,
+            env=os.environ
+        )
+        result.check_returncode()
+    except subprocess.CalledProcessError as e:
+        print(f" [!] Command '{command}' failed with error: {e}")
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
@@ -132,7 +133,7 @@ def print_start_banner():
 def start_server():
     status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
     if status_result.returncode == 0:
-        print("Server Already Running!")
+        print(" [!] Server Already Running!")
         exit()
 
     print_start_banner()

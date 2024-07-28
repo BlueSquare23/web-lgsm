@@ -2,8 +2,10 @@ import os
 import time
 import json
 import pytest
+import psutil
 from flask import url_for, request
 from game_servers import game_servers
+import subprocess
 
 # Global testing env vars.
 USERNAME = os.environ['USERNAME']
@@ -688,11 +690,21 @@ def test_delete_game_server(app, client):
 
 
 def test_full_game_server_install(app, client):
+    print(USERNAME)
+    print(PASSWORD)
+    print(TEST_SERVER)
+    print(TEST_SERVER_PATH)
+    print(TEST_SERVER_NAME)
+    print(CFG_PATH)
+    print(VERSION)
     # Login.
     with client:
         # Log test user in.
         response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
         assert response.status_code == 302
+
+        # For good measure.
+        os.system("killall -9 java")
 
         # Do an install.
         response = client.post('/install', data={'server_name':'mcserver', \
@@ -766,7 +778,7 @@ def test_game_server_start_stop(app, client):
         # Sleep until process is finished.
         while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
-            time.sleep(3)
+            time.sleep(5)
 
         print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
 
@@ -822,6 +834,19 @@ def test_game_server_start_stop(app, client):
         assert b'red' in response.data
 
 
+def check_watch_process():
+    """Checks if watch process is running."""
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            cmdline = ' '.join(proc.info['cmdline'])
+            if 'watch -te /usr/bin/tmux' in cmdline:
+                print(f"Process found: PID {proc.info['pid']}, CMD {cmdline}")
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+    print("Process not found")
+    return False
+
 def test_console_output(app, client):
     # Login.
     with client:
@@ -857,11 +882,12 @@ def test_console_output(app, client):
         time.sleep(5)
 
         # Check watch process is running and output is flowing.
-        for i in range(0, 3):
-            assert b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data
-            os.system("ps aux|grep '[w]atch -te /usr/bin/tmux'")
-            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
+        for i in range(0, 5):
+            print(f"###### Iteration: {i}")
             time.sleep(2)
+            assert b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data
+            assert check_watch_process() == True
+#            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
 
         # Cleanup
         os.system("killall -9 java watch")

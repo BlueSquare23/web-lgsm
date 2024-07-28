@@ -29,7 +29,8 @@ def run_command_popen(command):
         stdin=subprocess.PIPE,
         stdout=None,  # Direct output to the terminal.
         stderr=None,  # Direct error output to the terminal.
-        text=True
+        text=True,
+        env=os.environ
     )
 
     # Wait for the process to complete.
@@ -385,6 +386,10 @@ def run_tests():
     os.environ['HOME'] = SCRIPTPATH
     os.environ['APP_PATH'] = SCRIPTPATH
 
+    if O['verbose']:
+        for key, value in os.environ.items():
+            print(f'{key}={value}')
+
     # Backup Database.
     db_file = os.path.join(SCRIPTPATH, 'app/database.db')
     db_backup = backup_file(db_file)
@@ -418,13 +423,17 @@ def run_tests():
         if os.path.isdir(mcdir):
             backup_dir(mcdir)
 
-        run_command_popen('python -m pytest -v --maxfail=1')
+            # Then torch dir.
+            shutil.rmtree(mcdir)
+
+        run_command_popen('python -m pytest -vvv --maxfail=1')
 
     else:
         run_command_popen("python -m pytest -v -k 'not test_full_game_server_install and not test_game_server_start_stop and not test_console_output' --maxfail=1")
 
     # Restore Database.
-    shutil.move(db_backup, db_file)
+    if os.path.isfile(db_backup):
+        shutil.move(db_backup, db_file)
 
 
 def print_help():

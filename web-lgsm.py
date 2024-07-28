@@ -23,7 +23,7 @@ def signalint_handler(sig, frame):
 def run_command_popen(command):
     """Runs a command through a subprocess.Popen shell"""
     try:
-        result = subprocess.run(
+        result = subprocess.Popen(
             command,
             shell=True,
             executable='/bin/bash',
@@ -33,17 +33,26 @@ def run_command_popen(command):
             text=True,
             env=os.environ
         )
-        result.check_returncode()
+
+        # Wait for the process to complete.
+        process.wait()
+
     except subprocess.CalledProcessError as e:
         print(f" [!] Command '{command}' failed with error: {e}")
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
-    venv_path = SCRIPTPATH + '/venv/bin/activate'
+    venv_path = os.path.join(SCRIPTPATH, 'venv/bin/activate')
     if not os.path.isfile(venv_path):
-        exit(f" [!] Virtual environment not found at {venv_path}\n" +
-             "Create a virtual environment using the following command:\n" +
-             "\tpython3 -m venv venv")
+        err_msg = f"""\
+ [!] Virtual environment not found at {venv_path}
+ [*] Create a virtual environment using the following commands:
+         cd {SCRIPTPATH}
+         python3 -m venv venv
+ [*] Then install the required pip packages with this command:
+        pip3 -r install requirements.txt\
+        """
+        exit(err_msg)
 
     # Activate the virtual environment and re-run the script.
     activate_command = f'source {venv_path} && exec python3 {" ".join(sys.argv)}'
@@ -327,7 +336,8 @@ def backup_file(filename):
     print(f" [*] Backing up {filename} to {backup_filename}")
     return backup_filename
 
-def backup_dir(dirname):
+def backup_dir(dirname, tar=None):
+    """Back's up directories using shutil.copydirtree, optionally tar's them too"""
     if not os.path.isdir(dirname):
         print(f" [!] Warning: The directory '{dirname}' does not exist. No backup created!")
         return None
@@ -336,6 +346,15 @@ def backup_dir(dirname):
     backup_dirname = f"{dirname}.{epoc}.bak"
     shutil.copytree(dirname, backup_dirname)
     print(f" [*] Backing up {dirname} to {backup_dirname}")
+
+    if tar:
+        tar_filename = f"{backup_dirname}.tar.gz"
+        with tarfile.open(tar_filename, "w:gz") as tar_handle:
+            tar_handle.add(backup_dirname, arcname=os.path.basename(backup_dirname))
+        print(f" [*] Creating tar file {tar_filename}")
+        shutil.rmtree(backup_dirname)
+        return tar_filename
+
     return backup_dirname
 
 def update_weblgsm():
@@ -354,6 +373,9 @@ def update_weblgsm():
             resp = input(" [*] Would you like to update now? (y/n): ")
             if resp.lower() != 'y':
                 exit()
+
+        # Backup whole web-lgsm folder.
+        backup_dir(SCRIPTPATH, True)
 
         backup_file('main.conf')
 

@@ -20,6 +20,21 @@ def signalint_handler(sig, frame):
 
     exit(0)
 
+def run_command_popen(command):
+    """Runs a command through a subprocess.Popen shell"""
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        executable='/bin/bash',
+        stdin=subprocess.PIPE,
+        stdout=None,  # Direct output to the terminal.
+        stderr=None,  # Direct error output to the terminal.
+        text=True
+    )
+
+    # Wait for the process to complete.
+    process.wait()
+
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
     venv_path = SCRIPTPATH + '/venv/bin/activate'
@@ -32,27 +47,7 @@ def relaunch_in_venv():
     activate_command = f'source {venv_path} && exec python3 {" ".join(sys.argv)}'
     signal.signal(signal.SIGINT, signalint_handler)
 
-    # Use subprocess.Popen for real-time output
-    process = subprocess.Popen(
-        activate_command,
-        shell=True,
-        executable='/bin/bash',
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
-
-    # Read the output in real-time.
-    while True:
-        output = process.stdout.readline()
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            print(output.strip())
-
-    # Wait for the process to complete.
-    process.wait()
+    run_command_popen(activate_command)
 
 # Protection in case user is not in venv.
 if os.getenv('VIRTUAL_ENV') is None:
@@ -67,6 +62,7 @@ import shutil
 import string
 import getpass
 import configparser
+from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, main as appmain
 from app.models import User
@@ -86,7 +82,8 @@ os.environ['TERM'] = 'xterm-256color'
 # Global options hash.
 O = { "verbose" : False,
         "check" : False,
-         "auto" : False }
+         "auto" : False,
+    "test_full" : False }
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -291,7 +288,7 @@ def run_command(command):
     if O['verbose']:
         print(f" [*] Running command: {command}")
 
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    result = subprocess.run(command, shell=True, capture_output=True, text=True, env=os.environ)
 
     if O['verbose']:
         print(result.stdout.strip())
@@ -311,7 +308,7 @@ def backup_file(filename):
         return None
 
     epoc = int(time.time())
-    backup_filename = f"/tmp/{filename}.{epoc}.bak"
+    backup_filename = f"{filename}.{epoc}.bak"
     os.rename(filename, backup_filename)
     print(f" [*] Backing up {filename} to {backup_filename}")
     return backup_filename
@@ -370,6 +367,66 @@ def update_weblgsm():
     print(" [-] It's possible your local repo has diverged.", file=sys.stderr)
     sys.exit(2)
 
+def check_sudo():
+    try:
+        # Run the sudo command with the -v option to validate the current timestamp.
+        result = subprocess.run(['sudo', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            print(" [*] No active sudo tty ticket. Please run the script with an active sudo session.")
+            sys.exit(1)
+    except Exception as e:
+        print(f" [!] An error occurred while checking sudo status: {e}")
+        sys.exit(1)
+
+def run_tests():
+    # Source env vars.
+    env_path = os.path.join(SCRIPTPATH, 'tests/test.vars')
+    load_dotenv(dotenv_path=env_path)
+    os.environ['HOME'] = SCRIPTPATH
+    os.environ['APP_PATH'] = SCRIPTPATH
+
+    # Backup Database.
+    db_file = os.path.join(SCRIPTPATH, 'app/database.db')
+    db_backup = backup_file(db_file)
+
+    # Setup Mockcraft testdir.
+    mockcraft_dir = os.path.join(SCRIPTPATH, 'tests/test_data/Mockcraft')
+    cfg_dir = os.path.join(mockcraft_dir, 'lgsm/config-lgsm/mcserver/')
+    if not os.path.isdir(mockcraft_dir):
+        # will make mockcraft dir in the process.
+        os.makedirs(cfg_dir)
+
+        os.chdir(mockcraft_dir)
+        run_command("wget -O linuxgsm.sh https://linuxgsm.sh")
+        run_command("chmod +x linuxgsm.sh")
+        run_command("./linuxgsm.sh mcserver")
+        os.chdir(SCRIPTPATH)
+
+    # Reset test server cfg.
+    common_cfg = os.path.join(SCRIPTPATH, 'tests/test_data/common.cfg')
+    shutil.copy(common_cfg, cfg_dir)
+
+    # Enable verbose even if disabled by default just for test printing.
+    if not O['verbose']:
+        O['verbose'] = True
+
+    if O['test_full']:
+        # Need to get a sudo tty ticket for full game server install.
+        check_sudo()
+        # Backup Existing MC install, if one exists.
+        mcdir = os.path.join(SCRIPTPATH, 'Minecraft')
+        if os.path.isdir(mcdir):
+            backup_dir(mcdir)
+
+        run_command_popen('python -m pytest -v --maxfail=1')
+
+    else:
+        run_command_popen("python -m pytest -v -k 'not test_full_game_server_install and not test_game_server_start_stop and not test_console_output' --maxfail=1")
+
+    # Restore Database.
+    shutil.move(db_backup, db_file)
+
+
 def print_help():
     """Prints help menu"""
     print("""
@@ -390,6 +447,8 @@ def print_help():
   ║   -c, --check       Check if an update is available      ║
   ║   -a, --auto        Run an auto update                   ║
   ║   -f, --fetch_json  Fetch latest game servers json       ║
+  ║   -t, --test        Run project's pytest tests (short)   ║
+  ║   -x, --test_full   Run ALL project's pytest tests       ║
   ╚══════════════════════════════════════════════════════════╝
     """)
     exit()
@@ -397,8 +456,9 @@ def print_help():
 def main(argv):
     try:
         longopts = ["help", "start", "stop", "status", "restart", "debug",
-                    "verbose", "passwd", "update", "check", "auto", "fetch_json"]
-        opts, args = getopt.getopt(argv, "hsmrqdvpucaf", longopts)
+                    "verbose", "passwd", "update", "check", "auto", "fetch_json",
+                    "test", "test_full"]
+        opts, args = getopt.getopt(argv, "hsmrqdvpucaftx", longopts)
     except getopt.GetoptError:
         print_help()
 
@@ -415,6 +475,8 @@ def main(argv):
             O["check"] = True
         if opt in ("-a", "--auto"):
             O["auto"] = True
+        if opt in ("-x", "--test_full"):
+            O["test_full"] = True
 
     # Do the needful based on opts.
     for opt, _ in opts:
@@ -448,6 +510,9 @@ def main(argv):
             return
         elif opt in ("-f", "--fetch_json"):
             update_gs_list()
+            return
+        elif opt in ("-t", "--test", "-x", "--test_full"):
+            run_tests()
             return
 
 if __name__ == "__main__":

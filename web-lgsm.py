@@ -100,11 +100,15 @@ def check_status():
     else:
         print(" [*] Server Not Running.")
 
-def start_server():
-    status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
-    if status_result.returncode == 0:
-        print("Server Already Running!")
-        exit()
+def print_start_banner():
+    bar_len = 55
+    host_line_char_len = len(' http://:/') + len(HOST) + len(PORT)
+    host_line_spaces_len = bar_len - host_line_char_len
+    host_line_spaces = ' ' * host_line_spaces_len
+
+    port_line_char_len = len('  port to the outside world and then proxy this') + len(PORT)
+    port_line_spaces_len = bar_len - port_line_char_len
+    port_line_spaces = ' ' * port_line_spaces_len
 
     print(f"""
  ╔═══════════════════════════════════════════════════════╗
@@ -112,18 +116,26 @@ def start_server():
  ║                                                       ║
  ║ You can access the web-lgsm via the url below!        ║
  ║                                                       ║
- ║ http://{HOST}:{PORT}/                               ║
+ ║ http://{HOST}:{PORT}/{host_line_spaces}║
  ║                                                       ║
  ║ You can kill the web server with:                     ║
  ║                                                       ║
  ║ ./web-lgsm.py --stop                                  ║
  ║                                                       ║
  ║ Please Note: It is strongly advisable to firewall off ║
- ║ port {PORT} to the outside world and then proxy this   ║
+ ║ port {PORT} to the outside world and then proxy this{port_line_spaces}║
  ║ server to a real web server such as Apache or Nginx   ║
  ║ with SSL encryption! See the Readme for more info.    ║
  ╚═══════════════════════════════════════════════════════╝
     """)
+
+def start_server():
+    status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
+    if status_result.returncode == 0:
+        print("Server Already Running!")
+        exit()
+
+    print_start_banner()
 
     # Try to start the gunicorn server as a detached proc.
     try:

@@ -82,9 +82,14 @@ from app.utils import contains_bad_chars, check_and_get_lgsmsh
 # Import config data.
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(SCRIPTPATH, 'main.conf'))
-# TODO: Put try except around this to catch case where config settings not set.
-HOST = CONFIG['server']['host']
-PORT = CONFIG['server']['port']
+try:
+    HOST = CONFIG['server']['host']
+    PORT = CONFIG['server']['port']
+except KeyError as e:
+    print(f" [!] Configuration setting {e} not set.")
+    # You can also set default values if needed
+    HOST = '127.0.0.1'
+    PORT = '12357'
 
 os.environ['COLUMNS'] = '80'
 os.environ['LINES'] = '50'

@@ -41,8 +41,8 @@ Description="Web LGSM - A Simple Web Interface for the LinuxGSM"
 [Service]
 Type=forking
 WorkingDirectory=/home/steam/web-lgsm
-ExecStart=/home/steam/web-lgsm/init.sh
-ExecStop=/home/steam/web-lgsm/init.sh stop
+ExecStart=/home/steam/web-lgsm/web-lgsm.py
+ExecStop=/home/steam/web-lgsm/web-lgsm.py --stop
 Restart=always
 
 [Install]

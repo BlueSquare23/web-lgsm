@@ -1,24 +1,8 @@
-## Beta Version 1.6 Todos
-
-* Do light refactor of new code and old code. Look over some core parts with
-  fresh eyes to see if I'm doing anything obviously stupid anywhere or just
-  tweak around and make small improvements.
-
-## Beta Version 1.7 Todos
+## Beta Version 1.8.0 Todos
 
 * Look into make config editor work through sudo.
 
 ## In Idea Phase...
-
-* Create a single point of entry script for whole project.
-  - So right now I have the init script and the debug script and the setup as a
-    systemd service script and I was thinking of adding another script for
-    resetting the web portal login pass.
-  - Instead of having all these be differnt scripts, roll them all into one,
-    single point of entry, `web-lgsm` script.
-  - The `install.sh` script can still be its own thing.
-  - But pretty much everything else in the script dir can be controlled by one
-    main script for the whole project.
 
 * Explore putting new installations in their own user directory like the LGSM
   recommends to begin with.
@@ -44,3 +28,7 @@
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
+
+* Add support for containerized game server instances.
+  - See issue: https://github.com/BlueSquare23/web-lgsm/issues/16
+

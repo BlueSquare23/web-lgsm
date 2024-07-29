@@ -66,6 +66,18 @@ These settings control basic app behaviors.
     give web-lgsm access too!
 
 
+### Server Settings
+
+* `host`: The hostname or IP address the gunicorn server will run under. 
+  - Default: 127.0.0.1
+  - Warning: Unless you have good reason to, don't change this from the
+    default. See `docs/suggested_deployment.md` for more info.
+
+* `port`: The port number the gunicorn server will run on.
+  - Default: 12357
+  - Warning: Unless you have good reason to, don't change this from the
+    default. See `docs/suggested_deployment.md` for more info.
+
 ## A Subtle Distinction in Nomenclature
 
 For the purposes of keeping things straight I've tried to stick to calling game

@@ -49,16 +49,16 @@ cd web-lgsm
 ./install.sh
 ```
 
-* Once the install completes, start the server using the `init.sh` script.
+* Once the install completes, start the server using the `web-lgsm.py` script.
 
 ```
-./init.sh
+./web-lgsm.py
 ```
 
-* You can also stop the server with the `init.sh` script.
+* You can also stop the server with the `web-lgsm.py` script.
 
 ```
-./init.sh stop
+./web-lgsm.py --stop
 ```
 
 > :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
@@ -171,7 +171,7 @@ firewall off the port for this app (defaults to 12357) and proxy connections to
 this app through a **real** web server such as Apache or Nginx with SSL
 encryption!
 
-More information about that coming soon in the docs folder.
+For more information see: `docs/suggested_deployment.md`.
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

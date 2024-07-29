@@ -12,16 +12,6 @@ on:
 
 env:
   HOME: ${{ github.workspace }}
-  USERNAME: 'test'
-  PASSWORD: '**Testing12345'
-  APP_PATH: ${{ github.workspace }}
-  TEST_SERVER: 'Mockcraft'
-  TEST_SERVER_PATH: "tests/test_data/Mockcraft"
-  CFG_DIR: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver"
-  CFG_PATH: "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg"
-  TEST_SERVER_NAME: 'mcserver'
-  VERSION: 1.6
-  TERM: 'xterm-256color'
 
 jobs:
   build:
@@ -47,15 +37,9 @@ jobs:
           python3 -m virtualenv venv
           source venv/bin/activate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Setup Testing Mockcraft Install
+      - name: Install & Setup Java (For Minecraft Server Tests)
         run: |
           set -x
-          # Make new testing dirs recursively.
-          mkdir -p $CFG_DIR
-          cd $TEST_SERVER_PATH
-          wget -O linuxgsm.sh https://linuxgsm.sh && chmod +x linuxgsm.sh && ./linuxgsm.sh mcserver
-          cd ../../..
-          cp tests/test_data/common.cfg $CFG_DIR
           sudo update-alternatives --list java
           sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
           java -version
@@ -64,5 +48,4 @@ jobs:
           javac -version
       - name: Run Pytest Tests
         run: |
-          source venv/bin/activate
-          python -m pytest -v
+          $HOME/web-lgsm.py --test_full

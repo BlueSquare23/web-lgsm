@@ -521,7 +521,7 @@ def settings():
         flash(status)
 
         # Restart daemon thread sleeps for 5 seconds then restarts app.
-        cmd = ['./init.sh', 'restart']
+        cmd = ['./web-lgsm.py', '--restart']
         restart_daemon = Thread(target=restart_self, args=(cmd,), 
                                     daemon=True, name='restart')
         restart_daemon.start()

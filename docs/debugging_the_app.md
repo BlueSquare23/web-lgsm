@@ -14,9 +14,9 @@ extra output prining to help debug common issues. Simply run `./install.sh -d`
 to print the debug output and then look through it for common errors.
 
 You can also either open a github issue and put in your debug output in it or
-[contact me directly](https://johnlradford.io/contact) and Email me the output
-(my contact form will probably mangle the formatting so direct Email is best).
-I can look through it and try to help you get the project online!
+[contact me directly](https://johnlradford.io/contact.php) and Email me the
+output (my contact form will probably mangle the formatting so direct Email is
+best). I can look through it and try to help you get the project online!
 
 #### Option 2) Manually install the required apt and python packages
 
@@ -41,22 +41,23 @@ install the python packages within a virtual environment (venv).
 
 ## Trouble Starting the Web LGSM
 
-If you're having trouble starting the app with the `init.sh` script or having
+If you're having trouble starting the app with the `web-lgsm.py` script or having
 trouble with some feature of the app, then you can investigate further by
 starting the app in debug mode in your terminal. To do so simply ssh to the
 server, cd to the web-lgsm installation directory, and then run: 
-`./scripts/debug.py`.
+`./web-lgsm.py --debug`.
 
 ```
-» ./scripts/debug.py
+» ./web-lgsm.py --debug
+ [*] Press Ctrl + C to exit!
  * Created Database!
  * Serving Flask app 'app'
  * Debug mode: on
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5000
+ * Running on http://127.0.0.1:12357
 Press CTRL+C to quit
  * Restarting with stat
+ [*] Press Ctrl + C to exit!
  * Created Database!
  * Debugger is active!
  * Debugger PIN: ***-***-***
@@ -64,12 +65,12 @@ Press CTRL+C to quit
 
 That will bypass Gunicorn and use Flask's builtin debug web server. Please note,
 running the app this way is only recommended for debugging / troubleshooting
-purposes. For production deployments always use the `init.sh` script.
+purposes. For "production" deployments always use `web-lgsm.py --start`.
 
 ## Feel Free to Reach Out!
 
 If you're having trouble using the app or think you've found a bug, please
 reach out! You can either open a new Github issue for the project or [contact
-me directly](https://johnlradford.io/contact). I'll try to get back to you in a
-reasonable amount of time!
+me directly](https://johnlradford.io/contact.php). I'll try to get back to you
+in a reasonable amount of time!
 

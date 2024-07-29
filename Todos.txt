@@ -1,14 +1,5 @@
 ## Beta Version 1.7.0 Todos
 
-* Write some tests for new `web-lgsm.py` script.
-  - Not exactly sure how to best do this because this is also going to be the
-    script that launches the tests, and it already calls itself once and runs
-    the tests through a series of subprocess shells.
-    - I assume it will involve much forking and perhaps some acts of computer
-      heresy...
-      - Its tests, who gives a shit as long as they run and fail when they're
-        supposed to.
-
 * Replace test running logic in `.github/workflows/test.yml` with a call to
   `web-lgsm.py --test_full`.
   - I want to run all tests through this main script.

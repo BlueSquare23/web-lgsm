@@ -23,7 +23,7 @@ def signalint_handler(sig, frame):
 def run_command_popen(command):
     """Runs a command through a subprocess.Popen shell"""
     try:
-        result = subprocess.Popen(
+        process = subprocess.Popen(
             command,
             shell=True,
             executable='/bin/bash',
@@ -80,11 +80,11 @@ from app.models import User
 from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
-config = configparser.ConfigParser()
-config.read(os.path.join(SCRIPTPATH, 'main.conf'))
+CONFIG = configparser.ConfigParser()
+CONFIG.read(os.path.join(SCRIPTPATH, 'main.conf'))
 # TODO: Put try except around this to catch case where config settings not set.
-HOST = config['server']['host']
-PORT = config['server']['port']
+HOST = CONFIG['server']['host']
+PORT = CONFIG['server']['port']
 
 os.environ['COLUMNS'] = '80'
 os.environ['LINES'] = '50'
@@ -467,7 +467,7 @@ def run_tests():
         run_command_popen("python -m pytest -v -k 'not test_full_game_server_install and not test_game_server_start_stop and not test_console_output' --maxfail=1")
 
     # Restore Database.
-    if os.path.isfile(db_backup):
+    if db_backup:
         shutil.move(db_backup, db_file)
 
 

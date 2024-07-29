@@ -1,9 +1,6 @@
-## Beta Version 1.7.0 Todos
+## Beta Version 1.8.0 Todos
 
 * Look into make config editor work through sudo.
-
-* With v1.7.0 release, introduce a proper Semantic Versioning schema.
-  - More info: https://semver.org/
 
 ## In Idea Phase...
 
@@ -34,5 +31,4 @@
 
 * Add support for containerized game server instances.
   - See issue: https://github.com/BlueSquare23/web-lgsm/issues/16
-
 

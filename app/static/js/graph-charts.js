@@ -193,16 +193,16 @@ $(document).ready(function() {
     function updateCharts(data) {
         const now = Date.now();
 
-        networkBytesSentRate = data.network.bytes_sent_rate;
-        networkBytesRecvRate = data.network.bytes_recv_rate;
-        cpuUsage = data.cpu.cpu_usage;
-        memPercentUsed = data.mem.percent_used;
-        load1 = data.cpu.load1;
-        load5 = data.cpu.load5;
-        load15 = data.cpu.load15;
+        networkBytesSentRate = data.network.bytes_sent_rate || 0;
+        networkBytesRecvRate = data.network.bytes_recv_rate || 0;
+        cpuUsage = data.cpu.cpu_usage || 0;
+        memPercentUsed = data.mem.percent_used || 0;
+        load1 = data.cpu.load1 || 0;
+        load5 = data.cpu.load5 || 0;
+        load15 = data.cpu.load15 || 0;
 
-        diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used);
-        diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free);
+        diskChart.data.datasets[0].data[0] = bytesToGB(data.disk.used || 0);
+        diskChart.data.datasets[0].data[1] = bytesToGB(data.disk.free || 0);
         diskChart.update();
     }
 
@@ -212,6 +212,15 @@ $(document).ready(function() {
             method: 'GET',
             success: function(data) {
                 updateCharts(data);
+            },
+            error: function() {
+                // Ensure data is zeroed out on error
+                updateCharts({
+                    network: { bytes_sent_rate: 0, bytes_recv_rate: 0 },
+                    cpu: { cpu_usage: 0, load1: 0, load5: 0, load15: 0 },
+                    mem: { percent_used: 0 },
+                    disk: { used: 0, free: 0 }
+                });
             }
         });
     }

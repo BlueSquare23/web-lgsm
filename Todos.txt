@@ -1,13 +1,5 @@
 ## Beta Version 1.7.0 Todos
 
-* Replace test running logic in `.github/workflows/test.yml` with a call to
-  `web-lgsm.py --test_full`.
-  - I want to run all tests through this main script.
-  - Then I can ditch the env vars in the test.yml file.
-    - Aka just two places where the version number is kept, needs updated. Once
-      in the project files and one in the test files.
-  - Really should've done this from the beginning, but ehh live and learn.
-
 * Make it so that home page somehow shows if can't connect to backend server
   cause its down.
   - With recent changes to js, no longer goes flatline when cant connect.

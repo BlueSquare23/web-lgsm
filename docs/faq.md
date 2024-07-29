@@ -30,11 +30,16 @@
     sudoers rule in order to make the web-lgsm work properly. For more
     information please see, `docs/sudoers_info.md`.
 
-5. Question: I just updated to version 1.6 (or greater) from v1.5 (or below)
+5. Question: I just updated to version 1.6.0 (or greater) from v1.5.0 (or below)
    and now my web-lgsm instance wont start. How do I fix this?
-  - Answer: The database changed slightly with the release of v1.6. If you've
-    just updated to v1.6 (or greater) from v1.5 (or below) you can run the
-    `update-db.sh` script to update your database to be compatible with v1.6.
+  - Answer: The database changed slightly with the release of v1.6.0. If you've
+    just updated to v1.6.0 (or greater) from v1.5.0 (or below) you can run the
+    `update-db.sh` script to update your database to be compatible with v1.6.0.
     You may also need to run the `change_pass.py` script as the hash format for
     the password in the database changed slightly. You can change it to the
     same password as what it already was, the hash just needs regenerated.
+
+6. Questions: Where's the `init.sh` script?
+  - Answer: In version 1.7.0 the `init.sh` script was replaced with the all in
+    one `web-lgsm.py` script. It now does all of the old things the init script
+    did plus lots more! Run `./web-lgsm.py --help` to see all options!

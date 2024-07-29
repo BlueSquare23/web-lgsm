@@ -1,11 +1,9 @@
 ## Beta Version 1.7.0 Todos
 
-
 * Look into make config editor work through sudo.
 
 * With v1.7.0 release, introduce a proper Semantic Versioning schema.
   - More info: https://semver.org/
-
 
 ## In Idea Phase...
 

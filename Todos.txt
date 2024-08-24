@@ -55,6 +55,12 @@
     new user.
   - Will be a little more complicated but shouldn't be too crazy.
 
+* Put more error handling & set default values for main.conf parameters in
+  code.
+  - The idea here is if some user doesn't have some parameter set in their
+    main.conf, or if their main.conf is totally mangled or something, then the
+    app shouldn't fail catastrophically, which I think it kinda does rn.
+
 * Add Python Selenium end-to-end tests to actually login and do a bunch of
   stuff in the web interface.
   - Try to thoroughly test site functionality, basically redo all of the same
@@ -106,4 +112,11 @@
   - It would also just be styled more appropriately and I could probably remove
     & replace some of my hacky js with their legit code.
 
-
+* Add passwordless sudo option.
+  - Could create a config parameter to enable passwordless sudo option.
+  - If user has proper sudoers rules in place could allow web-lgsm to run
+    without any sudo pass input required.
+  - Could even make this part of the `web-lgsm.py` script to enable / disable
+    it.
+  - Then could probably use the same create sudoers rule playbook or another
+    similar one to automatically add the sudoers rules or remove them.

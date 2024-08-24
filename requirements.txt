@@ -9,3 +9,5 @@ SQLAlchemy==2.0.30
 Werkzeug==3.0.3
 gunicorn==22.0.0
 gevent==24.2.1
+ansible=10.3.0
+ansible-runner=2.4.0

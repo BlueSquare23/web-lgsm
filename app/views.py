@@ -260,6 +260,7 @@ def install():
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     text_area_height = config['aesthetic']['text_area_height']
+    create_new_user = config['settings'].getboolean('install_create_new_user')
 
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
@@ -326,26 +327,39 @@ def install():
             flash('An installation by that name already exits.', category='error')
             return redirect(url_for('views.install'))
 
-        if os.path.exists(server_full_name):
+        if not get_tty_ticket(sudo_pass):
+            flash('Problem with sudo password!', category='error')
+            return redirect(url_for('views.install'))
+
+        # Set defaults to local install values for case if install create new
+        # user not set.
+        install_path = os.path.join(os.getcwd(), server_full_name)
+        gs_system_user = getpass.getuser()
+
+        # If install_create_new_user config parameter is true then create a new
+        # user for the new game server and set install path to the path in that
+        # new users home directory.
+        if create_new_user:
+            # Create the new game server user.
+            gs_system_user = server_script_name 
+            create_user_cmd = ['ansible-playbook', 'playbooks/create_user.yml', '-e', f'"new_user={gs_system_user}"']
+            install_path = os.path.join(f'/home/{server_script_name}', server_full_name)
+
+
+        if os.path.exists(install_path):
             flash('Install directory already exists.', category='error')
             flash('Did you perhaps have this server installed previously?', \
                                                             category='error')
             return redirect(url_for('views.install'))
 
-        if not get_tty_ticket(sudo_pass):
-            flash('Problem with sudo password!', category='error')
-            return redirect(url_for('views.install'))
-
         # Make a new server dir and copy linuxgsm.sh into it.
-        os.mkdir(server_full_name)
-        shutil.copy(f"scripts/{lgsmsh}", server_full_name)
-
-        install_path = os.getcwd() + '/' + server_full_name
+        os.mkdir(install_path)
+        shutil.copy(f"scripts/{lgsmsh}", install_path)
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
                 install_path=install_path, script_name=server_script_name, \
-                username=getpass.getuser())
+                username=gs_system_user)
         db.session.add(new_game_server)
         db.session.commit()
 

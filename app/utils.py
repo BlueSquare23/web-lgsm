@@ -33,7 +33,9 @@ class OutputContainer:
             sort_keys=True, indent=4)
 
 
-# Kindly does the RCE.
+# Shell executor subprocess.Popen wrapper generator function. Runs command(s)
+# through the shell and returns output in realtime by appending it to output
+# object, which is read by output api.
 def shell_exec(exec_dir, cmds, output):
     # Clear any previous output.
     output.output_lines.clear()
@@ -344,6 +346,8 @@ def is_invalid_command(cmd, server, send_cmd):
     return True
 
 
+## Install Page Utils.
+
 # Validates form submitted server_script_name and server_full_name options.
 def install_options_are_invalid(script_name, full_name):
     servers = get_servers()
@@ -387,9 +391,10 @@ def get_lgsmsh(lgsmsh):
         print(e)
     print("Got linuxgsm.sh!")
 
-
 # Removes color codes from cmd line output.
 def escape_ansi(line):
+    # TODO: If I use xterm.js, I wont need this anymore... Escape sequences can be
+    # passed right to the web term and will be rendered in true color.
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
 
@@ -500,4 +505,6 @@ def get_server_stats():
     stats["network"] = get_network_stats()
 
     return stats
+
+
 

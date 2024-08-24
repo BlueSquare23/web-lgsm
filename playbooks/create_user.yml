@@ -1,0 +1,14 @@
+---
+- name: Creates a new game server user
+  hosts: localhost
+  become: true
+  connection: local
+
+  tasks:
+    - name: Creating New User
+      user:
+        name: "{{ username }}"
+        state: present
+        shell: /bin/bash
+        create_home: yes
+...

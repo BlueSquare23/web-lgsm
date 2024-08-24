@@ -50,7 +50,8 @@ def relaunch_in_venv():
          cd {SCRIPTPATH}
          python3 -m venv venv
  [*] Then install the required pip packages with this command:
-        pip3 -r install requirements.txt\
+        source venv/bin/activate
+        pip3 install -r requirements.txt\
         """
         exit(err_msg)
 

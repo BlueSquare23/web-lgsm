@@ -116,7 +116,7 @@ def get_gs_id(id_file_path):
         return ""
 
 
-# Get's the list of servers that are currently turnned on.
+# Get's the list of servers that are currently turned on.
 def get_server_statuses(all_game_servers):
     # Initialize all servers inactive to start with.
     server_statuses = {}
@@ -239,7 +239,7 @@ def del_server(server, remove_files):
 
 # Uses sudo_pass to get sudo tty ticket.
 def get_tty_ticket(sudo_pass):
-    # Attempt's to get sudo tty ticket. Uses try, except becaue subprocess.run
+    # Attempt's to get sudo tty ticket. Uses try, except because subprocess.run
     # is called with check=True which causes any subproc failures to throw an
     # exception. This uses that password fail exception to return False.
     try:

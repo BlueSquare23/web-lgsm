@@ -282,6 +282,7 @@ def install():
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
+        # TODO: Sanitize this more!!!
         server_script_name = request.form.get("server_name")
         server_full_name = request.form.get("full_name")
         sudo_pass = request.form.get("sudo_pass")
@@ -289,7 +290,7 @@ def install():
         # Make sure required options are supplied.
         for required_form_item in (server_script_name, server_full_name, sudo_pass):
             if required_form_item == None:
-                flash("Missing Required Form Feild!", category="error")
+                flash("Missing Required Form Field!", category="error")
                 return redirect(url_for('views.install'))
 
             # Check input lengths.

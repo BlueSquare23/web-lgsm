@@ -1,34 +1,109 @@
 ## Beta Version 1.8.0 Todos
 
-* Look into make config editor work through sudo.
+* Look into the best way to add additional sudo configurations.
+  - Editing the /etc/sudoers file directly is a bad solution for a number of
+    reasons.
+  - Instead, I think sudo allows additional config files to be shoved down
+    somewhere other than /etc/sudoers.
+  - That might be the way... More research is needed!
+  - I want to control the adding / removing of these via ansible playbooks,
+    specifically using the community sudoers module.
+    - https://docs.ansible.com/ansible/latest/collections/community/general/sudoers_module.html
+    - Then its not my code touching their sudoers file and I can rest easy
+      knowing its probably less likely to catastrophically explode and lock
+      someone out of sudo.
 
-## In Idea Phase...
+* Revamp game server install logic / system.
+  - Basically, I'm thinking of leaning on ansible playbooks actually create a
+    new user, set permissions, run game server install, & automatically setup &
+    manage sudo permissions.
+  - The default main.conf for this new system would be to create a new user for
+    each game server as per the lgsm's recommended setup instructions.
+  - I'll also make an optional config parameter for installing game servers
+    under the same user. Something like `install_create_new_user = no` or
+    something.
 
-* Explore putting new installations in their own user directory like the LGSM
-  recommends to begin with.
-  - Yeah its a good point for process isolation game servers should be running
-    as their own user.
-  - Ngl, I've always just kept all of my game servers under the same user but
-    I should probably make this a bit more legit and up to spec.
-  - I might make this an optional config param. Something like
-    `default_install_new_user = yes` or something idk.
+* Add the ability to create multiple web interface users w/ different levels of
+  permissions.
+  - User requested this: https://github.com/BlueSquare23/web-lgsm/issues/19
+  - I've also had it in the back of my mind since I start the project.
+  - Fun fact, the sample code example flask app this project's structure is
+    taken from is originally a multi user blog so shouldn't be too hard to
+    borrow some code from that project and roll it into this.
+  - I'm thinking first user that get's setup has admin privileges.
+  - Then the admin user can create new users and assign permissions.
+  - Additional web interface users can be setup as other admins or as user
+    level users.
+  - Only Admins can create / delete other users.
+  - Non-admin level user permissions should be:
+    - Can install new game servers: true/false
+    - Can add existing game servers: true/false
+    - Can manage game servers: checkbox list
+      - Can edit cfgs: true/false
+      - Can delete game server: true/false 
+      - Controls they're allowed to use: checkbox list
+      - All of the above (full control over game server): true/false
+  - I kinda like the idea of having the colors in the main.conf. But yeah maybe
+    I should just byte the bullet an put those in the db, then each user could
+    have their own colors. Don't think that'll be in permissions mk1 though.
 
-* Look into adding a debug mode to conf / app.
-  - So if debug in conf is set to true it would just enable debug logging which
-    could be used to output what functions are doing n'@.
+* Make config editor work for game servers owned by other system users.
+  - Think I'll have to re-write / add-to the write new config data logic.
+  - Right now it just writes to disk as the current user.
+  - Instead I think I'll have it write to a tempfile with python's `tempfile`
+    module, then sudo mv the tempfile into place, and lastly chown it to the
+    new user.
+  - Will be a little more complicated but shouldn't be too crazy.
 
-* Explore if containerizing project with docker is at all feasible /
-  worthwhile.
+* Add Python Selenium end-to-end tests to actually login and do a bunch of
+  stuff in the web interface.
+  - Try to thoroughly test site functionality, basically redo all of the same
+    things the functional tests do through raw GET/POST requests, but instead
+    through the selenium browser.
+
+* Containerize Project!
+  - Not entirely sure how to do this yet...
+  - One problem I can foresee is not being able to control game servers
+    installed outside of the container.
+  - Could work for any games installed also in the container but that's rather
+    limiting.
+  - Also I have to brush up on my docker compose knowledge. 
+    - https://www.youtube.com/watch?v=2qKlZQX1Ums
+
+* Add Support for game servers in containers!
+  - User requested project support for game servers that are running in
+    containers.
+  - Issue: https://github.com/BlueSquare23/web-lgsm/issues/16
+  - The LGSM themselves provide docker images of game servers.
+
+* Add additional debug mode & verbose level for info printing.
+  - In other words if the app is started in --debug mode, enable some
+    additional info printing.
+  - Also want to add a verbosity selector.
+    - This will likely take the form of a main.conf param.
+    - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
 ## Backlog
 
-* Do a thorough refactor.
-  - Spend some time just re-reading my own code looking for bugs / improvements.
-  - More unit testing will probably help with this.
+* Identify targets for refactoring.
+  - If there are some really messy or iffy sections of the code where I hacked
+    something together that really needed more thought, now is the time to try
+    to identify those things.
+  - Not fixing or changing anything just yet. Just want to review what I have
+    and where its weak to better get an idea of how to fix it later.
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
+  - But this whole system is probably one of those targets for refactoring &
+    rethinking.
 
-* Add support for containerized game server instances.
-  - See issue: https://github.com/BlueSquare23/web-lgsm/issues/16
+* Explore using Xterm.js lib instead of stylized textbox to print output from
+  cmds.
+  - I really don't know much about this module yet, but I might be able to use
+    it to fully fake a live console into a game servers tmux session. Users
+    could type in commands and hit enter and then wouldn't have to use the
+    awkward send command button / form.
+  - It would also just be styled more appropriately and I could probably remove
+    & replace some of my hacky js with their legit code.
+
 

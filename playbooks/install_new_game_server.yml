@@ -1,0 +1,68 @@
+---
+## Playbook required vars.
+# gs_user
+# install_path
+# lgsmsh_path
+# server_script_name
+# sudo_commands
+# sudo_rule_name
+# web_lgsm_user
+
+- name: Runs Pre-Install Steps for New Auto Installations
+  hosts: localhost
+  become: true
+  connection: local
+  vars:
+    # Same user defaults to false, meaning default create new user.
+    same_user: false
+
+  tasks:
+    - name: Creating new user
+      user:
+        name: "{{ gs_user }}"
+        state: present
+        shell: /bin/bash
+        create_home: yes
+      when: same_user is not defined or same_user == false
+
+    - name: Ensure required sudoers rules are in place for new user
+      community.general.sudoers:
+        name: "{{ sudo_rule_name }}"
+        user: "{{ web_lgsm_user }}"
+        host: "ALL"
+        runas: "{{ gs_user }}"
+        nopassword: true
+        commands: "{{ sudo_commands }}"
+        state: present
+      when: same_user is not defined or same_user == false
+
+    - name: Create new game server directory
+      file:
+        path: "{{ install_path }}"
+        state: directory
+        owner: "{{ gs_user }}"
+        group: "{{ gs_user }}"
+        mode: '0755'
+
+    - name: Use linuxgsm.sh to fetch {{ server_script_name }}
+      command:
+        chdir: "{{ lgsmsh_path | dirname }}"
+        argv:
+          - "{{ lgsmsh_path }}"
+          - "{{ server_script_name }}"
+      register: lgsmsh_result
+      become: yes
+      become_user: "{{ web_lgsm_user }}"
+
+    - name: Print linuxgsm.sh output
+      debug:
+        msg: "Output: {{ lgsmsh_result.stdout }}"
+
+    - name: Copy {{ server_script_name }} into new server dir
+      copy:
+        src: "{{ lgsmsh_path | dirname }}/{{ server_script_name }}"
+        dest: "{{ install_path }}"
+        owner: "{{ gs_user }}"
+        group: "{{ gs_user }}"
+        mode: '0750'
+...

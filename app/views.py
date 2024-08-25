@@ -333,28 +333,41 @@ def install():
 
         # Set defaults to local install values for case if install create new
         # user not set.
-        install_path = os.path.join(os.getcwd(), server_full_name)
         gs_system_user = getpass.getuser()
+        install_path = os.path.join(os.getcwd(), server_full_name)
+        lgsmsh_path = os.path.join(os.getcwd(), f'scripts/{lgsmsh}')
+        sudo_commands = 'sudo_commands=[]'
+        web_lgsm_user = gs_system_user
+        sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
         if create_new_user:
+            web_lgsm_user = getpass.getuser()
             # Create the new game server user.
             gs_system_user = server_script_name 
-            create_user_cmd = ['ansible-playbook', 'playbooks/create_user.yml', '-e', f'"new_user={gs_system_user}"']
             install_path = os.path.join(f'/home/{server_script_name}', server_full_name)
 
+            # Get a list of all game servers installed for this system user.
+            paths_query_result = GameServer.query.filter_by(username=gs_system_user).with_entities(GameServer.install_path).all()
+            print(f"########## paths_query_result: {paths_query_result}")
+            game_server_paths = [path[0] for path in paths_query_result]
+            print(f"########## game_server_paths: {game_server_paths}")
+#            game_servers.append(install_path)
+            user_server_paths = f"'{install_path}/{server_script_name}'"
+            for path in game_server_paths:
+                user_server_paths += f",'{_path}'"
+            sudo_commands = f"sudo_commands=[{user_server_paths},'/usr/bin/watch','/usr/bin/tmux','/usr/bin/kill']"
+            print(f"########## sudo_commands: {sudo_commands}")
+            sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
-        if os.path.exists(install_path):
-            flash('Install directory already exists.', category='error')
-            flash('Did you perhaps have this server installed previously?', \
-                                                            category='error')
-            return redirect(url_for('views.install'))
-
-        # Make a new server dir and copy linuxgsm.sh into it.
-        os.mkdir(install_path)
-        shutil.copy(f"scripts/{lgsmsh}", install_path)
+# TODO: Probably broken for other system users, needs alt solutions.
+#        if os.path.exists(install_path):
+#            flash('Install directory already exists.', category='error')
+#            flash('Did you perhaps have this server installed previously?', \
+#                                                            category='error')
+#            return redirect(url_for('views.install'))
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
@@ -363,15 +376,50 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        cmd = [f'./{lgsmsh}', server_script_name]
-        proc = subprocess.run(cmd, cwd=install_path, capture_output=True, text=True)
+        pre_install_cmd = [ 'ansible-playbook',
+                'playbooks/install_new_game_server.yml',
+                '-e', f'"gs_user={gs_system_user}"',
+                '-e', f'"install_path={install_path}"',
+                '-e', f'"lgsmsh_path={lgsmsh_path}"',
+                '-e', f'"server_script_name={server_script_name}"',
+                '-e', f'"{sudo_commands}"',
+                '-e', f'"sudo_rule_name={sudo_rule_name}"',
+                '-e', f'"web_lgsm_user={web_lgsm_user}"' ]
+
+        pre_inst_cmd_str = " ".join(pre_install_cmd)
+        print(f"########## pre_install_cmd: {pre_inst_cmd_str}")
+
+        # Clear any previous output.
+        output.output_lines.clear()
+
+        # Set lock flag to true.
+        output.process_lock = True
+
+#        proc = subprocess.run(pre_inst_cmd_str, cwd=os.getcwd(), capture_output=True, text=True, shell=True)
+        proc = subprocess.Popen(pre_inst_cmd_str, cwd=os.getcwd(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                shell=True
+        )
+   
+        for stdout_line in iter(proc.stdout.readline, ""):
+            output.output_lines.append(escape_ansi(stdout_line))
+   
+        for stderr_line in iter(proc.stderr.readline, ""):
+            output.output_lines.append(escape_ansi(stderr_line))
+
+        output.process_lock = False
 
         if proc.returncode != 0:
             output.output_lines.append(proc.stderr)
+#            print(f"##########!!! PROCESS FAILED: {proc.stderr}")
         output.output_lines.append(proc.stdout)
+#        print(f"########## Process succeeded: {proc.stdout}")
 
-        cmd = [f'./{server_script_name}', 'auto-install']
-        install_daemon = Thread(target=shell_exec, args=(install_path, cmd, \
+        cmd = ['sudo', '-u', gs_system_user, 'bash', '-c', f'cd {install_path} && {install_path}/{server_script_name} auto-install']
+#        cmd = ['sudo', '-u', gs_system_user,  f'./{server_script_name}', 'auto-install'] 
+        install_daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
                                 output), daemon=True, name='Install')
         install_daemon.start()
 

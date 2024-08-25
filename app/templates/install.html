@@ -27,7 +27,7 @@
             <label for="sudo_pass" class="pb-2" style="color: white;">Sudo Password</label>
             <input type="password" id="sudo_pass" name="sudo_pass" class="form-control" title="Sudo password is required to install necessary LGSM dependancies." placeholder="Please Enter Sudo Password" required />
 
-            <input onclick="window.scrollTo(0,0);closeForm('sudo_pass_form');" id="install_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
+            <input onclick="var serverName = document.forms[0][1].value;runInstall(serverName);" id="install_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
           </form>
         </div>
 
@@ -45,6 +45,21 @@
       </div>
       <br />
 
+      <script>
+        function runInstall(s) {
+          var serverName = s;
+          console.log(serverName);
+          window.scrollTo(0,0);
+          closeForm('sudo_pass_form');
+          document.getElementById('pre_install').style.display = 'block';
+          document.getElementById('spinners').style.display = 'block';
+          var interval = setInterval(function() {
+            document.getElementById('pre_install').style.display = 'block';
+            document.getElementById('spinners').style.display = 'block';
+            updateTextArea(serverName);
+          }, 1000);
+        }
+      </script>
       <!-- Set global serverName for update-text-area.js -->
       <script>var serverName='{{install_name}}';</script>
       <script src="/static/js/update-text-area.js"></script>

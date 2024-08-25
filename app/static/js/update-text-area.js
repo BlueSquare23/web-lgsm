@@ -1,12 +1,12 @@
 /* Grabs latest output json from the /output api route and slaps it
  * into the textarea. */
-function updateTextArea(){
+function updateTextArea(sName){
   return $.ajax({
     dataType: 'json',
     url: '/api/cmd-output',  // URL of output json api.
     type: 'GET',
     data: {
-      'server': serverName
+      'server': sName
     },
     error: function(reqObj, textStatus, errorThrown) {
       console.log(textStatus + '\n' + errorThrown);
@@ -50,6 +50,6 @@ if (typeof serverName === 'undefined' || serverName === null || !serverName){
   $('#output-textarea').val('No Output Yet!');
 } else {
   var interval = setInterval(function() {
-    updateTextArea();
+    updateTextArea(serverName);
   }, 1000);
 }

@@ -5,9 +5,9 @@ import pwd
 import json
 import glob
 import time
+import psutil
 import shutil
 import getpass
-import psutil
 import requests
 import subprocess
 from . import db
@@ -33,17 +33,17 @@ class OutputContainer:
             sort_keys=True, indent=4)
 
 
-# Shell executor subprocess.Popen wrapper generator function. Runs command(s)
+# Shell executor subprocess.Popen wrapper generator function. Runs a command
 # through the shell and returns output in realtime by appending it to output
 # object, which is read by output api.
-def shell_exec(exec_dir, cmds, output):
+def shell_exec(exec_dir, cmd, output):
     # Clear any previous output.
     output.output_lines.clear()
 
     # Set lock flag to true.
     output.process_lock = True
 
-    proc = subprocess.Popen(cmds,
+    proc = subprocess.Popen(cmd,
             cwd=exec_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -57,12 +57,11 @@ def shell_exec(exec_dir, cmds, output):
         output.output_lines.append(escape_ansi(stderr_line))
 
     # If run in auto-install mode, do cfg fix after install finishes.
-    if ('auto-install' in cmds):
+    if ('auto-install' in cmd):
         post_install_cfg_fix(exec_dir)
 
     # Reset process_lock flag.
     output.process_lock = False
-
 
 # Snips any lingering `watch` processes.
 def kill_watchers(last_request_for_output):

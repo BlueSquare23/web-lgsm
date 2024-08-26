@@ -75,6 +75,27 @@ def home():
                         config_options=config_options)
 
 
+######### XtermJS Test Page #########
+
+@views.route("/xtermjs", methods=['GET'])
+@login_required
+def xtermjs():
+    server_name = 'testingxtermjs'
+    if not server_name in GAME_SERVERS:
+        output_obj = OutputContainer([''], False)
+        GAME_SERVERS[server_name] = output_obj
+
+    # Set the output object to the one stored in the global dictionary.
+    output = GAME_SERVERS[server_name]
+
+    cmd = ['/home/blue/Projects/web-lgsm/scripts/random.sh']
+    daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, output),\
+                                            daemon=True, name='Command')
+
+    daemon.start()
+    return render_template("xtermjs.html", user=current_user,server_name=server_name)
+
+
 ######### Controls Page #########
 
 @views.route("/controls", methods=['GET'])
@@ -700,26 +721,8 @@ def delete():
     config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
-    # Delete via POST is for multiple deletions.
-    # Post submissions come from delete toggles on home page.
-    if request.method == 'POST':
-        for server_id, server_name in request.form.items():
-            server = GameServer.query.filter_by(install_name=server_name).first()
-            if server:
-                output_obj = OutputContainer([''], False)
-                # If this is the first time we're ever seeing the server_name then put it
-                # and its associated output_obj in the global INSTALL_SERVERS dictionary.
-                if not server.install_name in INSTALL_SERVERS:
-                    INSTALL_SERVERS[server.install_name] = output_obj
-
-                output = INSTALL_SERVERS[server.install_name]
-                del_server(server, remove_files, output)
-    else:
-        server_name = request.args.get("server")
-        if server_name == None:
-            flash("Missing Required Args!", category="error")
-            return redirect(url_for('views.home'))
-
+    def del_wrap(server_name):
+        """Wraps up delete logic used below"""
         server = GameServer.query.filter_by(install_name=server_name).first()
 
         if server:
@@ -731,6 +734,20 @@ def delete():
 
             output = INSTALL_SERVERS[server.install_name]
             del_server(server, remove_files, output)
+            del INSTALL_SERVERS[server.install_name]
+
+    # Delete via POST is for multiple deletions.
+    # Post submissions come from delete toggles on home page.
+    if request.method == 'POST':
+        for server_id, server_name in request.form.items():
+            del_wrap(server_name)
+    else:
+        server_name = request.args.get("server")
+        if server_name == None:
+            flash("Missing Required Args!", category="error")
+            return redirect(url_for('views.home'))
+
+        del_wrap(server_name)
 
     return redirect(url_for('views.home'))
 

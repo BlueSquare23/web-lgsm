@@ -108,6 +108,8 @@
     installed as different users.
 
 * Identify targets for refactoring.
+  - One such thing is all the overhead comments for functions n'@ can be turned
+    into under hanging docstring to make the more _pythonic_.
   - If there are some really messy or iffy sections of the code where I hacked
     something together that really needed more thought, now is the time to try
     to identify those things.

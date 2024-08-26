@@ -9,6 +9,7 @@ import subprocess
 
 # Where we at with it, Ali?
 SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
+os.chdir(SCRIPTPATH)
 
 def signalint_handler(sig, frame):
     # Suppress stderr for debug ctrl + c stack trace.

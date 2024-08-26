@@ -43,6 +43,8 @@ def shell_exec(exec_dir, cmd, output):
     # Set lock flag to true.
     output.process_lock = True
 
+    print(cmd)
+
     proc = subprocess.Popen(cmd,
             cwd=exec_dir,
             stdout=subprocess.PIPE,
@@ -58,6 +60,7 @@ def shell_exec(exec_dir, cmd, output):
 
     # If run in auto-install mode, do cfg fix after install finishes.
     if ('auto-install' in cmd):
+        # TODO: Make this work for multi system user setup!
         post_install_cfg_fix(exec_dir)
 
     # Reset process_lock flag.
@@ -223,16 +226,31 @@ def find_cfg_paths(search_path):
 
 
 # Does the actual deletions for the /delete route.
-def del_server(server, remove_files):
+def del_server(server, remove_files, output):
     install_path = server.install_path
     server_name = server.install_name
+    username = server.username
 
     GameServer.query.filter_by(install_name=server_name).delete()
     db.session.commit()
 
-    if remove_files:
+    if not remove_files:
+        flash(f'Game server, {server_name} deleted!')
+        return
+
+    web_lgsm_user = getpass.getuser()
+
+    if username == web_lgsm_user:
         if os.path.isdir(install_path):
             shutil.rmtree(install_path)
+    else:
+        sudo_rule_name = f'{web_lgsm_user}-{username}'
+        cmd = [ 'ansible-playbook',
+                'playbooks/delete_user.yml',
+                '-e', f'sudo_rule_name={sudo_rule_name}',
+                '-e', f'gs_user={username}' ]
+
+        shell_exec(os.getcwd(),cmd,output)
 
     flash(f'Game server, {server_name} deleted!')
     return

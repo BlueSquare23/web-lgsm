@@ -1,0 +1,24 @@
+---
+- name: Ensure specific sudo rule is present in sudoers
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Ensure the sudoers rule is present
+      community.general.sudoers:
+        name: '{{ sudo_rule_name }}'
+        state: present
+        user: '{{ web_lgsm_user }}'
+        commands: '{{ sudo_commands }}'
+        validation: required
+        runas: '{{ gs_user }}'
+
+    - name: Fix missing space before NOPASSWD
+      lineinfile:
+        path: /etc/sudoers.d/{{ sudo_rule_name }}
+        regexp: '^(.*)NOPASSWD:(.*)$'
+        line: '\1 NOPASSWD: \2'
+        backrefs: yes
+        validate: 'visudo -cf %s'
+...

@@ -1,0 +1,18 @@
+---
+- name: Removes Additional Game Server Users & Sudo Rules
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Delete sudoers rule
+      community.general.sudoers:
+        name: "{{ sudo_rule_name }}"
+        state: absent
+
+    - name: Delete user
+      user:
+        name: "{{ gs_user }}"
+        state: absent
+        remove: yes
+...

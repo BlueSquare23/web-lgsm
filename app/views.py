@@ -67,6 +67,8 @@ def home():
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
+    INSTALL_SERVERS = {}
+
     return render_template("home.html", user=current_user, \
                         servers_to_users=servers_to_users, \
                         server_status_dict=server_status_dict, \
@@ -103,10 +105,12 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for('views.home'))
 
+    # TODO: Fix this for multi system user!!! Can't read dir so thinks doesn't
+    # exist.
     # Checks that install dir exists.
-    if not os.path.isdir(server.install_path):
-        flash("No game server installation directory found!", category="error")
-        return redirect(url_for('views.home'))
+#    if not os.path.isdir(server.install_path):
+#        flash("No game server installation directory found!", category="error")
+#        return redirect(url_for('views.home'))
 
     # If config editor is disabled in the main.conf.
     if cfg_editor == 'no':
@@ -236,7 +240,7 @@ def controls():
                 cmd += sudo_prepend
 
             cmd += [script_path, script_arg]
-            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
+            daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
                                     output), daemon=True, name='Command')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
@@ -351,15 +355,13 @@ def install():
 
             # Get a list of all game servers installed for this system user.
             paths_query_result = GameServer.query.filter_by(username=gs_system_user).with_entities(GameServer.install_path).all()
-            print(f"########## paths_query_result: {paths_query_result}")
             game_server_paths = [path[0] for path in paths_query_result]
-            print(f"########## game_server_paths: {game_server_paths}")
-#            game_servers.append(install_path)
             user_server_paths = f"'{install_path}/{server_script_name}'"
+
             for path in game_server_paths:
                 user_server_paths += f",'{_path}'"
+
             sudo_commands = f"sudo_commands=[{user_server_paths},'/usr/bin/watch','/usr/bin/tmux','/usr/bin/kill']"
-            print(f"########## sudo_commands: {sudo_commands}")
             sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
 # TODO: Probably broken for other system users, needs alt solutions.
@@ -378,47 +380,23 @@ def install():
 
         pre_install_cmd = [ 'ansible-playbook',
                 'playbooks/install_new_game_server.yml',
-                '-e', f'"gs_user={gs_system_user}"',
-                '-e', f'"install_path={install_path}"',
-                '-e', f'"lgsmsh_path={lgsmsh_path}"',
-                '-e', f'"server_script_name={server_script_name}"',
-                '-e', f'"{sudo_commands}"',
-                '-e', f'"sudo_rule_name={sudo_rule_name}"',
-                '-e', f'"web_lgsm_user={web_lgsm_user}"' ]
+                '-e', f'gs_user={gs_system_user}',
+                '-e', f'install_path={install_path}',
+                '-e', f'lgsmsh_path={lgsmsh_path}',
+                '-e', f'server_script_name={server_script_name}',
+                '-e', f'{sudo_commands}',
+                '-e', f'sudo_rule_name={sudo_rule_name}',
+                '-e', f'web_lgsm_user={web_lgsm_user}' ]
 
-        pre_inst_cmd_str = " ".join(pre_install_cmd)
-        print(f"########## pre_install_cmd: {pre_inst_cmd_str}")
+        # Set playbook flag to not run user / sudo setup steps.
+        if not create_new_user:
+            pre_install_cmd += ['-e', 'same_user=true']
 
-        # Clear any previous output.
-        output.output_lines.clear()
+#        print(f"########## pre_install_cmd: {pre_install_cmd}")
 
-        # Set lock flag to true.
-        output.process_lock = True
-
-#        proc = subprocess.run(pre_inst_cmd_str, cwd=os.getcwd(), capture_output=True, text=True, shell=True)
-        proc = subprocess.Popen(pre_inst_cmd_str, cwd=os.getcwd(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                shell=True
-        )
-   
-        for stdout_line in iter(proc.stdout.readline, ""):
-            output.output_lines.append(escape_ansi(stdout_line))
-   
-        for stderr_line in iter(proc.stderr.readline, ""):
-            output.output_lines.append(escape_ansi(stderr_line))
-
-        output.process_lock = False
-
-        if proc.returncode != 0:
-            output.output_lines.append(proc.stderr)
-#            print(f"##########!!! PROCESS FAILED: {proc.stderr}")
-        output.output_lines.append(proc.stdout)
-#        print(f"########## Process succeeded: {proc.stdout}")
+        shell_exec(os.getcwd(), pre_install_cmd, output)
 
         cmd = ['sudo', '-u', gs_system_user, 'bash', '-c', f'cd {install_path} && {install_path}/{server_script_name} auto-install']
-#        cmd = ['sudo', '-u', gs_system_user,  f'./{server_script_name}', 'auto-install'] 
         install_daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
                                 output), daemon=True, name='Install')
         install_daemon.start()
@@ -728,7 +706,14 @@ def delete():
         for server_id, server_name in request.form.items():
             server = GameServer.query.filter_by(install_name=server_name).first()
             if server:
-                del_server(server, remove_files)
+                output_obj = OutputContainer([''], False)
+                # If this is the first time we're ever seeing the server_name then put it
+                # and its associated output_obj in the global INSTALL_SERVERS dictionary.
+                if not server.install_name in INSTALL_SERVERS:
+                    INSTALL_SERVERS[server.install_name] = output_obj
+
+                output = INSTALL_SERVERS[server.install_name]
+                del_server(server, remove_files, output)
     else:
         server_name = request.args.get("server")
         if server_name == None:
@@ -736,8 +721,16 @@ def delete():
             return redirect(url_for('views.home'))
 
         server = GameServer.query.filter_by(install_name=server_name).first()
+
         if server:
-            del_server(server, remove_files)
+            output_obj = OutputContainer([''], False)
+            # If this is the first time we're ever seeing the server_name then put it
+            # and its associated output_obj in the global INSTALL_SERVERS dictionary.
+            if not server.install_name in INSTALL_SERVERS:
+                INSTALL_SERVERS[server.install_name] = output_obj
+
+            output = INSTALL_SERVERS[server.install_name]
+            del_server(server, remove_files, output)
 
     return redirect(url_for('views.home'))
 

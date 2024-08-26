@@ -1,27 +1,16 @@
 ## Beta Version 1.8.0 Todos
 
-* Look into the best way to add additional sudo configurations.
-  - Editing the /etc/sudoers file directly is a bad solution for a number of
-    reasons.
-  - Instead, I think sudo allows additional config files to be shoved down
-    somewhere other than /etc/sudoers.
-  - That might be the way... More research is needed!
-  - I want to control the adding / removing of these via ansible playbooks,
-    specifically using the community sudoers module.
-    - https://docs.ansible.com/ansible/latest/collections/community/general/sudoers_module.html
-    - Then its not my code touching their sudoers file and I can rest easy
-      knowing its probably less likely to catastrophically explode and lock
-      someone out of sudo.
-
-* Revamp game server install logic / system.
-  - Basically, I'm thinking of leaning on ansible playbooks actually create a
-    new user, set permissions, run game server install, & automatically setup &
-    manage sudo permissions.
-  - The default main.conf for this new system would be to create a new user for
-    each game server as per the lgsm's recommended setup instructions.
-  - I'll also make an optional config parameter for installing game servers
-    under the same user. Something like `install_create_new_user = no` or
-    something.
+* Finish making changes to the logic for auto install.
+  - Make server delete work for users other than main web-lgsm user.
+    - Aka make a playbook to cleanup the user, their home dir and sudo rules.
+    - Basically the inverse of the one I made yesterday.
+  - Fix things broken by other game servers now running as an alternate user.
+  - Cleanup commented up code. Possible convert to debug mode verbose
+    statements.
+  - See if there's a way to get pre_install_cmd array to work through
+    `shell_exec` so we don't have to use insecure shell=True.
+    - I still don't know why this is failing with pre_install_cmd. It seems
+      like it should work but subprocess doesn't like it.
 
 * Add the ability to create multiple web interface users w/ different levels of
   permissions.
@@ -89,19 +78,18 @@
     - This will likely take the form of a main.conf param.
     - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
+* Allow multiple auto installs of same game server as new user, just increment
+  the name.
+  - So first mcserver install would just be mcserver but then a second one the
+    user would be mcserver2, mcserver3, etc.
+
+* Make game server name editable.
+
+* Make install_path an optional main.conf parameter.
+  - By default I want to set this to just `/home/<user>/<server_name>`.
+  - But then allow people to put it where ever for their own purposes.
+
 ## Backlog
-
-* Identify targets for refactoring.
-  - If there are some really messy or iffy sections of the code where I hacked
-    something together that really needed more thought, now is the time to try
-    to identify those things.
-  - Not fixing or changing anything just yet. Just want to review what I have
-    and where its weak to better get an idea of how to fix it later.
-
-* Think of way to do watch thread timeout. Not terribly important
-  - kill_watchers gets the job done alright for rn.
-  - But this whole system is probably one of those targets for refactoring &
-    rethinking.
 
 * Explore using Xterm.js lib instead of stylized textbox to print output from
   cmds.
@@ -112,6 +100,20 @@
   - It would also just be styled more appropriately and I could probably remove
     & replace some of my hacky js with their legit code.
 
+* Possible rework things so that game server name in database is not unique,
+  aka users can have more than one game server with the same name.
+  - This DB Model line set's install name to be unique:
+    `install_name = db.Column(db.String(150), unique=True)`
+  - I'm thinking of allowing this possibly under the case where they're
+    installed as different users.
+
+* Identify targets for refactoring.
+  - If there are some really messy or iffy sections of the code where I hacked
+    something together that really needed more thought, now is the time to try
+    to identify those things.
+  - Not fixing or changing anything just yet. Just want to review what I have
+    and where its weak to better get an idea of how to fix it later.
+
 * Add passwordless sudo option.
   - Could create a config parameter to enable passwordless sudo option.
   - If user has proper sudoers rules in place could allow web-lgsm to run
@@ -120,3 +122,8 @@
     it.
   - Then could probably use the same create sudoers rule playbook or another
     similar one to automatically add the sudoers rules or remove them.
+
+* Think of way to do watch thread timeout. Not terribly important
+  - kill_watchers gets the job done alright for rn.
+  - But this whole system is probably one of those targets for refactoring &
+    rethinking.

@@ -80,6 +80,10 @@ random_key=$(echo $RANDOM | md5sum | head -c 20)
 echo "SECRET_KEY=\"$random_key\"" > .secret
 chmod 600 .secret
 
+# TODO: Need to do something like the below command to install the sudo rules
+# to allow web app to run cmds without prompting for a sudo pass.
+#ansible-playbook playbooks/create_sudoers_rules.yml -e 'sudo_rule_name=blue-blue' -e 'web_lgsm_user=blue' -e 'gs_user=root' -e 'sudo_commands=["/home/blue/Projects/web-lgsm/venv/bin/ansible-playbook"]'
+
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"
 

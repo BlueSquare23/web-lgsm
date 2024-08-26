@@ -43,3 +43,15 @@
   - Answer: In version 1.7.0 the `init.sh` script was replaced with the all in
     one `web-lgsm.py` script. It now does all of the old things the init script
     did plus lots more! Run `./web-lgsm.py --help` to see all options!
+
+7. Question: Why don't any of my sudo rules work? / Why does the web app say
+   _"sudo: a password is required"_?
+   - It may be the case that you have `/etc/sudoers.d` disabled or have
+     additional entries for your user after the `#includedir /etc/sudoers.d`
+     line. If so simply move those directives above the `#includedir` line.
+   - As man sudoers states:
+>   When multiple entries match for a user, they are applied in order.
+>   Where there are multiple matches, the last match is used (which is not
+>   necessarily the most specific match).
+
+

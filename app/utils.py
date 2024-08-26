@@ -245,8 +245,10 @@ def del_server(server, remove_files, output):
             shutil.rmtree(install_path)
     else:
         sudo_rule_name = f'{web_lgsm_user}-{username}'
-        cmd = [ 'ansible-playbook',
-                'playbooks/delete_user.yml',
+        here = os.getcwd()
+        apb_path = os.path.join(here, 'venv/bin/ansible-playbook')
+        del_usr_path = os.path.join(here, 'playbooks/delete_user.yml')
+        cmd = [ 'sudo', '-n', apb_path, del_usr_path,
                 '-e', f'sudo_rule_name={sudo_rule_name}',
                 '-e', f'gs_user={username}' ]
 

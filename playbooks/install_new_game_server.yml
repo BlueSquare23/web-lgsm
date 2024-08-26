@@ -75,4 +75,9 @@
         owner: "{{ gs_user }}"
         group: "{{ gs_user }}"
         mode: '0750'
+
+    - name: Delete {{ server_script_name }} file
+      file:
+        path: "{{ lgsmsh_path | dirname }}/{{ server_script_name }}"
+        state: absent
 ...

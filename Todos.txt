@@ -1,5 +1,11 @@
 ## Beta Version 1.8.0 Todos
 
+* Tuck in edges of xterm.js changes.
+  - Try to pipe setting for output text color and default textarea hight out to
+    new xtermjs console window.
+  - Maybe play around with fonts and stylizing a little more, really make the
+    terminal window shine!
+
 * Finish making changes to the logic for auto install.
   - Make server delete work for users other than main web-lgsm user.
     - Aka make a playbook to cleanup the user, their home dir and sudo rules.
@@ -90,15 +96,6 @@
   - But then allow people to put it where ever for their own purposes.
 
 ## Backlog
-
-* Explore using Xterm.js lib instead of stylized textbox to print output from
-  cmds.
-  - I really don't know much about this module yet, but I might be able to use
-    it to fully fake a live console into a game servers tmux session. Users
-    could type in commands and hit enter and then wouldn't have to use the
-    awkward send command button / form.
-  - It would also just be styled more appropriately and I could probably remove
-    & replace some of my hacky js with their legit code.
 
 * Possible rework things so that game server name in database is not unique,
   aka users can have more than one game server with the same name.

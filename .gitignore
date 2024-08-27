@@ -10,3 +10,6 @@ lgsm
 venv
 __pycache__
 Mockcraft
+node_modules
+package-lock.json
+package.json

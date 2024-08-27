@@ -724,17 +724,11 @@ def delete():
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
         server = GameServer.query.filter_by(install_name=server_name).first()
-
         if server:
             output_obj = OutputContainer([''], False)
-            # If this is the first time we're ever seeing the server_name then put it
-            # and its associated output_obj in the global INSTALL_SERVERS dictionary.
-            if not server.install_name in INSTALL_SERVERS:
-                INSTALL_SERVERS[server.install_name] = output_obj
-
-            output = INSTALL_SERVERS[server.install_name]
-            del_server(server, remove_files, output)
-            del INSTALL_SERVERS[server.install_name]
+            del_server(server, remove_files, output_obj)
+            if server.install_name in INSTALL_SERVERS:
+                del INSTALL_SERVERS[server.install_name]
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.

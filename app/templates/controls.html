@@ -8,7 +8,7 @@
         {% include 'spinners.html' %}
 
         <div class="row">
-          {% include 'textarea.html' %}
+          {% include 'xtermjs.html' %}
         </div>
         <br />
 
@@ -79,8 +79,7 @@
 
       <!-- Set global serverName for update-text-area.js -->
       <script>var serverName = "{{server_name}}";</script>
-      <script src="/static/js/update-text-area.js"></script>
-      <script src="/static/js/auto-scroll-button.js"></script>
+      <script src="/static/js/update-xterm.js"></script>
 
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
         /\ Top /\

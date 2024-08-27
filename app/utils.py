@@ -53,10 +53,10 @@ def shell_exec(exec_dir, cmd, output):
     )
 
     for stdout_line in iter(proc.stdout.readline, ""):
-        output.output_lines.append(escape_ansi(stdout_line))
+        output.output_lines.append(stdout_line)
 
     for stderr_line in iter(proc.stderr.readline, ""):
-        output.output_lines.append(escape_ansi(stderr_line))
+        output.output_lines.append(stderr_line)
 
     # If run in auto-install mode, do cfg fix after install finishes.
     if ('auto-install' in cmd):
@@ -409,14 +409,6 @@ def get_lgsmsh(lgsmsh):
         # For debug.
         print(e)
     print("Got linuxgsm.sh!")
-
-# Removes color codes from cmd line output.
-def escape_ansi(line):
-    # TODO: If I use xterm.js, I wont need this anymore... Escape sequences can be
-    # passed right to the web term and will be rendered in true color.
-    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
-    return ansi_escape.sub('', line)
-
 
 # Checks for the presense of bad chars in input.
 def contains_bad_chars(i):

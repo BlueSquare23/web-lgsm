@@ -1,9 +1,2 @@
-{% extends "base.html" %}
-
-{% block content %}
-  {% include 'spinners.html' %}
   <h2 style="color: white;">Output:</h2>
   <div id="terminal" class="bg-dark border border-secondary rounded-3" id="output-terminal"></div>
-  <script>var serverName="{{server_name}}";</script>
-  <script src="/static/js/update-xterm.js"></script>
-{% endblock %}

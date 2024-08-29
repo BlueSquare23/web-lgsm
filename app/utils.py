@@ -177,7 +177,7 @@ def purge_user_tmux_sockets():
     if os.path.exists(socket_dir):
         user_tmux_sockets = os.listdir(socket_dir)
         for socket in user_tmux_sockets:
-            os.remove(socket_dir + '/' + socket)
+            os.remove(os.path.join(socket_dir, socket))
 
 
 # After installation fixes lgsm cfg files.
@@ -248,7 +248,7 @@ def del_server(server, remove_files, output):
         here = os.getcwd()
         apb_path = os.path.join(here, 'venv/bin/ansible-playbook')
         del_usr_path = os.path.join(here, 'playbooks/delete_user.yml')
-        cmd = [ 'sudo', '-n', apb_path, del_usr_path,
+        cmd = [ '/usr/bin/sudo', '-n', apb_path, del_usr_path,
                 '-e', f'sudo_rule_name={sudo_rule_name}',
                 '-e', f'gs_user={username}' ]
 
@@ -423,6 +423,19 @@ def contains_bad_chars(i):
 
     return False
 
+
+# Validate if supplied input path is valid for supplied route. Multi use
+# function. For add page checks if path does not exist or is not a directory.
+#def valid_path(path, route):
+#    if route == 'add':
+#        cmd = ['/usr/bin/sudo', '/usr/bin/test', '-d', path]
+#        proc = subprocess.run(cmd,
+#                stdout = subprocess.PIPE,
+#                stderr = subprocess.PIPE,
+#                universal_newlines=True)
+#
+#        if proc.returncode != 0:
+#            return True
 
 # Run's self update script.
 def update_self():

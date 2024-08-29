@@ -1,17 +1,5 @@
 ## Beta Version 1.8.0 Todos
 
-* Finish making changes to the logic for auto install.
-  - Make server delete work for users other than main web-lgsm user.
-    - Aka make a playbook to cleanup the user, their home dir and sudo rules.
-    - Basically the inverse of the one I made yesterday.
-  - Fix things broken by other game servers now running as an alternate user.
-  - Cleanup commented up code. Possible convert to debug mode verbose
-    statements.
-  - See if there's a way to get pre_install_cmd array to work through
-    `shell_exec` so we don't have to use insecure shell=True.
-    - I still don't know why this is failing with pre_install_cmd. It seems
-      like it should work but subprocess doesn't like it.
-
 * Add the ability to create multiple web interface users w/ different levels of
   permissions.
   - User requested this: https://github.com/BlueSquare23/web-lgsm/issues/19

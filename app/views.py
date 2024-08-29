@@ -126,12 +126,9 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for('views.home'))
 
-    # TODO: Fix this for multi system user!!! Can't read dir so thinks doesn't
-    # exist.
-    # Checks that install dir exists.
-#    if not os.path.isdir(server.install_path):
-#        flash("No game server installation directory found!", category="error")
-#        return redirect(url_for('views.home'))
+    if not os.path.isdir(server.install_path):
+        flash("No game server installation directory found!", category="error")
+        return redirect(url_for('views.home'))
 
     # If config editor is disabled in the main.conf.
     if cfg_editor == 'no':
@@ -163,7 +160,7 @@ def controls():
     # Set the output object to the one stored in the global dictionary.
     output = GAME_SERVERS[server_name]
 
-    script_path = server.install_path + '/' + server.script_name
+    script_path = os.path.join(server.install_path, server.script_name)
 
     # This code block is only triggered in the event the script_arg param is
     # supplied with the GET request. Aka if a user has clicked one of the
@@ -384,12 +381,11 @@ def install():
             sudo_commands = f"sudo_commands=[{user_server_paths},'/usr/bin/watch','/usr/bin/tmux','/usr/bin/kill']"
             sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
-# TODO: Probably broken for other system users, needs alt solutions.
-#        if os.path.exists(install_path):
-#            flash('Install directory already exists.', category='error')
-#            flash('Did you perhaps have this server installed previously?', \
-#                                                            category='error')
-#            return redirect(url_for('views.install'))
+        if os.path.exists(install_path):
+            flash('Install directory already exists.', category='error')
+            flash('Did you perhaps have this server installed previously?', \
+                                                            category='error')
+            return redirect(url_for('views.install'))
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
@@ -674,38 +670,42 @@ def add():
         if install_exists:
             flash('An installation by that name already exits.', category='error')
             status_code = 400
+            return redirect(url_for('views.home'))
 
         elif not os.path.exists(install_path) or not os.path.isdir(install_path):
             flash('Directory path does not exist.', category='error')
             status_code = 400
+            return redirect(url_for('views.home'))
 
-        elif script_name_is_invalid(script_name):
+        if script_name_is_invalid(script_name):
             flash('Invalid game server script file name!', category='error')
             status_code = 400
+            return redirect(url_for('views.home'))
 
-        elif not os.path.exists(install_path + '/' + script_name) or \
-                not os.path.isfile(install_path + '/' + script_name):
+        script_path = os.path.join(install_path, script_name) 
+        if not os.path.exists(script_path) or \
+                not os.path.isfile(script_path):
             flash('Script file does not exist.', category='error')
             status_code = 400
-
-        else:
-            # Add the install to the database, then redirect home.
-            new_game_server = GameServer(install_name=install_name, \
-                        install_path=install_path, script_name=script_name, \
-                        username=username)
-            db.session.add(new_game_server)
-            db.session.commit()
-
-            flash('Game server added!')
-            if username != system_user:
-                flash(f'''
-                    NOTE: You will need to add a sudoers rule like the following in
-                    order for game servers owned by other users to function
-                    properly. You can edit your sudoers file using: "sudo visudo".
-                    Add this line: 
-                    {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
-                ''')
             return redirect(url_for('views.home'))
+
+        # Add the install to the database, then redirect home.
+        new_game_server = GameServer(install_name=install_name, \
+                    install_path=install_path, script_name=script_name, \
+                    username=username)
+        db.session.add(new_game_server)
+        db.session.commit()
+
+        flash('Game server added!')
+        if username != system_user:
+            flash(f'''
+                NOTE: You will need to add a sudoers rule like the following in
+                order for game servers owned by other users to function
+                properly. You can edit your sudoers file using: "sudo visudo".
+                Add this line: 
+                {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
+            ''')
+        return redirect(url_for('views.home'))
 
     return render_template("add.html", user=current_user), status_code
 

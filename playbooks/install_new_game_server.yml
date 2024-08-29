@@ -20,9 +20,18 @@
     - name: Creating new user
       user:
         name: "{{ gs_user }}"
+        groups: "{{ gs_user }}"
+        append: true
         state: present
         shell: /bin/bash
         create_home: yes
+      when: same_user is not defined or same_user == false
+
+    - name: Add {{ web_lgsm_user }} to new {{ gs_user }} group
+      user:
+        name: "{{ web_lgsm_user }}"
+        groups: "{{ gs_user }}"
+        append: true
       when: same_user is not defined or same_user == false
 
     - name: Ensure required sudoers rules are in place for new user

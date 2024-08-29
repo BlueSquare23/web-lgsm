@@ -47,7 +47,7 @@
 
       <script src="/static/js/pre-install.js"></script>
       <!-- Set global serverName for update-xterm.js -->
-      <script>var serverName='{{install_name}}';</script>
+      <script>var serverName = "{{ install_name }}"; var textColor = "{{ text_color }}"</script>
       <script src="/static/js/update-xterm.js"></script>
 
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">

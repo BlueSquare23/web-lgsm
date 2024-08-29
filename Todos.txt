@@ -1,11 +1,5 @@
 ## Beta Version 1.8.0 Todos
 
-* Tuck in edges of xterm.js changes.
-  - Try to pipe setting for output text color and default textarea hight out to
-    new xtermjs console window.
-  - Maybe play around with fonts and stylizing a little more, really make the
-    terminal window shine!
-
 * Finish making changes to the logic for auto install.
   - Make server delete work for users other than main web-lgsm user.
     - Aka make a playbook to cleanup the user, their home dir and sudo rules.
@@ -126,3 +120,13 @@
   - kill_watchers gets the job done alright for rn.
   - But this whole system is probably one of those targets for refactoring &
     rethinking.
+
+* Add Restart/backup Scheduler.
+  - User suggested this feature and I think its a good one.
+    - https://github.com/BlueSquare23/web-lgsm/issues/20
+  - The idea here would be to create a simple web interface to wrap up adding
+    crontab entries. Then the actual restarts or backups will just be handled
+    by the lgsm game server cli script itself.
+  - I've got all of the above to work through first but I do like this idea and
+    want to add it in.
+  - Just a matter of time until I can get to it.

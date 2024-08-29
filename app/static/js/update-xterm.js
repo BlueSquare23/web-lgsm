@@ -46,18 +46,25 @@ function updateTerminal(sName){
   });
 }
 
-//console.log("Server Name: " + serverName);
+var term = new Terminal({
+  theme: {
+    foreground: textColor,
+    background: '#1e1e1e',
+  },
+  fontFamily: 'Fira Code, monospace',
+  fontSize: 14,
+  lineHeight: 1.2,
+  cursorStyle: 'block',
+  cursorBlink: false,
+});
 
-var term = new Terminal();
 term.open(document.getElementById('terminal'));
 
 var fitAddon = new FitAddon.FitAddon();
-
 term.loadAddon(fitAddon);
-term.open(document.getElementById('terminal'));
-fitAddon.fit(); // Fit the terminal to the container
+fitAddon.fit();
 
-term.write('\r\x1B[32mWelcome to the web-lgsm!\x1B[0m\n\r');
+term.write('\rWelcome to the web-lgsm!\n\r');
 
 // Handle window resize.
 window.addEventListener('resize', function() {

@@ -105,7 +105,7 @@ def controls():
     config = configparser.ConfigParser()
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
-    text_area_height = config['aesthetic']['text_area_height']
+    terminal_height = config['aesthetic']['terminal_height']
     cfg_editor = config['settings']['cfg_editor']
     send_cmd = config['settings']['send_cmd']
 
@@ -271,7 +271,7 @@ def controls():
 
     return render_template("controls.html", user=current_user, \
         server_name=server_name, server_commands=commands_list, \
-        text_color=text_color, text_area_height=text_area_height, \
+        text_color=text_color, terminal_height=terminal_height, \
                       bs_colors=bs_colors, cfg_paths=cfg_paths)
 
 
@@ -284,7 +284,7 @@ def install():
     config = configparser.ConfigParser()
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
-    text_area_height = config['aesthetic']['text_area_height']
+    terminal_height = config['aesthetic']['terminal_height']
     create_new_user = config['settings'].getboolean('install_create_new_user')
 
     # Pull in install server list from game_servers.json file.
@@ -335,13 +335,12 @@ def install():
         # Used to pass install_name to frontend js.
         install_name = server_full_name
 
-        # Object to hold output from any running daemon threads.
-        output_obj = OutputContainer([''], False)
-
-        # If this is the first time we're ever seeing the server_name then put it
-        # and its associated output_obj in the global INSTALL_SERVERS dictionary.
-        if not server_full_name in INSTALL_SERVERS:
-            INSTALL_SERVERS[server_full_name] = output_obj
+        # Object to hold output from any running daemon threads. Since this is
+        # the install route delete any previously held output objects for
+        # server name. Clearly this is the output we want to look at.
+        if server_full_name in INSTALL_SERVERS:
+            del INSTALL_SERVERS[server.install_name]
+        INSTALL_SERVERS[server_full_name] =  OutputContainer([''], False)
 
         # Set the output object to the one stored in the global dictionary.
         output = INSTALL_SERVERS[server_full_name]
@@ -424,7 +423,7 @@ def install():
 
     return render_template("install.html", user=current_user, \
             servers=install_list, text_color=text_color, bs_colors=bs_colors, \
-            install_name=install_name, text_area_height=text_area_height)
+            install_name=install_name, terminal_height=terminal_height)
 
 
 ######### API System Usage #########
@@ -483,7 +482,7 @@ def settings():
     config = configparser.ConfigParser()
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
-    text_area_height = config['aesthetic']['text_area_height']
+    terminal_height = config['aesthetic']['terminal_height']
     remove_files = config['settings'].getboolean('remove_files')
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
@@ -491,7 +490,7 @@ def settings():
 
     config_options = {
         "text_color": text_color,
-        "text_area_height": text_area_height,
+        "terminal_height": terminal_height,
         "remove_files": remove_files,
         "graphs_primary": graphs_primary,
         "graphs_secondary": graphs_secondary,
@@ -504,7 +503,7 @@ def settings():
 
     text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
-    height_pref = request.form.get("text_area_height")
+    height_pref = request.form.get("terminal_height")
     purge_socks = request.form.get("purge_socks")
     update_weblgsm = request.form.get("update_weblgsm")
     graphs_primary_pref = request.form.get("graphs_primary")
@@ -552,9 +551,9 @@ def settings():
         config['aesthetic']['show_stats'] = 'yes'
 
     # Set default text area height setting.
-    config['aesthetic']['text_area_height'] = text_area_height
+    config['aesthetic']['terminal_height'] = terminal_height
     if height_pref:
-        # Validate textarea height is int.
+        # Validate terminal height is int.
         try:
             height_pref = int(height_pref)
         except ValueError:
@@ -567,7 +566,7 @@ def settings():
             return redirect(url_for('views.settings'))
 
         # Have to cast back to string to save in config.
-        config['aesthetic']['text_area_height'] = str(height_pref)
+        config['aesthetic']['terminal_height'] = str(height_pref)
 
     with open('main.conf', 'w') as configfile:
          config.write(configfile)
@@ -758,7 +757,7 @@ def edit():
     config = configparser.ConfigParser()
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
-    text_area_height = config['aesthetic']['text_area_height']
+    terminal_height = config['aesthetic']['terminal_height']
 
     if config['settings']['cfg_editor'] == 'no':
         flash("Config Editor Disabled", category="error")
@@ -838,7 +837,7 @@ def edit():
         return send_from_directory(basedir, basename, as_attachment=True)
 
     return render_template("edit.html", user=current_user, \
-    text_color=text_color, text_area_height=text_area_height, \
+    text_color=text_color, terminal_height=terminal_height, \
                 server_name=server_name, cfg_file=cfg_path, \
                 file_contents=file_contents, cfg_file_name=cfg_file)
 

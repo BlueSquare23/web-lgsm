@@ -51,6 +51,24 @@
     - This will likely take the form of a main.conf param.
     - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
+* Fix tests broken by changes to auto-install / default new user install.
+
+* Write new tests for newly added features:
+  - Need new tests for:
+    - New settings page options:
+      - install_create_new_user
+      - passwordles_install
+      - Make sure toggle changes config file.
+    - Test new full auto install passwordless.
+    - Test new full auto install as new user.
+      - Rather than run 4 full installs (time consuming, resource intensive)
+        I'm just going to run two full installs.
+        - The first one will be exactly the same as it is now. Install
+          minecraft as the web-lgsm system user.
+        - The second one will be install as a new user with passwordless.
+        - Aka test old default auto install vs new default auto install.
+    - Test new delete for multi user, make sure it cleans up new user.
+
 * Add the ability to create multiple web interface users w/ different levels of
   permissions.
   - User requested this: https://github.com/BlueSquare23/web-lgsm/issues/19
@@ -120,6 +138,16 @@
 * Make install_path an optional main.conf parameter.
   - By default I want to set this to just `/home/<user>/<server_name>`.
   - But then allow people to put it where ever for their own purposes.
+  - Write tests for this.
+
+* Remove support for python3.8 and add python3.13.
+  - Python 3.8 is going eol Oct. 1st 2024.
+  - That's also the same day python 3.13 is released.
+  - So remove 3.8 from list in `.github/workflows/test.yml` and add 3.13.
+
+* Add support for Ubuntu 24.04.
+  - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
+    too.
 
 ## Backlog
 

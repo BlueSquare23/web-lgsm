@@ -66,6 +66,7 @@ def shell_exec(exec_dir, cmd, output):
     # Reset process_lock flag.
     output.process_lock = False
 
+
 # Snips any lingering `watch` processes.
 def kill_watchers(last_request_for_output):
     # Add three minutes to last_request_for_output time as a timeout. In other
@@ -275,7 +276,7 @@ def get_tty_ticket(sudo_pass):
 
 
 # Validates submitted cfg_file for edit route.
-def is_invalid_cfg_name(cfg_file):
+def valid_cfg_name(cfg_file):
     gs_cfgs = open('json/accepted_cfgs.json', 'r')
     json_data = json.load(gs_cfgs)
     gs_cfgs.close()
@@ -284,9 +285,9 @@ def is_invalid_cfg_name(cfg_file):
 
     for cfg in valid_gs_cfgs:
         if cfg_file == cfg:
-            return False
+            return True
 
-    return True
+    return False
     
 
 # Turns data in commands.json into list of command objects that implement the
@@ -354,35 +355,34 @@ def get_servers():
 
 
 # Validates short commands.
-def is_invalid_command(cmd, server, send_cmd):
+def valid_command(cmd, server, send_cmd):
     commands = get_commands(server, send_cmd)
     for command in commands:
-        # If cmd is in list of short_cmds return False.
-        # Aka is not invalid command.
+        # Aka is valid command.
         if cmd == command.short_cmd:
-            return False
+            return True
 
-    return True
+    return False
 
 
 ## Install Page Utils.
 
 # Validates form submitted server_script_name and server_full_name options.
-def install_options_are_invalid(script_name, full_name):
+def valid_install_options(script_name, full_name):
     servers = get_servers()
     for server, server_name in servers.items():
         if server == script_name and server_name == full_name:
-            return False
-    return True
+            return True
+    return False
 
 
 # Validates script_name.
-def script_name_is_invalid(script_name):
+def valid_script_name(script_name):
     servers = get_servers()
     for server, server_name in servers.items():
         if server == script_name:
-            return False
-    return True
+            return True
+    return False
 
 
 # Checks if linuxgsm.sh already exists and if not, gets it.

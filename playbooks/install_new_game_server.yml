@@ -4,7 +4,7 @@
 # install_path
 # lgsmsh_path
 # server_script_name
-# sudo_commands
+# script_paths
 # sudo_rule_name
 # web_lgsm_user
 
@@ -15,9 +15,161 @@
   vars:
     # Same user defaults to false, meaning default create new user.
     same_user: false
+    # We want to validate the gs_user var to prevent sudo rules getting created
+    # as users like ALL or root. Problem with the below list is rn I'll have to
+    # remember to update it by hand when they add a new lgsm servers.
+    accepted_gs_users:
+      - acserver
+      - ahlserver
+      - ahl2server
+      - arkserver
+      - arma3server
+      - armarserver
+      - atsserver
+      - avserver
+      - bbserver
+      - bb2server
+      - bdserver
+      - bf1942server
+      - bfvserver
+      - bmdmserver
+      - boserver
+      - bsserver
+      - btserver
+      - btlserver
+      - ccserver
+      - ckserver
+      - cmwserver
+      - codserver
+      - cod2server
+      - cod4server
+      - coduoserver
+      - codwawserver
+      - colserver
+      - csserver
+      - cs2server
+      - csczserver
+      - csgoserver
+      - cssserver
+      - ctserver
+      - dabserver
+      - dayzserver
+      - dmcserver
+      - dodserver
+      - dodrserver
+      - dodsserver
+      - doiserver
+      - dstserver
+      - dysserver
+      - ecoserver
+      - emserver
+      - etlserver
+      - ets2server
+      - fctrserver
+      - fofserver
+      - gmodserver
+      - hcuserver
+      - hl2dmserver
+      - hldmserver
+      - hldmsserver
+      - hwserver
+      - hzserver
+      - insserver
+      - inssserver
+      - iosserver
+      - jc2server
+      - jc3server
+      - jk2server
+      - kfserver
+      - kf2server
+      - l4dserver
+      - l4d2server
+      - mcserver
+      - mcbserver
+      - mhserver
+      - mohaaserver
+      - momserver
+      - mtaserver
+      - ndserver
+      - necserver
+      - nmrihserver
+      - nsserver
+      - ns2server
+      - ns2cserver
+      - ohdserver
+      - onsetserver
+      - opforserver
+      - pcserver
+      - pc2server
+      - pmcserver
+      - psserver
+      - pvkiiserver
+      - pvrserver
+      - pwserver
+      - pzserver
+      - q2server
+      - q3server
+      - q4server
+      - qlserver
+      - qwserver
+      - ricochetserver
+      - roserver
+      - rtcwserver
+      - rustserver
+      - rwserver
+      - sampserver
+      - sbserver
+      - sbotsserver
+      - scpslserver
+      - scpslsmserver
+      - sdtdserver
+      - sfserver
+      - sfcserver
+      - sof2server
+      - solserver
+      - squadserver
+      - stserver
+      - stnserver
+      - svenserver
+      - terrariaserver
+      - tfserver
+      - tf2server
+      - tfcserver
+      - tiserver
+      - tsserver
+      - ts3server
+      - tuserver
+      - twserver
+      - untserver
+      - utserver
+      - ut2k4server
+      - ut3server
+      - ut99server
+      - vhserver
+      - vintsserver
+      - vpmcserver
+      - vsserver
+      - wetserver
+      - wfserver
+      - wmcserver
+      - wurmserver
+      - zmrserver
+      - zpsserver
+      - blue # TODO: Will need to hard code web-lgsm user and do it via install.sh.
 
   tasks:
-    - name: Creating new user
+    - name: Validate {{ gs_user }} against accepted_gs_users list
+      fail:
+        msg: "The user {{ gs_user }} is not an accepted user."
+      when: gs_user not in accepted_gs_users
+
+    - name: Create new {{ gs_user }} group 
+      group:
+        name: "{{ gs_user }}"
+        state: present
+      when: same_user is not defined or same_user == false
+
+    - name: Creating new {{ gs_user}} user
       user:
         name: "{{ gs_user }}"
         groups: "{{ gs_user }}"
@@ -41,7 +193,11 @@
         host: "ALL"
         runas: "{{ gs_user }}"
         nopassword: true
-        commands: "{{ sudo_commands }}"
+        commands:
+          - "{{ script_paths }}"
+          - /usr/bin/watch
+          - /usr/bin/tmux
+          - /usr/bin/kill
         state: present
       when: same_user is not defined or same_user == false
 

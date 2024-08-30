@@ -3,6 +3,32 @@
 * Pipe install as new user config option out to settings page.
 
 * Make /add page also automatically add the necessary sudoers rules.
+  - This is going to be tricky to do right because it involves adding sudoers
+    rules for nopasswd running of a playbook for creating new sudoers rules.
+    - Lots of potential for sploitation here.
+    - If they can write to the playbook file as the web-lgsm user, pwned.
+    - If they can supply the wrong input, pwned.
+  - Luckily, I think I've figured out a way to validate the supplied gs_user
+    var against a list of acceptable usernames. I've already been playing
+    around with it in `install_new_game_server.yml`.
+    - I think all I have to do borrow from that playbook or put that code in a
+      new playbook and import it.
+  - With the gs_user validated, there's no way for someone with shell access to
+    add arbitrary sudo rules for root or ALL, and then use them to pwn the
+    system.
+
+* Add passwordless sudo option.
+  - Could create a config parameter to enable passwordless sudo option.
+  - If user has proper sudoers rules in place could allow web-lgsm to run
+    without any sudo pass input required.
+  - Could even make this part of the `web-lgsm.py` script to enable / disable
+    it.
+  - Then could probably use the same create sudoers rule playbook or another
+    similar one to automatically add the sudoers rules or remove them.
+
+* Add step to install.sh to setup `playbooks/install_new_game_server.yml` to
+  hardcoded web-lgsm username into accepted_gs_users list and chown / chmod
+  that file.
 
 * Make sure that the `install.sh` script chown's `playbooks/delete_user.yml` to
   root and chmod's it 644.
@@ -113,14 +139,6 @@
   - Not fixing or changing anything just yet. Just want to review what I have
     and where its weak to better get an idea of how to fix it later.
 
-* Add passwordless sudo option.
-  - Could create a config parameter to enable passwordless sudo option.
-  - If user has proper sudoers rules in place could allow web-lgsm to run
-    without any sudo pass input required.
-  - Could even make this part of the `web-lgsm.py` script to enable / disable
-    it.
-  - Then could probably use the same create sudoers rule playbook or another
-    similar one to automatically add the sudoers rules or remove them.
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.

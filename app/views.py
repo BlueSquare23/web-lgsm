@@ -5,7 +5,6 @@ import json
 import time
 import shutil
 import getpass
-import subprocess
 import configparser
 from . import db
 from .utils import *
@@ -175,7 +174,7 @@ def controls():
             server.username = getpass.getuser()
 
         # Validate script_arg against contents of commands.json file.
-        if is_invalid_command(script_arg, server.script_name, send_cmd):
+        if not valid_command(script_arg, server.script_name, send_cmd):
             flash("Invalid Command!", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
@@ -322,7 +321,7 @@ def install():
                 return redirect(url_for('views.install'))
 
         # Validate form submission data against install list in json file.
-        if install_options_are_invalid(server_script_name, server_full_name):
+        if not valid_install_options(server_script_name, server_full_name):
             flash("Invalid Installation Option(s)!", category="error")
             return redirect(url_for('views.install'))
 
@@ -336,7 +335,7 @@ def install():
         # the install route delete any previously held output objects for
         # server name. Clearly this is the output we want to look at.
         if server_full_name in INSTALL_SERVERS:
-            del INSTALL_SERVERS[server.install_name]
+            del INSTALL_SERVERS[server_full_name]
         INSTALL_SERVERS[server_full_name] =  OutputContainer([''], False)
 
         # Set the output object to the one stored in the global dictionary.
@@ -357,7 +356,7 @@ def install():
         gs_system_user = getpass.getuser()
         install_path = os.path.join(os.getcwd(), server_full_name)
         lgsmsh_path = os.path.join(os.getcwd(), f'scripts/{lgsmsh}')
-        sudo_commands = 'sudo_commands=[]'
+        user_script_paths = ''
         web_lgsm_user = gs_system_user
         sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
@@ -373,12 +372,11 @@ def install():
             # Get a list of all game servers installed for this system user.
             paths_query_result = GameServer.query.filter_by(username=gs_system_user).with_entities(GameServer.install_path).all()
             game_server_paths = [path[0] for path in paths_query_result]
-            user_server_paths = f"'{install_path}/{server_script_name}'"
+            user_script_paths = os.path.join(install_path, server_script_name)
 
             for path in game_server_paths:
-                user_server_paths += f",'{_path}'"
+                user_script_paths += f",{path}"
 
-            sudo_commands = f"sudo_commands=[{user_server_paths},'/usr/bin/watch','/usr/bin/tmux','/usr/bin/kill']"
             sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
 
         if os.path.exists(install_path):
@@ -400,7 +398,7 @@ def install():
                 '-e', f'install_path={install_path}',
                 '-e', f'lgsmsh_path={lgsmsh_path}',
                 '-e', f'server_script_name={server_script_name}',
-                '-e', f'{sudo_commands}',
+                '-e', f'script_paths={user_script_paths}',
                 '-e', f'sudo_rule_name={sudo_rule_name}',
                 '-e', f'web_lgsm_user={web_lgsm_user}' ]
 
@@ -412,7 +410,15 @@ def install():
 
         shell_exec(os.getcwd(), pre_install_cmd, output)
 
-        cmd = ['sudo', '-u', gs_system_user, 'bash', '-c', f'cd {install_path} && {install_path}/{server_script_name} auto-install']
+        # Not an ideal way to catch failures but it works for now.
+        for line in output.output_lines:
+            print(line)
+            if 'failed=1' in line:
+                flash('Pre-Install Playbook Failed!', category='error')
+                return redirect(url_for('views.install'))
+
+        subcmd = f'cd {install_path} && {install_path}/{server_script_name} auto-install'
+        cmd = ['sudo', '-n', '-u', gs_system_user, 'bash', '-c', subcmd]
         install_daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
                                 output), daemon=True, name='Install')
         install_daemon.start()
@@ -649,7 +655,7 @@ def add():
             flash("Form field too long!", category='error')
             return redirect(url_for('views.add'))
 
-        # Returns None if invalid username.
+        # Returns None if not valid username.
         if get_uid(username) == None:
             flash("User not found on system!", category='error')
             return redirect(url_for('views.add'))
@@ -677,7 +683,7 @@ def add():
             status_code = 400
             return redirect(url_for('views.home'))
 
-        if script_name_is_invalid(script_name):
+        if not valid_script_name(script_name):
             flash('Invalid game server script file name!', category='error')
             status_code = 400
             return redirect(url_for('views.home'))
@@ -799,7 +805,7 @@ def edit():
         return redirect(url_for('views.home'))
 
     # Validate cfg_file name is in list of accepted cfgs.
-    if is_invalid_cfg_name(cfg_file):
+    if not valid_cfg_name(cfg_file):
         flash("Invalid config file name!", category="error")
         return redirect(url_for('views.home'))
 

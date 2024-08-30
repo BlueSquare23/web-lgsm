@@ -1,0 +1,9 @@
+- name: Creating new {{ gs_user}} user
+  user:
+    name: "{{ gs_user }}"
+    groups: "{{ gs_user }}"
+    append: true
+    state: present
+    shell: /bin/bash
+    create_home: yes
+  when: same_user is not defined or same_user == false

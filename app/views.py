@@ -704,6 +704,30 @@ def add():
             status_code = 400
             return redirect(url_for('views.home'))
 
+        output_obj = OutputContainer([''], False)
+        cwd = os.getcwd()
+        apb_path = os.path.join(cwd, 'venv/bin/ansible-playbook')
+        create_sudoers_rules = os.path.join(cwd, 'playbooks/create_sudoers_rules.yml')
+
+        # Get a list of all game servers installed for this system user.
+        # TODO: This code is duplicated, put it in a function in utils.py.
+        paths_query_result = GameServer.query.filter_by(username=script_name).with_entities(GameServer.install_path).all()
+        game_server_paths = [path[0] for path in paths_query_result]
+        user_script_paths = os.path.join(install_path, script_name)
+        web_lgsm_user = getpass.getuser()
+        sudo_rule_name = f'{web_lgsm_user}-{script_name}'
+
+        cmd = ['/usr/bin/sudo', '-n', 
+               apb_path, create_sudoers_rules,
+               '-e', f'gs_user={script_name}',
+               '-e', f'script_paths={user_script_paths}',
+               '-e', f'sudo_rule_name={sudo_rule_name}',
+               '-e', f'web_lgsm_user={web_lgsm_user}' ]
+
+        shell_exec(cwd, cmd, output_obj)
+        for line in output_obj.output_lines:
+            print(line)
+
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(install_name=install_name, \
                     install_path=install_path, script_name=script_name, \
@@ -712,14 +736,6 @@ def add():
         db.session.commit()
 
         flash('Game server added!')
-        if username != system_user:
-            flash(f'''
-                NOTE: You will need to add a sudoers rule like the following in
-                order for game servers owned by other users to function
-                properly. You can edit your sudoers file using: "sudo visudo".
-                Add this line: 
-                {system_user} ALL=({username}) NOPASSWD: {install_path}/{script_name}, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
-            ''')
         return redirect(url_for('views.home'))
 
     return render_template("add.html", user=current_user), status_code

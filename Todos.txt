@@ -1,19 +1,17 @@
 ## Beta Version 1.8.0 Todos
 
-* Make /add page also automatically add the necessary sudoers rules.
-  - This is going to be tricky to do right because it involves adding sudoers
-    rules for nopasswd running of a playbook for creating new sudoers rules.
-    - Lots of potential for sploitation here.
-    - If they can write to the playbook file as the web-lgsm user, pwned.
-    - If they can supply the wrong input, pwned.
-  - Luckily, I think I've figured out a way to validate the supplied gs_user
-    var against a list of acceptable usernames. I've already been playing
-    around with it in `install_new_game_server.yml`.
-    - I think all I have to do borrow from that playbook or put that code in a
-      new playbook and import it.
-  - With the gs_user validated, there's no way for someone with shell access to
-    add arbitrary sudo rules for root or ALL, and then use them to pwn the
-    system.
+* Cleanup new /add page sudoers rule add code.
+  - Just got it working so views.py code is a mess rn.
+
+* I don't think `shell_exec` needs path arg anymore. Remove it!
+  - Now that auto install cmds are being run through a sudo new gs_user sub
+    shell I don't think shell_exec need to know the path to run the cmd from
+    anymore.
+  - I don't think there's anything else using shell_exec that depends on that.
+  - Always good to trim dead code!
+
+* Cleanup all the random cwd calls and just put it in one `CWD` global to be
+  used wherever.
 
 * Add passwordless sudo option.
   - Could create a config parameter to enable passwordless sudo option.

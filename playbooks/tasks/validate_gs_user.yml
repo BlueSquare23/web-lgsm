@@ -1,0 +1,4 @@
+- name: Validate {{ gs_user }} against accepted_gs_users list
+  fail:
+    msg: "The user {{ gs_user }} is not an accepted user."
+  when: gs_user not in accepted_gs_users

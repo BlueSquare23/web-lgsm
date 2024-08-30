@@ -1,24 +1,27 @@
 ---
-- name: Ensure specific sudo rule is present in sudoers
+## Playbook required vars.
+# gs_user
+# script_paths
+# sudo_rule_name
+# web_lgsm_user
+
+- name: Runs sudo rule creation for /add existing game servers page
   hosts: localhost
-  connection: local
   become: true
+  connection: local
+  vars:
+    # Same user defaults to false, meaning default create new user.
+    same_user: false
+  vars_files:
+    - vars/accepted_gs_users.yml
 
   tasks:
-    - name: Ensure the sudoers rule is present
-      community.general.sudoers:
-        name: '{{ sudo_rule_name }}'
-        state: present
-        user: '{{ web_lgsm_user }}'
-        commands: '{{ sudo_commands }}'
-        validation: required
-        runas: '{{ gs_user }}'
-
-    - name: Fix missing space before NOPASSWD
-      lineinfile:
-        path: /etc/sudoers.d/{{ sudo_rule_name }}
-        regexp: '^(.*)NOPASSWD:(.*)$'
-        line: '\1 NOPASSWD: \2'
-        backrefs: yes
-        validate: 'visudo -cf %s'
+    - name: Include sub tasks
+      include_tasks: "{{ item }}"
+      loop:
+        - tasks/validate_gs_user.yml
+        - tasks/create_gs_user_group.yml
+        - tasks/add_weblgsm_to_gs_group.yml
+        - tasks/add_sudoers_rules.yml
+        - tasks/fix_sudoers_rule.yml
 ...

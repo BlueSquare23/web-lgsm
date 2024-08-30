@@ -1,5 +1,30 @@
 ## Beta Version 1.8.0 Todos
 
+* Pipe install as new user config option out to settings page.
+
+* Make /add page also automatically add the necessary sudoers rules.
+
+* Make sure that the `install.sh` script chown's `playbooks/delete_user.yml` to
+  root and chmod's it 644.
+  - Otherwise I've just given the web-lgsm user passwordless root.
+  - If the web-lgsm system user can both run that playbook without a password
+    and also edit that playbook then technically they can run whatever they
+    want as root on the system without a password and that's bad!
+
+* Lock down other user sudoers rules more.
+  - For example here's what I have as the current sudoers rule.
+  - `(mcserver) NOPASSWD: /home/mcserver/Minecraft/mcserver, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill`
+  - That's probably too open and could be locked down more.
+    - At least the tmux cmd probably could be, will have to think more about
+      the others...
+
+* Add additional debug mode & verbose level for info printing.
+  - In other words if the app is started in --debug mode, enable some
+    additional info printing.
+  - Also want to add a verbosity selector.
+    - This will likely take the form of a main.conf param.
+    - Maybe I'll do 1,2,3 or something to print more info at higher levels.
+
 * Add the ability to create multiple web interface users w/ different levels of
   permissions.
   - User requested this: https://github.com/BlueSquare23/web-lgsm/issues/19
@@ -58,13 +83,6 @@
     containers.
   - Issue: https://github.com/BlueSquare23/web-lgsm/issues/16
   - The LGSM themselves provide docker images of game servers.
-
-* Add additional debug mode & verbose level for info printing.
-  - In other words if the app is started in --debug mode, enable some
-    additional info printing.
-  - Also want to add a verbosity selector.
-    - This will likely take the form of a main.conf param.
-    - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
 * Allow multiple auto installs of same game server as new user, just increment
   the name.

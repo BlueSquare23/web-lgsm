@@ -30,13 +30,28 @@
             <div class="form-check">
               <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
               <label class="form-check-label" for="delete-files">
-                Remove Game Server Files on Delete
+                Remove game server files on delete
               </label>
             </div>
             <div class="form-check">
               <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if config_options.remove_files == false %}checked{% endif %}>
               <label class="form-check-label" for="leave-files">
-                Leave Game Server Files on Delete
+                Leave game server files on delete
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_new_user" id="install-different-user" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="install-different-user">
+                Setup new system user when installing new game servers
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_new_user" id="install-same-user" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
+              <label class="form-check-label" for="install-same-user">
+                Install new game servers under the <i>{{ system_user }}</i> system user
               </label>
             </div>
 

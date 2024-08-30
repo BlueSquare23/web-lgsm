@@ -44,6 +44,7 @@ def shell_exec(exec_dir, cmd, output):
     output.process_lock = True
 
     print(cmd)
+    print(" ".join(cmd))
 
     proc = subprocess.Popen(cmd,
             cwd=exec_dir,

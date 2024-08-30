@@ -49,7 +49,7 @@ function updateTerminal(sName){
 var term = new Terminal({
   theme: {
     foreground: textColor,
-    background: '#1e1e1e',
+    background: '#212529',
   },
   fontFamily: 'Fira Code, monospace',
   fontSize: 14,
@@ -77,6 +77,6 @@ if (typeof serverName === 'undefined' || serverName === null || !serverName){
 } else {
   var interval = setInterval(function() {
     updateTerminal(serverName);
-  }, 1000);
+  }, 500);
 }
 

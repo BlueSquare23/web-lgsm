@@ -489,6 +489,7 @@ def settings():
     graphs_primary = config['aesthetic']['graphs_primary']
     graphs_secondary = config['aesthetic']['graphs_secondary']
     show_stats = config['aesthetic'].getboolean('show_stats')
+    install_create_new_user = config['settings'].getboolean('install_create_new_user')
 
     config_options = {
         "text_color": text_color,
@@ -496,12 +497,14 @@ def settings():
         "remove_files": remove_files,
         "graphs_primary": graphs_primary,
         "graphs_secondary": graphs_secondary,
-        "show_stats": show_stats
+        "show_stats": show_stats,
+        "install_create_new_user": install_create_new_user
     }
 
+    system_user = getpass.getuser()
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
-                                    config_options=config_options)
+            system_user=system_user, config_options=config_options)
 
     text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
@@ -511,6 +514,7 @@ def settings():
     graphs_primary_pref = request.form.get("graphs_primary")
     graphs_secondary_pref = request.form.get("graphs_secondary")
     show_stats_pref = request.form.get("show_stats")
+    install_new_user_pref = request.form.get("install_new_user")
 
     # Purge user's tmux socket files.
     if purge_socks:
@@ -520,6 +524,11 @@ def settings():
     config['settings']['remove_files'] = 'yes'
     if file_pref == "false":
         config['settings']['remove_files'] = 'no'
+
+    # Set New user install setting.
+    config['settings']['install_create_new_user'] = 'yes'
+    if install_new_user_pref == "false":
+        config['settings']['install_create_new_user'] = 'no'
 
     # Text color settings.
     def valid_color(color):

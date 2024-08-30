@@ -1,7 +1,5 @@
 ## Beta Version 1.8.0 Todos
 
-* Pipe install as new user config option out to settings page.
-
 * Make /add page also automatically add the necessary sudoers rules.
   - This is going to be tricky to do right because it involves adding sudoers
     rules for nopasswd running of a playbook for creating new sudoers rules.

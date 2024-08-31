@@ -15,6 +15,7 @@
   vars:
     # Same user defaults to false, meaning default create new user.
     same_user: false
+    setup: false
   vars_files:
     - vars/accepted_gs_users.yml
 
@@ -28,6 +29,8 @@
         - tasks/add_weblgsm_to_gs_group.yml
         - tasks/add_sudoers_rules.yml
         - tasks/fix_sudoers_rule.yml
+        - tasks/add_temp_nopass_rule.yml
+        - tasks/fix_temp_nopass_rule.yml
 
     - name: Create new game server directory
       file:

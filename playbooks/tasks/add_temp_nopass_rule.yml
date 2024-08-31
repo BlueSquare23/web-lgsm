@@ -1,0 +1,10 @@
+- name: Add temporary sudoers rule for game server auto install
+  community.general.sudoers:
+    name: temp-auto-install
+    user: "{{ gs_user }}"
+    host: "ALL"
+    runas: root
+    nopassword: true
+    commands: "{{ script_paths }}"
+    state: present
+  when: same_user is not defined or same_user == false

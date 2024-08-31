@@ -3,4 +3,7 @@
     name: "{{ web_lgsm_user }}"
     groups: "{{ gs_user }}"
     append: true
-  when: same_user is not defined or same_user == false
+  when:
+    - same_user is not defined or same_user == false
+    - setup is not defined or setup == false
+

@@ -304,13 +304,11 @@ def install():
 
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
-        # TODO: Sanitize this more!!!
         server_script_name = request.form.get("server_name")
         server_full_name = request.form.get("full_name")
-        sudo_pass = request.form.get("sudo_pass")
 
         # Make sure required options are supplied.
-        for required_form_item in (server_script_name, server_full_name, sudo_pass):
+        for required_form_item in (server_script_name, server_full_name):
             if required_form_item == None:
                 flash("Missing Required Form Field!", category="error")
                 return redirect(url_for('views.install'))
@@ -347,10 +345,6 @@ def install():
             flash('An installation by that name already exits.', category='error')
             return redirect(url_for('views.install'))
 
-        if not get_tty_ticket(sudo_pass):
-            flash('Problem with sudo password!', category='error')
-            return redirect(url_for('views.install'))
-
         # Set defaults to local install values.
         gs_system_user = USER
         install_path = os.path.join(CWD, server_full_name)
@@ -384,8 +378,10 @@ def install():
         db.session.add(new_game_server)
         db.session.commit()
 
-        pre_install_cmd = [ 'ansible-playbook',
-                'playbooks/install_new_game_server.yml',
+        apb_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
+        install_new_gs = os.path.join(CWD, 'playbooks/install_new_game_server.yml')
+
+        pre_install_cmd = [ '/usr/bin/sudo', '-n', apb_path, install_new_gs,
                 '-e', f'gs_user={gs_system_user}',
                 '-e', f'install_path={install_path}',
                 '-e', f'lgsmsh_path={lgsmsh_path}',

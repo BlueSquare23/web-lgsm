@@ -80,9 +80,29 @@ random_key=$(echo $RANDOM | md5sum | head -c 20)
 echo "SECRET_KEY=\"$random_key\"" > .secret
 chmod 600 .secret
 
-# TODO: Need to do something like the below command to install the sudo rules
-# to allow web app to run cmds without prompting for a sudo pass.
-#ansible-playbook playbooks/create_sudoers_rules.yml -e 'sudo_rule_name=blue-blue' -e 'web_lgsm_user=blue' -e 'gs_user=root' -e 'sudo_commands=["/home/blue/Projects/web-lgsm/venv/bin/ansible-playbook"]'
+# Setup sudoers rules to allow web-lgsm to run multi game server user
+# management components without needing to prompt for a sudo pass.
+echo -e "${green}####### Setting up Sudoers Rules...${reset}"
+
+apb="$SCRIPTPATH/venv/bin/ansible-playbook"
+del_user="$SCRIPTPATH/playbooks/delete_user.yml"
+create_sudo_rule="$SCRIPTPATH/playbooks/create_sudoers_rules.yml"
+inst_new_gs="$SCRIPTPATH/playbooks/install_new_game_server.yml"
+script_paths="$apb $del_user *, $apb $create_sudo_rule *, $apb $inst_new_gs *"
+accpt_gs_users="$SCRIPTPATH/playbooks/vars/accepted_gs_users.yml"
+
+# Hardcode web-lgsm system user into accepted_users validation list.
+echo "  - $USER" >> $accpt_gs_users
+echo "  - root" >> $accpt_gs_users
+# Run sudo rule add playbook.
+$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$script_paths'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
+
+# Delete last line (aka root line) from accepted_gs_users.yml.
+sed -i '$ d' $accpt_gs_users
+# Lock playbook files down for security reasons.
+sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
+sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;
+sudo chown -R root:root $SCRIPTPATH/playbooks
 
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"

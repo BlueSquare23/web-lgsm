@@ -12,10 +12,15 @@
   vars:
     # Same user defaults to false, meaning default create new user.
     same_user: false
+    setup: false
   vars_files:
     - vars/accepted_gs_users.yml
 
   tasks:
+    - name: Print vars
+      debug:
+        msg: "{{ setup }}"
+
     - name: Include sub tasks
       include_tasks: "{{ item }}"
       loop:

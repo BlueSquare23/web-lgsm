@@ -1,29 +1,8 @@
 ## Beta Version 1.8.0 Todos
 
-* Deprecate the sudo password form.
-  - I've decided that instead of making this a togglable config option, if I
-    can make it so the app works totally through sudoers rules without needing
-    to accept a user password at all. Then that should not only be the default
-    option, but it should really be the only option.
-    - Then I can clean a lot of things up related to taking in the sudo pass.
-    - Also I can stop worrying about users without ssl certs entering their
-      sudo pass in clear text.
-  - Also see Todo below about adding multiple web interface users with different
-    levels of permissions.
-    - So I wont even need to keep it around anymore to prevent unauthorized
-      users from installing things, which is sorta a white label purpose it
-      has served in the past, under the single web interface user setup.
-
-* Add step to install.sh to setup `playbooks/install_new_game_server.yml` to
-  hardcoded web-lgsm username into accepted_gs_users list and chown / chmod
-  that file.
-
-* Make sure that the `install.sh` script chown's `playbooks/delete_user.yml` to
-  root and chmod's it 644.
-  - Otherwise I've just given the web-lgsm user passwordless root.
-  - If the web-lgsm system user can both run that playbook without a password
-    and also edit that playbook then technically they can run whatever they
-    want as root on the system without a password and that's bad!
+* Make sure post auto install removes new users rootless sudo access.
+  - Playbook has to add this for auto install as new users to work correctly.
+  - But if its not cleaned up afterwards, could be bad.
 
 * Lock down other user sudoers rules more.
   - For example here's what I have as the current sudoers rule.

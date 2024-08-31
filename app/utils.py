@@ -253,26 +253,10 @@ def del_server(server, remove_files, output):
                 '-e', f'sudo_rule_name={sudo_rule_name}',
                 '-e', f'gs_user={username}' ]
 
-        shell_exec(os.getcwd(),cmd,output)
+        shell_exec(cmd, output)
 
     flash(f'Game server, {server_name} deleted!')
     return
-
-
-# Uses sudo_pass to get sudo tty ticket.
-def get_tty_ticket(sudo_pass):
-    # Attempt's to get sudo tty ticket. Uses try, except because subprocess.run
-    # is called with check=True which causes any subproc failures to throw an
-    # exception. This uses that password fail exception to return False.
-    try:
-        subprocess.run(['/usr/bin/sudo', '-S', 'apt-get', 'check'],
-                       check=True,
-                       input=sudo_pass,
-                       stderr=subprocess.PIPE,
-                       universal_newlines=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        return False
 
 
 # Validates submitted cfg_file for edit route.

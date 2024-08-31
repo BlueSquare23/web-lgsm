@@ -138,4 +138,3 @@ accepted_gs_users:
   - wurmserver
   - zmrserver
   - zpsserver
-  - blue # TODO: Will need to hard code web-lgsm user and do it via install.sh.

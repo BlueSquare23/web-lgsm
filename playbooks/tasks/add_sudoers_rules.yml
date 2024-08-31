@@ -11,4 +11,19 @@
       - /usr/bin/tmux
       - /usr/bin/kill
     state: present
-  when: same_user is not defined or same_user == false
+  when:
+    - same_user is not defined or same_user == false
+    - setup is not defined or setup == false
+
+- name: Ensure required sudoers rules are in place for web-lgsm user 
+  community.general.sudoers:
+    name: "{{ sudo_rule_name }}"
+    user: "{{ web_lgsm_user }}"
+    host: "ALL"
+    runas: "{{ gs_user }}"
+    nopassword: true
+    commands: "{{ script_paths }}"
+    state: present
+  when:
+    - same_user is not defined or same_user == false
+    - setup | bool

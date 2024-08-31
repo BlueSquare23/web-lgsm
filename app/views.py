@@ -325,6 +325,7 @@ def install():
 
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
+        server_full_name = server_full_name.replace(":", "_")
 
         # Used to pass install_name to frontend js.
         install_name = server_full_name
@@ -406,9 +407,28 @@ def install():
                 flash('Pre-Install Playbook Failed!', category='error')
                 return redirect(url_for('views.install'))
 
-        subcmd = f'cd {install_path} && {install_path}/{server_script_name} auto-install'
-        cmd = ['sudo', '-n', '-u', gs_system_user, 'bash', '-c', subcmd]
-        install_daemon = Thread(target=shell_exec, args=(cmd, output, CWD), daemon=True, name='Install')
+#        time.sleep(1)
+#        os.system('/usr/bin/sudo -k')
+#        status = os.system(f'/usr/bin/sudo -n -u {server_script_name} {install_path}/{server_script_name} m')
+#        if status != 0:
+#            print("Failed to invalidate sudo cache.", file=sys.stderr)
+#            return redirect(url_for('views.install'))
+#        time.sleep(1)
+
+        # Get sudo tty ticket for new user.
+        sudo_cmd = ['/usr/bin/sudo', '-n']
+        inst_cmd = [f'{install_path}/{server_script_name} auto-install']
+
+        subcmd = sudo_cmd + ['-u', gs_system_user]
+#        get_sudo_tty_cmd = subcmd + sudo_cmd + ['-v'] 
+#
+#        shell_exec(get_sudo_tty_cmd, output)
+#        for line in output.output_lines:
+#            print(line)
+
+        # Run auto install!
+        install_cmd = subcmd + inst_cmd
+        install_daemon = Thread(target=shell_exec, args=(install_cmd, output, CWD), daemon=True, name='Install')
         install_daemon.start()
 
     return render_template("install.html", user=current_user, \

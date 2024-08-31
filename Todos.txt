@@ -1,8 +1,66 @@
 ## Beta Version 1.8.0 Todos
 
-* Make sure post auto install removes new users rootless sudo access.
-  - Playbook has to add this for auto install as new users to work correctly.
-  - But if its not cleaned up afterwards, could be bad.
+### v1.8.0 Pt 1.
+---
+
+* \/\/\/ THE STRAW THAT BROKE THE CAMEL'S BACK \/\/\/
+
+* ~Make sure post auto install removes new users rootless sudo access.~
+  - ~Playbook has to add this for auto install as new users to work correctly.~
+  - ~But if its not cleaned up afterwards, could be bad.~
+
+* I Need to rethink things related to this passwordless auto install.
+  - In trying to accomplish the above todo, I realized a pretty fundamental
+    problem with the new approach, which I should've noticed earlier, but ehh
+    live and learn.
+  - Basically, it would appear, the main thread that launches the ansible
+    playbook to setup the required auto install sudoers rules, cannot also be
+    then use those sudoers rules right after adding them.
+    - This is so dumb, but yeah any other process launched not by the same
+      thread can make use of those sudoers rules just fine. The rules are valid
+      and they work.
+    - But since its the same thread that creates them, it appears, it cannot
+      then make use of those sudoers rules.
+    - So that's fun...
+  - The real problem here is I've basically stretched the original logic to its
+    limits and unsurprisingly it broke.
+    - Previously the install page was just had to be responsible for running
+      the main auto install script.
+    - But really it now needs to be able to run three separate stages back to
+      back.
+      - Pre-install
+      - Auto-install
+      - Post-install
+    - Each stage depends on the others finishing successfully.
+    - Cleanup needs to happen if the stage before fails.
+    - Also as we've seen, it doesn't appear we can use the sudoers rule in the
+      same thread after we add them.
+  - As for how to solve it, I kinda have two rough ideas.
+    - Option 1 - The hacky way.
+      - Put the whole install in one playbook and find some way to hackily pull
+        out the auto install cmd stdout & stderr in realtime.
+      - There's an ansible async poll thing that might be able to use, but not
+        sure if I can get stdout of that yet.
+      - Maybe also there's some output file redirection that could be done but
+        idk.
+    - Option 2 - Probably the right way.
+      - Significantly rewrite the way the install page currently works to some
+        how do these things as three separate steps before returning. 
+        - I really don't know how to do this.
+        - Right now the whole generator is dependant on that thread.start()
+          call, then the auto install output spills out to the in mem global
+          output object which can be read when requested from the api. 
+        - Problem is how do I add sudoers rules then user them from same
+          thread, can't apparently...
+          - I don't want to have to restart the app in the middle of an
+            install.
+          - I don't want them to have to run install step 1 then go and run
+            install step 2.
+          - So how tf do I make this work....????????????
+
+
+
+
 
 * Lock down other user sudoers rules more.
   - For example here's what I have as the current sudoers rule.
@@ -19,6 +77,20 @@
     - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
 * Fix tests broken by changes to auto-install / default new user install.
+
+* Remove tmux socket file purge option.
+  - This was nice and hand for me as a developer while trying to figure out the
+    socket file stuff.
+  - However, I suspect it was of limited or of no use to most people
+    downloading and installing the app.
+    - Maybe if their tmux got messed up because of uninstalling / reinstalling
+      a bunch before my code had all the bugs worked out, then they probably
+      could've used it.
+    - But the status indicator and live console logic that is based of finding
+      the socket files has been figured out ever since I discovered where the
+      base lgsm keeps the id files. 
+    - Aka the issue this button was created for as been resolved and its now
+      vestigial.
 
 * Add new flag to `web-lgsm.py` to allow external gs_user.
   - This will prompt for a sudo password and the supplied gs_user value will be
@@ -51,6 +123,10 @@
         - The second one will be install as a new user with passwordless.
         - Aka test old default auto install vs new default auto install.
     - Test new delete for multi user, make sure it cleans up new user.
+
+
+### v1.8.0 Pt 2.
+---
 
 * Add the ability to create multiple web interface users w/ different levels of
   permissions.
@@ -90,11 +166,9 @@
     main.conf, or if their main.conf is totally mangled or something, then the
     app shouldn't fail catastrophically, which I think it kinda does rn.
 
-* Add Python Selenium end-to-end tests to actually login and do a bunch of
-  stuff in the web interface.
-  - Try to thoroughly test site functionality, basically redo all of the same
-    things the functional tests do through raw GET/POST requests, but instead
-    through the selenium browser.
+* Make sure `web-lgsm.py --update` can deal with new folders owned as root.
+  - Might need to just put a little sudo chown back to the user line for those
+    before running git pull or backing up etc.
 
 * Containerize Project!
   - Not entirely sure how to do this yet...
@@ -136,15 +210,6 @@
   - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
     too.
 
-## Backlog
-
-* Possible rework things so that game server name in database is not unique,
-  aka users can have more than one game server with the same name.
-  - This DB Model line set's install name to be unique:
-    `install_name = db.Column(db.String(150), unique=True)`
-  - I'm thinking of allowing this possibly under the case where they're
-    installed as different users.
-
 * Identify targets for refactoring.
   - One such thing is all the overhead comments for functions n'@ can be turned
     into under hanging docstring to make the more _pythonic_.
@@ -154,6 +219,20 @@
   - Not fixing or changing anything just yet. Just want to review what I have
     and where its weak to better get an idea of how to fix it later.
 
+## Backlog
+
+* Possible rework things so that game server name in database is not unique,
+  aka users can have more than one game server with the same name.
+  - This DB Model line set's install name to be unique:
+    `install_name = db.Column(db.String(150), unique=True)`
+  - I'm thinking of allowing this possibly under the case where they're
+    installed as different users.
+
+* Add Python Selenium end-to-end tests to actually login and do a bunch of
+  stuff in the web interface.
+  - Try to thoroughly test site functionality, basically redo all of the same
+    things the functional tests do through raw GET/POST requests, but instead
+    through the selenium browser.
 
 * Think of way to do watch thread timeout. Not terribly important
   - kill_watchers gets the job done alright for rn.
@@ -169,3 +248,23 @@
   - I've got all of the above to work through first but I do like this idea and
     want to add it in.
   - Just a matter of time until I can get to it.
+
+## Disclaimer
+
+This document is basically just a rubber ducky for me while I change things.
+Its just a scratch pad to jot things down on and throw ideas in when I maybe
+don't have time to work on them right then.
+
+It is the main way I keep track of what needs done for the project so it is a
+highly in flux document on the dev branch. Not all of these ideas make sense or
+are going to work or make it into the final release.
+
+```
+      ,~~.
+ ,   (  - )>
+ )`~~'   (
+(  .__)   )
+ `-.____,' 
+```
+
+[Art by Hayley Jane Wakenshaw](https://www.asciiart.eu/animals/birds-water)

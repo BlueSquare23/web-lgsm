@@ -1,23 +1,18 @@
 ## Beta Version 1.8.0 Todos
 
-* I don't think `shell_exec` needs path arg anymore. Remove it!
-  - Now that auto install cmds are being run through a sudo new gs_user sub
-    shell I don't think shell_exec need to know the path to run the cmd from
-    anymore.
-  - I don't think there's anything else using shell_exec that depends on that.
-  - Always good to trim dead code!
-
-* Cleanup all the random cwd calls and just put it in one `CWD` global to be
-  used wherever.
-
-* Add passwordless sudo option.
-  - Could create a config parameter to enable passwordless sudo option.
-  - If user has proper sudoers rules in place could allow web-lgsm to run
-    without any sudo pass input required.
-  - Could even make this part of the `web-lgsm.py` script to enable / disable
-    it.
-  - Then could probably use the same create sudoers rule playbook or another
-    similar one to automatically add the sudoers rules or remove them.
+* Deprecate the sudo password form.
+  - I've decided that instead of making this a togglable config option, if I
+    can make it so the app works totally through sudoers rules without needing
+    to accept a user password at all. Then that should not only be the default
+    option, but it should really be the only option.
+    - Then I can clean a lot of things up related to taking in the sudo pass.
+    - Also I can stop worrying about users without ssl certs entering their
+      sudo pass in clear text.
+  - Also see Todo below about adding multiple web interface users with different
+    levels of permissions.
+    - So I wont even need to keep it around anymore to prevent unauthorized
+      users from installing things, which is sorta a white label purpose it
+      has served in the past, under the single web interface user setup.
 
 * Add step to install.sh to setup `playbooks/install_new_game_server.yml` to
   hardcoded web-lgsm username into accepted_gs_users list and chown / chmod
@@ -148,6 +143,10 @@
   - By default I want to set this to just `/home/<user>/<server_name>`.
   - But then allow people to put it where ever for their own purposes.
   - Write tests for this.
+
+* Make install.sh setup npm pkgs at the end.
+  - I'm using xterm.js and a plugin for them that can only be installed via
+    npm.
 
 * Remove support for python3.8 and add python3.13.
   - Python 3.8 is going eol Oct. 1st 2024.

@@ -22,6 +22,10 @@ INSTALL_SERVERS = {}
 # Global last requested output time.
 last_request_for_output = int(time.time())
 
+# Misc Globals.
+CWD = os.getcwd()
+USER = getpass.getuser()
+
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
 
@@ -58,7 +62,7 @@ def home():
     for server in installed_servers:
         # Account for legacy db's that don't have a user field.
         if server.username == None:
-            server.username = getpass.getuser()
+            server.username = USER
 
         servers_to_users[server.install_name] = server.username
 
@@ -88,7 +92,7 @@ def xtermjs():
     output = GAME_SERVERS[server_name]
 
     cmd = ['/home/blue/Projects/web-lgsm/scripts/random.sh']
-    daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, output),\
+    daemon = Thread(target=shell_exec, args=(cmd, output),\
                                             daemon=True, name='Command')
 
     daemon.start()
@@ -166,7 +170,6 @@ def controls():
     # control button.
     if script_arg:
         # For running cmds as alt users.
-        system_user = getpass.getuser()
         sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
 
         # Account for legacy db's that don't have a user field.
@@ -202,14 +205,13 @@ def controls():
 
             cmd = []
             # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != system_user:
+            if server.username != USER:
                 cmd += sudo_prepend
 
             # Use daemonized `watch` command to keep live console running.
             cmd += ['/usr/bin/watch', '-te', '/usr/bin/tmux', '-L', tmux_socket, \
                                         'capture-pane', '-pt', server.script_name]
-            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
-                                    output), daemon=True, name='Console')
+            daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Console')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
@@ -240,12 +242,11 @@ def controls():
 
             cmd = []
             # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != system_user:
+            if server.username != USER:
                 cmd += sudo_prepend
 
             cmd += [script_path, script_arg, console_cmd]
-            daemon = Thread(target=shell_exec, args=(server.install_path, cmd, \
-                                    output), daemon=True, name='ConsoleCMD')
+            daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='ConsoleCMD')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
             
@@ -253,12 +254,11 @@ def controls():
         else:
             cmd = []
             # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != system_user:
+            if server.username != USER:
                 cmd += sudo_prepend
 
             cmd += [script_path, script_arg]
-            daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
-                                    output), daemon=True, name='Command')
+            daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Command')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
@@ -351,33 +351,25 @@ def install():
             flash('Problem with sudo password!', category='error')
             return redirect(url_for('views.install'))
 
-        # Set defaults to local install values for case if install create new
-        # user not set.
-        gs_system_user = getpass.getuser()
-        install_path = os.path.join(os.getcwd(), server_full_name)
-        lgsmsh_path = os.path.join(os.getcwd(), f'scripts/{lgsmsh}')
+        # Set defaults to local install values.
+        gs_system_user = USER
+        install_path = os.path.join(CWD, server_full_name)
+        lgsmsh_path = os.path.join(CWD, f'scripts/{lgsmsh}')
         user_script_paths = ''
-        web_lgsm_user = gs_system_user
-        sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
+        sudo_rule_name = f'{USER}-{gs_system_user}'
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
         if create_new_user:
-            web_lgsm_user = getpass.getuser()
             # Create the new game server user.
             gs_system_user = server_script_name 
             install_path = os.path.join(f'/home/{server_script_name}', server_full_name)
 
             # Get a list of all game servers installed for this system user.
-            paths_query_result = GameServer.query.filter_by(username=gs_system_user).with_entities(GameServer.install_path).all()
-            game_server_paths = [path[0] for path in paths_query_result]
-            user_script_paths = os.path.join(install_path, server_script_name)
+            user_script_paths = get_user_script_paths(install_path, server_script_name)
 
-            for path in game_server_paths:
-                user_script_paths += f",{path}"
-
-            sudo_rule_name = f'{web_lgsm_user}-{gs_system_user}'
+            sudo_rule_name = f'{USER}-{gs_system_user}'
 
         if os.path.exists(install_path):
             flash('Install directory already exists.', category='error')
@@ -400,15 +392,16 @@ def install():
                 '-e', f'server_script_name={server_script_name}',
                 '-e', f'script_paths={user_script_paths}',
                 '-e', f'sudo_rule_name={sudo_rule_name}',
-                '-e', f'web_lgsm_user={web_lgsm_user}' ]
+                '-e', f'web_lgsm_user={USER}' ]
 
         # Set playbook flag to not run user / sudo setup steps.
         if not create_new_user:
             pre_install_cmd += ['-e', 'same_user=true']
 
+# Possibly make stuff like this part of debug.
 #        print(f"########## pre_install_cmd: {pre_install_cmd}")
 
-        shell_exec(os.getcwd(), pre_install_cmd, output)
+        shell_exec(pre_install_cmd, output)
 
         # Not an ideal way to catch failures but it works for now.
         for line in output.output_lines:
@@ -419,8 +412,7 @@ def install():
 
         subcmd = f'cd {install_path} && {install_path}/{server_script_name} auto-install'
         cmd = ['sudo', '-n', '-u', gs_system_user, 'bash', '-c', subcmd]
-        install_daemon = Thread(target=shell_exec, args=(os.getcwd(), cmd, \
-                                output), daemon=True, name='Install')
+        install_daemon = Thread(target=shell_exec, args=(cmd, output, CWD), daemon=True, name='Install')
         install_daemon.start()
 
     return render_template("install.html", user=current_user, \
@@ -501,10 +493,9 @@ def settings():
         "install_create_new_user": install_create_new_user
     }
 
-    system_user = getpass.getuser()
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
-            system_user=system_user, config_options=config_options)
+            system_user=USER, config_options=config_options)
 
     text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
@@ -655,10 +646,9 @@ def add():
                 flash("Form field too long!", category='error')
                 return redirect(url_for('views.add'))
 
-        system_user = getpass.getuser()
         # Set default user if none provided.
         if username == None or username == '':
-            username = system_user
+            username = USER
 
         if len(username) > 150:
             flash("Form field too long!", category='error')
@@ -704,29 +694,33 @@ def add():
             status_code = 400
             return redirect(url_for('views.home'))
 
-        output_obj = OutputContainer([''], False)
-        cwd = os.getcwd()
-        apb_path = os.path.join(cwd, 'venv/bin/ansible-playbook')
-        create_sudoers_rules = os.path.join(cwd, 'playbooks/create_sudoers_rules.yml')
+        # Add sudoers rules automatically if game server not owned by web-lgsm
+        # system user. To the user, note there is a slight problem with this
+        # code. If you try to add a game server as some user that's not allowed
+        # by the validate_gs_user.yml playbook (aka not a mcserver type name)
+        # then it'll fail.
+        if USER != username:
+            output_obj = OutputContainer([''], False)
+            apb_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
+            create_sudoers_rules = os.path.join(CWD, 'playbooks/create_sudoers_rules.yml')
 
-        # Get a list of all game servers installed for this system user.
-        # TODO: This code is duplicated, put it in a function in utils.py.
-        paths_query_result = GameServer.query.filter_by(username=script_name).with_entities(GameServer.install_path).all()
-        game_server_paths = [path[0] for path in paths_query_result]
-        user_script_paths = os.path.join(install_path, script_name)
-        web_lgsm_user = getpass.getuser()
-        sudo_rule_name = f'{web_lgsm_user}-{script_name}'
+            # Get a list of all game servers installed for this system user.
+            user_script_paths = get_user_script_paths(install_path, script_name)
 
-        cmd = ['/usr/bin/sudo', '-n', 
-               apb_path, create_sudoers_rules,
-               '-e', f'gs_user={script_name}',
-               '-e', f'script_paths={user_script_paths}',
-               '-e', f'sudo_rule_name={sudo_rule_name}',
-               '-e', f'web_lgsm_user={web_lgsm_user}' ]
+            sudo_rule_name = f'{USER}-{script_name}'
 
-        shell_exec(cwd, cmd, output_obj)
-        for line in output_obj.output_lines:
-            print(line)
+
+            cmd = ['/usr/bin/sudo', '-n', 
+                   apb_path, create_sudoers_rules,
+                   '-e', f'gs_user={script_name}',
+                   '-e', f'script_paths={user_script_paths}',
+                   '-e', f'sudo_rule_name={sudo_rule_name}',
+                   '-e', f'web_lgsm_user={USER}' ]
+
+            shell_exec(cmd, output_obj)
+            # TODO: Turn into debug mode printing.
+            #for line in output_obj.output_lines:
+            #    print(line)
 
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(install_name=install_name, \

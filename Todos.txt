@@ -1,8 +1,5 @@
 ## Beta Version 1.8.0 Todos
 
-* Cleanup new /add page sudoers rule add code.
-  - Just got it working so views.py code is a mess rn.
-
 * I don't think `shell_exec` needs path arg anymore. Remove it!
   - Now that auto install cmds are being run through a sudo new gs_user sub
     shell I don't think shell_exec need to know the path to run the cmd from
@@ -48,6 +45,22 @@
     - Maybe I'll do 1,2,3 or something to print more info at higher levels.
 
 * Fix tests broken by changes to auto-install / default new user install.
+
+* Add new flag to `web-lgsm.py` to allow external gs_user.
+  - This will prompt for a sudo password and the supplied gs_user value will be
+    edited into the list of allowed gs_users in the `validate_gs_user.yml`
+    playbook.
+  - People will only need to run it with this flag when they're trying to add
+    an existing game server that was installed as a system user which is
+    non-standard.
+    - By default the LGSM project themselves recommend users install server as
+      new users where the username matches the main gs script. Aka Minecraft
+      should be installed as the mcserver user, etc.
+    - If someone installed minecraft as username `todd` and the web-lgsm is
+      running as username `billybob`, that server can still be added and
+      managed by the web interface.
+    - Users in that predicament will just have to run the `web-lgsm.py` script
+      with the new arg first.
 
 * Write new tests for newly added features:
   - Need new tests for:

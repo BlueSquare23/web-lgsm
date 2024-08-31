@@ -36,7 +36,7 @@ class OutputContainer:
 # Shell executor subprocess.Popen wrapper generator function. Runs a command
 # through the shell and returns output in realtime by appending it to output
 # object, which is read by output api.
-def shell_exec(exec_dir, cmd, output):
+def shell_exec(cmd, output, gs_dir=None):
     # Clear any previous output.
     output.output_lines.clear()
 
@@ -47,7 +47,6 @@ def shell_exec(exec_dir, cmd, output):
     print(" ".join(cmd))
 
     proc = subprocess.Popen(cmd,
-            cwd=exec_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True
@@ -61,8 +60,8 @@ def shell_exec(exec_dir, cmd, output):
 
     # If run in auto-install mode, do cfg fix after install finishes.
     if ('auto-install' in cmd):
-        # TODO: Make this work for multi system user setup!
-        post_install_cfg_fix(exec_dir)
+        # TODO: Make sure this works for multi system user setup!
+        post_install_cfg_fix(gs_dir)
 
     # Reset process_lock flag.
     output.process_lock = False
@@ -425,18 +424,18 @@ def contains_bad_chars(i):
     return False
 
 
-# Validate if supplied input path is valid for supplied route. Multi use
-# function. For add page checks if path does not exist or is not a directory.
-#def valid_path(path, route):
-#    if route == 'add':
-#        cmd = ['/usr/bin/sudo', '/usr/bin/test', '-d', path]
-#        proc = subprocess.run(cmd,
-#                stdout = subprocess.PIPE,
-#                stderr = subprocess.PIPE,
-#                universal_newlines=True)
-#
-#        if proc.returncode != 0:
-#            return True
+# Returns a string comma separated game server script paths for a given user.
+def get_user_script_paths(install_path, script_name):
+    paths_query_result = GameServer.query.filter_by(username=script_name).with_entities(GameServer.install_path).all()
+    game_server_paths = [path[0] for path in paths_query_result]
+    user_script_paths = os.path.join(install_path, script_name)
+
+    # Add any other game server paths for gs_user.
+    for path in game_server_paths:
+        user_script_paths += f",{path}"
+
+    return user_script_paths
+
 
 # Run's self update script.
 def update_self():

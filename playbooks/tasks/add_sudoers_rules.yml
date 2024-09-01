@@ -10,7 +10,6 @@
       - /usr/bin/watch
       - /usr/bin/tmux
       - /usr/bin/kill
-      - /usr/bin/sudo
     state: present
   when:
     - same_user is not defined or same_user == false

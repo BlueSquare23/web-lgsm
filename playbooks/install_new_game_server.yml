@@ -29,8 +29,6 @@
         - tasks/add_weblgsm_to_gs_group.yml
         - tasks/add_sudoers_rules.yml
         - tasks/fix_sudoers_rule.yml
-        - tasks/add_temp_nopass_rule.yml
-        - tasks/fix_temp_nopass_rule.yml
 
     - name: Create new game server directory
       file:

@@ -19,6 +19,10 @@ PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
 PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
 PREV_TIME = time.time()
 
+# Misc Globals.
+CWD = os.getcwd()
+USER = getpass.getuser()
+
 # Holds the output from a running daemon thread.
 class OutputContainer:
     def __init__(self, output_lines, process_lock):
@@ -59,9 +63,9 @@ def shell_exec(cmd, output, gs_dir=None):
         output.output_lines.append(stderr_line)
 
     # If run in auto-install mode, do cfg fix after install finishes.
-    if ('auto-install' in cmd):
-        # TODO: Make sure this works for multi system user setup!
-        post_install_cfg_fix(gs_dir)
+    # TODO: Move into ansible connector post install.
+#    if auto_install:
+#        post_install_cfg_fix(gs_dir)
 
     # Reset process_lock flag.
     output.process_lock = False
@@ -182,6 +186,7 @@ def purge_user_tmux_sockets():
 
 
 # After installation fixes lgsm cfg files.
+# TODO: Move into ansible connector script as post install step.
 def post_install_cfg_fix(gs_dir):
     # Find the default and common configs.
     default_cfg = next(os.path.join(root, name) \
@@ -246,17 +251,24 @@ def del_server(server, remove_files, output):
             shutil.rmtree(install_path)
     else:
         sudo_rule_name = f'{web_lgsm_user}-{username}'
-        here = os.getcwd()
-        apb_path = os.path.join(here, 'venv/bin/ansible-playbook')
-        del_usr_path = os.path.join(here, 'playbooks/delete_user.yml')
-        cmd = [ '/usr/bin/sudo', '-n', apb_path, del_usr_path,
-                '-e', f'sudo_rule_name={sudo_rule_name}',
-                '-e', f'gs_user={username}' ]
+        # Set Ansible playbook vars.
+        ansible_vars = dict()
+        ansible_vars['action'] = 'delete'
+        ansible_vars['gs_user'] = username
+        ansible_vars['sudo_rule_name'] = sudo_rule_name
+        write_ansible_vars_json(ansible_vars)
 
+        cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
         shell_exec(cmd, output)
 
     flash(f'Game server, {server_name} deleted!')
     return
+
+def write_ansible_vars_json(ansible_vars):
+    ansible_vars_json_file = os.path.join(CWD, 'json/ansible_vars.json')
+    # Write json to file.
+    with open(ansible_vars_json_file, 'w') as json_file:
+        json.dump(ansible_vars, json_file, indent=4)
 
 
 # Validates submitted cfg_file for edit route.

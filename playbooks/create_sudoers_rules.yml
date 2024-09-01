@@ -17,10 +17,6 @@
     - vars/accepted_gs_users.yml
 
   tasks:
-    - name: Print vars
-      debug:
-        msg: "{{ setup }}"
-
     - name: Include sub tasks
       include_tasks: "{{ item }}"
       loop:

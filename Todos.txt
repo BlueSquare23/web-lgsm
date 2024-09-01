@@ -3,17 +3,15 @@
 ### v1.8.0 Pt 1.
 
 * Finish building out connector script and integrating changes into the app.
-  - Remove old parts of the auto install process that have now been deprecated
-    by new connector.
-    - Specifically, I don't think the additional sudoers rules hacks are
-      necessary anymore. So those task files can probably be cleaned up and
-      those lines removed from the install playbook.
-  - Fix post install stuff in shell_exec function.
-    - The cmd changed so shell_exec post cfg fix is gonna be broken now.
-  - Add logic for delete playbook.
-    - Both add logic to connector script & fix logic in app.
-  - Add logic for create_new_rule playbook.
-    - Both add logic to connector script & fix logic in app.
+  - Move post install cfg fixes out of shell_exec function / utils.py script
+    and into the new ansible connector script.
+    - For gs installed as new users, web-lgsm user lacks perms to create new
+      cfg files.
+  - Also add playbook json cleanup after connector script run.
+    - The connector script should delete it's input json after its done doing
+      the needful or in the event it fails.
+    - The last thing we need is for old delete json vars hanging around when
+      someone is trying to add a game server.
   - Validation should be built into this script.
     - Going to have to do a lot of boiling down and pass in only what is
       absolutely necessary.
@@ -34,6 +32,14 @@
   - That's probably too open and could be locked down more.
     - At least the tmux cmd probably could be, will have to think more about
       the others...
+
+* Figure on what's going on where output objects for deleted game servers don't
+  get cleaned up correctly.
+  - Its happened to me a couple of times now where I've got to delete a server
+    then re-install it and the output route in mem is still the old installs
+    one so the install doesn't stream out like its supposed to.
+  - Minor bug but just something silly is going on.
+  - Might be related to leave game server files on delete option...
 
 * Add additional debug mode & verbose level for info printing.
   - In other words if the app is started in --debug mode, enable some

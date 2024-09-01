@@ -351,8 +351,6 @@ def install():
         ansible_vars['action'] = 'install'
         ansible_vars['gs_user'] = USER
         ansible_vars['install_path'] = os.path.join(CWD, server_full_name)
-        # TODO: Might not need to pass this lgsmsh_path var...
-        ansible_vars['lgsmsh_path'] = os.path.join(CWD, f'scripts/{lgsmsh}')
         ansible_vars['server_script_name'] = server_script_name
         ansible_vars['script_paths'] = ''
         ansible_vars['sudo_rule_name'] = f'{USER}-{USER}'
@@ -376,10 +374,7 @@ def install():
                                                             category='error')
             return redirect(url_for('views.install'))
 
-        ansible_vars_json_file = os.path.join(CWD, 'json/ansible_vars.json')
-        # Write json to file.
-        with open(ansible_vars_json_file, 'w') as json_file:
-            json.dump(ansible_vars, json_file, indent=4)
+        write_ansible_vars_json(ansible_vars)
 
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
@@ -677,27 +672,21 @@ def add():
         # by the validate_gs_user.yml playbook (aka not a mcserver type name)
         # then it'll fail.
         if USER != username:
-            output_obj = OutputContainer([''], False)
-            apb_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
-            create_sudoers_rules = os.path.join(CWD, 'playbooks/create_sudoers_rules.yml')
-
             # Get a list of all game servers installed for this system user.
             user_script_paths = get_user_script_paths(install_path, script_name)
 
-            sudo_rule_name = f'{USER}-{script_name}'
+            # Set Ansible playbook vars.
+            ansible_vars = dict()
+            ansible_vars['action'] = 'create'
+            ansible_vars['gs_user'] = username
+            ansible_vars['script_paths'] = user_script_paths
+            ansible_vars['sudo_rule_name'] = f'{USER}-{script_name}'
+            ansible_vars['web_lgsm_user'] = USER
+            write_ansible_vars_json(ansible_vars)
 
-
-            cmd = ['/usr/bin/sudo', '-n', 
-                   apb_path, create_sudoers_rules,
-                   '-e', f'gs_user={script_name}',
-                   '-e', f'script_paths={user_script_paths}',
-                   '-e', f'sudo_rule_name={sudo_rule_name}',
-                   '-e', f'web_lgsm_user={USER}' ]
-
+            output_obj = OutputContainer([''], False)
+            cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
             shell_exec(cmd, output_obj)
-            # TODO: Turn into debug mode printing.
-            #for line in output_obj.output_lines:
-            #    print(line)
 
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(install_name=install_name, \

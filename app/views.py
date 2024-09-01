@@ -346,101 +346,49 @@ def install():
             flash('An installation by that name already exits.', category='error')
             return redirect(url_for('views.install'))
 
-        # Set defaults to local install values.
-        gs_system_user = USER
-        install_path = os.path.join(CWD, server_full_name)
-        lgsmsh_path = os.path.join(CWD, f'scripts/{lgsmsh}')
-        user_script_paths = ''
-        sudo_rule_name = f'{USER}-{gs_system_user}'
+        # Set Ansible playbook vars.
+        ansible_vars = dict()
+        ansible_vars['action'] = 'install'
+        ansible_vars['gs_user'] = USER
+        ansible_vars['install_path'] = os.path.join(CWD, server_full_name)
+        # TODO: Might not need to pass this lgsmsh_path var...
+        ansible_vars['lgsmsh_path'] = os.path.join(CWD, f'scripts/{lgsmsh}')
+        ansible_vars['server_script_name'] = server_script_name
+        ansible_vars['script_paths'] = ''
+        ansible_vars['sudo_rule_name'] = f'{USER}-{USER}'
+        ansible_vars['web_lgsm_user'] = USER
+
+        if not create_new_user:
+            ansible_vars['same_user'] = 'true'
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
         if create_new_user:
-            # Create the new game server user.
-            gs_system_user = server_script_name 
-            install_path = os.path.join(f'/home/{server_script_name}', server_full_name)
+            ansible_vars['gs_user'] = server_script_name
+            ansible_vars['install_path'] = os.path.join(f'/home/{server_script_name}', server_full_name)
+            ansible_vars['script_paths'] = get_user_script_paths(ansible_vars['install_path'], server_script_name)
+            ansible_vars['sudo_rule_name'] =  f"{USER}-{ansible_vars['gs_user']}"
 
-            # Get a list of all game servers installed for this system user.
-            user_script_paths = get_user_script_paths(install_path, server_script_name)
-
-            sudo_rule_name = f'{USER}-{gs_system_user}'
-
-        if os.path.exists(install_path):
+        if os.path.exists(ansible_vars['install_path']):
             flash('Install directory already exists.', category='error')
             flash('Did you perhaps have this server installed previously?', \
                                                             category='error')
             return redirect(url_for('views.install'))
 
+        ansible_vars_json_file = os.path.join(CWD, 'json/ansible_vars.json')
+        # Write json to file.
+        with open(ansible_vars_json_file, 'w') as json_file:
+            json.dump(ansible_vars, json_file, indent=4)
+
         # Add the install to the database.
         new_game_server = GameServer(install_name=server_full_name, \
-                install_path=install_path, script_name=server_script_name, \
-                username=gs_system_user)
+            install_path=ansible_vars['install_path'], script_name=server_script_name, \
+            username=ansible_vars['gs_user'])
         db.session.add(new_game_server)
         db.session.commit()
 
-        apb_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
-        install_new_gs = os.path.join(CWD, 'playbooks/install_new_game_server.yml')
-
-        pre_install_cmd = [ '/usr/bin/sudo', '-n', apb_path, install_new_gs,
-                '-e', f'gs_user={gs_system_user}',
-                '-e', f'install_path={install_path}',
-                '-e', f'lgsmsh_path={lgsmsh_path}',
-                '-e', f'server_script_name={server_script_name}',
-                '-e', f'script_paths={user_script_paths}',
-                '-e', f'sudo_rule_name={sudo_rule_name}',
-                '-e', f'web_lgsm_user={USER}' ]
-
-        # Set playbook flag to not run user / sudo setup steps.
-        if not create_new_user:
-            pre_install_cmd += ['-e', 'same_user=true']
-
-# Possibly make stuff like this part of debug.
-#        print(f"########## pre_install_cmd: {pre_install_cmd}")
-
-#        shell_exec(pre_install_cmd, output)
-
-#        # Not an ideal way to catch failures but it works for now.
-#        for line in output.output_lines:
-#            print(line)
-#            if 'failed=1' in line:
-#                flash('Pre-Install Playbook Failed!', category='error')
-#                return redirect(url_for('views.install'))
-
-#        time.sleep(1)
-#        os.system('/usr/bin/sudo -k')
-#        status = os.system(f'/usr/bin/sudo -n -u {server_script_name} {install_path}/{server_script_name} m')
-#        if status != 0:
-#            print("Failed to invalidate sudo cache.", file=sys.stderr)
-#            return redirect(url_for('views.install'))
-#        time.sleep(1)
-
-        # Get sudo tty ticket for new user.
-        sudo_cmd = ['/usr/bin/sudo', '-n']
-        inst_cmd = [f'{install_path}/{server_script_name}', 'auto-install']
-
-        subcmd = sudo_cmd + ['-u', gs_system_user]
-#        get_sudo_tty_cmd = subcmd + sudo_cmd + ['-v'] 
-#
-#        shell_exec(get_sudo_tty_cmd, output)
-#        for line in output.output_lines:
-#            print(line)
-
-        # Run auto install!
-        install_cmd = subcmd + inst_cmd
-        post_install_cmd = ['id']
-        print(f'################ pre install cmd: {pre_install_cmd}')
-        print(f'################ install cmd: {install_cmd}')
-        print(f'################ post install cmd: {post_install_cmd}')
-        cmd1_str = ','.join(pre_install_cmd)
-        cmd2_str = ','.join(install_cmd)
-        cmd3_str = ','.join(post_install_cmd)
-        print(f'################ pre install cmd str: {cmd1_str}')
-        print(f'################ install cmd str: {cmd2_str}')
-        print(f'################ post install cmd str: {cmd3_str}')
-        wrapper = '/home/blue/Projects/web-lgsm/test.py'
-        cmd = sudo_cmd + [wrapper, cmd1_str, cmd2_str, cmd3_str]
-        print(f'################ final cmd: {cmd}')
+        cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
         install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Install')
         install_daemon.start()
 

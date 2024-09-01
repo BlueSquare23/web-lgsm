@@ -59,8 +59,49 @@
           - So how tf do I make this work....????????????
 
 
+* /\/\/\ THE PLAN /\/\/\
+ - Build out a standalone ansible connector script to interface with the
+   playbooks.
+ - I have a test.py script that seems like it can do the needful.
+   - I'm going to turn this into a fully blown interface between the app and
+     the ansible playbooks.
+   - So the app wont run the playbooks directly anymore. Instead the apps will
+     run the connector script, which will run the playbooks.
+   - And it will be the connector script only that has a sudoers root
+     passwordless rule like the following:
+     `(root) NOPASSWD: /home/blue/Projects/web-lgsm/test.py`
+ - I think this new approach using a single connector script has a few
+   advantages.
+   - First and foremost it'll actually appears to work unlike the old new way.
+     - That is, running all of the sub steps (pre-install, install,
+       post-install) in a single external script actually allows the sudoers
+       rules that are applied in the pre-install step to be used during the
+       install step, which is the main hurdle previous approach had.
+     - But it also has other advantages..
+   - Secondly, only one script will now need to be put in the sudoers rules for
+     root nopass which at the very least does cut down on clutter.
+   - This new connector script will also be more modular, meaning down the road
+     it could be used to give the main `web-lgsm.py` script a way to connect
+     into the playbooks if I should decide I want to be able to control any
+     playbook functionality through the web-lgsm.py script.
 
-
+* How to actually build the new connector?
+  - Take the test.py script and build it out.
+  - Input should be a standard format.
+    - I'm thinking it takes info in as json.
+  - Validation should be built into this script.
+    - Going to have to do a lot of boiling down and pass in only what is
+      absolutely necessary.
+    - THE MAIN THING TO VALIDATE IS `gs_user`!!!
+      - WE CANNOT ALLOW GS_USER TO BE ANYTHING OTHER THAN A GAME SERVER
+        USERNAME!!!
+      - If someone has shell access and they're able to provide `root` or `ALL`
+        as the gs_user var then its all ogre, pwned!
+      - So very important to validate that one and make sure the connector
+        script is owned by root and not writable by the web-lgsm user. 
+    - We should validate as much as we possibly can of course still, but yes
+      gs_user in particular.
+---
 
 * Lock down other user sudoers rules more.
   - For example here's what I have as the current sudoers rule.

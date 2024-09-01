@@ -398,14 +398,14 @@ def install():
 # Possibly make stuff like this part of debug.
 #        print(f"########## pre_install_cmd: {pre_install_cmd}")
 
-        shell_exec(pre_install_cmd, output)
+#        shell_exec(pre_install_cmd, output)
 
-        # Not an ideal way to catch failures but it works for now.
-        for line in output.output_lines:
-            print(line)
-            if 'failed=1' in line:
-                flash('Pre-Install Playbook Failed!', category='error')
-                return redirect(url_for('views.install'))
+#        # Not an ideal way to catch failures but it works for now.
+#        for line in output.output_lines:
+#            print(line)
+#            if 'failed=1' in line:
+#                flash('Pre-Install Playbook Failed!', category='error')
+#                return redirect(url_for('views.install'))
 
 #        time.sleep(1)
 #        os.system('/usr/bin/sudo -k')
@@ -417,7 +417,7 @@ def install():
 
         # Get sudo tty ticket for new user.
         sudo_cmd = ['/usr/bin/sudo', '-n']
-        inst_cmd = [f'{install_path}/{server_script_name} auto-install']
+        inst_cmd = [f'{install_path}/{server_script_name}', 'auto-install']
 
         subcmd = sudo_cmd + ['-u', gs_system_user]
 #        get_sudo_tty_cmd = subcmd + sudo_cmd + ['-v'] 
@@ -428,7 +428,20 @@ def install():
 
         # Run auto install!
         install_cmd = subcmd + inst_cmd
-        install_daemon = Thread(target=shell_exec, args=(install_cmd, output, CWD), daemon=True, name='Install')
+        post_install_cmd = ['id']
+        print(f'################ pre install cmd: {pre_install_cmd}')
+        print(f'################ install cmd: {install_cmd}')
+        print(f'################ post install cmd: {post_install_cmd}')
+        cmd1_str = ','.join(pre_install_cmd)
+        cmd2_str = ','.join(install_cmd)
+        cmd3_str = ','.join(post_install_cmd)
+        print(f'################ pre install cmd str: {cmd1_str}')
+        print(f'################ install cmd str: {cmd2_str}')
+        print(f'################ post install cmd str: {cmd3_str}')
+        wrapper = '/home/blue/Projects/web-lgsm/test.py'
+        cmd = sudo_cmd + [wrapper, cmd1_str, cmd2_str, cmd3_str]
+        print(f'################ final cmd: {cmd}')
+        install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Install')
         install_daemon.start()
 
     return render_template("install.html", user=current_user, \

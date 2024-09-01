@@ -13,3 +13,4 @@ Mockcraft
 node_modules
 package-lock.json
 package.json
+ansible_vars.json

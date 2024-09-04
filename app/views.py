@@ -6,6 +6,7 @@ import time
 import shutil
 import getpass
 import configparser
+from pprint import pprint
 from . import db
 from .utils import *
 from .models import *
@@ -13,7 +14,7 @@ from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
-                                redirect, Response, send_from_directory, jsonify
+                                redirect, Response, send_from_directory, jsonify, g
 
 # Globals dictionaries to hold output objects.
 GAME_SERVERS = {}
@@ -25,6 +26,7 @@ last_request_for_output = int(time.time())
 # Misc Globals.
 CWD = os.getcwd()
 USER = getpass.getuser()
+DEBUG = False
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -44,6 +46,12 @@ def home():
     graphs_secondary = config['aesthetic']['graphs_secondary']
     show_stats = config['aesthetic'].getboolean('show_stats')
     show_barrel_roll = config['aesthetic'].getboolean('show_barrel_roll')
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     config_options = {
         "text_color": text_color,
@@ -71,6 +79,12 @@ def home():
     server_status_dict = get_server_statuses(installed_servers)
 
     INSTALL_SERVERS = {}
+
+    if DEBUG and verbosity >= 1:
+        print(f"##### DEBUG config_options {config_options}")
+        print(f"##### DEBUG installed_servers {installed_servers}")
+        print(f"##### DEBUG servers_to_users {servers_to_users}")
+        print(f"##### DEBUG server_status_dict {server_status_dict}")
 
     return render_template("home.html", user=current_user, \
                         servers_to_users=servers_to_users, \
@@ -111,6 +125,12 @@ def controls():
     terminal_height = config['aesthetic']['terminal_height']
     cfg_editor = config['settings']['cfg_editor']
     send_cmd = config['settings']['send_cmd']
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -265,6 +285,15 @@ def controls():
     # Default to no refresh.
     refresh = False
 
+    if DEBUG and verbosity >= 1:
+        print(f"##### DEBUG server_name {server_name}")
+        print("##### DEBUG commands_list ")
+        pprint(commands_list)
+        print(f"##### DEBUG text_color {text_color}")
+        print(f"##### DEBUG terminal_height {terminal_height}")
+        print(f"##### DEBUG bs_colors {bs_colors}")
+        print(f"##### DEBUG cfg_paths {cfg_paths}")
+        
     return render_template("controls.html", user=current_user, \
         server_name=server_name, server_commands=commands_list, \
         text_color=text_color, terminal_height=terminal_height, \
@@ -282,6 +311,12 @@ def install():
     text_color = config['aesthetic']['text_color']
     terminal_height = config['aesthetic']['terminal_height']
     create_new_user = config['settings'].getboolean('install_create_new_user')
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
@@ -382,6 +417,12 @@ def install():
         db.session.commit()
 
         cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+
+        if DEBUG and verbosity >= 1:
+            print("##### DEBUG ansible_vars ")
+            pprint(ansible_vars)
+            print(f"##### DEBUG cmd {cmd}")
+
         install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Install')
         install_daemon.start()
 
@@ -452,6 +493,12 @@ def settings():
     graphs_secondary = config['aesthetic']['graphs_secondary']
     show_stats = config['aesthetic'].getboolean('show_stats')
     install_create_new_user = config['settings'].getboolean('install_create_new_user')
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     config_options = {
         "text_color": text_color,
@@ -463,6 +510,10 @@ def settings():
         "install_create_new_user": install_create_new_user
     }
 
+    if DEBUG and verbosity >= 1:
+        print(f"##### DEBUG config_options")
+        pprint(config_options)
+
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
             system_user=USER, config_options=config_options)
@@ -470,16 +521,11 @@ def settings():
     text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
     height_pref = request.form.get("terminal_height")
-    purge_socks = request.form.get("purge_socks")
     update_weblgsm = request.form.get("update_weblgsm")
     graphs_primary_pref = request.form.get("graphs_primary")
     graphs_secondary_pref = request.form.get("graphs_secondary")
     show_stats_pref = request.form.get("show_stats")
     install_new_user_pref = request.form.get("install_new_user")
-
-    # Purge user's tmux socket files.
-    if purge_socks:
-        purge_user_tmux_sockets()
 
     # Set Remove files setting.
     config['settings']['remove_files'] = 'yes'
@@ -559,6 +605,16 @@ def settings():
                                     daemon=True, name='restart')
         restart_daemon.start()
         return redirect(url_for('views.settings'))
+
+    if DEBUG and verbosity >= 1:
+        print(f"##### DEBUG text_color_pref: {text_color_pref}")
+        print(f"##### DEBUG file_pref: {file_pref}")
+        print(f"##### DEBUG height_pref: {height_pref}")
+        print(f"##### DEBUG update_weblgsm: {update_weblgsm}")
+        print(f"##### DEBUG graphs_primary_pref: {graphs_primary_pref}")
+        print(f"##### DEBUG graphs_secondary_pref: {graphs_secondary_pref}")
+        print(f"##### DEBUG show_stats_pref: {show_stats_pref}")
+        print(f"##### DEBUG install_new_user_pref: {install_new_user_pref}")
 
     flash("Settings Updated!")
     return redirect(url_for('views.settings'))
@@ -681,6 +737,11 @@ def add():
             ansible_vars['web_lgsm_user'] = USER
             write_ansible_vars_json(ansible_vars)
 
+            if DEBUG and verbosity >= 1:
+                print("##### DEBUG ansible_vars ")
+                pprint(ansible_vars)
+
+            # TODO: Add debug options to print this hidden output.
             output_obj = OutputContainer([''], False)
             cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
             shell_exec(cmd, output_obj)
@@ -691,6 +752,12 @@ def add():
                     username=username)
         db.session.add(new_game_server)
         db.session.commit()
+
+        if DEBUG and verbosity >= 1:
+            print(f"##### DEBUG install_name: {install_name}")
+            print(f"##### DEBUG install_path: {install_path}")
+            print(f"##### DEBUG script_name: {script_name}")
+            print(f"##### DEBUG username: {username}")
 
         flash('Game server added!')
         return redirect(url_for('views.home'))
@@ -703,15 +770,30 @@ def add():
 @views.route("/delete", methods=['GET', 'POST'])
 @login_required
 def delete():
+    # TODO: Should eventually make this whole function work via IDs instead of
+    # server names. Will get there eventually.
     # Import config data.
     config = configparser.ConfigParser()
     config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
         server = GameServer.query.filter_by(install_name=server_name).first()
+
+        if DEBUG and verbosity >= 1:
+            print(f"##### DEBUG server_name: {server_name}")
+            print(f"##### DEBUG server:")
+            pprint(server)
+
         if server:
+            # TODO: Add debug level 2 hidden output printing here.
             if server.install_name in INSTALL_SERVERS:
                 del INSTALL_SERVERS[server.install_name]
             output_obj = OutputContainer([''], False)
@@ -746,6 +828,12 @@ def edit():
     config.read('main.conf')
     text_color = config['aesthetic']['text_color']
     terminal_height = config['aesthetic']['terminal_height']
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    if env_debug == 'true' or debug:
+        DEBUG = True
 
     if config['settings']['cfg_editor'] == 'no':
         flash("Config Editor Disabled", category="error")

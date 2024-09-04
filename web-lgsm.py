@@ -87,11 +87,12 @@ CONFIG.read(os.path.join(SCRIPTPATH, 'main.conf'))
 try:
     HOST = CONFIG['server']['host']
     PORT = CONFIG['server']['port']
+    DEBUG = CONFIG['debug']['debug']
 except KeyError as e:
     print(f" [!] Configuration setting {e} not set.")
-    # You can also set default values if needed
     HOST = '127.0.0.1'
     PORT = '12357'
+    DEBUG = False
 
 os.environ['COLUMNS'] = '80'
 os.environ['LINES'] = '50'
@@ -172,6 +173,7 @@ def start_server():
 
 def start_debug():
     """Starts the app in debug mode"""
+    os.environ["DEBUG"] = "true"
     from app import main
     # For clean ctrl + c handling.
     signal.signal(signal.SIGINT, signalint_handler)
@@ -547,7 +549,7 @@ def main(argv):
         elif opt in ("-q", "--stop"):
             stop_server()
             return
-        elif opt in ("-d", "--debug"):
+        elif opt in ("-d", "--debug") or DEBUG:
             start_debug()
             return
         elif opt in ("-u", "--update", "-c", "--check", "-a", "--auto"):

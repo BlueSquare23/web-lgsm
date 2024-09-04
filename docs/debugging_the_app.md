@@ -39,6 +39,19 @@ Please note, the command above will install the python packages as your system
 user (aka in ~/.local/bin/). Whereas, by default the web-lgsm will try to
 install the python packages within a virtual environment (venv).
 
+## Debug Options
+
+In the `main.conf` file there's a section for `[debug]` that holds some
+debugging options. The `debug` option will control whether or not the app is
+run in debug mode, similar to the web-lgsm.py optional --debug arg.
+
+The `verbosity` option controls what information the app will output to the
+debug console. Here are the basic levels:
+
+1: Variable dumps
+2: Hidden output dumps
+3: All possible debug info
+
 ## Trouble Starting the Web LGSM
 
 If you're having trouble starting the app with the `web-lgsm.py` script or having

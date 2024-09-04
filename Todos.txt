@@ -2,13 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-* Add additional debug mode & verbose level for info printing.
-  - In other words if the app is started in --debug mode, enable some
-    additional info printing.
-  - Also want to add a verbosity selector.
-    - This will likely take the form of a main.conf param.
-    - Maybe I'll do 1,2,3 or something to print more info at higher levels.
-
 * Create new "Cancel Install" red button on install page that appears when
   installation is running.
   - Hook this button up to some backend logic to snip the running install
@@ -16,20 +9,6 @@
   - Test this.
 
 * Fix tests broken by changes to auto-install / default new user install.
-
-* Remove tmux socket file purge option.
-  - This was nice and hand for me as a developer while trying to figure out the
-    socket file stuff.
-  - However, I suspect it was of limited or of no use to most people
-    downloading and installing the app.
-    - Maybe if their tmux got messed up because of uninstalling / reinstalling
-      a bunch before my code had all the bugs worked out, then they probably
-      could've used it.
-    - But the status indicator and live console logic that is based of finding
-      the socket files has been figured out ever since I discovered where the
-      base lgsm keeps the id files. 
-    - Aka the issue this button was created for as been resolved and its now
-      vestigial.
 
 * Add new flag to `web-lgsm.py` to allow external gs_user.
   - This will prompt for a sudo password and the supplied gs_user value will be

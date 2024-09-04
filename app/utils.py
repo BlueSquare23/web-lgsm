@@ -165,19 +165,8 @@ def get_server_statuses(all_game_servers):
 def get_socket_for_gs(server):
     id_file_path = os.path.join(server.install_path, f'lgsm/data/{server.script_name}.uid')
     gs_id = get_gs_id(id_file_path).strip()
-    socket = server.script_name + '-' + gs_id
-    return socket
-
-
-# Cleans up old dead tmux socket files.
-def purge_user_tmux_sockets():
-    uid = os.getuid()
-    socket_dir = f"/tmp/tmux-{uid}"
-    # Handle no sockets yet.
-    if os.path.exists(socket_dir):
-        user_tmux_sockets = os.listdir(socket_dir)
-        for socket in user_tmux_sockets:
-            os.remove(os.path.join(socket_dir, socket))
+    socket_file_path = server.script_name + '-' + gs_id
+    return socket_file_path
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the
@@ -502,4 +491,17 @@ def get_server_stats():
     return stats
 
 
+def get_verbosity(verbostiy):
+    """Tries to cast config verbosity to int. Also checks if below three."""
+    try:
+        v = int(verbostiy)
+    except ValueError as verr:
+        v = 1
+    except Exception as ex:
+        v = 1
 
+    # Only allow levels 1-3.
+    if v > 3:
+        v = 1 
+
+    return v

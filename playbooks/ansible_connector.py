@@ -111,6 +111,8 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
 
         proc.wait()
         exit_status = proc.returncode
+        # Debugging...
+        print(f"######### EXIT STATUS: {exit_status}")
 
         if exit_status != 0:
             print("\033[91mInstall command failed!\033[0m")

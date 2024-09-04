@@ -7,7 +7,7 @@
     nopassword: true
     commands:
       - "{{ script_paths }}"
-      - /usr/bin/watch -te * /usr/bin/tmux -L *
+      - /usr/bin/watch -te *
       - /usr/bin/tmux -L *
       - /usr/bin/kill -9 *
     state: present

@@ -62,11 +62,6 @@ def shell_exec(cmd, output, gs_dir=None):
     for stderr_line in iter(proc.stderr.readline, ""):
         output.output_lines.append(stderr_line)
 
-    # If run in auto-install mode, do cfg fix after install finishes.
-    # TODO: Move into ansible connector post install.
-#    if auto_install:
-#        post_install_cfg_fix(gs_dir)
-
     # Reset process_lock flag.
     output.process_lock = False
 
@@ -168,7 +163,7 @@ def get_server_statuses(all_game_servers):
 
 # Get's socket file name for a given game server name.
 def get_socket_for_gs(server):
-    id_file_path = server.install_path + f'/lgsm/data/{server.script_name}.uid'
+    id_file_path = os.path.join(server.install_path, f'lgsm/data/{server.script_name}.uid')
     gs_id = get_gs_id(id_file_path).strip()
     socket = server.script_name + '-' + gs_id
     return socket
@@ -183,26 +178,6 @@ def purge_user_tmux_sockets():
         user_tmux_sockets = os.listdir(socket_dir)
         for socket in user_tmux_sockets:
             os.remove(os.path.join(socket_dir, socket))
-
-
-# After installation fixes lgsm cfg files.
-# TODO: Move into ansible connector script as post install step.
-def post_install_cfg_fix(gs_dir):
-    # Find the default and common configs.
-    default_cfg = next(os.path.join(root, name) \
-        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
-            for name in files if name == "_default.cfg")
-    common_cfg = next(os.path.join(root, name) \
-        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
-            for name in files if name == "common.cfg")
-
-    # Strip the first 9 lines of warning comments from _default.cfg and write
-    # the rest to the common.cfg.
-    with open(default_cfg, 'r') as default_file, open(common_cfg, 'w') as common_file:
-        for _ in range(9):
-            next(default_file)  # Skip the first 9 lines
-        for line in default_file:
-            common_file.write(line)
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the

@@ -353,7 +353,6 @@ def install():
         ansible_vars['install_path'] = os.path.join(CWD, server_full_name)
         ansible_vars['server_script_name'] = server_script_name
         ansible_vars['script_paths'] = ''
-        ansible_vars['sudo_rule_name'] = f'{USER}-{USER}'
         ansible_vars['web_lgsm_user'] = USER
 
         if not create_new_user:
@@ -366,7 +365,6 @@ def install():
             ansible_vars['gs_user'] = server_script_name
             ansible_vars['install_path'] = os.path.join(f'/home/{server_script_name}', server_full_name)
             ansible_vars['script_paths'] = get_user_script_paths(ansible_vars['install_path'], server_script_name)
-            ansible_vars['sudo_rule_name'] =  f"{USER}-{ansible_vars['gs_user']}"
 
         if os.path.exists(ansible_vars['install_path']):
             flash('Install directory already exists.', category='error')
@@ -680,7 +678,6 @@ def add():
             ansible_vars['action'] = 'create'
             ansible_vars['gs_user'] = username
             ansible_vars['script_paths'] = user_script_paths
-            ansible_vars['sudo_rule_name'] = f'{USER}-{script_name}'
             ansible_vars['web_lgsm_user'] = USER
             write_ansible_vars_json(ansible_vars)
 

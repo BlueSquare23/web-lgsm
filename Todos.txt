@@ -2,36 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-* Finish building out connector script and integrating changes into the app.
-  - Move post install cfg fixes out of shell_exec function / utils.py script
-    and into the new ansible connector script.
-    - For gs installed as new users, web-lgsm user lacks perms to create new
-      cfg files.
-  - Also add playbook json cleanup after connector script run.
-    - The connector script should delete it's input json after its done doing
-      the needful or in the event it fails.
-    - The last thing we need is for old delete json vars hanging around when
-      someone is trying to add a game server.
-  - Validation should be built into this script.
-    - Going to have to do a lot of boiling down and pass in only what is
-      absolutely necessary.
-    - THE MAIN THING TO VALIDATE IS `gs_user`!!!
-      - WE CANNOT ALLOW GS_USER TO BE ANYTHING OTHER THAN A GAME SERVER
-        USERNAME!!!
-      - If someone has shell access and they're able to provide `root` or `ALL`
-        as the gs_user var then its all ogre, pwned!
-      - So very important to validate that one and make sure the connector
-        script is owned by root and not writable by the web-lgsm user. 
-    - We should validate as much as we possibly can of course still, but yes
-      gs_user in particular.
----
-
-* Lock down other user sudoers rules more.
-  - For example here's what I have as the current sudoers rule.
-  - `(mcserver) NOPASSWD: /home/mcserver/Minecraft/mcserver, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill`
-  - That's probably too open and could be locked down more.
-    - At least the tmux cmd probably could be, will have to think more about
-      the others...
 
 * Figure on what's going on where output objects for deleted game servers don't
   get cleaned up correctly.
@@ -47,6 +17,12 @@
   - Also want to add a verbosity selector.
     - This will likely take the form of a main.conf param.
     - Maybe I'll do 1,2,3 or something to print more info at higher levels.
+
+* Create new "Cancel Install" red button on install page that appears when
+  installation is running.
+  - Hook this button up to some backend logic to snip the running install
+    thread.
+  - Test this.
 
 * Fix tests broken by changes to auto-install / default new user install.
 
@@ -191,6 +167,8 @@
   - Not fixing or changing anything just yet. Just want to review what I have
     and where its weak to better get an idea of how to fix it later.
 
+* Update Readme gifs with newest look of interface.
+
 ## Backlog
 
 * Possible rework things so that game server name in database is not unique,
@@ -231,6 +209,14 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
   - That is switch the connector script to pull json for runs from an
     authenticated api route.
   - The auth for this route is something I don't want to figure out right now.
+
+* Make install page fancier, add new features.
+  - I'm thinking currently running install list at the top so if someone clicks
+    away they can click back then click on the currently installing one to view
+    the progress again.
+  - Then people can manage and view multiple installs concurrently.
+  - Also make it so other install buttons disappear when viewing running
+    installs.
 
 ## Disclaimer
 

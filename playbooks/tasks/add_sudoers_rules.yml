@@ -7,9 +7,9 @@
     nopassword: true
     commands:
       - "{{ script_paths }}"
-      - /usr/bin/watch
-      - /usr/bin/tmux
-      - /usr/bin/kill
+      - /usr/bin/watch -te * /usr/bin/tmux -L *
+      - /usr/bin/tmux -L *
+      - /usr/bin/kill -9 *
     state: present
   when:
     - same_user is not defined or same_user == false

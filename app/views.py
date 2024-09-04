@@ -712,10 +712,10 @@ def delete():
         """Wraps up delete logic used below"""
         server = GameServer.query.filter_by(install_name=server_name).first()
         if server:
-            output_obj = OutputContainer([''], False)
-            del_server(server, remove_files, output_obj)
             if server.install_name in INSTALL_SERVERS:
                 del INSTALL_SERVERS[server.install_name]
+            output_obj = OutputContainer([''], False)
+            del_server(server, remove_files, output_obj)
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.

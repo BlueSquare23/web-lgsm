@@ -2,15 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-
-* Figure on what's going on where output objects for deleted game servers don't
-  get cleaned up correctly.
-  - Its happened to me a couple of times now where I've got to delete a server
-    then re-install it and the output route in mem is still the old installs
-    one so the install doesn't stream out like its supposed to.
-  - Minor bug but just something silly is going on.
-  - Might be related to leave game server files on delete option...
-
 * Add additional debug mode & verbose level for info printing.
   - In other words if the app is started in --debug mode, enable some
     additional info printing.

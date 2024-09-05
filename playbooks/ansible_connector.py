@@ -66,6 +66,10 @@ def main(argv):
         run_create_sudoers_rules(playbook_vars_data)
         cleanup()
 
+    if playbook_vars_data.get('action') == 'cancel':
+        cancel_install(playbook_vars_data)
+        cleanup()
+
     print(' [!] No action taken! Are you sure you supplied valid json?')
 
 # Cleans up json & exits.
@@ -279,6 +283,14 @@ def post_install_cfg_fix(gs_dir, gs_user):
             common_file.write(line)
 
     print("Configuration file common.cgf updated!")
+
+def cancel_install(vars_data):
+    required_vars = ['pid']
+    check_required_vars_are_set(vars_data, required_vars)
+    pid = vars_data.get('pid')
+
+    cmd = ['pkill', '-P', f'{pid}']
+    run_cmd(cmd)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

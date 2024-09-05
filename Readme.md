@@ -184,6 +184,7 @@ For more information see: `docs/suggested_deployment.md`.
 * CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
 * Testing: [Pytest](https://docs.pytest.org/)
+* Automation: [Ansible](https://www.ansible.com/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
@@ -199,10 +200,10 @@ contributing to the project feel free to submit a pull request!
 
 ## :closed_lock_with_key: Security & Liability
 
-I claim no liability for any injury or damages that may result from the use or
-abuse of this piece of software. Use at your own risk! I have tried to take
-security precautions when building this app in order to prevent it from being
-horribly abused.
+This project is MIT licensed meaning I claim no liability for any damages that
+may result from the use or abuse of this piece of software. Use at your own
+risk! I have tried to take security precautions when building this app in order
+to prevent it from being horribly abused.
 
 However, please note I am an amateur programmer and this app is fundamentally
 sorta suss. It is a web portal for wrapping shell commands. Everything should

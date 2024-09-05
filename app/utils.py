@@ -10,6 +10,8 @@ import shutil
 import getpass
 import requests
 import subprocess
+import threading
+from threading import Thread
 from . import db
 from .models import GameServer
 from flask import flash
@@ -25,12 +27,13 @@ USER = getpass.getuser()
 
 # Holds the output from a running daemon thread.
 class OutputContainer:
-    def __init__(self, output_lines, process_lock):
-        # Lines of output delievered by running daemon threat.
+    def __init__(self, output_lines, process_lock, pid=False):
+        # Lines of output delivered by running daemon threat.
         self.output_lines = output_lines
         # Boolean to act as a lock and tell if process is already running and
         # output is being appended.
         self.process_lock = process_lock
+        self.pid = pid
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__,
@@ -55,6 +58,8 @@ def shell_exec(cmd, output, gs_dir=None):
             stderr=subprocess.PIPE,
             universal_newlines=True
     )
+
+    output.pid = proc.pid
 
     for stdout_line in iter(proc.stdout.readline, ""):
         output.output_lines.append(stdout_line)
@@ -99,6 +104,45 @@ def kill_watchers(last_request_for_output):
         if proc.returncode != 0:
 #            print("Cant kill proc")
             pass
+
+
+def cancel_install(output):
+    """Calls the ansible playbook connector to kill running installs"""
+    pid = output.pid
+
+    # Set Ansible playbook vars.
+    ansible_vars = dict()
+    ansible_vars['action'] = 'cancel'
+    ansible_vars['pid'] = pid
+    write_ansible_vars_json(ansible_vars)
+
+    cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+    shell_exec(cmd, output)
+
+#    try:
+#        # Get the process object for the given PID.
+#        parent = psutil.Process(pid)
+#    except psutil.NoSuchProcess:
+#        return
+#
+#    # Recursively kill children processes.
+#    for child in parent.children(recursive=True):
+#        try:
+#            child.terminate()
+#            child.wait(timeout=3)
+#        except psutil.NoSuchProcess:
+#            pass
+#        except psutil.TimeoutExpired:
+#            child.kill()
+#
+#    # Kill the parent process itself.
+#    try:
+#        parent.terminate()
+#        parent.wait(timeout=3)
+#    except psutil.NoSuchProcess:
+#        pass
+#    except psutil.TimeoutExpired:
+#        parent.kill()
 
 
 # Translates a username to a uid using pwd module.
@@ -167,6 +211,17 @@ def get_socket_for_gs(server):
     gs_id = get_gs_id(id_file_path).strip()
     socket_file_path = server.script_name + '-' + gs_id
     return socket_file_path
+
+
+def get_running_installs():
+    threads = threading.enumerate()
+    # Get all active threads.
+    thread_names = []
+    for thread in threads:
+        if thread.is_alive() and thread.name.startswith("Install_"):
+            thread_names.append(thread.name)
+
+    return thread_names
 
 
 # Returns list of any game server cfg listed in accepted_cfgs.json under the
@@ -341,6 +396,15 @@ def valid_script_name(script_name):
     servers = get_servers()
     for server, server_name in servers.items():
         if server == script_name:
+            return True
+    return False
+
+
+# Validates server_name.
+def valid_server_name(server_name):
+    servers = get_servers()
+    for server, s_name in servers.items():
+        if s_name == server_name:
             return True
     return False
 

@@ -7,6 +7,21 @@
       <br />
 
       <div class="container">
+        {% if running_installs|length > 0 %}
+          <h2>Currently Running Installs</h2>
+          <ul>
+          {% for install in running_installs %}
+            {% set server_name = install | replace('Install_', '') %}
+            <div class="list-group-item list-group-item-action">
+              <div class="d-flex align-items-center">
+                <a href="/install?server={{server_name}}" class="game_server_link text-decoration-none flex-grow-1">{{server_name}}</a>
+              </div>
+            </div>
+          {% endfor %}
+          </ul>
+        {% endif %}
+        <br />
+
         {% include 'spinners.html' %}
 
         <div class="row">
@@ -21,11 +36,11 @@
         {% for script_name, full_name in servers.items() %}
         <div class="row">
           <div class="col">
-            <form method="POST" class="form-group" id="sudo_pass_form" action="/install">
+            <form method="POST" class="form-group" id="install-form" action="/install">
               <input type="hidden" id="server_name" name="server_name" value="{{script_name}}" class="form-control" />
               <input type="hidden" id="full_name" name="full_name" value="{{full_name}}" class="form-control" />
 
-              <button type="submit" onclick="updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
+              <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
             </form>
           </div>
           <div class="col text-primary">
@@ -37,11 +52,14 @@
       </div>
       <br />
 
-      <script src="/static/js/pre-install.js"></script>
       <!-- Set global serverName for update-xterm.js -->
       <script>var serverName = "{{ install_name }}"; var textColor = "{{ text_color }}"</script>
       <script src="/static/js/update-xterm.js"></script>
 
+
+      {% if install_name %}
+        <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server={{install_name}}&cancel=true" role="button">Cancel Install</a>
+      {% endif %}
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
         /\ Top /\
       </button>

@@ -3,6 +3,7 @@ import re
 import sys
 import json
 import time
+import signal
 import shutil
 import getpass
 import configparser
@@ -85,6 +86,8 @@ def home():
         print(f"##### DEBUG installed_servers {installed_servers}")
         print(f"##### DEBUG servers_to_users {servers_to_users}")
         print(f"##### DEBUG server_status_dict {server_status_dict}")
+
+#    snip_thread("Install_Mincraft")
 
     return render_template("home.html", user=current_user, \
                         servers_to_users=servers_to_users, \
@@ -337,6 +340,9 @@ def install():
     lgsmsh = "linuxgsm.sh"
     check_and_get_lgsmsh(f"./scripts/{lgsmsh}")
 
+    # Check if any installs are currently running.
+    running_installs = get_running_installs()
+
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
@@ -360,7 +366,7 @@ def install():
 
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
-        server_full_name = server_full_name.replace(":", "_")
+        server_full_name = server_full_name.replace(":", "")
 
         # Used to pass install_name to frontend js.
         install_name = server_full_name
@@ -370,7 +376,7 @@ def install():
         # server name. Clearly this is the output we want to look at.
         if server_full_name in INSTALL_SERVERS:
             del INSTALL_SERVERS[server_full_name]
-        INSTALL_SERVERS[server_full_name] =  OutputContainer([''], False)
+        INSTALL_SERVERS[server_full_name] =  OutputContainer([''], False, '')
 
         # Set the output object to the one stored in the global dictionary.
         output = INSTALL_SERVERS[server_full_name]
@@ -423,12 +429,34 @@ def install():
             pprint(ansible_vars)
             print(f"##### DEBUG cmd {cmd}")
 
-        install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Install')
+        install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name=f'Install_{server_full_name}')
         install_daemon.start()
+
+    elif request.method == 'GET':
+        server_name = request.args.get("server")
+        cancel = request.args.get("cancel")
+        if server_name != None:
+            if not valid_server_name(server_name):
+                flash("Invalid Option!", category="error")
+                return redirect(url_for('views.install'))
+
+            install_name = server_name 
+
+            if cancel == 'true':
+                # Check if install thread is still running.
+                thread_name = 'Install_' + server_name
+                if thread_name not in running_installs:
+                    flash(f"Install for {server_name} not currently running!", category="error")
+                    return redirect(url_for('views.install'))
+
+                output = INSTALL_SERVERS[server_name]
+                pprint(output)
+                if output.pid:
+                    cancel_install(output)
 
     return render_template("install.html", user=current_user, \
             servers=install_list, text_color=text_color, bs_colors=bs_colors, \
-            install_name=install_name, terminal_height=terminal_height)
+            install_name=install_name, terminal_height=terminal_height, running_installs=running_installs)
 
 
 ######### API System Usage #########
@@ -450,11 +478,15 @@ def no_output():
 
     # Can't load the controls page without a server specified.
     if server_name == None:
-        return """{ "error" : "eer can't load page n'@" }"""
+        resp_dict = {"error": "eer can't load page n'@"}
+        response = Response(json.dumps(resp_dict, indent=4), status=200, mimetype='application/json')
+        return response
 
     # Can't do anyting if we don't recognize the server_name.
     if server_name not in GAME_SERVERS and server_name not in INSTALL_SERVERS:
-        return """{ "error" : "eer never heard of em" }"""
+        resp_dict = {"error": "eer never heard of em"}
+        response = Response(json.dumps(resp_dict, indent=4), status=200, mimetype='application/json')
+        return response
 
     # Reset the last requested output time.
     last_request_for_output = int(time.time())
@@ -471,7 +503,8 @@ def no_output():
         output = GAME_SERVERS[server_name]
 
     # Returns json for used by ajax code on /controls route.
-    return output.toJSON()
+    response = Response(output.toJSON(), status=200, mimetype='application/json')
+    return response
 
 
 ######### Settings Page #########

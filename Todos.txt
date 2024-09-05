@@ -2,13 +2,8 @@
 
 ### v1.8.0 Pt 1.
 
-* Create new "Cancel Install" red button on install page that appears when
-  installation is running.
-  - Hook this button up to some backend logic to snip the running install
-    thread.
-  - Test this.
-
-* Fix tests broken by changes to auto-install / default new user install.
+* Fix install script so it setups sudoers rules for ansible_connector.py script
+  and chown's & chmod's stuff to root appropriately.
 
 * Add new flag to `web-lgsm.py` to allow external gs_user.
   - This will prompt for a sudo password and the supplied gs_user value will be
@@ -26,6 +21,8 @@
     - Users in that predicament will just have to run the `web-lgsm.py` script
       with the new arg first.
 
+* Fix tests broken by changes to auto-install / default new user install.
+
 * Write new tests for newly added features:
   - Need new tests for:
     - New settings page options:
@@ -41,6 +38,7 @@
         - The second one will be install as a new user with passwordless.
         - Aka test old default auto install vs new default auto install.
     - Test new delete for multi user, make sure it cleans up new user.
+    - Test cancel install button.
 
 
 ### v1.8.0 Pt 2.
@@ -137,7 +135,11 @@
   - Not fixing or changing anything just yet. Just want to review what I have
     and where its weak to better get an idea of how to fix it later.
 
-* Update Readme gifs with newest look of interface.
+* Fix up Readme.
+  - Update Readme gifs with newest look of interface.
+  - Add contribute section pointing users to submitting an issue or submitting a
+    pull request.
+    - I have the community docs for this now.
 
 ## Backlog
 
@@ -179,14 +181,6 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
   - That is switch the connector script to pull json for runs from an
     authenticated api route.
   - The auth for this route is something I don't want to figure out right now.
-
-* Make install page fancier, add new features.
-  - I'm thinking currently running install list at the top so if someone clicks
-    away they can click back then click on the currently installing one to view
-    the progress again.
-  - Then people can manage and view multiple installs concurrently.
-  - Also make it so other install buttons disappear when viewing running
-    installs.
 
 ## Disclaimer
 

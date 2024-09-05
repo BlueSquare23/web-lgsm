@@ -47,6 +47,12 @@ p, li, b {
   bottom: 70px;
 }
 
+#cancel-button {
+  position: fixed;
+  right: 40px;
+  bottom: 70px;
+}
+
 /* The popup send cmd form - hidden by default */
 .form-popup {
   max-width: 350px;

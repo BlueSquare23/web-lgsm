@@ -284,10 +284,55 @@ def post_install_cfg_fix(gs_dir, gs_user):
 
     print("Configuration file common.cgf updated!")
 
+def get_script_cmd_from_pid(pid):
+    try:
+        # Get script name from ps cmd output.
+        proc = subprocess.run(
+            ['ps', '-o', 'cmd=', str(pid)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        stderr = proc.stderr.strip()
+        proc.check_returncode()
+
+        script_path = proc.stdout.strip()
+
+        # If the script path is empty, it might mean the PID does not exist
+        if not script_path:
+            print(f" [!] Error No script found for PID {pid}")
+            cleanup(23)
+
+        return script_path
+
+    except subprocess.CalledProcessError as e:
+        # Handle errors during command execution.
+        print(f" [!] Error running ps command: {e}")
+        cleanup(23)
+
+    except ValueError as e:
+        # Handle any specific value errors.
+        print(e)
+        cleanup(23)
+
+    except Exception as e:
+        # Catch any other unforeseen errors.
+        print(f" [!] An unexpected error occurred: {str(e)}")
+        cleanup(23)
+
+
 def cancel_install(vars_data):
     required_vars = ['pid']
     check_required_vars_are_set(vars_data, required_vars)
     pid = vars_data.get('pid')
+
+    pid_cmd = get_script_cmd_from_pid(pid)
+    self_path = os.path.join(SCRIPTPATH, __file__)
+    self_cmd = f"/usr/bin/sudo -n {self_path}"
+    if pid_cmd != self_cmd:
+        print(f" [!] Not allowed to kill pid: {pid}!")
+        cleanup()
 
     cmd = ['pkill', '-P', f'{pid}']
     run_cmd(cmd)

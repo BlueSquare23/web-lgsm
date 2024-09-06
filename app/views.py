@@ -87,8 +87,6 @@ def home():
         print(f"##### DEBUG servers_to_users {servers_to_users}")
         print(f"##### DEBUG server_status_dict {server_status_dict}")
 
-#    snip_thread("Install_Mincraft")
-
     return render_template("home.html", user=current_user, \
                         servers_to_users=servers_to_users, \
                         server_status_dict=server_status_dict, \
@@ -376,7 +374,7 @@ def install():
         # server name. Clearly this is the output we want to look at.
         if server_full_name in INSTALL_SERVERS:
             del INSTALL_SERVERS[server_full_name]
-        INSTALL_SERVERS[server_full_name] =  OutputContainer([''], False, '')
+        INSTALL_SERVERS[server_full_name] = OutputContainer([''], False, '')
 
         # Set the output object to the one stored in the global dictionary.
         output = INSTALL_SERVERS[server_full_name]
@@ -428,6 +426,7 @@ def install():
             print("##### DEBUG ansible_vars ")
             pprint(ansible_vars)
             print(f"##### DEBUG cmd {cmd}")
+            print(f"##### DEBUG INSTALL_SERVERS {INSTALL_SERVERS}")
 
         install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name=f'Install_{server_full_name}')
         install_daemon.start()
@@ -822,14 +821,21 @@ def delete():
 
         if DEBUG and verbosity >= 1:
             print(f"##### DEBUG server_name: {server_name}")
-            print(f"##### DEBUG server:")
-            pprint(server)
+            print(f"##### DEBUG INSTALL_SERVERS: {INSTALL_SERVERS}")
+            print(f"##### DEBUG server.id: {server.id}")
+            print(f"##### DEBUG server.install_name: {server.install_name}")
+            print(f"##### DEBUG server.username: {server.username}")
+            print(f"##### DEBUG server.install_path: {server.install_path}")
 
         if server:
             # TODO: Add debug level 2 hidden output printing here.
             if server.install_name in INSTALL_SERVERS:
                 del INSTALL_SERVERS[server.install_name]
             output_obj = OutputContainer([''], False)
+
+            if DEBUG and verbosity >= 1:
+                print(f"##### DEBUG INSTALL_SERVERS: {INSTALL_SERVERS}")
+
             del_server(server, remove_files, output_obj)
 
     # Delete via POST is for multiple deletions.

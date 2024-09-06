@@ -2,9 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-* Fix install script so it setups sudoers rules for ansible_connector.py script
-  and chown's & chmod's stuff to root appropriately.
-
 * Add new flag to `web-lgsm.py` to allow external gs_user.
   - This will prompt for a sudo password and the supplied gs_user value will be
     edited into the list of allowed gs_users in the `validate_gs_user.yml`

@@ -119,31 +119,6 @@ def cancel_install(output):
     cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
     shell_exec(cmd, output)
 
-#    try:
-#        # Get the process object for the given PID.
-#        parent = psutil.Process(pid)
-#    except psutil.NoSuchProcess:
-#        return
-#
-#    # Recursively kill children processes.
-#    for child in parent.children(recursive=True):
-#        try:
-#            child.terminate()
-#            child.wait(timeout=3)
-#        except psutil.NoSuchProcess:
-#            pass
-#        except psutil.TimeoutExpired:
-#            child.kill()
-#
-#    # Kill the parent process itself.
-#    try:
-#        parent.terminate()
-#        parent.wait(timeout=3)
-#    except psutil.NoSuchProcess:
-#        pass
-#    except psutil.TimeoutExpired:
-#        parent.kill()
-
 
 # Translates a username to a uid using pwd module.
 def get_uid(username):

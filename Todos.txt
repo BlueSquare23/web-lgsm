@@ -2,22 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-* Add new flag to `web-lgsm.py` to allow external gs_user.
-  - This will prompt for a sudo password and the supplied gs_user value will be
-    edited into the list of allowed gs_users in the `validate_gs_user.yml`
-    playbook.
-  - People will only need to run it with this flag when they're trying to add
-    an existing game server that was installed as a system user which is
-    non-standard.
-    - By default the LGSM project themselves recommend users install server as
-      new users where the username matches the main gs script. Aka Minecraft
-      should be installed as the mcserver user, etc.
-    - If someone installed minecraft as username `todd` and the web-lgsm is
-      running as username `billybob`, that server can still be added and
-      managed by the web interface.
-    - Users in that predicament will just have to run the `web-lgsm.py` script
-      with the new arg first.
-
 * Fix tests broken by changes to auto-install / default new user install.
 
 * Write new tests for newly added features:

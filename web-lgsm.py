@@ -87,7 +87,7 @@ CONFIG.read(os.path.join(SCRIPTPATH, 'main.conf'))
 try:
     HOST = CONFIG['server']['host']
     PORT = CONFIG['server']['port']
-    DEBUG = CONFIG['debug']['debug']
+    DEBUG = CONFIG['debug'].getboolean('debug')
 except KeyError as e:
     print(f" [!] Configuration setting {e} not set.")
     HOST = '127.0.0.1'
@@ -480,6 +480,11 @@ def run_tests():
         shutil.move(db_backup, db_file)
 
 
+def add_valid_gs_user(gs_user):
+    cmd = f"/usr/bin/sudo echo '  - {gs_user}' >> playbooks/vars/accepted_gs_users.yml"
+    run_command(cmd)
+
+
 def print_help():
     """Prints help menu"""
     print("""
@@ -488,34 +493,37 @@ def print_help():
   ║                                                          ║
   ║   Options:                                               ║
   ║                                                          ║
-  ║   -h, --help        Prints this help menu                ║
-  ║   -s, --start       Starts the server (default no args)  ║
-  ║   -q, --stop        Stop the server                      ║
-  ║   -r, --restart     Restart the server                   ║
-  ║   -m, --status      Show server status                   ║
-  ║   -d, --debug       Start server in debug mode           ║
-  ║   -v, --verbose     More verbose output                  ║
-  ║   -p, --passwd      Change web user password             ║
-  ║   -u, --update      Update web-lgsm version              ║
-  ║   -c, --check       Check if an update is available      ║
-  ║   -a, --auto        Run an auto update                   ║
-  ║   -f, --fetch_json  Fetch latest game servers json       ║
-  ║   -t, --test        Run project's pytest tests (short)   ║
-  ║   -x, --test_full   Run ALL project's pytest tests       ║
+  ║   -h, --help          Prints this help menu              ║
+  ║   -s, --start         Starts the server (default no args)║
+  ║   -q, --stop          Stop the server                    ║
+  ║   -r, --restart       Restart the server                 ║
+  ║   -m, --status        Show server status                 ║
+  ║   -d, --debug         Start server in debug mode         ║
+  ║   -v, --verbose       More verbose output                ║
+  ║   -p, --passwd        Change web user password           ║
+  ║   -u, --update        Update web-lgsm version            ║
+  ║   -c, --check         Check if an update is available    ║
+  ║   -a, --auto          Run an auto update                 ║
+  ║   -f, --fetch_json    Fetch latest game servers json     ║
+  ║   -t, --test          Run project's pytest tests (short) ║
+  ║   -x, --test_full     Run ALL project's pytest tests     ║
+  ║   -j, --valid [user]  Add valid gs_user to allow list    ║
   ╚══════════════════════════════════════════════════════════╝
     """)
     exit()
+
 
 def main(argv):
     try:
         longopts = ["help", "start", "stop", "status", "restart", "debug",
                     "verbose", "passwd", "update", "check", "auto", "fetch_json",
-                    "test", "test_full"]
-        opts, args = getopt.getopt(argv, "hsmrqdvpucaftx", longopts)
-    except getopt.GetoptError:
+                    "test", "test_full", "valid="]
+        opts, args = getopt.getopt(argv, "hsmrqdvpucaftxj:", longopts)
+    except getopt.GetoptError as e:
+        print(e)
         print_help()
 
-    # If no args, start the server.
+    # If no flags, start the server.
     if not opts and not args:
         start_server()
         return
@@ -532,7 +540,7 @@ def main(argv):
             O["test_full"] = True
 
     # Do the needful based on opts.
-    for opt, _ in opts:
+    for opt, arg in opts:
         if opt in ("-h", "--help"):
             print_help()
         elif opt in ("-s", "--start"):
@@ -566,6 +574,11 @@ def main(argv):
             return
         elif opt in ("-t", "--test", "-x", "--test_full"):
             run_tests()
+            return
+        elif opt in ("-j", "--valid"):
+            print(opt)
+            print(arg)
+            add_valid_gs_user(arg)
             return
 
 if __name__ == "__main__":

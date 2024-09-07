@@ -36,10 +36,20 @@ def run_command_popen(command):
         )
 
         # Wait for the process to complete.
-        process.wait()
+        return_code = process.wait()
+        if return_code > 0:
+            exit(return_code)   
 
-    except subprocess.CalledProcessError as e:
-        print(f" [!] Command '{command}' failed with error: {e}")
+    except ValueError as e:
+        # Handle any specific value errors.
+        print(e)
+        exit(return_code)
+
+    except Exception as e:
+        # Catch any other unforeseen errors.
+        print(f" [!] An unexpected error occurred: {e}")
+        exit(23)
+
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""

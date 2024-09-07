@@ -3,18 +3,18 @@ import pytest
 import json
 from app.utils import *
 
-def test_is_invalid_cfg_name():
+def test_valid_cfg_name():
     gs_cfgs = open('json/accepted_cfgs.json', 'r')
     json_data = json.load(gs_cfgs)
     gs_cfgs.close()
 
     valid_gs_cfgs = json_data["accepted_cfgs"]
     for cfg in valid_gs_cfgs:
-        assert is_invalid_cfg_name(cfg) == False
+        assert valid_cfg_name(cfg) == True
 
     invalid_gs_cfgs = ["fart", "blah", 777777, None, "---------"]
     for cfg in invalid_gs_cfgs:
-        assert is_invalid_cfg_name(cfg) == True
+        assert valid_cfg_name(cfg) == False
 
 
 # For now just test that the cmds in commands.json make it through. Will write
@@ -50,49 +50,49 @@ def test_get_servers():
         assert any(x.isupper() for x in servers[key]) == True
 
 
-def test_is_invalid_command():
+def test_valid_command():
     commands_json = open('json/commands.json', 'r')
     json_data = json.load(commands_json)
     commands_json.close()
 
     valid_cmds = json_data["short_cmds"]
     for cmd in valid_cmds:
-        assert is_invalid_command(cmd, 'mcserver', 'yes') == False
+        assert valid_command(cmd, 'mcserver', 'yes') == True
 
-    # Send should be invalid when no is supplied to is_invalid_command().
+    # Send should be invalid when no is supplied to valid_command().
     invalid_cmds = ["fart", "blah", 777777, None, "---------", 'send']
     for cmd in invalid_cmds:
-        assert is_invalid_command(cmd, 'mcserver', 'no') == True
+        assert valid_command(cmd, 'mcserver', 'no') == False
     
 
-def test_install_options_are_invalid():
+def test_valid_install_options():
     servers_json = open('json/game_servers.json', 'r')
     json_data = json.load(servers_json)
     servers_json.close()
 
     # Valid install options.
     for script_name, full_name in zip(json_data["servers"], json_data["server_names"]):
-        assert install_options_are_invalid(script_name, full_name) == False
+        assert valid_install_options(script_name, full_name) == True
 
     # Invalid install options.
     servers = ["fart", "blah", 777777, None, "---------"]
     server_names = ["fart", "blah", 777777, None, "---------"]
     for script_name, full_name in zip(servers, server_names):
-        assert install_options_are_invalid(script_name, full_name) == True
+        assert valid_install_options(script_name, full_name) == False
 
 
-def script_name_is_invalid():
+def valid_script_name():
     servers_json = open('json/game_servers.json', 'r')
     json_data = json.load(servers_json)
     servers_json.close()
 
     # Valid servers.
     for script_name in json_data["servers"]:
-        assert script_name_is_invalid(script_name) == False
+        assert valid_script_name(script_name) == True
 
     garbage = ["fart", "blah", 777777, None, "---------"]
     for script_name in garbage:
-        assert script_name_is_invalid(script_name) == True
+        assert valid_script_name(script_name) == False
 
 def test_contains_bad_chars():
     bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">",

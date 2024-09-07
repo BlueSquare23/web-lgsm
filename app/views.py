@@ -51,6 +51,7 @@ def home():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 
@@ -130,6 +131,7 @@ def controls():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 
@@ -316,6 +318,7 @@ def install():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 
@@ -529,6 +532,7 @@ def settings():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 
@@ -607,12 +611,12 @@ def settings():
         try:
             height_pref = int(height_pref)
         except ValueError:
-            flash('Invalid Textarea Height!', category='error')
+            flash('Invalid Terminal Height!', category='error')
             return redirect(url_for('views.settings'))
 
-        # Check if height pref is in valid range.
+        # Check if height pref is invalid range.
         if height_pref > 100 or height_pref < 5:
-            flash('Invalid Textarea Height!', category='error')
+            flash('Invalid Terminal Height!', category='error')
             return redirect(url_for('views.settings'))
 
         # Have to cast back to string to save in config.
@@ -680,6 +684,14 @@ def add():
     config.read('main.conf')
     remove_files = config['settings'].getboolean('remove_files')
 
+    debug = config['debug'].getboolean('debug')
+    v = config['debug']['verbosity']
+    verbosity = get_verbosity(v)
+    env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
+    if env_debug == 'true' or debug:
+        DEBUG = True
+
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
@@ -697,12 +709,14 @@ def add():
         for required_form_item in (install_name, install_path, script_name):
             if required_form_item == None or required_form_item == '':
                 flash("Missing required form field(s)!", category="error")
-                return redirect(url_for('views.add'))
+                status_code = 400
+                return render_template("add.html", user=current_user), status_code
 
             # Check input lengths.
             if len(required_form_item) > 150:
                 flash("Form field too long!", category='error')
-                return redirect(url_for('views.add'))
+                status_code = 400
+                return render_template("add.html", user=current_user), status_code
 
         # Set default user if none provided.
         if username == None or username == '':
@@ -710,12 +724,14 @@ def add():
 
         if len(username) > 150:
             flash("Form field too long!", category='error')
-            return redirect(url_for('views.add'))
+            status_code = 400
+            return render_template("add.html", user=current_user), status_code
 
         # Returns None if not valid username.
         if get_uid(username) == None:
             flash("User not found on system!", category='error')
-            return redirect(url_for('views.add'))
+            status_code = 400
+            return render_template("add.html", user=current_user), status_code
 
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
@@ -728,29 +744,30 @@ def add():
                 flash("Illegal Character Entered!", category="error")
                 flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
                                                             category="error")
-                return redirect(url_for('views.add'))
+                status_code = 400
+                return render_template("add.html", user=current_user), status_code
 
         if install_exists:
             flash('An installation by that name already exits.', category='error')
             status_code = 400
-            return redirect(url_for('views.home'))
+            return render_template("add.html", user=current_user), status_code
 
         elif not os.path.exists(install_path) or not os.path.isdir(install_path):
             flash('Directory path does not exist.', category='error')
             status_code = 400
-            return redirect(url_for('views.home'))
+            return render_template("add.html", user=current_user), status_code
 
         if not valid_script_name(script_name):
             flash('Invalid game server script file name!', category='error')
             status_code = 400
-            return redirect(url_for('views.home'))
+            return render_template("add.html", user=current_user), status_code
 
         script_path = os.path.join(install_path, script_name) 
         if not os.path.exists(script_path) or \
                 not os.path.isfile(script_path):
             flash('Script file does not exist.', category='error')
             status_code = 400
-            return redirect(url_for('views.home'))
+            return render_template("add.html", user=current_user), status_code
 
         # Add sudoers rules automatically if game server not owned by web-lgsm
         # system user. To the user, note there is a slight problem with this
@@ -812,6 +829,7 @@ def delete():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 
@@ -871,6 +889,7 @@ def edit():
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
     env_debug = os.getenv('DEBUG')
+    global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
 

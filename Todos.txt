@@ -2,8 +2,6 @@
 
 ### v1.8.0 Pt 1.
 
-* Fix tests broken by changes to auto-install / default new user install.
-
 * Write new tests for newly added features:
   - Need new tests for:
     - New settings page options:

@@ -116,7 +116,7 @@ def test_add_responses(app, client):
         assert response.status_code == 302
 
         ## Test empty parameters.
-        resp_code = 200
+        resp_code = 400
         error_msg = b"Missing required form field(s)!"
         response = client.post('/add', data={'install_name':'', \
             'install_path':'', 'script_name':''}, follow_redirects=True)
@@ -139,7 +139,7 @@ def test_add_responses(app, client):
 
 
         ## Test empty parameters.
-        resp_code = 200
+        resp_code = 400
         error_msg = b"Missing required form field(s)!"
         response = client.post('/add', data={'install_name':'', \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
@@ -170,8 +170,7 @@ def test_add_responses(app, client):
         ## Bad char tests.
         # Checks response to see if it contains bad chars msg.
         def contains_bad_chars(response):
-            # 200 bc redirect.
-            assert response.status_code == 200
+            assert response.status_code == 400
 
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for('views.add')
@@ -203,7 +202,6 @@ def test_add_responses(app, client):
         response = client.post('/add', data={'install_name':TEST_SERVER, \
             'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME})
 
-        # Is 400 bc bad request.
         assert response.status_code == 400
         assert b"An installation by that name already exits." in response.data
 
@@ -378,7 +376,7 @@ def test_install_responses(app, client):
 
         # Test for no feilds supplied.
         resp_code = 200
-        error_msg = b"Missing Required Form Feild!"
+        error_msg = b"Missing Required Form Field!"
         response = client.post('/install', follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.install')
 
@@ -420,11 +418,9 @@ def test_settings_content(app, client):
         assert b"Output Text Color" in response.data
         assert b"Stats Primary Color" in response.data
         assert b"Stats Secondary Color" in response.data
-        assert b"Remove Game Server Files on Delete" in response.data
-        assert b"Leave Game Server Files on Delete" in response.data
+        assert b"Remove game server files on delete" in response.data
+        assert b"Leave game server files on delete" in response.data
         assert b"Show Live Server Stats on Home Page" in response.data
-        assert b"Purge user tmux socket files" in response.data
-        assert b"Make sure your game servers are turned off first" in response.data
         assert b"Check for and update the Web LGSM" in response.data
         assert b"Note: Checking this box will restart your Web LGSM instance" in response.data
         assert b"Apply" in response.data
@@ -481,23 +477,23 @@ def test_settings_responses(app, client):
         check_response(response, error_msg, resp_code, 'views.settings')
 
         # Test text area height change.
-        # App only accepts textarea height between 5 and 100.
-        error_msg = b'Invalid Textarea Height!'
-        response = client.post('/settings', data={'text_area_height':'-20'}, follow_redirects=True)
+        # App only accepts terminal height between 5 and 100.
+        error_msg = b'Invalid Terminal Height!'
+        response = client.post('/settings', data={'terminal_height':'-20'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
-        response = client.post('/settings', data={'text_area_height':'test'}, follow_redirects=True)
+        response = client.post('/settings', data={'terminal_height':'test'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
-        response = client.post('/settings', data={'text_area_height':'99999'}, follow_redirects=True)
+        response = client.post('/settings', data={'terminal_height':'99999'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
-        response = client.post('/settings', data={'text_area_height':'-e^(i*3.14)'}, follow_redirects=True)
+        response = client.post('/settings', data={'terminal_height':'-e^(i*3.14)'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
-        # Legit textarea height test.
+        # Legit terminal height test.
         error_msg = b'Settings Updated!'
-        response = client.post('/settings', data={'text_area_height':'10'}, follow_redirects=True)
+        response = client.post('/settings', data={'terminal_height':'10'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
     # Re-disable remove_files for the sake of idempotency.
@@ -727,7 +723,7 @@ def test_full_game_server_install(app, client):
             assert b'output_lines' in response.data
 
             # Check that the output lines are not empty.
-            empty_resp = '{"output_lines": [""], "process_lock": false}'
+            empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
             json_data = json.loads(response.data.decode('utf8'))
             assert empty_resp != json.dumps(json_data)
 
@@ -743,7 +739,7 @@ def test_full_game_server_install(app, client):
 
         response = client.get('/api/cmd-output?server=Minecraft')
         assert response.status_code == 200
-        expected_resp = '{"output_lines": [""], "process_lock": false}'
+        expected_resp = '{"output_lines": [""], "pid": false, "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
         assert expected_resp == json.dumps(json_data)
 
@@ -771,7 +767,7 @@ def test_game_server_start_stop(app, client):
         print("######################## OUTPUT ROUTE STDOUT\n" + response.data.decode('utf8'))
 
         # Check that the output lines are not empty.
-        empty_resp = '{"output_lines": [""], "process_lock": false}'
+        empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
         assert empty_resp != json.dumps(json_data)
 
@@ -866,7 +862,7 @@ def test_console_output(app, client):
         assert b'output_lines' in response.data
 
         # Check that the output lines are not empty.
-        empty_resp = '{"output_lines": [""], "process_lock": false}'
+        empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
         assert empty_resp != json.dumps(json_data)
 

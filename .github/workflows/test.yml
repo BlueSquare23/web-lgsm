@@ -9,6 +9,7 @@ on:
     - '**.css'
     - '**.js'
     - '**.json'
+    - '**.yml'
 
 env:
   HOME: ${{ github.workspace }}
@@ -38,6 +39,8 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          USER=$(whoami)
+          echo "  - $USER" >> playbooks/vars/accepted_gs_users.yml
       - name: Install & Setup Java (For Minecraft Server Tests)
         run: |
           set -x

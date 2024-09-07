@@ -96,11 +96,6 @@
   - I'm using xterm.js and a plugin for them that can only be installed via
     npm.
 
-* Remove support for python3.8 and add python3.13.
-  - Python 3.8 is going eol Oct. 1st 2024.
-  - That's also the same day python 3.13 is released.
-  - So remove 3.8 from list in `.github/workflows/test.yml` and add 3.13.
-
 * Add support for Ubuntu 24.04.
   - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
     too.

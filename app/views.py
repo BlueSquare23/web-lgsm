@@ -17,9 +17,8 @@ from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
                                 redirect, Response, send_from_directory, jsonify, g
 
-# Globals dictionaries to hold output objects.
-GAME_SERVERS = {}
-INSTALL_SERVERS = {}
+# Globals dictionary to hold output objects.
+SERVERS = {}
 
 # Global last requested output time.
 last_request_for_output = int(time.time())
@@ -80,7 +79,8 @@ def home():
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
-    INSTALL_SERVERS = {}
+    global SERVERS
+    SERVERS = {}
 
     if DEBUG and verbosity >= 1:
         print(f"##### DEBUG config_options {config_options}")
@@ -100,12 +100,12 @@ def home():
 @login_required
 def xtermjs():
     server_name = 'testingxtermjs'
-    if not server_name in GAME_SERVERS:
+    if not server_name in SERVERS:
         output_obj = OutputContainer([''], False)
-        GAME_SERVERS[server_name] = output_obj
+        SERVERS[server_name] = output_obj
 
     # Set the output object to the one stored in the global dictionary.
-    output = GAME_SERVERS[server_name]
+    output = SERVERS[server_name]
 
     cmd = ['/home/blue/Projects/web-lgsm/scripts/random.sh']
     daemon = Thread(target=shell_exec, args=(cmd, output),\
@@ -179,12 +179,12 @@ def controls():
     output_obj = OutputContainer([''], False)
 
     # If this is the first time we're ever seeing the server_name then put it
-    # and its associated output_obj in the global GAME_SERVERS dictionary.
-    if not server_name in GAME_SERVERS:
-        GAME_SERVERS[server_name] = output_obj
+    # and its associated output_obj in the global SERVERS dictionary.
+    if not server_name in SERVERS:
+        SERVERS[server_name] = output_obj
 
     # Set the output object to the one stored in the global dictionary.
-    output = GAME_SERVERS[server_name]
+    output = SERVERS[server_name]
 
     script_path = os.path.join(server.install_path, server.script_name)
 
@@ -344,6 +344,7 @@ def install():
     # Check if any installs are currently running.
     running_installs = get_running_installs()
 
+    global SERVERS   
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
@@ -375,12 +376,12 @@ def install():
         # Object to hold output from any running daemon threads. Since this is
         # the install route delete any previously held output objects for
         # server name. Clearly this is the output we want to look at.
-        if server_full_name in INSTALL_SERVERS:
-            del INSTALL_SERVERS[server_full_name]
-        INSTALL_SERVERS[server_full_name] = OutputContainer([''], False, '')
+#        if server_full_name in SERVERS:
+#            del SERVERS[server_full_name]
+        SERVERS[server_full_name] = OutputContainer([''], False, '')
 
         # Set the output object to the one stored in the global dictionary.
-        output = INSTALL_SERVERS[server_full_name]
+        output = SERVERS[server_full_name]
 
         install_exists = GameServer.query.filter_by(install_name=server_full_name).first()
 
@@ -429,7 +430,7 @@ def install():
             print("##### DEBUG ansible_vars ")
             pprint(ansible_vars)
             print(f"##### DEBUG cmd {cmd}")
-            print(f"##### DEBUG INSTALL_SERVERS {INSTALL_SERVERS}")
+            print(f"##### DEBUG SERVERS {SERVERS}")
 
         install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name=f'Install_{server_full_name}')
         install_daemon.start()
@@ -451,7 +452,7 @@ def install():
                     flash(f"Install for {server_name} not currently running!", category="error")
                     return redirect(url_for('views.install'))
 
-                output = INSTALL_SERVERS[server_name]
+                output = SERVERS[server_name]
                 pprint(output)
                 if output.pid:
                     cancel_install(output)
@@ -484,8 +485,9 @@ def no_output():
         response = Response(json.dumps(resp_dict, indent=4), status=200, mimetype='application/json')
         return response
 
-    # Can't do anyting if we don't recognize the server_name.
-    if server_name not in GAME_SERVERS and server_name not in INSTALL_SERVERS:
+    # Can't do anything if we don't recognize the server_name.
+    global SERVERS
+    if server_name not in SERVERS:
         resp_dict = {"error": "eer never heard of em"}
         response = Response(json.dumps(resp_dict, indent=4), status=200, mimetype='application/json')
         return response
@@ -493,16 +495,10 @@ def no_output():
     # Reset the last requested output time.
     last_request_for_output = int(time.time())
 
-    # If its a server in the INSTALL_SERVERS dict set the output object to the
+    # If its a server in the SERVERS dict set the output object to the
     # one from that dictionary.
-    if server_name in INSTALL_SERVERS:
-        output = INSTALL_SERVERS[server_name]
-
-    # If its a server in the GAME_SERVERS dict set the output object to the one
-    # from that dictionary. Will clober the above after server is installed. Is
-    # intentional.
-    if server_name in GAME_SERVERS:
-        output = GAME_SERVERS[server_name]
+    if server_name in SERVERS:
+        output = SERVERS[server_name]
 
     # Returns json for used by ajax code on /controls route.
     response = Response(output.toJSON(), status=200, mimetype='application/json')
@@ -836,10 +832,14 @@ def delete():
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
         server = GameServer.query.filter_by(install_name=server_name).first()
+        if server == None:
+            flash("No such server found!", category="error")
+            return redirect(url_for('views.home'))
 
+        global SERVERS
         if DEBUG and verbosity >= 1:
             print(f"##### DEBUG server_name: {server_name}")
-            print(f"##### DEBUG INSTALL_SERVERS: {INSTALL_SERVERS}")
+            print(f"##### DEBUG SERVERS: {SERVERS}")
             print(f"##### DEBUG server.id: {server.id}")
             print(f"##### DEBUG server.install_name: {server.install_name}")
             print(f"##### DEBUG server.username: {server.username}")
@@ -847,12 +847,12 @@ def delete():
 
         if server:
             # TODO: Add debug level 2 hidden output printing here.
-            if server.install_name in INSTALL_SERVERS:
-                del INSTALL_SERVERS[server.install_name]
+            if server_name in SERVERS:
+                del SERVERS[server_name]
             output_obj = OutputContainer([''], False)
 
             if DEBUG and verbosity >= 1:
-                print(f"##### DEBUG INSTALL_SERVERS: {INSTALL_SERVERS}")
+                print(f"##### DEBUG SERVERS: {SERVERS}")
 
             del_server(server, remove_files, output_obj)
 

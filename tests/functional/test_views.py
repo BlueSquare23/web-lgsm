@@ -1,4 +1,5 @@
 import os
+import pwd
 import time
 import json
 import pytest
@@ -26,6 +27,11 @@ def check_response(response, msg, resp_code, url):
     assert response.request.path == url_for(url)
     assert msg in response.data
 
+def check_main_conf(confstr):
+    with open('main.conf', 'r') as f:
+        content = f.read()
+
+    assert confstr in content
 
 ### Home Page tests.
 # Check basic content matches.
@@ -420,6 +426,8 @@ def test_settings_content(app, client):
         assert b"Stats Secondary Color" in response.data
         assert b"Remove game server files on delete" in response.data
         assert b"Leave game server files on delete" in response.data
+        assert b"Setup new system user when installing new game servers" in response.data
+        assert b"Install new game servers under the " in response.data 
         assert b"Show Live Server Stats on Home Page" in response.data
         assert b"Check for and update the Web LGSM" in response.data
         assert b"Note: Checking this box will restart your Web LGSM instance" in response.data
@@ -473,8 +481,29 @@ def test_settings_responses(app, client):
 
         # Legit color change test.
         error_msg = b'Settings Updated!'
-        response = client.post('/settings', data={'text_color':'#0ed0fc'}, follow_redirects=True)
+        text_color = '#0ed0fc'
+        response = client.post('/settings', data={'text_color':text_color}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
+
+        # Check changes are reflected in main.conf.
+        check_main_conf(f'text_color = {text_color}')
+
+        # Test install as new user settings.
+        error_msg = b'Settings Updated!'
+        response = client.post('/settings', data={'install_new_user':'false'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+        # Check changes are reflected in main.conf.
+        check_main_conf('install_create_new_user = no')
+
+        response = client.post('/settings', data={'install_new_user':'true'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+        # Check changes are reflected in main.conf.
+        check_main_conf('install_create_new_user = yes')
+
+        # Check nonsense input has no effect.
+        response = client.post('/settings', data={'install_new_user':'sneeeeeeeeeeeeeeeeee'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+        check_main_conf('install_create_new_user = yes')
 
         # Test text area height change.
         # App only accepts terminal height between 5 and 100.
@@ -496,8 +525,12 @@ def test_settings_responses(app, client):
         response = client.post('/settings', data={'terminal_height':'10'}, follow_redirects=True)
         check_response(response, error_msg, resp_code, 'views.settings')
 
+        # Check changes are reflected in main.conf.
+        check_main_conf('terminal_height = 10')
+
     # Re-disable remove_files for the sake of idempotency.
     os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
+    check_main_conf('remove_files = no')
 
 ### API system-usage tests.
 # Test system usage content & responses.
@@ -685,149 +718,124 @@ def test_delete_game_server(app, client):
         check_response(response, msg, 200, 'views.home')
 
 
-def test_full_game_server_install(app, client):
-    print(USERNAME)
-    print(PASSWORD)
-    print(TEST_SERVER)
-    print(TEST_SERVER_PATH)
-    print(TEST_SERVER_NAME)
-    print(CFG_PATH)
-    print(VERSION)
-    # Login.
-    with client:
-        # Log test user in.
-        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
-        assert response.status_code == 302
+def full_game_server_install(client):
+    # For good measure.
+    os.system("sudo -n killall -9 java")
 
-        # For good measure.
-        os.system("killall -9 java")
+    # Do an install.
+    response = client.post('/install', data={'server_name':'mcserver', \
+        'full_name':'Minecraft'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Installing' in response.data
 
-        # Do an install.
-        response = client.post('/install', data={'server_name':'mcserver', \
-            'full_name':'Minecraft', 'sudo_pass':'fake-sudo-pass'}, follow_redirects=True)
-        assert response.status_code == 200
-        assert b'Installing' in response.data
+    # Some buffer time.
+    time.sleep(5)
+    print(client.get('/api/cmd-output?server=Minecraft').data.decode("utf-8"))
 
-        # Some buffer time.
-        time.sleep(3)
+    observed_running = False
+    # While process is running check output route is producing output.
+    while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
+        observed_running = True
 
-        observed_running = False
-        # While process is running check output route is producing output.
-        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
-            observed_running = True
-
-            # Test to make sure output route is returning stuff for gs while
-            # game server install is running.
-            response = client.get('/api/cmd-output?server=Minecraft')
-            assert response.status_code == 200
-            assert b'output_lines' in response.data
-
-            # Check that the output lines are not empty.
-            empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
-            json_data = json.loads(response.data.decode('utf8'))
-            assert empty_resp != json.dumps(json_data)
-
-            time.sleep(5)
-
-        # Test that install was observed to be running.
-        assert observed_running
-
-        # Test output route says its done.
-        # Have to request new server page first.
-        response = client.get('/controls?server=Minecraft')
-        assert response.status_code == 200
-
-        response = client.get('/api/cmd-output?server=Minecraft')
-        assert response.status_code == 200
-        expected_resp = '{"output_lines": [""], "pid": false, "process_lock": false}'
-        json_data = json.loads(response.data.decode('utf8'))
-        assert expected_resp == json.dumps(json_data)
-
-
-def test_game_server_start_stop(app, client):
-    # Login.
-    with client:
-        # Log test user in.
-        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
-        assert response.status_code == 302
-
-        # Test starting the server.
-        response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
-        assert response.status_code == 200
-        print("######################## START CMD RESPONSE\n" + response.data.decode('utf8'))
-
-        time.sleep(2)
-        response = client.get('/controls?server=Minecraft', follow_redirects=True)
-        print("######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n" + response.data.decode('utf8'))
-
-        # Check output lines are there.
+        # Test to make sure output route is returning stuff for gs while
+        # game server install is running.
         response = client.get('/api/cmd-output?server=Minecraft')
         assert response.status_code == 200
         assert b'output_lines' in response.data
-        print("######################## OUTPUT ROUTE STDOUT\n" + response.data.decode('utf8'))
 
         # Check that the output lines are not empty.
         empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
         json_data = json.loads(response.data.decode('utf8'))
         assert empty_resp != json.dumps(json_data)
 
-        # Sleep until process is finished.
-        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
-            print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
-            time.sleep(5)
+        time.sleep(5)
 
+    # Test that install was observed to be running.
+    assert observed_running
+
+
+def game_server_start_stop(client):
+    # Log test user in.
+    response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+    assert response.status_code == 302
+
+    # Test starting the server.
+    response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
+    assert response.status_code == 200
+    print("######################## START CMD RESPONSE\n" + response.data.decode('utf8'))
+
+    time.sleep(2)
+    response = client.get('/controls?server=Minecraft', follow_redirects=True)
+    print("######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n" + response.data.decode('utf8'))
+
+    # Check output lines are there.
+    response = client.get('/api/cmd-output?server=Minecraft')
+    assert response.status_code == 200
+    assert b'output_lines' in response.data
+    print("######################## OUTPUT ROUTE STDOUT\n" + response.data.decode('utf8'))
+
+    # Check that the output lines are not empty.
+    empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
+    json_data = json.loads(response.data.decode('utf8'))
+    assert empty_resp != json.dumps(json_data)
+
+    # Sleep until process is finished.
+    while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
         print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
+        time.sleep(5)
 
-#        print("######################## Minecraft Start Log\n")
-#        os.system("cat Minecraft/logs/script/mcserver-script.log")
-#        os.system("cat Minecraft/log/server/latest.log")
-#        os.system("cat Minecraft/log/console/mcserver-console.log")
+    print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
 
-        # Check status indicator color on home page.
-        # Green hex color means on.
-        expected_color = b'00FF11'
-        response = client.get('/home')
-        print("######################## HOME PAGE RESPONSE\n" + response.data.decode('utf8'))
-        assert response.status_code == 200
-        assert expected_color in response.data
+#    print("######################## Minecraft Start Log\n")
+#    os.system("cat Minecraft/logs/script/mcserver-script.log")
+#    os.system("cat Minecraft/log/server/latest.log")
+#    os.system("cat Minecraft/log/console/mcserver-console.log")
 
-        # Enable the send_cmd setting.
-        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
-        time.sleep(1)
+    # Check status indicator color on home page.
+    # Green hex color means on.
+    expected_color = b'00FF11'
+    response = client.get('/home')
+    print("######################## HOME PAGE RESPONSE\n" + response.data.decode('utf8'))
+    assert response.status_code == 200
+    assert expected_color in response.data
 
-        # Test sending command to game server console
-        response = client.get('/controls?server=Minecraft&command=sd&cmd=test', follow_redirects=True)
-        assert response.status_code == 200
+    # Enable the send_cmd setting.
+    os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+    time.sleep(1)
 
-        # Sleep until process is finished.
-        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
-            print("######################## SEND COMMAND OUTPUT\n")
-            print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
-            time.sleep(3)
+    # Test sending command to game server console
+    response = client.get('/controls?server=Minecraft&command=sd&cmd=test', follow_redirects=True)
+    assert response.status_code == 200
 
-        time.sleep(1)
+    # Sleep until process is finished.
+    while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
+        print("######################## SEND COMMAND OUTPUT\n")
         print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
-        assert b'Sending command to console' in client.get('/api/cmd-output?server=Minecraft').data
+        time.sleep(3)
 
-        # Set send_cmd back to default state for sake of idempotency.
-        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
-        time.sleep(1)
+    time.sleep(1)
+    print(client.get('/api/cmd-output?server=Minecraft').data.decode('utf8'))
+    assert b'Sending command to console' in client.get('/api/cmd-output?server=Minecraft').data
 
-        # Test stopping the server
-        response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)
-        assert response.status_code == 200
-        
-        # Run until "process_lock": false (aka proc stopped).
-        while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
-            time.sleep(3)
+    # Set send_cmd back to default state for sake of idempotency.
+    os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+    time.sleep(1)
 
-        # For good measure.
-        os.system("killall -9 java")
+    # Test stopping the server
+    response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)
+    assert response.status_code == 200
+    
+    # Run until "process_lock": false (aka proc stopped).
+    while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
+        time.sleep(3)
 
-        # Check if status indicator is red.
-        response = client.get('/home')
-        assert response.status_code == 200
-        assert b'red' in response.data
+    # For good measure.
+    os.system("sudo -n killall -9 java")
+
+    # Check if status indicator is red.
+    response = client.get('/home')
+    assert response.status_code == 200
+    assert b'red' in response.data
 
 
 def check_watch_process():
@@ -843,47 +851,150 @@ def check_watch_process():
     print("Process not found")
     return False
 
-def test_console_output(app, client):
+
+def console_output(client):
+    # Test starting the server.
+    response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
+    assert response.status_code == 200
+
+    time.sleep(5)
+
+    # Check output lines are there.
+    response = client.get('/api/cmd-output?server=Minecraft')
+    assert response.status_code == 200
+    assert b'output_lines' in response.data
+
+    # Check that the output lines are not empty.
+    empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
+    json_data = json.loads(response.data.decode('utf8'))
+    assert empty_resp != json.dumps(json_data)
+
+    # Run until "process_lock": false (aka proc stopped).
+    while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
+        time.sleep(3)
+
+    # Check that console button is working and console is outputting.
+    response = client.get('/controls?server=Minecraft&command=c', follow_redirects=True)
+    assert response.status_code == 200
+    print("######################## CONSOLE ROUTE OUTPUT\n" + response.data.decode('utf8'))
+
+    time.sleep(5)
+
+    # Check watch process is running and output is flowing.
+    for i in range(0, 5):
+        print(f"###### Iteration: {i}")
+        time.sleep(2)
+        assert b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data
+        assert check_watch_process() == True
+
+    # Cleanup
+    os.system("sudo -n killall -9 java watch")
+
+
+def user_exists(username):
+    try:
+        pwd.getpwnam(username)
+        return True
+    except KeyError:
+        return False
+
+
+def test_install_newuser(app, client):
+    """First test install as new user."""
+    print(USERNAME)
+    print(PASSWORD)
+    print(TEST_SERVER)
+    print(TEST_SERVER_PATH)
+    print(TEST_SERVER_NAME)
+    print(CFG_PATH)
+    print(VERSION)
+
     # Login.
     with client:
         # Log test user in.
         response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
         assert response.status_code == 302
 
-        # Test starting the server.
-        response = client.get('/controls?server=Minecraft&command=st', follow_redirects=True)
+        # Change settings.
+        error_msg = b'Settings Updated!'
+        resp_code = 200
+        response = client.post('/settings', data={'install_new_user':'true'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        # Check changes are reflected in main.conf.
+        check_main_conf('install_create_new_user = yes')
+
+        # Test full install as new user.
+        full_game_server_install(client)
+
+        game_server_start_stop(client)
+        console_output(client)
+
+        response = client.post('/settings', data={'delete_files':'true'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        # Stop the server.
+        response = client.get('/controls?server=Minecraft&command=sp', follow_redirects=True)
         assert response.status_code == 200
-
-        time.sleep(5)
-
-        # Check output lines are there.
-        response = client.get('/api/cmd-output?server=Minecraft')
-        assert response.status_code == 200
-        assert b'output_lines' in response.data
-
-        # Check that the output lines are not empty.
-        empty_resp ='{"output_lines": [""], "pid": false, "process_lock": false}'
-        json_data = json.loads(response.data.decode('utf8'))
-        assert empty_resp != json.dumps(json_data)
-
+        
         # Run until "process_lock": false (aka proc stopped).
         while b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data:
             time.sleep(3)
 
-        # Check that console button is working and console is outputting.
-        response = client.get('/controls?server=Minecraft&command=c', follow_redirects=True)
-        assert response.status_code == 200
-        print("######################## CONSOLE ROUTE OUTPUT\n" + response.data.decode('utf8'))
+        response = client.get('/delete?server=Minecraft', follow_redirects=True)
+        msg = b'Game server, Minecraft deleted'
+        check_response(response, msg, 200, 'views.home')
 
-        time.sleep(5)
+        dir_path = '/home/mcserver'
+        i = 0
+        while os.path.exists(dir_path):
+            # hacky timeout.
+            if i > 10:
+                assert True == False    
+            print(f"{dir_path} exists. Checking again in 1 second...")
+            time.sleep(1)
+            i+=1
+        assert not os.path.exists(dir_path)
 
-        # Check watch process is running and output is flowing.
-        for i in range(0, 5):
-            print(f"###### Iteration: {i}")
-            time.sleep(2)
-            assert b'"process_lock": true' in client.get('/api/cmd-output?server=Minecraft').data
-            assert check_watch_process() == True
-#            assert os.system("ps aux|grep -q '[w]atch -te /usr/bin/tmux'") == 0
+    # Will pass for both newuser and sameuser installs.
+    assert user_exists('mcserver') == False
 
-        # Cleanup
-        os.system("killall -9 java watch")
+
+def test_install_sameuser(app, client):
+    """Then test install as existing user."""
+    print(USERNAME)
+    print(PASSWORD)
+    print(TEST_SERVER)
+    print(TEST_SERVER_PATH)
+    print(TEST_SERVER_NAME)
+    print(CFG_PATH)
+    print(VERSION)
+
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Change settings.
+        error_msg = b'Settings Updated!'
+        resp_code = 200
+        response = client.post('/settings', data={'install_new_user':'false'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        # Check changes are reflected in main.conf.
+        check_main_conf('install_create_new_user = no')
+
+        # Test full install as existing user.
+        full_game_server_install(client)
+
+        game_server_start_stop(client)
+        console_output(client)
+
+        response = client.post('/settings', data={'delete_files':'true'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.settings')
+
+        response = client.get('/delete?server=Minecraft', follow_redirects=True)
+        msg = b'Game server, Minecraft deleted'
+        check_response(response, msg, 200, 'views.home')
+        assert not os.path.exists('/home/mcserver')

@@ -480,10 +480,10 @@ def run_tests():
             # Then torch dir.
             shutil.rmtree(mcdir)
 
-        run_command_popen('python -m pytest -vvv --maxfail=1')
+        run_command_popen('python -m pytest -v --maxfail=1')
 
     else:
-        run_command_popen("python -m pytest -v -k 'not test_full_game_server_install and not test_game_server_start_stop and not test_console_output' --maxfail=1")
+        run_command_popen("python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1")
 
     # Restore Database.
     if db_backup:

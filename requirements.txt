@@ -10,5 +10,5 @@ Werkzeug==3.0.3
 gunicorn==22.0.0
 gevent==24.2.1
 ansible>=9.0.0a1
-ansible-runner==2.4.0
+ansible-runner>=2.3.6
 PyYAML==6.0.2

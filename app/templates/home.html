@@ -47,8 +47,11 @@
 
       <h2 style="color: white;">Other Options</h2>
       <div class="list-group border border-secondary">
-        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server </a>
-        <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation </a>
+        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
+        <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
+        {% if user.is_authenticated and user.role == 'admin' %}
+          <a href="/create_user" class="list-group-item list-group-item-action">Create New Web LGSM User</a>
+        {% endif %}
       </div>
 
       {% if config_options.show_stats %}

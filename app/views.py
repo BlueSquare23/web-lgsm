@@ -54,6 +54,10 @@ def home():
     if env_debug == 'true' or debug:
         DEBUG = True
 
+    print(current_user.username)
+    print(current_user.role)
+    print(current_user.permissions)
+
     config_options = {
         "text_color": text_color,
         "graphs_primary": graphs_primary,
@@ -69,6 +73,10 @@ def home():
     installed_servers = GameServer.query.all()
     servers_to_users = {}
     for server in installed_servers:
+        # TODO: Remove support for legacy db's. App min supported version will
+        # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
+        # have a legacy DB. If you haven't upgraded by now you might as well
+        # just re-install newest version and re-add your game servers.
         # Account for legacy db's that don't have a user field.
         if server.username == None:
             server.username = USER
@@ -195,6 +203,10 @@ def controls():
         # For running cmds as alt users.
         sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
 
+        # TODO: Remove support for legacy db's. App min supported version will
+        # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
+        # have a legacy DB. If you haven't upgraded by now you might as well
+        # just re-install newest version and re-add your game servers.
         # Account for legacy db's that don't have a user field.
         if server.username == None:
             server.username = getpass.getuser()
@@ -209,6 +221,10 @@ def controls():
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
 
+            # TODO: Remove support for legacy db's. App min supported version will
+            # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
+            # have a legacy DB. If you haven't upgraded by now you might as well
+            # just re-install newest version and re-add your game servers.
             # Account for legacy db's that don't have a user field.
             for server in installed_servers:
                 if server.username == None:
@@ -251,6 +267,10 @@ def controls():
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
 
+            # TODO: Remove support for legacy db's. App min supported version will
+            # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
+            # have a legacy DB. If you haven't upgraded by now you might as well
+            # just re-install newest version and re-add your game servers.
             # Account for legacy db's that don't have a user field.
             for server in installed_servers:
                 if server.username == None:

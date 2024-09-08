@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Create Web Portal User{% endblock %}
+
+{% block content %}
+      <br />
+
+      <div class="container bg-dark border border-secondary rounded-3 p-2">
+        <form method="POST">
+          <h3 align="enter" style="color: white;">
+            Create New Web LGSM User
+          </h3>
+          <div class="form-group" style="color: white;">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Enter New Username" />
+
+            <label for="password1" style="color: white;">Password</label>
+            <input type="password" id="password1" name="password1" class="form-control" placeholder="Enter New Password" />
+
+            <label for="password2" style="color: white;">Confirm Password</label>
+            <input type="password" id="password2" name="password2" class="form-control" placeholder="Retype New Password" />
+
+            <br />
+
+            <!-- Admin checkbox -->
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="is_admin" id="is_admin" value="true" onchange="togglePermissions()">
+              <label class="form-check-label" for="is_admin">
+                Admin User - Can do anything in the web interface
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="is_admin" id="is_admin" value="false" onchange="togglePermissions()" checked>
+              <label class="form-check-label" for="is_admin">
+                Regular User - Configure limited user permissions below
+              </label>
+            </div>
+
+            <br />
+
+            <div class="container">
+              <div class="row">
+                <!-- Non-admin permissions, disabled if Admin is checked -->
+                <div id="non-admin-permissions">
+                  <label><i><u>Basic Permissions</u></i></label><br />
+
+                  <input type="checkbox" id="install_servers" name="install_servers" class="form-check-input" value="true">
+                  <label for="install_servers">Can Install New Game Servers</label>
+                  <br />
+
+                  <input type="checkbox" id="add_servers" name="add_servers" class="form-check-input" value="true">
+                  <label for="add_servers">Can Add Existing Game Servers</label>
+                  <br />
+
+                  <input type="checkbox" id="mod_settings" name="mod_settings" class="form-check-input" value="true">
+                  <label for="mod_settings">Can Modify Web-LGSM Settings Page</label>
+                  <br />
+
+                  <input type="checkbox" id="edit_cfgs" name="edit_cfgs" class="form-check-input" value="true">
+                  <label for="edit_cfgs">Can Edit Game Server Configs</label>
+                  <br />
+
+                  <input type="checkbox" id="delete_server" name="delete_server" class="form-check-input" value="true">
+                  <label for="delete_server">Can Delete Game Servers</label>
+                  <br />
+                  <br />
+
+                  <label><i><u>Allowed Controls</u></i></label><br />
+
+                  <!-- Button to select/unselect all controls -->
+                  <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllControls()">All Controls</button>
+
+                  <div class="form-check">
+                      <!-- Loop over a Jinja list of controls -->
+                      {% for control in controls %}
+                          <input class="form-check-input control-checkbox" type="checkbox" id="control_{{ loop.index }}" name="controls" value="{{ control }}">
+                          <label class="form-check-label" for="control_{{ loop.index }}">{{ control }}</label><br />
+                      {% endfor %}
+                  </div>
+
+                  <br />
+
+                  <!-- Loop over installed servers for checkboxes -->
+                  <label><i><u>Allow Access to Game Servers</u></i></label><br />
+                  {% if installed_servers | length > 0 %}
+                  <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllGameServers()">All Game Servers</button>
+                  <div class="form-check">
+                    {% for server in installed_servers %}
+                      <input class="form-check-input gameserver-checkbox" type="checkbox" id="server_{{ server }}" name="servers" value="{{ server }}">
+                      <label class="form-check-label" for="server_{{ server }}">{{ server }}</label><br />
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <p>No game servers installed yet!<br/>
+                  You can adjust what servers this user has access to after installing or adding a game server.</p>
+                  {% endif %}
+
+                </div>
+
+                <br />
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button class="btn btn-outline-primary" type="submit">Submit</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+<script>
+  function togglePermissions() {
+    const isAdmin = document.getElementById('is_admin').checked;
+    const nonAdminPermissions = document.getElementById('non-admin-permissions');
+
+    // Disable or enable all non-admin fields based on admin checkbox.
+    nonAdminPermissions.querySelectorAll('input').forEach(input => {
+        input.disabled = isAdmin;
+    });
+
+    nonAdminPermissions.querySelectorAll('button').forEach(button => {
+        button.disabled = isAdmin;
+    });
+  }
+
+  // Function to select/unselect all controls.
+  function toggleAllControls() {
+    const allCommandCheckboxes = document.querySelectorAll('.control-checkbox');
+    const isChecked = Array.from(allCommandCheckboxes).every(checkbox => checkbox.checked);
+    allCommandCheckboxes.forEach(checkbox => checkbox.checked = !isChecked);
+  }
+
+  // Function to select/unselect all game servers.
+  function toggleAllGameServers() {
+    const allGsCheckboxes = document.querySelectorAll('.gameserver-checkbox');
+    const isChecked = Array.from(allGsCheckboxes).every(checkbox => checkbox.checked);
+    allGsCheckboxes.forEach(checkbox => checkbox.checked = !isChecked);
+  }
+
+  // Initial call to set the correct state on page load.
+  togglePermissions();
+</script>
+
+{% endblock %}

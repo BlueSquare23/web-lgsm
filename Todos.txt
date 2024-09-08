@@ -138,6 +138,18 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     authenticated api route.
   - The auth for this route is something I don't want to figure out right now.
 
+* Add option for anonymous usage statistics.
+  - This is not technically difficult, as in setting this up from a software
+    perspective would be relatively simple.
+  - Thing is I don't know about the regulatory side and how that applies to me
+    as a single creator of a simple web app...
+  - Pretty sure all of these regulations mean I need to get user consent first:
+    - GDPR (General Data Protection Regulation)
+    - CCPA (California Consumer Privacy Act)
+    - COPPA (Children's Online Privacy Protection Act)
+  - So thinking maybe after initial install & login form pops up that says "do
+    you want to send anonymous usage stats?"
+
 ## Disclaimer
 
 This document is basically just a rubber ducky for me while I change things.

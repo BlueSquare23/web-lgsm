@@ -5,6 +5,7 @@ import pwd
 import json
 import glob
 import time
+import string
 import psutil
 import shutil
 import getpass
@@ -24,6 +25,68 @@ PREV_TIME = time.time()
 # Misc Globals.
 CWD = os.getcwd()
 USER = getpass.getuser()
+
+def check_require_auth_setup_fields(username, password1, password2):
+    """Ensure supplied auth fields for creating a new user are supplied.
+    Returns True if they're all good, False if there's a problem with them."""
+    # Make sure required form items are supplied.
+    for form_item in (username, password1, password2):
+        if form_item == None or form_item == "":
+            flash("Missing required form field(s)!", category='error')
+            return False
+
+        # Check input lengths.
+        if len(form_item) > 150:
+            flash("Form field too long!", category='error')
+            return False
+
+    # To try to nip sql, xss, template injections in the bud.
+    if contains_bad_chars(username):
+        flash("Username Contains Illegal Character(s)", category="error")
+        flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
+                                                    category="error")
+        return False
+
+    return True
+
+def valid_password(password1, password2):
+    """Runs supplied auth route passwords against some basic checks. Returns
+    False if passwords bad, True if all good."""
+    # Setup rudimentary password strength counter.
+    lower_alpha_count = 0
+    upper_alpha_count = 0
+    number_count = 0
+    special_char_count = 0
+
+    # Adjust password strength values.
+    for char in list(password1):
+        if char in string.ascii_lowercase:
+            lower_alpha_count += 1
+        elif char in string.ascii_uppercase:
+            upper_alpha_count += 1
+        elif char in string.digits:
+            number_count += 1
+        else:
+            special_char_count += 1
+
+    ## Check if submitted form data for issues.
+    # Verify password passes basic strength tests.
+    if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
+        flash("Passwords doesn't meet criteria!", category='error')
+        flash("Must contain: an upper case character, a number, and a \
+                                special character", category='error')
+        return False
+
+    elif password1 != password2:
+        flash('Passwords don\'t match!', category='error')
+        return False
+
+    elif len(password1) < 12:
+        flash('Password is too short!', category='error')
+        return False
+
+    return True
+
 
 # Holds the output from a running daemon thread.
 class OutputContainer:
@@ -544,3 +607,4 @@ def get_verbosity(verbostiy):
         v = 1 
 
     return v
+

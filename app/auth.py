@@ -1,11 +1,11 @@
 import os
-import string
+import json
 from . import db
 from pathlib import Path
-from .models import User
-from .utils import contains_bad_chars
+from .models import User, GameServer
+from .utils import check_require_auth_setup_fields, valid_password
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, confirm_login, logout_user, login_required, current_user
 from flask import Blueprint, render_template, redirect, url_for, request, \
                                                               flash, abort
 
@@ -41,9 +41,15 @@ def login():
         # Check login info.
         user = User.query.filter_by(username=username).first()
         if user:
+            print(user.username)
+            print(user.role)
+            print(user.permissions)
             if check_password_hash(user.password, password):
+                if current_user.is_authenticated:
+                    logout_user()
                 flash("Logged in!", category='success')
                 login_user(user, remember=True)
+                confirm_login()
                 return redirect(url_for('views.home'))
             else:
                 flash('Incorrect Username or Password!', category='error')
@@ -68,81 +74,36 @@ def setup():
         password2 = request.form.get("password2")
 
         # Make sure required form items are supplied.
-        for form_item in (username, password1, password2):
-            if form_item == None or form_item == "":
-                flash("Missing required form field(s)!", category='error')
-                return redirect(url_for('auth.setup'))
-
-            # Check input lengths.
-            if len(form_item) > 150:
-                flash("Form field too long!", category='error')
-                return redirect(url_for('auth.setup'))
+        if not check_require_auth_setup_fields(username, password1, password2):
+            return redirect(url_for('auth.setup'))
 
         # Check if a user already exists and if so don't allow another user to
-        # be created. Right now this is a single user interface. Could possible
-        # expand it to mulitiple users in the future.
+        # be created. Only allow authenticated admin users to create new users
+        # after initial setup.
         if User.query.first() != None:
             flash("User already added. Please sign in!", category='error')
             return redirect(url_for('auth.login'))
 
+        if not valid_password(password1, password2):
+            return redirect(url_for('auth.setup'))
 
-        # Setup rudimentary password strength counter.
-        lower_alpha_count = 0
-        upper_alpha_count = 0
-        number_count = 0
-        special_char_count = 0
+        # Add the new_user to the database, then redirect home.
+        new_user = User(username=username, \
+                password=generate_password_hash(password1, method='pbkdf2:sha256'), \
+                role='admin', permissions=json.dumps({'admin': True}))
+        db.session.add(new_user)
+        db.session.commit()
 
-        # Adjust password strength values.
-        for char in list(password1):
-            if char in string.ascii_lowercase:
-                lower_alpha_count += 1
-            elif char in string.ascii_uppercase:
-                upper_alpha_count += 1
-            elif char in string.digits:
-                number_count += 1
-            else:
-                special_char_count += 1
-
-        ## Check if submitted form data for issues.
-        # Verify password passes basic strength tests.
-        if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
-            flash("Passwords doesn't meet criteria!", category='error')
-            flash("Must contain: an upper case character, a number, and a \
-                                    special character", category='error')
-            response_code = 400
-
-        # To try to nip xss & template injection in the bud.
-        elif contains_bad_chars(username):
-            flash("Username Contains Illegal Character(s)", category="error")
-            flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
-                                                        category="error")
-            response_code = 400
-
-        elif password1 != password2:
-            flash('Passwords don\'t match!', category='error')
-            response_code = 400
-
-        elif len(password1) < 12:
-            flash('Password is too short!', category='error')
-            response_code = 400
-
-        else:
-            # Add the new_user to the database, then redirect home.
-            new_user = User(username=username, \
-                    password=generate_password_hash(password1, method='pbkdf2:sha256'))
-            db.session.add(new_user)
-            db.session.commit()
-
-            flash('User created!')
-            login_user(new_user, remember=True)
-            return redirect(url_for('views.home'))
+        flash('User created!')
+        login_user(new_user, remember=True)
+        return redirect(url_for('views.home'))
 
     # If already a user added, disable the setup route.
-    if User.query.first() == None:
-        return render_template("setup.html", user=current_user), response_code
-    else:
+    if User.query.first() != None:
         flash("User already added. Please sign in!", category='error')
         return redirect(url_for('auth.login'))
+
+    return render_template("setup.html", user=current_user), response_code
 
 ######### Logout Route #########
 
@@ -153,3 +114,117 @@ def logout():
     flash('Logged out!', category='success')
     return redirect(url_for("auth.login"))
 
+######### Create New User Route #########
+
+@auth.route("/create_user", methods=['GET', 'POST'])
+@login_required
+def create_user():
+    print(current_user.username)
+    print(current_user.role)
+    if current_user.role != 'admin':
+        flash("Only Admins are allowed to create new users!", category='error')
+        return redirect(url_for('views.home'))
+
+    installed_servers = GameServer.query.all()
+    all_controls = ["start", "stop", "restart", "monitor", "test-alert", "details",
+                "postdetails", "update-lgsm", "update", "backup", "console", "send"]
+
+    if request.method == 'POST':
+        username = request.form.get("username")
+        password1 = request.form.get("password1")
+        password2 = request.form.get("password2")
+        is_admin = request.form.get("is_admin")
+        install_servers = request.form.get("install_servers")
+        add_servers = request.form.get("add_servers")
+        mod_settings = request.form.get("mod_settings")
+        edit_cfgs = request.form.get("edit_cfgs")
+        delete_server = request.form.get("delete_server")
+        controls = request.form.getlist("controls")
+        servers = request.form.getlist("servers")
+
+        if not valid_password(password1, password2):
+            return redirect(url_for('auth.create_user'))
+
+        # Reject if user already exists 
+        if User.query.filter_by(username=username).first() is not None:
+            flash("User already added. Please sign in!", category='error')
+            return redirect(url_for('auth.create_user'))
+
+        # If is admin setup with all perms.
+        if not valid_password(password1, password2):
+            return redirect(url_for('auth.create_user'))
+
+#    Example request payload.
+#    {
+#    	"username": "",
+#    	"password1": "",
+#    	"password2": "",
+#    	"is_admin": "false",
+#    	"install_servers": "true",
+#    	"add_servers": "true",
+#    	"mod_settings": "true",
+#    	"edit_cfgs": "true",
+#    	"delete_server": "true",
+#    	"controls": [
+#    		"start",
+#    		"stop",
+#    		"restart",
+#    		"monitor",
+#    		"test-alert",
+#    		"details",
+#    		"postdetails",
+#    		"update-lgsm",
+#    		"update",
+#    		"backup",
+#    		"console",
+#    		"send"
+#    	]
+#    }
+
+        permissions = dict()
+        role = 'user' # Default to user role.
+
+        permissions['install_servers'] = False
+        if install_servers == 'true':
+            permissions['install_servers'] = True
+
+        permissions['add_servers'] = False
+        if add_servers == 'true':
+            permissions['add_servers'] = True
+
+        permissions['mod_settings'] = False
+        if mod_settings == 'true':
+            permissions['mod_settings'] = True
+
+        permissions['edit_cfgs'] = False
+        if edit_cfgs == 'true':
+            permissions['edit_cfgs'] = True
+
+        permissions['delete_server'] = False
+        if delete_server == 'true':
+            permissions['delete_server'] = True
+
+        permissions['controls'] = False
+        if controls:
+            for control in controls:
+                if control not in all_controls:
+                    flash("Invalid Control Supplied!", category='error')
+                    return redirect(url_for('auth.create_user'))
+            permissions['controls'] = controls
+
+        # Only explicitly set admin if supplied.
+        if is_admin != None:
+            if is_admin == 'true':
+                role = 'admin'
+                permissions = {'admin': True}
+
+        # Add the new_user to the database, then redirect home.
+        new_user = User(username=username, \
+                password=generate_password_hash(password1, method='pbkdf2:sha256'), \
+                role=role, permissions=json.dumps(permissions))
+        db.session.add(new_user)
+        db.session.commit()
+        flash("New User Added!")
+        return redirect(url_for('views.home'))
+
+    return render_template("create_user.html", user=current_user, installed_servers=installed_servers, controls=all_controls)

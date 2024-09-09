@@ -31,15 +31,30 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbar">
-          <div class="navbar-nav">
-            <a class="nav-item nav-link" href="/home">Home</a>
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/home">Home</a>
+            </li>
             {% if user.is_authenticated %}
-            <a class="nav-item nav-link" href="/settings">Settings</a>
-            <a class="nav-item nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
+            </li>
             {% else %}
-            <a class="nav-item nav-link" href="/login">Login</a>
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Login</a>
+            </li>
             {% endif %}
-          </div>
+          </ul>
+          {% if user.is_authenticated %}
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <span class="navbar-text p-3">Logged in as {{ user.username }}</span>
+            </li>
+          </ul>
+          {% endif %}
         </div>
       </div>
     </nav>

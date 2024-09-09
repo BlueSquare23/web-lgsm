@@ -5,19 +5,60 @@
       <br />
 
       <div class="container bg-dark border border-secondary rounded-3 p-2">
+        <h3 align="enter" style="color: white;">
+          Create or Edit Web LGSM User(s)
+        </h3>
+        <hr style="color:white">
+
+        <h4 align="enter" style="color: white;">
+          Select User:
+        </h4>
+        <ul class="list-group">
+          {% if selected_user == 'newuser' %}
+          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none active" aria-current="true">New User</a>
+          {% else %}
+          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none">New User</a>
+          {% endif %}
+
+          {% for user in all_users %}
+            {% if user.username == selected_user %}
+          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none active" aria-current="true">{{user.username}}</a>
+            {% else %}
+          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none">{{user.username}}</a>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <br/>
+
+        {% if selected_user is not none %}
+        <h4 align="enter" style="color: white;">
+          User Settings:
+        </h4>
         <form method="POST">
-          <h3 align="enter" style="color: white;">
-            Create New Web LGSM User
-          </h3>
           <div class="form-group" style="color: white;">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="Enter New Username" />
+            <input type="hidden" id="selected_user" name="selected_user" value="{{selected_user}}">
+            {% if selected_user == 'newuser' %}
+            <div id="user_pass_fields">
+            {% else %}
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="change_username_password" onchange="toggleViewUserPassFields()">
+              <label class="form-check-label" for="change_username_password">Change Username or Password</label>
+            </div>
+            <div id="user_pass_fields" class="d-none">
+            {% endif %}
+              <label for="username">Username</label>
+              {% if selected_user == 'newuser' %}
+              <input type="text" id="username" name="username" class="form-control" placeholder="Enter New Username" />
+              {% else %}
+              <input type="text" id="username" name="username" class="form-control" value="{{selected_user}}" placeholder="{{selected_user}}" />
+              {% endif %}
 
-            <label for="password1" style="color: white;">Password</label>
-            <input type="password" id="password1" name="password1" class="form-control" placeholder="Enter New Password" />
+              <label for="password1" style="color: white;">Password</label>
+              <input type="password" id="password1" name="password1" class="form-control" placeholder="Enter New Password" />
 
-            <label for="password2" style="color: white;">Confirm Password</label>
-            <input type="password" id="password2" name="password2" class="form-control" placeholder="Retype New Password" />
+              <label for="password2" style="color: white;">Confirm Password</label>
+              <input type="password" id="password2" name="password2" class="form-control" placeholder="Retype New Password" />
+            </div>
 
             <br />
 
@@ -105,9 +146,40 @@
             </div>
           </div>
         </form>
+        {% endif %}
       </div>
 
 <script>
+  const userRole = '{{user_role}}';
+  const userPerms = JSON.parse({{user_permissions | tojson}});
+  if (userRole == 'admin') {
+    document.getElementById('is_admin').checked = true;
+    togglePermissions();
+  }
+
+  // Function to apply the user permissions to the form.
+  function applyUserPermissions() {
+    // Check or uncheck basic permissions based on userPerms.
+    document.getElementById('install_servers').checked = userPerms.install_servers;
+    document.getElementById('add_servers').checked = userPerms.add_servers;
+    document.getElementById('mod_settings').checked = userPerms.mod_settings;
+    document.getElementById('edit_cfgs').checked = userPerms.edit_cfgs;
+    document.getElementById('delete_server').checked = userPerms.delete_server;
+
+    // Check the controls checkboxes.
+    const controlCheckboxes = document.querySelectorAll('.control-checkbox');
+    controlCheckboxes.forEach(checkbox => {
+      if (userPerms.controls.includes(checkbox.value)) {
+        checkbox.checked = true;
+      }
+    });
+  }
+
+  function toggleViewUserPassFields() {
+    const userPassFields = document.getElementById('user_pass_fields');
+    userPassFields.classList.toggle('d-none');
+  }
+
   function togglePermissions() {
     const isAdmin = document.getElementById('is_admin').checked;
     const nonAdminPermissions = document.getElementById('non-admin-permissions');
@@ -137,7 +209,13 @@
   }
 
   // Initial call to set the correct state on page load.
-  togglePermissions();
+  // Call applyUserPermissions and togglePermissions to auto check checkboxes
+  // according backend user perms.
+  document.addEventListener('DOMContentLoaded', function() {
+    applyUserPermissions();
+    togglePermissions();
+  });
+
 </script>
 
 {% endblock %}

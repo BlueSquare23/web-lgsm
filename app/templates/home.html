@@ -50,7 +50,7 @@
         <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
         <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
         {% if user.is_authenticated and user.role == 'admin' %}
-          <a href="/create_user" class="list-group-item list-group-item-action">Create New Web LGSM User</a>
+          <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
         {% endif %}
       </div>
 
@@ -93,7 +93,6 @@
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
         <script src="/static/js/graph-charts.js"></script>
         <script src="/static/js/toggle-stats.js"></script>
-
 
         {% if config_options.show_barrel_roll %}
           <!-- Mission Critical Barrel-Roll Code -->

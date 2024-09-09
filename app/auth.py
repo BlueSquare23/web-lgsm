@@ -2,6 +2,7 @@ import os
 import json
 from . import db
 from pathlib import Path
+from datetime import timedelta
 from .models import User, GameServer
 from .utils import check_require_auth_setup_fields, valid_password
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -40,15 +41,16 @@ def login():
         # Check login info.
         user = User.query.filter_by(username=username).first()
         if user:
-            print(user.username)
-            print(user.role)
-            print(user.permissions)
+# TODO; Turn these into debug prints.
+#            print(user.username)
+#            print(user.role)
+#            print(user.permissions)
             if check_password_hash(user.password, password):
                 if current_user.is_authenticated:
                     logout_user()
                 flash("Logged in!", category='success')
-                four_weeks = 2419200
-                login_user(user, remember=True, duration=four_weeks)
+                four_weeks_delta = timedelta(days=28)
+                login_user(user, remember=True, duration=four_weeks_delta)
                 confirm_login()
                 return redirect(url_for('views.home'))
             else:
@@ -114,13 +116,11 @@ def logout():
     flash('Logged out!', category='success')
     return redirect(url_for("auth.login"))
 
-######### Create New User Route #########
+######### Create / Edit User(s) Route #########
 
-@auth.route("/create_user", methods=['GET', 'POST'])
+@auth.route("/edit_users", methods=['GET', 'POST'])
 @login_required
-def create_user():
-    print(current_user.username)
-    print(current_user.role)
+def edit_users():
     if current_user.role != 'admin':
         flash("Only Admins are allowed to create new users!", category='error')
         return redirect(url_for('views.home'))
@@ -129,7 +129,30 @@ def create_user():
     all_controls = ["start", "stop", "restart", "monitor", "test-alert", "details",
                 "postdetails", "update-lgsm", "update", "backup", "console", "send"]
 
+    all_users = User.query.all()
+
+    if request.method == 'GET':
+        selected_user = request.args.get("username")
+
+        user_ident = None
+        if selected_user != 'newuser' and selected_user != None:
+            user_ident = User.query.filter_by(username=selected_user).first()
+            if user_ident == None:
+                flash("Invalid user selected!", category='error')
+                return redirect(url_for('auth.edit_users'))
+
+        if user_ident == None:
+            user_role = None
+            user_permissions = None
+        else:
+            user_role = user_ident.role
+            user_permissions = user_ident.permissions
+
+        return render_template("edit_users.html", user=current_user, installed_servers=installed_servers, controls=all_controls, all_users=all_users, selected_user=selected_user, user_role=user_role, user_permissions=user_permissions)
+
     if request.method == 'POST':
+        selected_user = request.form.get("selected_user")
+        change_user_pass = request.form.get("change_username_password")
         username = request.form.get("username")
         password1 = request.form.get("password1")
         password2 = request.form.get("password2")
@@ -142,44 +165,20 @@ def create_user():
         controls = request.form.getlist("controls")
         servers = request.form.getlist("servers")
 
-        if not valid_password(password1, password2):
-            return redirect(url_for('auth.create_user'))
+        if selected_user == 'newuser' or change_user_pass == 'true':
+            if not check_require_auth_setup_fields(username, password1, password2):
+                return redirect(url_for('auth.edit_users'))
 
-        # Reject if user already exists 
-        if User.query.filter_by(username=username).first() is not None:
-            flash("User already added. Please sign in!", category='error')
-            return redirect(url_for('auth.create_user'))
+            if not valid_password(password1, password2):
+                return redirect(url_for('auth.edit_users'))
 
-        # If is admin setup with all perms.
-        if not valid_password(password1, password2):
-            return redirect(url_for('auth.create_user'))
+        user_ident = None
+        if selected_user != 'newuser':
+            user_ident = User.query.filter_by(username=username).first()
+            if user_ident == None:
+                flash("Invalid user selected!", category='error')
+                return redirect(url_for('auth.edit_users'))
 
-#    Example request payload.
-#    {
-#    	"username": "",
-#    	"password1": "",
-#    	"password2": "",
-#    	"is_admin": "false",
-#    	"install_servers": "true",
-#    	"add_servers": "true",
-#    	"mod_settings": "true",
-#    	"edit_cfgs": "true",
-#    	"delete_server": "true",
-#    	"controls": [
-#    		"start",
-#    		"stop",
-#    		"restart",
-#    		"monitor",
-#    		"test-alert",
-#    		"details",
-#    		"postdetails",
-#    		"update-lgsm",
-#    		"update",
-#    		"backup",
-#    		"console",
-#    		"send"
-#    	]
-#    }
 
         permissions = dict()
         role = 'user' # Default to user role.
@@ -209,22 +208,36 @@ def create_user():
             for control in controls:
                 if control not in all_controls:
                     flash("Invalid Control Supplied!", category='error')
-                    return redirect(url_for('auth.create_user'))
+                    return redirect(url_for('auth.edit_users'))
             permissions['controls'] = controls
 
         # Only explicitly set admin if supplied.
         if is_admin != None:
             if is_admin == 'true':
                 role = 'admin'
-                permissions = {'admin': True}
 
-        # Add the new_user to the database, then redirect home.
-        new_user = User(username=username, \
-                password=generate_password_hash(password1, method='pbkdf2:sha256'), \
-                role=role, permissions=json.dumps(permissions))
-        db.session.add(new_user)
+        if selected_user == 'newuser':
+            # Add the new_user to the database, then redirect home.
+            new_user = User(username=username, \
+                    password=generate_password_hash(password1, method='pbkdf2:sha256'), \
+                    role=role, permissions=json.dumps(permissions))
+            db.session.add(new_user)
+            db.session.commit()
+            flash("New User Added!")
+            return redirect(url_for('views.home'))
+
+        if change_user_pass == 'true':
+            user_ident.username = username
+            user_ident.password = generate_password_hash(password1, method='pbkdf2:sha256')
+            user_ident.role = role
+            user_ident.permissions = json.dumps(permissions)
+            db.session.commit()
+            flash(f"User {username} Updated!")
+            return redirect(url_for('auth.edit_users', username=username))
+
+        user_ident.role = role
+        user_ident.permissions = json.dumps(permissions)
         db.session.commit()
-        flash("New User Added!")
-        return redirect(url_for('views.home'))
+        flash(f"User {username} Updated!")
+        return redirect(url_for('auth.edit_users', username=username))
 
-    return render_template("create_user.html", user=current_user, installed_servers=installed_servers, controls=all_controls)

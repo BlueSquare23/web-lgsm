@@ -3,30 +3,34 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
-* Add the ability to create multiple web interface users w/ different levels of
-  permissions.
-  - User requested this: https://github.com/BlueSquare23/web-lgsm/issues/19
-  - I've also had it in the back of my mind since I start the project.
-  - Fun fact, the sample code example flask app this project's structure is
-    taken from is originally a multi user blog so shouldn't be too hard to
-    borrow some code from that project and roll it into this.
-  - I'm thinking first user that get's setup has admin privileges.
-  - Then the admin user can create new users and assign permissions.
-  - Additional web interface users can be setup as other admins or as user
-    level users.
-  - Only Admins can create / delete other users.
-  - Non-admin level user permissions should be:
-    - Can install new game servers: true/false
-    - Can add existing game servers: true/false
-    - Can manage game servers: checkbox list
-      - Can edit cfgs: true/false
-      - Can delete game server: true/false 
-      - Controls they're allowed to use: checkbox list
-      - All of the above (full control over game server): true/false
-  - I kinda like the idea of having the colors in the main.conf. But yeah maybe
-    I should just byte the bullet an put those in the db, then each user could
-    have their own colors. Don't think that'll be in permissions mk1 though.
+* Finish multi web interface users feature.
+  - Display current_user.username in top navbar to reflect to end users who
+    they're logged in as. 
+    - I mean I've already had situations where I need this so other people
+      probably will too.
+  - Create edit users page to adjust user permissions after the fact.
+    - Think I can just adapt the new create_user page for this.
+      - Might consolidate things into a single user management page.
+      - Or might just make a new page for edit and share a bunch of elements /
+        logic between them. Haven't decided yet.
+    - Should allow admins to del users on this page as well.
+  - Implement permissions controls for affected routes.
+    - Should be simple enough to just check the permissions json for each
+      route.
 
+* Test new permissions controls.
+  - Test create new user.
+  - Test login as new user.
+  - Test user permissions are effective.
+    - At first new user shouldn't be able to do anything go to any pages, admin
+      any servers.
+    - Then permissions should be changed by an admin user, log back in as
+      non-admin user, test can now do things that have been opened up.
+  - Test user delete.
+  - Maybe also run some sqlite3 cli cmds in the tests just to verify from the
+    outside that db changes are being made properly n'@.
+    - Still don't totally know how I feel about this idea yet...
+  
 
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---

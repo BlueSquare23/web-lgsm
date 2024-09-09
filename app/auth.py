@@ -6,8 +6,7 @@ from .models import User, GameServer
 from .utils import check_require_auth_setup_fields, valid_password
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, confirm_login, logout_user, login_required, current_user
-from flask import Blueprint, render_template, redirect, url_for, request, \
-                                                              flash, abort
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort
 
 auth = Blueprint("auth", __name__)
 
@@ -48,7 +47,8 @@ def login():
                 if current_user.is_authenticated:
                     logout_user()
                 flash("Logged in!", category='success')
-                login_user(user, remember=True)
+                four_weeks = 2419200
+                login_user(user, remember=True, duration=four_weeks)
                 confirm_login()
                 return redirect(url_for('views.home'))
             else:

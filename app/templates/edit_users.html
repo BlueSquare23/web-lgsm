@@ -126,8 +126,8 @@
                   <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllGameServers()">All Game Servers</button>
                   <div class="form-check">
                     {% for server in installed_servers %}
-                      <input class="form-check-input gameserver-checkbox" type="checkbox" id="server_{{ server }}" name="servers" value="{{ server }}">
-                      <label class="form-check-label" for="server_{{ server }}">{{ server }}</label><br />
+                      <input class="form-check-input gameserver-checkbox" type="checkbox" id="server_{{ server.install_name }}" name="servers" value="{{ server.install_name }}">
+                      <label class="form-check-label" for="server_{{ server.install_name }}">{{ server.install_name }}</label><br />
                     {% endfor %}
                   </div>
                   {% else %}
@@ -148,6 +148,12 @@
         </form>
         {% endif %}
       </div>
+      {% if selected_user != 'newuser' %}
+      <a id="del-button" title="Perminantly delete web-lgsm user" onclick="return confirm('Are you sure you want to delete {{selected_user}}?');" class="btn btn-outline-danger" href="/edit_users?username={{selected_user}}&delete=true" role="button">
+        Delete {{selected_user}}
+      </a>
+      {% endif %}
+
 
 <script>
   const userRole = '{{user_role}}';
@@ -170,6 +176,14 @@
     const controlCheckboxes = document.querySelectorAll('.control-checkbox');
     controlCheckboxes.forEach(checkbox => {
       if (userPerms.controls.includes(checkbox.value)) {
+        checkbox.checked = true;
+      }
+    });
+
+    // Check the servers checkboxes.
+    const serverCheckboxes = document.querySelectorAll('.gameserver-checkbox');
+    serverCheckboxes.forEach(checkbox => {
+      if (userPerms.servers.includes(checkbox.value)) {
         checkbox.checked = true;
       }
     });

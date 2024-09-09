@@ -122,10 +122,11 @@ def logout():
 @login_required
 def edit_users():
     if current_user.role != 'admin':
-        flash("Only Admins are allowed to create new users!", category='error')
+        flash("Only Admins are allowed to edit users!", category='error')
         return redirect(url_for('views.home'))
 
     installed_servers = GameServer.query.all()
+    all_server_names = [server.install_name for server in installed_servers]
     all_controls = ["start", "stop", "restart", "monitor", "test-alert", "details",
                 "postdetails", "update-lgsm", "update", "backup", "console", "send"]
 
@@ -133,13 +134,25 @@ def edit_users():
 
     if request.method == 'GET':
         selected_user = request.args.get("username")
+        delete = request.args.get("delete")
 
-        user_ident = None
-        if selected_user != 'newuser' and selected_user != None:
-            user_ident = User.query.filter_by(username=selected_user).first()
-            if user_ident == None:
-                flash("Invalid user selected!", category='error')
+        user_ident = User.query.filter_by(username=selected_user).first()
+        if user_ident == None and selected_user != 'newuser':
+            return redirect(url_for('auth.edit_users', username='newuser'))
+
+        if selected_user == 'newuser' and delete == 'true':
+            flash("Can't delete user that doesn't exist yet!", category='error')
+            return redirect(url_for('auth.edit_users'))
+
+        if selected_user != 'newuser' and delete == 'true':
+            if user_ident.username == current_user.username:
+                flash("Cannot delete currently logged in user!", category='error')
                 return redirect(url_for('auth.edit_users'))
+
+            db.session.delete(user_ident)
+            db.session.commit()
+            flash(f"User {selected_user} deleted!")
+            return redirect(url_for('auth.edit_users'))
 
         if user_ident == None:
             user_role = None
@@ -203,13 +216,23 @@ def edit_users():
         if delete_server == 'true':
             permissions['delete_server'] = True
 
-        permissions['controls'] = False
+        permissions['controls'] = []
         if controls:
+            # Validate supplied control(s) are in allowed list.
             for control in controls:
                 if control not in all_controls:
                     flash("Invalid Control Supplied!", category='error')
                     return redirect(url_for('auth.edit_users'))
             permissions['controls'] = controls
+
+        permissions['servers'] = []
+        if servers:
+            # Validate supplied server(s) are in installed list.
+            for server in servers:
+                if server not in all_server_names:
+                    flash("Invalid Server Supplied!", category='error')
+                    return redirect(url_for('auth.edit_users'))
+            permissions['servers'] = servers 
 
         # Only explicitly set admin if supplied.
         if is_admin != None:

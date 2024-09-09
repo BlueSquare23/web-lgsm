@@ -15,7 +15,7 @@ from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
-                                redirect, Response, send_from_directory, jsonify, g
+                                redirect, Response, send_from_directory, jsonify
 
 # Globals dictionary to hold output objects.
 SERVERS = {}
@@ -152,6 +152,12 @@ def controls():
     if server_name == None:
         flash("No server specified!", category="error")
         return redirect(url_for('views.home'))
+
+    if current_user.role != 'admin':
+        user_perms = json.loads(current_user.permissions)
+        if server_name not in user_perms['servers']:
+            flash("Your user does NOT have permission access this game server!", category="error")
+            return redirect(url_for('views.home'))
 
     # Check that the submitted server exists in db.
     server = GameServer.query.filter_by(install_name=server_name).first()
@@ -341,6 +347,12 @@ def install():
     global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
+
+    if current_user.role != 'admin':
+        user_perms = json.loads(current_user.permissions)
+        if not user_perms['mod_settings']:
+            flash("Your user does NOT have permission access the install page!", category="error")
+            return redirect(url_for('views.home'))
 
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
@@ -552,6 +564,12 @@ def settings():
     if env_debug == 'true' or debug:
         DEBUG = True
 
+    if current_user.role != 'admin':
+        user_perms = json.loads(current_user.permissions)
+        if not user_perms['mod_settings']:
+            flash("Your user does NOT have permission access the settings page!", category="error")
+            return redirect(url_for('views.home'))
+
     config_options = {
         "text_color": text_color,
         "terminal_height": terminal_height,
@@ -708,6 +726,12 @@ def add():
     if env_debug == 'true' or debug:
         DEBUG = True
 
+    if current_user.role != 'admin':
+        user_perms = json.loads(current_user.permissions)
+        if not user_perms['mod_settings']:
+            flash("Your user does NOT have permission access the add page!", category="error")
+            return redirect(url_for('views.home'))
+
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
@@ -848,6 +872,12 @@ def delete():
     global DEBUG # Tests fail unless this is explicitly a global.
     if env_debug == 'true' or debug:
         DEBUG = True
+
+    if current_user.role != 'admin':
+        user_perms = json.loads(current_user.permissions)
+        if not user_perms['delete_server']:
+            flash("Your user does NOT have permission to delete servers!", category="error")
+            return redirect(url_for('views.home'))
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""

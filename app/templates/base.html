@@ -36,9 +36,12 @@
               <a class="nav-link" href="/home">Home</a>
             </li>
             {% if user.is_authenticated %}
+              {% set parsed_json = user.permissions|from_json %}
+              {% if user.role == 'admin' or parsed_json.mod_settings %}
             <li class="nav-item">
               <a class="nav-link" href="/settings">Settings</a>
             </li>
+              {% endif %}
             <li class="nav-item">
               <a class="nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
             </li>

@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from flask import Flask
 from pathlib import Path
 from dotenv import load_dotenv
@@ -48,5 +49,10 @@ def main():
     @login_manager.user_loader
     def load_user(id):
         return db.session.get(User, int(id))
+
+    # Filter for jinja2 json parsing for user permissions.
+    @app.template_filter('from_json')
+    def from_json_filter(s):
+        return json.loads(s)
 
     return app

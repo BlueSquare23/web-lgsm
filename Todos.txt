@@ -3,8 +3,13 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
+* Make so even if user has delete privs, they can still only delete game
+  servers they have access too.
+  - As of right now, that is not the case and they could in theory delete game
+    servers they aren't allowed access too.
+  - Just an oversight I noticed while testing.
+
 * Write tests for new permissions controls.
-  - Test create new user.
   - Test login as new user.
   - Test user permissions are effective.
     - At first new user shouldn't be able to do anything go to any pages, admin
@@ -41,6 +46,12 @@
 
 ### v1.8.0 Pt 4. The Rest...
 ---
+
+* Make use of some sort of logger to send debug message out.
+  - Right now I'm just being very lazy and printing them at various debug
+    levels.
+  - There are almost certainly already logger tools for doing this.
+  - Or I could just write my own logger function.
 
 * Make config editor work for game servers owned by other system users.
   - Think I'll have to re-write / add-to the write new config data logic.

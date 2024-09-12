@@ -344,7 +344,7 @@ def install():
         DEBUG = True
 
     # Check if user has permissions to install route.
-    if not user_has_permissions(current_user, 'install', server_name):
+    if not user_has_permissions(current_user, 'install'):
         return redirect(url_for('views.home'))
 
     # Pull in install server list from game_servers.json file.
@@ -555,7 +555,7 @@ def settings():
         DEBUG = True
 
     # Check if user has permissions to settings route.
-    if not user_has_permissions(current_user, 'settings', server_name):
+    if not user_has_permissions(current_user, 'settings'):
         return redirect(url_for('views.home'))
 
     config_options = {
@@ -715,7 +715,7 @@ def add():
         DEBUG = True
 
     # Check if user has permissions to add route.
-    if not user_has_permissions(current_user, 'add', server_name):
+    if not user_has_permissions(current_user, 'add'):
         return redirect(url_for('views.home'))
 
     # Kill any lingering background watch processes in case console page is
@@ -859,12 +859,12 @@ def delete():
     if env_debug == 'true' or debug:
         DEBUG = True
 
-    # Check if user has permissions to delete route.
-    if not user_has_permissions(current_user, 'delete', server_name):
-        return redirect(url_for('views.home'))
-
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
+        # Check if user has permissions to delete route & server.
+        if not user_has_permissions(current_user, 'delete', server_name):
+            return redirect(url_for('views.home'))
+
         server = GameServer.query.filter_by(install_name=server_name).first()
         if server == None:
             flash("No such server found!", category="error")

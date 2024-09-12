@@ -150,7 +150,7 @@ def edit_users():
                 return redirect(url_for('auth.edit_users'))
 
             if user_ident.id == 1:
-                flash("Cannot delete main admin user!", category='error')
+                flash("Cannot delete main admin user! Anti-lockout protection!", category='error')
                 return redirect(url_for('auth.edit_users'))
 
             db.session.delete(user_ident)
@@ -194,6 +194,10 @@ def edit_users():
             user_ident = User.query.filter_by(username=username).first()
             if user_ident == None:
                 flash("Invalid user selected!", category='error')
+                return redirect(url_for('auth.edit_users'))
+
+            if user_ident.id == 1:
+                flash("Cannot modify main admin user's permissions! Anti-lockout protection!", category='error')
                 return redirect(url_for('auth.edit_users'))
 
         permissions = dict()

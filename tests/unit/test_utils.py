@@ -3,6 +3,13 @@ import pytest
 import json
 from app.utils import *
 
+# Mock current user class.
+class ModCurrentUser:
+    def __init__(self, role, permissions):
+        self.role = role 
+        self.permissions = permissions 
+
+
 def test_valid_cfg_name():
     gs_cfgs = open('json/accepted_cfgs.json', 'r')
     json_data = json.load(gs_cfgs)
@@ -24,7 +31,9 @@ def test_get_commands():
     json_data = json.load(commands_json)
     commands_json.close()
 
-    for command in get_commands('mcserver', 'no'):
+    current_user = ModCurrentUser('admin', json.dumps({'admin': True}))
+
+    for command in get_commands('mcserver', 'no', current_user):
         assert command.short_cmd in json_data["short_cmds"]
         assert len(command.short_cmd) < 3
         assert command.long_cmd in json_data["long_cmds"]
@@ -55,15 +64,35 @@ def test_valid_command():
     json_data = json.load(commands_json)
     commands_json.close()
 
+    current_user = ModCurrentUser('admin', json.dumps({'admin': True}))
+
     valid_cmds = json_data["short_cmds"]
     for cmd in valid_cmds:
-        assert valid_command(cmd, 'mcserver', 'yes') == True
+        assert valid_command(cmd, 'mcserver', 'yes', current_user) == True
 
     # Send should be invalid when no is supplied to valid_command().
     invalid_cmds = ["fart", "blah", 777777, None, "---------", 'send']
     for cmd in invalid_cmds:
-        assert valid_command(cmd, 'mcserver', 'no') == False
-    
+        assert valid_command(cmd, 'mcserver', 'no', current_user) == False
+
+    # Test valid & invalid cmds for user.
+    permissions = dict()
+    permissions['controls'] = ['start', 'stop']
+    current_user2 = ModCurrentUser('user', json.dumps(permissions))
+
+    invalid_cmds = json_data['short_cmds']
+    invalid_cmds.remove('st')
+    invalid_cmds.remove('sp')
+
+    print(current_user2.permissions)
+
+    for cmd in invalid_cmds:
+        assert valid_command(cmd, 'mcserver', 'no', current_user2) == False
+
+    valid_cmds = ['st', 'sp']
+    for cmd in valid_cmds:
+        assert valid_command(cmd, 'mcserver', 'no', current_user2) == True
+
 
 def test_valid_install_options():
     servers_json = open('json/game_servers.json', 'r')

@@ -425,6 +425,8 @@ def get_servers():
 def valid_command(cmd, server, send_cmd, current_user):
     commands = get_commands(server, send_cmd, current_user)
     for command in commands:
+        print(command.short_cmd)
+        print(command.long_cmd)
         # Aka is valid command.
         if cmd == command.short_cmd:
             return True
@@ -631,6 +633,7 @@ def user_has_permissions(current_user, route, server_name=None):
         current_user (object): The currently logged in user object.
         route (string): The route to apply permissions controls to.
         server_name (string): Game server name to check user has access to.
+                              Only matters for controls & delete routes.
 
     Returns:
         bool: True if user has appropriate perms, False otherwise.
@@ -655,6 +658,10 @@ def user_has_permissions(current_user, route, server_name=None):
     if route == 'delete':
         if not user_perms['delete_server']:
             flash("Your user does NOT have permission to delete servers!", category="error")
+            return False
+
+        if server_name not in user_perms['servers']:
+            flash("Your user does NOT have permission to delete this game server!", category="error")
             return False
 
     if route == 'settings':

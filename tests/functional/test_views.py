@@ -363,6 +363,7 @@ def test_install_content(app, client):
         assert b"Top" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 
+
 # Test install page responses.
 def test_install_responses(app, client):
     # Test page redirects to login if user not already authenticated.
@@ -433,6 +434,7 @@ def test_settings_content(app, client):
         assert b"Note: Checking this box will restart your Web LGSM instance" in response.data
         assert b"Apply" in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+
 
 # Test settings page responses.
 def test_settings_responses(app, client):
@@ -532,6 +534,7 @@ def test_settings_responses(app, client):
     os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
     check_main_conf('remove_files = no')
 
+
 ### API system-usage tests.
 # Test system usage content & responses.
 def test_system_usage(app, client):
@@ -621,6 +624,7 @@ def test_edit_content(app, client):
         assert b"Please note," in response.data
         assert f"Web LGSM - Version: {VERSION}".encode() in response.data
 
+
 # Test edit page responses.
 def test_edit_responses(app, client):
     # Test page redirects to login if user not already authenticated.
@@ -705,6 +709,52 @@ def test_edit_responses(app, client):
     # Re-disable the cfg_editor for the sake of idempotency.
     os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
 
+
+#def test_create_new_user(app, client):
+#    # Login.
+#    with client:
+#        # Log test user in.
+#        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+#        assert response.status_code == 302
+#
+#        # Test page redirects to username=newuser by default.
+#        response = client.get('/edit_users', follow_redirects=True)
+#        assert response.status_code == 200
+#        assert response.request.path == url_for('auth.edit_users')
+#        assert response.request.query_string == b'username=newuser'
+#
+#        create_user_json = """{
+#            "selected_user": "newuser",
+#            "username": "test3",
+#            "password1": "**Testing12345",
+#            "password2": "**Testing12345",
+#            "is_admin": "false",
+#            "install_servers": "true",
+#            "add_servers": "true",
+#            "mod_settings": "true",
+#            "edit_cfgs": "true",
+#            "delete_server": "true",
+#            "controls": [
+#                "start",
+#                "stop",
+#                "restart",
+#                "monitor",
+#                "test-alert",
+#                "details",
+#                "postdetails",
+#                "update-lgsm",
+#                "update",
+#                "backup",
+#                "console",
+#                "send"
+#            ],
+#            "servers": "Minecraft"
+#        }"""
+#
+#        response = client.post('/edit_users', data=json.loads(create_user_json), follow_redirects=True)
+#        assert response.request.path == url_for('home')
+
+        
 
 def test_delete_game_server(app, client):
     # Login.

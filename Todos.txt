@@ -3,14 +3,6 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
-* Mess around with trying to break new code and make fixes.
-  - The new auth route code and other route code for adding users and enforcing
-    users permissions is fresh and not totally hardened yet.
-  - Time to poke at it, try weird inputs and look for any oversights I might
-    have missed previously.
-    - Writing tests will also help with this, but want to do it a bit by hand
-      first to catch and super obvious bugs.
-
 * Write tests for new permissions controls.
   - Test create new user.
   - Test login as new user.

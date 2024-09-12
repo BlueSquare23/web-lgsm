@@ -55,29 +55,27 @@
         <hr />
 
         {% for command in server_commands %}
-          {% if user.role == 'admin' or command.long_cmd in parsed_json.controls %}
-            {% if command.short_cmd == 'sd' %}
-            <div class="row">
-              <div class="col">
-                <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_name}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
-              </div>
-            {% else %}
-            <div class="row">
-              <div class="col">
-                <form method="GET" id="ctrls-form" action="/controls">
-                  <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
-                  <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
-
-                  <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
-                </form>
-              </div>
-            {% endif %}
-              <div class="col text-primary">
-                {{command.description}}
-              </div>
+          {% if command.short_cmd == 'sd' %}
+          <div class="row">
+            <div class="col">
+              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_name}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
             </div>
-            <br />
+          {% else %}
+          <div class="row">
+            <div class="col">
+              <form method="GET" id="ctrls-form" action="/controls">
+                <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+                <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
+
+                <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
+              </form>
+            </div>
           {% endif %}
+            <div class="col text-primary">
+              {{command.description}}
+            </div>
+          </div>
+          <br />
         {% endfor %}
       </div>
       <br />

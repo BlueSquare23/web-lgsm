@@ -149,6 +149,10 @@ def edit_users():
                 flash("Cannot delete currently logged in user!", category='error')
                 return redirect(url_for('auth.edit_users'))
 
+            if user_ident.id == 1:
+                flash("Cannot delete main admin user!", category='error')
+                return redirect(url_for('auth.edit_users'))
+
             db.session.delete(user_ident)
             db.session.commit()
             flash(f"User {selected_user} deleted!")
@@ -191,7 +195,6 @@ def edit_users():
             if user_ident == None:
                 flash("Invalid user selected!", category='error')
                 return redirect(url_for('auth.edit_users'))
-
 
         permissions = dict()
         role = 'user' # Default to user role.

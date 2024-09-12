@@ -343,25 +343,27 @@ def valid_cfg_name(cfg_file):
     return False
     
 
-# Turns data in commands.json into list of command objects that implement the
-# CmdDescriptor class.
-def get_commands(server, send_cmd):
+def get_commands(server, send_cmd, current_user):
+    """
+    Turns data in commands.json into list of command objects that implement the
+    CmdDescriptor class. This list of commands is used to validate user input
+    and populate the buttons on the controls page.
+
+    Args:
+        server (string): Name of game server to get commands for.
+        send_cmd (bool): Whether or not send cmd button is enabled.
+        current_user (object): Currently logged in flask user object.
+    """
     commands = []
 
-    # Try except in case problem with json files.
-    try:
-        commands_json = open('json/commands.json', 'r')
+    with open('json/commands.json', 'r') as commands_json:
         json_data = json.load(commands_json)
-        commands_json.close()
 
-        exemptions_json = open('json/ctrl_exemptions.json', 'r')
+    with open('json/ctrl_exemptions.json', 'r') as exemptions_json:
         exemptions_data = json.load(exemptions_json)
-        exemptions_json.close()
-    except:
-        return commands
 
     # Remove send cmd if option disabled in main.conf.
-    if send_cmd == "no":
+    if send_cmd == False:
         json_data["short_cmds"].remove("sd")
         json_data["long_cmds"].remove("send")
         json_data["descriptions"].remove("Send command to game server console.")
@@ -375,8 +377,7 @@ def get_commands(server, send_cmd):
         for desc in exemptions_data[server]['descriptions']:
             json_data["descriptions"].remove(desc)
 
-    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], \
-        json_data["descriptions"])
+    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], json_data["descriptions"])
 
     class CmdDescriptor:
         def __init__(self):
@@ -384,7 +385,20 @@ def get_commands(server, send_cmd):
             self.short_cmd = ""
             self.description = ""
 
+        def __str__(self):
+            return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
+
+        def __repr__(self):
+            return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
+
+    # Remove commands for non-admin users. Part of permissions controls.
+    user_perms = json.loads(current_user.permissions)
+
     for short_cmd, long_cmd, description in cmds:
+        if current_user.role != 'admin':
+            if long_cmd not in user_perms['controls']:
+                continue
+
         cmd = CmdDescriptor()
         cmd.long_cmd = long_cmd
         cmd.short_cmd = short_cmd
@@ -408,8 +422,8 @@ def get_servers():
 
 
 # Validates short commands.
-def valid_command(cmd, server, send_cmd):
-    commands = get_commands(server, send_cmd)
+def valid_command(cmd, server, send_cmd, current_user):
+    commands = get_commands(server, send_cmd, current_user)
     for command in commands:
         # Aka is valid command.
         if cmd == command.short_cmd:
@@ -608,3 +622,49 @@ def get_verbosity(verbostiy):
 
     return v
 
+
+def user_has_permissions(current_user, route, server_name=None):
+    """
+    Check's if current user has permissions to various routes.
+
+    Args:
+        current_user (object): The currently logged in user object.
+        route (string): The route to apply permissions controls to.
+        server_name (string): Game server name to check user has access to.
+
+    Returns:
+        bool: True if user has appropriate perms, False otherwise.
+
+    """
+    # Admins can always do anything.
+    if current_user.role == 'admin':
+        return True
+
+    user_perms = json.loads(current_user.permissions)
+
+    if route == 'install':
+        if not user_perms['install_servers']:
+            flash("Your user does NOT have permission access the install page!", category="error")
+            return False
+
+    if route == 'add':
+        if not user_perms['add_servers']:
+            flash("Your user does NOT have permission access the add page!", category="error")
+            return False
+
+    if route == 'delete':
+        if not user_perms['delete_server']:
+            flash("Your user does NOT have permission to delete servers!", category="error")
+            return False
+
+    if route == 'settings':
+        if not user_perms['mod_settings']:
+            flash("Your user does NOT have permission access the settings page!", category="error")
+            return False
+
+    if route == 'controls':
+        if server_name not in user_perms['servers']:
+            flash("Your user does NOT have permission access this game server!", category="error")
+            return False
+
+    return True

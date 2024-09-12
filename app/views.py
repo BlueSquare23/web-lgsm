@@ -28,6 +28,9 @@ CWD = os.getcwd()
 USER = getpass.getuser()
 DEBUG = False
 
+# Bootstrap spinner colors.
+SPINNER_COLORS = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light']
+
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
 
@@ -134,7 +137,7 @@ def controls():
     text_color = config['aesthetic']['text_color']
     terminal_height = config['aesthetic']['terminal_height']
     cfg_editor = config['settings']['cfg_editor']
-    send_cmd = config['settings']['send_cmd']
+    send_cmd = config['settings'].getboolean('send_cmd')
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
@@ -145,7 +148,7 @@ def controls():
 
     # Collect args from GET request.
     server_name = request.args.get("server")
-    script_arg = request.args.get("command")
+    short_cmd = request.args.get("command")
     console_cmd = request.args.get("cmd")
 
     # Can't load the controls page without a server specified.
@@ -153,11 +156,9 @@ def controls():
         flash("No server specified!", category="error")
         return redirect(url_for('views.home'))
 
-    if current_user.role != 'admin':
-        user_perms = json.loads(current_user.permissions)
-        if server_name not in user_perms['servers']:
-            flash("Your user does NOT have permission access this game server!", category="error")
-            return redirect(url_for('views.home'))
+    # Check if user has permissions to game server for controls route.
+    if not user_has_permissions(current_user, 'controls', server_name):
+        return redirect(url_for('views.home'))
 
     # Check that the submitted server exists in db.
     server = GameServer.query.filter_by(install_name=server_name).first()
@@ -180,14 +181,15 @@ def controls():
             cfg_paths = []
 
     # Pull in commands list from commands.json file.
-    commands_list = get_commands(server.script_name, send_cmd)
-    if not commands_list:
+    cmds_list = get_commands(server.script_name, send_cmd, current_user)
+    # TODO: Remove / change this as a way to check if json file is okay. Right
+    # now this is serving the purposes of telling if the json file has become
+    # mangled or not, in case users have edited it by hand and left off a comma
+    # or something. I should make a dedicated function to check if json data is
+    # all good and put that at the top of the route instead.
+    if not cmds_list:
         flash('Error loading commands.json file!', category='error')
         return redirect(url_for('views.home'))
-
-    # Bootstrap spinner colors.
-    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
-                                                        'info', 'light']
 
     # Object to hold output from any running daemon threads.
     output_obj = OutputContainer([''], False)
@@ -202,10 +204,10 @@ def controls():
 
     script_path = os.path.join(server.install_path, server.script_name)
 
-    # This code block is only triggered in the event the script_arg param is
+    # This code block is only triggered in the event the short_cmd param is
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
-    if script_arg:
+    if short_cmd:
         # For running cmds as alt users.
         sudo_prepend = ['/usr/bin/sudo', '-n', '-u', server.username]
 
@@ -217,13 +219,13 @@ def controls():
         if server.username == None:
             server.username = getpass.getuser()
 
-        # Validate script_arg against contents of commands.json file.
-        if not valid_command(script_arg, server.script_name, send_cmd):
+        # Validate short_cmd against contents of commands.json file.
+        if not valid_command(short_cmd, server.script_name, send_cmd, current_user):
             flash("Invalid Command!", category="error")
             return redirect(url_for('views.controls', server=server_name))
 
         # Console option, use tmux capture-pane to get output.
-        if script_arg == "c":
+        if short_cmd == "c":
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
 
@@ -260,7 +262,7 @@ def controls():
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
-        elif script_arg == "sd":
+        elif short_cmd == "sd":
             # Check if send_cmd is enabled in main.conf.
             if send_cmd == 'no':
                 flash("Send console command button disabled!", category='error')
@@ -294,7 +296,7 @@ def controls():
             if server.username != USER:
                 cmd += sudo_prepend
 
-            cmd += [script_path, script_arg, console_cmd]
+            cmd += [script_path, short_cmd, console_cmd]
             daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='ConsoleCMD')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
@@ -306,27 +308,20 @@ def controls():
             if server.username != USER:
                 cmd += sudo_prepend
 
-            cmd += [script_path, script_arg]
+            cmd += [script_path, short_cmd]
             daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name='Command')
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
-    # Default to no refresh.
-    refresh = False
-
     if DEBUG and verbosity >= 1:
         print(f"##### DEBUG server_name {server_name}")
-        print("##### DEBUG commands_list ")
-        pprint(commands_list)
+        print(f"##### DEBUG cmds_list {cmds_list}")
         print(f"##### DEBUG text_color {text_color}")
         print(f"##### DEBUG terminal_height {terminal_height}")
-        print(f"##### DEBUG bs_colors {bs_colors}")
+        print(f"##### DEBUG SPINNER_COLORS {SPINNER_COLORS}")
         print(f"##### DEBUG cfg_paths {cfg_paths}")
         
-    return render_template("controls.html", user=current_user, \
-        server_name=server_name, server_commands=commands_list, \
-        text_color=text_color, terminal_height=terminal_height, \
-                      bs_colors=bs_colors, cfg_paths=cfg_paths)
+    return render_template("controls.html", user=current_user, server_name=server_name, server_commands=cmds_list, text_color=text_color, terminal_height=terminal_height, spinners_colors=SPINNER_COLORS, cfg_paths=cfg_paths)
 
 
 ######### Install Page #########
@@ -348,11 +343,9 @@ def install():
     if env_debug == 'true' or debug:
         DEBUG = True
 
-    if current_user.role != 'admin':
-        user_perms = json.loads(current_user.permissions)
-        if not user_perms['mod_settings']:
-            flash("Your user does NOT have permission access the install page!", category="error")
-            return redirect(url_for('views.home'))
+    # Check if user has permissions to install route.
+    if not user_has_permissions(current_user, 'install', server_name):
+        return redirect(url_for('views.home'))
 
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
@@ -366,9 +359,6 @@ def install():
     # Kill any lingering background watch processes if page is reloaded.
     kill_watchers(last_request_for_output)
 
-    # Bootstrap spinner colors.
-    bs_colors = ['primary', 'secondary', 'success', 'danger', 'warning', \
-                                                        'info', 'light']
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
     check_and_get_lgsmsh(f"./scripts/{lgsmsh}")
@@ -490,7 +480,7 @@ def install():
                     cancel_install(output)
 
     return render_template("install.html", user=current_user, \
-            servers=install_list, text_color=text_color, bs_colors=bs_colors, \
+            servers=install_list, text_color=text_color, spinner_colors=SPINNER_COLORS, \
             install_name=install_name, terminal_height=terminal_height, running_installs=running_installs)
 
 
@@ -564,11 +554,9 @@ def settings():
     if env_debug == 'true' or debug:
         DEBUG = True
 
-    if current_user.role != 'admin':
-        user_perms = json.loads(current_user.permissions)
-        if not user_perms['mod_settings']:
-            flash("Your user does NOT have permission access the settings page!", category="error")
-            return redirect(url_for('views.home'))
+    # Check if user has permissions to settings route.
+    if not user_has_permissions(current_user, 'settings', server_name):
+        return redirect(url_for('views.home'))
 
     config_options = {
         "text_color": text_color,
@@ -726,11 +714,9 @@ def add():
     if env_debug == 'true' or debug:
         DEBUG = True
 
-    if current_user.role != 'admin':
-        user_perms = json.loads(current_user.permissions)
-        if not user_perms['mod_settings']:
-            flash("Your user does NOT have permission access the add page!", category="error")
-            return redirect(url_for('views.home'))
+    # Check if user has permissions to add route.
+    if not user_has_permissions(current_user, 'add', server_name):
+        return redirect(url_for('views.home'))
 
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
@@ -873,11 +859,9 @@ def delete():
     if env_debug == 'true' or debug:
         DEBUG = True
 
-    if current_user.role != 'admin':
-        user_perms = json.loads(current_user.permissions)
-        if not user_perms['delete_server']:
-            flash("Your user does NOT have permission to delete servers!", category="error")
-            return redirect(url_for('views.home'))
+    # Check if user has permissions to delete route.
+    if not user_has_permissions(current_user, 'delete', server_name):
+        return redirect(url_for('views.home'))
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""

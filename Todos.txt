@@ -3,11 +3,21 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
-* Make so even if user has delete privs, they can still only delete game
-  servers they have access too.
-  - As of right now, that is not the case and they could in theory delete game
-    servers they aren't allowed access too.
-  - Just an oversight I noticed while testing.
+* Fix home page server listing when web-lgsm user has none.
+  - I ripped out some jinja code on the home page which turns out I needed so
+    the html for when user has no game servers.
+    - Right now just a black box, not correct.
+
+* Fix install listing.
+  - I broke something because this isn't showing the running script output
+    anymore after clicking back to it...
+
+* Fix post install new group adoption.
+  - This is going to be tricky and don't know I went this far without noticing
+    it. Problem with not working in a clean environment.
+  - Basically I need the web-lgsm main process to somehow source the new group
+    so it knows its in the newly installed server's group.
+    - I'm thinking it needs to basically run the (newgrp command).
 
 * Write tests for new permissions controls.
   - Test login as new user.
@@ -26,8 +36,16 @@
   - Make it now accept an optarg for user and then change that users password.
   - Default to first primary admin user.
 
+* Apply autoformatting via `black`.
+  - No not the award winning ps2 game from 2006.
+  - The python module.
+
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
+
+* Make debug stuff more robust.
+  - I half sketched it out earlier.
+  - But time to make a dedicated debug function for handling output.
 
 * Containerize Project!
   - Not entirely sure how to do this yet...
@@ -43,6 +61,10 @@
     containers.
   - Issue: https://github.com/BlueSquare23/web-lgsm/issues/16
   - The LGSM themselves provide docker images of game servers.
+
+* Test these changes.
+
+* Apply autoformatting via `black`.
 
 ### v1.8.0 Pt 4. The Rest...
 ---
@@ -93,6 +115,9 @@
   - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
     too.
 
+### v1.8.0 Pt 5. QA...
+---
+
 * Thorough code review process.
   - Pt 1. Identify targets for refactoring. Just find and tag for later things
     that need refactored.
@@ -130,11 +155,67 @@
       lines twice if I didn't have to.
       - But I've grown as a programmer since then and now no longer care.
 
+* Apply autoformatting via `black`.
+
+* MANUAL QA TESTING.
+  - Going to try to bribe my friends with pizza and or fine lettuces to go
+    through and make sure its doing the needful.
+  - Look for bugs, try to break it, suggest improvements.
+    - Small bugs if found, can be fixed.
+    - Big bugs if found, can be hackily dealt with, then properly fixed in next
+      release.
+    - Feature suggestions can go into the next release.
+
+* Add new docs & Fix existing docs.
+  - A decent amount of review needs done here, I haven't even begun to look but
+    probs going to be a lot.
+
 * Fix up Readme.
   - Update Readme gifs with newest look of interface.
   - Add contribute section pointing users to submitting an issue or submitting a
     pull request.
     - I have the community docs for this now.
+
+
+## Beta Version 1.9.0 Todos
+
+* Re-write routes to be all api based.
+  - I know it might seem tedious, but what this will give me is an api that
+    other people could use to do whatever they want.
+  - I'd be not only creating a web management interface for the lgsm, but a
+    whole web api.
+    - The app currently can be used like this already. A user could make GET
+      requests to the controls endpoints easily to start / stop / restart etc.
+    - However nothings in real REST format, can't do it in json, its all GET
+      requests when it should be POST's if it were an api, etc.
+
+* Introduce more oop concepts to project / slowly transition to more oop.
+  - Modularize utils functions using SOLID principals.
+    - This whole project can be broken apart more. Too many functions don't
+      really make sense and are doing too much.
+    - Everything should just do one thing.
+
+* Add Restart/backup Scheduler.
+  - User suggested this feature and I think its a good one.
+    - https://github.com/BlueSquare23/web-lgsm/issues/20
+  - The idea here would be to create a simple web interface to wrap up adding
+    crontab entries. Then the actual restarts or backups will just be handled
+    by the lgsm game server cli script itself.
+  - I've got all of the above to work through first but I do like this idea and
+    want to add it in.
+  - Just a matter of time until I can get to it.
+
+* Build out support for Fedora, Rocky Linux, & AlmaLinux.
+  - These are all of the linuxes supported by the base lgsm project.
+    - https://docs.linuxgsm.com/linux/distro
+  - I don't anticipate this being too difficult...
+  - The install script needs updated.
+  - The tests need re-ran on all the linuxes.
+    - Maybeeeee I could setup custom gh action runners for these os's.
+    - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners
+    - But that seems like a lot, so might just only have CI for the Ubuntu one,
+      and I'll have to remember to just manually run the tests against and play
+      with the others before release.
 
 ## Backlog
 
@@ -148,17 +229,6 @@
   - kill_watchers gets the job done alright for rn.
   - But this whole system is probably one of those targets for refactoring &
     rethinking.
-
-* Add Restart/backup Scheduler.
-  - User suggested this feature and I think its a good one.
-    - https://github.com/BlueSquare23/web-lgsm/issues/20
-  - The idea here would be to create a simple web interface to wrap up adding
-    crontab entries. Then the actual restarts or backups will just be handled
-    by the lgsm game server cli script itself.
-  - I've got all of the above to work through first but I do like this idea and
-    want to add it in.
-  - Just a matter of time until I can get to it.
-
 
 ## Pie in the Sky
 

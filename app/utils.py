@@ -458,6 +458,10 @@ def valid_script_name(script_name):
 def valid_server_name(server_name):
     servers = get_servers()
     for server, s_name in servers.items():
+        # Convert s_name to a unix friendly directory name.
+        s_name = s_name.replace(" ", "_")
+        s_name = s_name.replace(":", "")
+
         if s_name == server_name:
             return True
     return False

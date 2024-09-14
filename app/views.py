@@ -361,7 +361,7 @@ def install():
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh(f"./scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"scripts/{lgsmsh}")
 
     # Check if any installs are currently running.
     running_installs = get_running_installs()
@@ -398,8 +398,6 @@ def install():
         # Object to hold output from any running daemon threads. Since this is
         # the install route delete any previously held output objects for
         # server name. Clearly this is the output we want to look at.
-#        if server_full_name in SERVERS:
-#            del SERVERS[server_full_name]
         SERVERS[server_full_name] = OutputContainer([''], False, '')
 
         # Set the output object to the one stored in the global dictionary.
@@ -433,8 +431,7 @@ def install():
 
         if os.path.exists(ansible_vars['install_path']):
             flash('Install directory already exists.', category='error')
-            flash('Did you perhaps have this server installed previously?', \
-                                                            category='error')
+            flash('Did you perhaps have this server installed previously?', category='error')
             return redirect(url_for('views.install'))
 
         write_ansible_vars_json(ansible_vars)
@@ -445,6 +442,14 @@ def install():
             username=ansible_vars['gs_user'])
         db.session.add(new_game_server)
         db.session.commit()
+
+        # Update web user's permissions.
+        if current_user.role != 'admin':
+            user_ident = User.query.filter_by(username=current_user.username).first()
+            user_perms = json.loads(user_ident.permissions)
+            user_perms['servers'].append(server_full_name)
+            user_ident.permissions = json.dumps(user_perms)
+            db.session.commit()
 
         cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
 

@@ -3,18 +3,6 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
-* Write tests for new permissions controls.
-  - Test login as new user.
-  - Test user permissions are effective.
-    - At first new user shouldn't be able to do anything go to any pages, admin
-      any servers.
-    - Then permissions should be changed by an admin user, log back in as
-      non-admin user, test can now do things that have been opened up.
-  - Test user delete.
-  - Maybe also run some sqlite3 cli cmds in the tests just to verify from the
-    outside that db changes are being made properly n'@.
-    - Still don't totally know how I feel about this idea yet...
-  
 * Make `web-lgsm.py` script change password for supplied user.
   - Already has a change pass option.
   - Make it now accept an optarg for user and then change that users password.
@@ -202,6 +190,11 @@
       with the others before release.
 
 ## Backlog
+
+* Write some database tests that use the sqlite3 cli to test that data is
+  actually making it into the db file.
+  - So just anywhere the app add stuff to the db, just verify with sqlite3
+    commands that its in there.
 
 * Add Python Selenium end-to-end tests to actually login and do a bunch of
   stuff in the web interface.

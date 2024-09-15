@@ -710,51 +710,92 @@ def test_edit_responses(app, client):
     os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
 
 
-#def test_create_new_user(app, client):
-#    # Login.
-#    with client:
-#        # Log test user in.
-#        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
-#        assert response.status_code == 302
-#
-#        # Test page redirects to username=newuser by default.
-#        response = client.get('/edit_users', follow_redirects=True)
-#        assert response.status_code == 200
-#        assert response.request.path == url_for('auth.edit_users')
-#        assert response.request.query_string == b'username=newuser'
-#
-#        create_user_json = """{
-#            "selected_user": "newuser",
-#            "username": "test3",
-#            "password1": "**Testing12345",
-#            "password2": "**Testing12345",
-#            "is_admin": "false",
-#            "install_servers": "true",
-#            "add_servers": "true",
-#            "mod_settings": "true",
-#            "edit_cfgs": "true",
-#            "delete_server": "true",
-#            "controls": [
-#                "start",
-#                "stop",
-#                "restart",
-#                "monitor",
-#                "test-alert",
-#                "details",
-#                "postdetails",
-#                "update-lgsm",
-#                "update",
-#                "backup",
-#                "console",
-#                "send"
-#            ],
-#            "servers": "Minecraft"
-#        }"""
-#
-#        response = client.post('/edit_users', data=json.loads(create_user_json), follow_redirects=True)
-#        assert response.request.path == url_for('home')
+def test_new_user_has_no_permissions(app, client):
+    """
+    Test's that the new user cannot do anything in the web interface yet,
+    except login.
+    """
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':'test2', 'password':PASSWORD})
+        assert response.status_code == 302
 
-        
+        # Test edit_user page. Should never be allowed with or without perms.
+        resp_code = 200
+        error_msg = b"Only Admins are allowed to edit users"
+        response = client.get('/edit_users', data={'username':'newuser'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.home')
+
+        # Test install page.
+        response = client.get('/install', follow_redirects=True)
+        error_msg = b'Your user does NOT have permission access the install page'
+        check_response(response, error_msg, resp_code,  'views.home')
+
+        # Test add page.
+        response = client.get('/add', follow_redirects=True)
+        error_msg = b'Your user does NOT have permission access the add page'
+        check_response(response, error_msg, resp_code, 'views.home')
+
+        # Test delete page.
+        response = client.get(f'/delete?server={TEST_SERVER}', follow_redirects=True)
+        error_msg = b'Your user does NOT have permission to delete servers'
+        check_response(response, error_msg, resp_code, 'views.home')
+
+        # Test settings page.
+        response = client.get('/settings', follow_redirects=True)
+        error_msg = b'Your user does NOT have permission access the settings page'
+        check_response(response, error_msg, resp_code, 'views.home')
+
+        # Test game server controls page.
+        response = client.get(f'/controls?server={TEST_SERVER}', follow_redirects=True)
+        error_msg = b'Your user does NOT have permission access this game server'
+        print(response.data.decode('utf-8'))
+        check_response(response, error_msg, resp_code, 'views.home')
+
+
+def test_enable_new_user_perms(app, client):
+    # Login as admin.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        response = client.get('/edit_users?username=newuser')
+        assert response.status_code == 200
+
+        create_user_json = """{
+            "selected_user": "test2",
+            "username": "test2",
+            "is_admin": "false",
+            "change_user_pass": "false",
+            "install_servers": "true",
+            "add_servers": "true",
+            "mod_settings": "true",
+            "edit_cfgs": "true",
+            "delete_server": "true",
+            "controls": [
+                "start",
+                "stop",
+                "restart",
+                "monitor",
+                "test-alert",
+                "details",
+                "postdetails",
+                "update-lgsm",
+                "update",
+                "backup",
+                "console",
+                "send"
+            ],
+            "servers": ["Mockcraft"]
+        }"""
+
+        response = client.post('/edit_users', data=json.loads(create_user_json), follow_redirects=True)
+        assert response.request.path == url_for('auth.edit_users')
+        print(response.data.decode('utf-8'))
+        assert b"User test2 Updated" in response.data
+
 
 def test_delete_game_server(app, client):
     # Login.
@@ -766,6 +807,87 @@ def test_delete_game_server(app, client):
         response = client.get('/delete?server=' + TEST_SERVER, follow_redirects=True)
         msg = b'Game server, Mockcraft deleted'
         check_response(response, msg, 200, 'views.home')
+
+
+def test_new_user_has_ALL_permissions(app, client):
+    """
+    Test's that the new user can do anything in the web interface. 
+    """
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':'test2', 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Test edit_user page. Should never be allowed with or without perms.
+        resp_code = 200
+        error_msg = b"Only Admins are allowed to edit users"
+        response = client.get('/edit_users', data={'username':'newuser'}, follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'views.home')
+
+        # Test install page.
+        response = client.get('/install', follow_redirects=True)
+        msg = b'Install a New LGSM Server'
+        check_response(response, msg, resp_code, 'views.install')
+
+        # Test add page.
+        response = client.get('/add', follow_redirects=True)
+        msg = b'Add Existing LGSM Installation'
+        check_response(response, msg, resp_code, 'views.add')
+
+        ## Test legit server add.
+        response = client.post('/add', data={'install_name':TEST_SERVER, \
+            'install_path':TEST_SERVER_PATH, 'script_name':TEST_SERVER_NAME}, \
+                                                       follow_redirects=True)
+        # Is 200 bc follow_redirects=True.
+        assert response.status_code == 200
+
+        # Check redirect by seeing if path changed.
+        assert response.request.path == url_for('views.home')
+        assert b"Game server added!" in response.data
+
+        # Test game server controls page.
+        response = client.get(f'/controls?server={TEST_SERVER}', follow_redirects=True)
+        msg = b'Server Controls for: Mockcraft'
+        check_response(response, msg, resp_code, 'views.controls')
+
+        # Test delete page.
+        response = client.get('/delete?server=' + TEST_SERVER, follow_redirects=True)
+        msg = b'Game server, Mockcraft deleted'
+        check_response(response, msg, resp_code, 'views.home')
+
+        # Test settings page.
+        response = client.get('/settings', follow_redirects=True)
+        msg = b'Web LGSM Settings'
+        check_response(response, msg, resp_code, 'views.settings')
+
+
+def test_delete_new_user(app, client):
+    # Login as admin.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
+
+        # Make sure can't do certain delete options first.
+        resp_code = 200
+        error_msg = b"Can&#39;t delete user that doesn&#39;t exist yet"
+        response = client.get('/edit_users?username=newuser&delete=true', follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'auth.edit_users')
+
+        error_msg = b"Cannot delete currently logged in user"
+        response = client.get(f'/edit_users?username={USERNAME}&delete=true', follow_redirects=True)
+        check_response(response, error_msg, resp_code, 'auth.edit_users')
+        
+        # TODO: Make test for this. Rn, this test doesn't work because above case block it.
+#        error_msg = b"Cannot delete main admin user"
+#        response = client.get(f'/edit_users?username={USERNAME}&delete=true', follow_redirects=True)
+#        check_response(response, error_msg, resp_code, 'auth.edit_users')
+
+        # Do a legit user delete.
+        response = client.get('/edit_users?username=test2&delete=true', follow_redirects=True)
+        assert response.status_code == 200
+        assert b'User test2 deleted' in response.data
 
 
 def full_game_server_install(client):

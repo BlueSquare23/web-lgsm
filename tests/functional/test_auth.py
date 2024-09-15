@@ -351,29 +351,24 @@ def test_create_new_user(app, client):
             "password1": "**Testing12345",
             "password2": "**Testing12345",
             "is_admin": "false",
-            "install_servers": "true",
-            "add_servers": "true",
-            "mod_settings": "true",
-            "edit_cfgs": "true",
-            "delete_server": "true",
-            "controls": [
-                "start",
-                "stop",
-                "restart",
-                "monitor",
-                "test-alert",
-                "details",
-                "postdetails",
-                "update-lgsm",
-                "update",
-                "backup",
-                "console",
-                "send"
-            ]
+            "install_servers": "false",
+            "add_servers": "false",
+            "mod_settings": "false",
+            "edit_cfgs": "false",
+            "delete_server": "false",
+            "controls": []
         }"""
 
         response = client.post('/edit_users', data=json.loads(create_user_json), follow_redirects=True)
         assert response.request.path == url_for('views.home')
         assert b"New User Added" in response.data
+
+
+def test_login_as_new_user(app, client):
+    # Login.
+    with client:
+        # Log test user in.
+        response = client.post('/login', data={'username':USERNAME, 'password':PASSWORD})
+        assert response.status_code == 302
 
 

@@ -187,6 +187,12 @@ def run_delete_user(vars_data):
     run_cmd(cmd)
 
 
+def touch(fname, times=None):
+    """Re-implement unix touch in python."""
+    with open(fname, 'a'):
+        os.utime(fname, times)
+
+
 def validate_install_path(install_path):
     """
     Check's if install path is in accepted list.
@@ -199,6 +205,7 @@ def validate_install_path(install_path):
     """
     try:
         install_path_list = os.path.join(CWD, 'playbooks/gs_allowed_paths.txt')
+        touch(install_path_list)
         with open(install_path_list, 'r') as file:
             return any(line.strip() == install_path for line in file)
     except FileNotFoundError:

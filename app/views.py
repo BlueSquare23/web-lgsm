@@ -7,7 +7,6 @@ import signal
 import shutil
 import getpass
 import configparser
-from pprint import pprint
 from . import db
 from .utils import *
 from .models import *
@@ -17,19 +16,17 @@ from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, flash, url_for, \
                                 redirect, Response, send_from_directory, jsonify
 
-# Globals dictionary to hold output objects.
-SERVERS = {}
-
-# Global last requested output time.
-last_request_for_output = int(time.time())
-
-# Misc Globals.
+# Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-DEBUG = False
-
 # Bootstrap spinner colors.
 SPINNER_COLORS = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light']
+
+# Globals.
+servers = {}  # Holds output objects.
+last_request_for_output = int(time.time())  # Holds last requested output time.
+debug = False
+verbosity = 0
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -41,6 +38,9 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=['GET'])
 @login_required
 def home():
+    global debug
+    global verbosity
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read('main.conf')
@@ -52,14 +52,10 @@ def home():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
-    print(current_user.username)
-    print(current_user.role)
-    print(current_user.permissions)
+    debug_handler('current_user.username', current_user.username, debug)
+    debug_handler('current_user.role', current_user.role, debug)
+    debug_handler('current_user.permissions', current_user.permissions, debug)
 
     config_options = {
         "text_color": text_color,
@@ -90,11 +86,10 @@ def home():
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
-    if DEBUG and verbosity >= 1:
-        print(f"##### DEBUG config_options {config_options}")
-        print(f"##### DEBUG installed_servers {installed_servers}")
-        print(f"##### DEBUG servers_to_users {servers_to_users}")
-        print(f"##### DEBUG server_status_dict {server_status_dict}")
+    debug_handler('config_options', config_options, debug)
+    debug_handler('installed_servers', installed_servers, debug)
+    debug_handler('servers_to_users', servers_to_users, debug)
+    debug_handler('server_status_dict', server_status_dict, debug)
 
     return render_template("home.html", user=current_user, \
                         servers_to_users=servers_to_users, \
@@ -107,13 +102,15 @@ def home():
 @views.route("/xtermjs", methods=['GET'])
 @login_required
 def xtermjs():
+    global servers
+
     server_name = 'testingxtermjs'
-    if not server_name in SERVERS:
+    if not server_name in servers:
         output_obj = OutputContainer([''], False)
-        SERVERS[server_name] = output_obj
+        servers[server_name] = output_obj
 
     # Set the output object to the one stored in the global dictionary.
-    output = SERVERS[server_name]
+    output = servers[server_name]
 
     cmd = ['/home/blue/Projects/web-lgsm/scripts/random.sh']
     daemon = Thread(target=shell_exec, args=(cmd, output),\
@@ -128,6 +125,9 @@ def xtermjs():
 @views.route("/controls", methods=['GET'])
 @login_required
 def controls():
+    global debug
+    global verbosity
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read('main.conf')
@@ -138,10 +138,6 @@ def controls():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -192,12 +188,12 @@ def controls():
     output_obj = OutputContainer([''], False)
 
     # If this is the first time we're ever seeing the server_name then put it
-    # and its associated output_obj in the global SERVERS dictionary.
-    if not server_name in SERVERS:
-        SERVERS[server_name] = output_obj
+    # and its associated output_obj in the global servers dictionary.
+    if not server_name in servers:
+        servers[server_name] = output_obj
 
     # Set the output object to the one stored in the global dictionary.
-    output = SERVERS[server_name]
+    output = servers[server_name]
 
     script_path = os.path.join(server.install_path, server.script_name)
 
@@ -310,13 +306,13 @@ def controls():
             daemon.start()
             return redirect(url_for('views.controls', server=server_name))
 
-    if DEBUG and verbosity >= 1:
-        print(f"##### DEBUG server_name {server_name}")
-        print(f"##### DEBUG cmds_list {cmds_list}")
-        print(f"##### DEBUG text_color {text_color}")
-        print(f"##### DEBUG terminal_height {terminal_height}")
-        print(f"##### DEBUG SPINNER_COLORS {SPINNER_COLORS}")
-        print(f"##### DEBUG cfg_paths {cfg_paths}")
+    if debug and verbosity >= 1:
+        print(f"##### debug server_name {server_name}")
+        print(f"##### debug cmds_list {cmds_list}")
+        print(f"##### debug text_color {text_color}")
+        print(f"##### debug terminal_height {terminal_height}")
+        print(f"##### debug SPINNER_COLORS {SPINNER_COLORS}")
+        print(f"##### debug cfg_paths {cfg_paths}")
         
     return render_template("controls.html", user=current_user, server_name=server_name, server_commands=cmds_list, text_color=text_color, terminal_height=terminal_height, spinners_colors=SPINNER_COLORS, cfg_paths=cfg_paths)
 
@@ -326,6 +322,10 @@ def controls():
 @views.route("/install", methods=['GET', 'POST'])
 @login_required
 def install():
+    global servers   
+    global debug
+    global verbosity
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read('main.conf')
@@ -335,10 +335,6 @@ def install():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     # Check if user has permissions to install route.
     if not user_has_permissions(current_user, 'install'):
@@ -363,7 +359,6 @@ def install():
     # Check if any installs are currently running.
     running_installs = get_running_installs()
 
-    global SERVERS   
     # Post logic only triggered after install form submission.
     if request.method == 'POST':
         server_script_name = request.form.get("server_name")
@@ -395,10 +390,10 @@ def install():
         # Object to hold output from any running daemon threads. Since this is
         # the install route delete any previously held output objects for
         # server name. Clearly this is the output we want to look at.
-        SERVERS[server_full_name] = OutputContainer([''], False, '')
+        servers[server_full_name] = OutputContainer([''], False, '')
 
         # Set the output object to the one stored in the global dictionary.
-        output = SERVERS[server_full_name]
+        output = servers[server_full_name]
 
         install_exists = GameServer.query.filter_by(install_name=server_full_name).first()
 
@@ -426,7 +421,7 @@ def install():
             ansible_vars['install_path'] = os.path.join(f'/home/{server_script_name}', server_full_name)
             ansible_vars['script_paths'] = get_user_script_paths(ansible_vars['install_path'], server_script_name)
 
-        if install_path_exists(ansible_vars['install_path']:
+        if install_path_exists(ansible_vars['install_path']):
             flash('Install directory already exists.', category='error')
             flash('Did you perhaps have this server installed previously?', category='error')
             return redirect(url_for('views.install'))
@@ -450,11 +445,9 @@ def install():
 
         cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
 
-        if DEBUG and verbosity >= 1:
-            print("##### DEBUG ansible_vars ")
-            pprint(ansible_vars)
-            print(f"##### DEBUG cmd {cmd}")
-            print(f"##### DEBUG SERVERS {SERVERS}")
+        debug_handler('ansible_vars', ansible_vars, debug)
+        debug_handler('cmd', cmd, debug)
+        debug_handler('servers', servers, debug)
 
         install_daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name=f'Install_{server_full_name}')
         install_daemon.start()
@@ -476,8 +469,10 @@ def install():
                     flash(f"Install for {server_name} not currently running!", category="error")
                     return redirect(url_for('views.install'))
 
-                output = SERVERS[server_name]
-                pprint(output)
+                output = servers[server_name]
+                if verbosity >= 2:
+                    debug_handler('output', output, debug)
+
                 if output.pid:
                     cancel_install(output)
 
@@ -500,6 +495,8 @@ def get_stats():
 @views.route("/api/cmd-output", methods=['GET'])
 @login_required
 def no_output():
+    global servers
+
     # Collect args from GET request.
     server_name = request.args.get("server")
 
@@ -510,8 +507,7 @@ def no_output():
         return response
 
     # Can't do anything if we don't recognize the server_name.
-    global SERVERS
-    if server_name not in SERVERS:
+    if server_name not in servers:
         resp_dict = {"error": "eer never heard of em"}
         response = Response(json.dumps(resp_dict, indent=4), status=200, mimetype='application/json')
         return response
@@ -519,10 +515,10 @@ def no_output():
     # Reset the last requested output time.
     last_request_for_output = int(time.time())
 
-    # If its a server in the SERVERS dict set the output object to the
+    # If its a server in the servers dict set the output object to the
     # one from that dictionary.
-    if server_name in SERVERS:
-        output = SERVERS[server_name]
+    if server_name in servers:
+        output = servers[server_name]
 
     # Returns json for used by ajax code on /controls route.
     response = Response(output.toJSON(), status=200, mimetype='application/json')
@@ -534,6 +530,9 @@ def no_output():
 @views.route("/settings", methods=['GET', 'POST'])
 @login_required
 def settings():
+    global debug
+    global verbosity
+
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
@@ -551,10 +550,6 @@ def settings():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, 'settings'):
@@ -570,9 +565,7 @@ def settings():
         "install_create_new_user": install_create_new_user
     }
 
-    if DEBUG and verbosity >= 1:
-        print(f"##### DEBUG config_options")
-        pprint(config_options)
+    debug_handler('config_options', config_options, debug)
 
     if request.method == 'GET':
         return render_template("settings.html", user=current_user, \
@@ -666,15 +659,15 @@ def settings():
         restart_daemon.start()
         return redirect(url_for('views.settings'))
 
-    if DEBUG and verbosity >= 1:
-        print(f"##### DEBUG text_color_pref: {text_color_pref}")
-        print(f"##### DEBUG file_pref: {file_pref}")
-        print(f"##### DEBUG height_pref: {height_pref}")
-        print(f"##### DEBUG update_weblgsm: {update_weblgsm}")
-        print(f"##### DEBUG graphs_primary_pref: {graphs_primary_pref}")
-        print(f"##### DEBUG graphs_secondary_pref: {graphs_secondary_pref}")
-        print(f"##### DEBUG show_stats_pref: {show_stats_pref}")
-        print(f"##### DEBUG install_new_user_pref: {install_new_user_pref}")
+    # Debug messages.
+    debug_handler('text_color_pref', text_color_pref, debug)
+    debug_handler('file_pref', file_pref, debug)
+    debug_handler('height_pref', height_pref, debug)
+    debug_handler('update_weblgsm', update_weblgsm, debug)
+    debug_handler('graphs_primary_pref', graphs_primary_pref, debug)
+    debug_handler('graphs_secondary_pref', graphs_secondary_pref, debug)
+    debug_handler('show_stats_pref', show_stats_pref, debug)
+    debug_handler('install_new_user_pref', install_new_user_pref, debug)
 
     flash("Settings Updated!")
     return redirect(url_for('views.settings'))
@@ -703,6 +696,9 @@ def about():
 @views.route("/add", methods=['GET', 'POST'])
 @login_required
 def add():
+    global debug
+    global verbosity
+
     # Import config data.
     config = configparser.ConfigParser()
     config.read('main.conf')
@@ -711,10 +707,6 @@ def add():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     # Check if user has permissions to add route.
     if not user_has_permissions(current_user, 'add'):
@@ -798,7 +790,7 @@ def add():
 #                not os.path.isfile(script_path):
 #            flash('Script file does not exist.', category='error')
 #            status_code = 400
-            return render_template("add.html", user=current_user), status_code
+#            return render_template("add.html", user=current_user), status_code
 
         # Add sudoers rules automatically if game server not owned by web-lgsm
         # system user. To the user, note there is a slight problem with this
@@ -817,9 +809,7 @@ def add():
             ansible_vars['web_lgsm_user'] = USER
             write_ansible_vars_json(ansible_vars)
 
-            if DEBUG and verbosity >= 1:
-                print("##### DEBUG ansible_vars ")
-                pprint(ansible_vars)
+            debug_handler('ansible_vars', ansible_vars, debug)
 
             # TODO: Add debug options to print this hidden output.
             cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
@@ -832,11 +822,10 @@ def add():
         db.session.add(new_game_server)
         db.session.commit()
 
-        if DEBUG and verbosity >= 1:
-            print(f"##### DEBUG install_name: {install_name}")
-            print(f"##### DEBUG install_path: {install_path}")
-            print(f"##### DEBUG script_name: {script_name}")
-            print(f"##### DEBUG username: {username}")
+        debug_handler('install_name', install_name, debug)
+        debug_handler('install_path', install_path, debug)
+        debug_handler('script_name', script_name, debug)
+        debug_handler('username', username, debug)
 
         flash('Game server added!')
         return redirect(url_for('views.home'))
@@ -849,6 +838,10 @@ def add():
 @views.route("/delete", methods=['GET', 'POST'])
 @login_required
 def delete():
+    global servers
+    global debug
+    global verbosity
+
     # TODO: Should eventually make this whole function work via IDs instead of
     # server names. Will get there eventually.
     # Import config data.
@@ -858,10 +851,6 @@ def delete():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
@@ -874,25 +863,22 @@ def delete():
             flash("No such server found!", category="error")
             return redirect(url_for('views.home'))
 
-        global SERVERS
-        if DEBUG and verbosity >= 1:
-            print(f"##### DEBUG server_name: {server_name}")
-            print(f"##### DEBUG SERVERS: {SERVERS}")
-            print(f"##### DEBUG server.id: {server.id}")
-            print(f"##### DEBUG server.install_name: {server.install_name}")
-            print(f"##### DEBUG server.username: {server.username}")
-            print(f"##### DEBUG server.install_path: {server.install_path}")
+        debug_handler('server_name', server_name, debug)
+        debug_handler('servers', servers, debug)
+        debug_handler('server.id', server.id, debug)
+        debug_handler('server.install_name', server.install_name, debug)
+        debug_handler('server.username', server.username, debug)
+        debug_handler('server.install_path', server.install_path, debug)
 
         if server:
             # TODO: Add debug level 2 hidden output printing here.
-            if server_name in SERVERS:
-                del SERVERS[server_name]
+            if server_name in servers:
+                del servers[server_name]
             output_obj = OutputContainer([''], False)
 
-            if DEBUG and verbosity >= 1:
-                print(f"##### DEBUG SERVERS: {SERVERS}")
+            debug_handler('servers', servers, debug)
 
-            del_server(server, remove_files, output_obj)
+            del_server(server, remove_files)
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.
@@ -914,7 +900,10 @@ def delete():
 @views.route("/edit", methods=['GET', 'POST'])
 @login_required
 def edit():
-    # The abbreviation cfg will be used to refer to any lgsm game server
+    global debug
+    global verbosity
+
+    # NOTE: The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
@@ -926,10 +915,6 @@ def edit():
     debug = config['debug'].getboolean('debug')
     v = config['debug']['verbosity']
     verbosity = get_verbosity(v)
-    env_debug = os.getenv('DEBUG')
-    global DEBUG # Tests fail unless this is explicitly a global.
-    if env_debug == 'true' or debug:
-        DEBUG = True
 
     if config['settings']['cfg_editor'] == 'no':
         flash("Config Editor Disabled", category="error")

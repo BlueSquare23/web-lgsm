@@ -27,7 +27,6 @@
         - tasks/create_gs_user_group.yml
         - tasks/create_gs_user.yml
         - tasks/set_default_gs_user_group.yml
-        - tasks/add_weblgsm_to_gs_group.yml
         - tasks/add_sudoers_rules.yml
         - tasks/fix_sudoers_rule.yml
         - tasks/add_temp_nopass_rule.yml

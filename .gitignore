@@ -14,3 +14,4 @@ node_modules
 package-lock.json
 package.json
 ansible_vars.json
+gs_allowed_paths.txt

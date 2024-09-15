@@ -3,26 +3,6 @@
 ### v1.8.0 Pt 2. Add Multi Web Interface Users
 ---
 
-* Get rid of the idea of adding web-lgsm user to newly added game server
-  groups.
-  - I've waffled back and forth on this idea before.
-  - Basically what it comes down to is if the web-lgsm user is in the same
-    group as newly added game servers it can read that game servers files and
-    tell dirs exist.
-    - So useful to tell install exists and to edit game server cfgs.
-  - However, its too f-in hard to get the app to reload its group information
-    post install without logging out and back in again.
-  - So instead I'm just going to ditch this as a requirement.
-    - What that get's me is some tangential security gains.
-    - But mainly, it makes the app actually work so that's the real reason to
-      do it.
-  - So instead of adding web-lgsm user to newly install gs group, I've decided
-    to just make the app run those checks through the connector script.  
-    - The connector script will now run a playbook to:
-      - 1) Check if some game server dir exists.
-        - Only allow dirs checking under gs_user home dirs.
-      - 2) Push changes to cfg files.
-
 * Write tests for new permissions controls.
   - Test login as new user.
   - Test user permissions are effective.

@@ -1,8 +1,0 @@
-- name: Add {{ web_lgsm_user }} to new {{ gs_user }} group
-  user:
-    name: "{{ web_lgsm_user }}"
-    groups: "{{ gs_user }}"
-    append: true
-  when:
-    - same_user is not defined or same_user == false
-    - setup is not defined or setup == false

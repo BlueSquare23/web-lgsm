@@ -12,19 +12,49 @@ import getpass
 import requests
 import subprocess
 import threading
+from datetime import datetime
 from threading import Thread
 from . import db
 from .models import GameServer
 from flask import flash
 
-# Network stats globals.
-PREV_BYTES_SENT = psutil.net_io_counters().bytes_sent
-PREV_BYTES_RECV = psutil.net_io_counters().bytes_recv
-PREV_TIME = time.time()
-
-# Misc Globals.
+# Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
+
+# Network stats globals.
+prev_bytes_sent = psutil.net_io_counters().bytes_sent
+prev_bytes_recv = psutil.net_io_counters().bytes_recv
+prev_time = time.time()
+
+def debug_handler(item_name, item, debug):
+    """
+    Kindly handles the debug output / logging.
+
+    Args:
+        item_name (str): Name of the thing we're debug printing.
+        item (any): Item to be debug printed / logged.
+        debug (bool): True if debug enabled, false otherwise.
+
+    Return:
+        None: Only does the needful, no return.
+    """
+    # Env var debug take precedence over config var.
+    env_debug = os.getenv('DEBUG')
+    if env_debug != None:
+        if env_debug == 'true':
+            debug = True
+
+    if not debug:
+        return
+
+    now = datetime.now()
+    formatted_time = now.strftime("[%d/%b/%Y %H:%M:%S]")
+
+    pre_str = f'     DEBUG     - - {formatted_time} {item_name} {str(type(item))}: '
+    print(pre_str, end='')
+    print(item)
+    
 
 def check_require_auth_setup_fields(username, password1, password2):
     """Ensure supplied auth fields for creating a new user are supplied.
@@ -550,7 +580,7 @@ def restart_self(restart_cmd):
 
 # Gets bytes in/out per second. Stores last value in global.
 def get_network_stats():
-    global PREV_BYTES_SENT, PREV_BYTES_RECV, PREV_TIME
+    global prev_bytes_sent, prev_bytes_recv, prev_time
 
     # Get current counters and timestamp.
     net_io = psutil.net_io_counters()
@@ -559,13 +589,13 @@ def get_network_stats():
     current_time = time.time()
 
     # Calculate the rate of bytes sent and received per second.
-    bytes_sent_rate = (current_bytes_sent - PREV_BYTES_SENT) / (current_time - PREV_TIME)
-    bytes_recv_rate = (current_bytes_recv - PREV_BYTES_RECV) / (current_time - PREV_TIME)
+    bytes_sent_rate = (current_bytes_sent - prev_bytes_sent) / (current_time - prev_time)
+    bytes_recv_rate = (current_bytes_recv - prev_bytes_recv) / (current_time - prev_time)
 
     # Update previous counters and timestamp.
-    PREV_BYTES_SENT = current_bytes_sent
-    PREV_BYTES_RECV = current_bytes_recv
-    PREV_TIME = current_time
+    prev_bytes_sent = current_bytes_sent
+    prev_bytes_recv = current_bytes_recv
+    prev_time = current_time
 
     return {
         'bytes_sent_rate': bytes_sent_rate,

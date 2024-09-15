@@ -11,15 +11,17 @@ import subprocess
 SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
 os.chdir(SCRIPTPATH)
 
+
 def signalint_handler(sig, frame):
     # Suppress stderr for debug ctrl + c stack trace.
-    with open(os.devnull, 'w') as fnull:
+    with open(os.devnull, "w") as fnull:
         sys.stdout = fnull
         sys.stderr = fnull
         sys.stdout = sys.__stdout__
-        print('\r [!] Ctrl + C received. Shutting down...')
+        print("\r [!] Ctrl + C received. Shutting down...")
 
     exit(0)
+
 
 def run_command_popen(command):
     """Runs a command through a subprocess.Popen shell"""
@@ -27,18 +29,18 @@ def run_command_popen(command):
         process = subprocess.Popen(
             command,
             shell=True,
-            executable='/bin/bash',
+            executable="/bin/bash",
             stdin=subprocess.PIPE,
             stdout=None,  # Direct output to the terminal.
             stderr=None,  # Direct error output to the terminal.
             text=True,
-            env=os.environ
+            env=os.environ,
         )
 
         # Wait for the process to complete.
         return_code = process.wait()
         if return_code > 0:
-            exit(return_code)   
+            exit(return_code)
 
     except ValueError as e:
         # Handle any specific value errors.
@@ -53,7 +55,7 @@ def run_command_popen(command):
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
-    venv_path = os.path.join(SCRIPTPATH, 'venv/bin/activate')
+    venv_path = os.path.join(SCRIPTPATH, "venv/bin/activate")
     if not os.path.isfile(venv_path):
         err_msg = f"""\
  [!] Virtual environment not found at {venv_path}
@@ -74,7 +76,7 @@ def relaunch_in_venv():
 
 
 # Protection in case user is not in venv.
-if os.getenv('VIRTUAL_ENV') is None:
+if os.getenv("VIRTUAL_ENV") is None:
     print(" [!] Relaunching in venv!")
     relaunch_in_venv()
     exit(0)
@@ -96,26 +98,24 @@ from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
 CONFIG = configparser.ConfigParser()
-CONFIG.read(os.path.join(SCRIPTPATH, 'main.conf'))
+CONFIG.read(os.path.join(SCRIPTPATH, "main.conf"))
 try:
-    HOST = CONFIG['server']['host']
-    PORT = CONFIG['server']['port']
-    DEBUG = CONFIG['debug'].getboolean('debug')
+    HOST = CONFIG["server"]["host"]
+    PORT = CONFIG["server"]["port"]
+    DEBUG = CONFIG["debug"].getboolean("debug")
 except KeyError as e:
     print(f" [!] Configuration setting {e} not set.")
-    HOST = '127.0.0.1'
-    PORT = '12357'
+    HOST = "127.0.0.1"
+    PORT = "12357"
     DEBUG = False
 
-os.environ['COLUMNS'] = '80'
-os.environ['LINES'] = '50'
-os.environ['TERM'] = 'xterm-256color'
+os.environ["COLUMNS"] = "80"
+os.environ["LINES"] = "50"
+os.environ["TERM"] = "xterm-256color"
 
 # Global options hash.
-O = { "verbose" : False,
-        "check" : False,
-         "auto" : False,
-    "test_full" : False }
+O = {"verbose": False, "check": False, "auto": False, "test_full": False}
+
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -124,6 +124,7 @@ def stop_server():
     else:
         print(" [!] Server Not Running!")
 
+
 def check_status():
     result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
     if result.returncode == 0:
@@ -131,17 +132,21 @@ def check_status():
     else:
         print(" [*] Server Not Running.")
 
+
 def print_start_banner():
     bar_len = 55
-    host_line_char_len = len(' http://:/') + len(HOST) + len(PORT)
+    host_line_char_len = len(" http://:/") + len(HOST) + len(PORT)
     host_line_spaces_len = bar_len - host_line_char_len
-    host_line_spaces = ' ' * host_line_spaces_len
+    host_line_spaces = " " * host_line_spaces_len
 
-    port_line_char_len = len('  port to the outside world and then proxy this') + len(PORT)
+    port_line_char_len = len("  port to the outside world and then proxy this") + len(
+        PORT
+    )
     port_line_spaces_len = bar_len - port_line_char_len
-    port_line_spaces = ' ' * port_line_spaces_len
+    port_line_spaces = " " * port_line_spaces_len
 
-    print(f"""
+    print(
+        f"""
  ╔═══════════════════════════════════════════════════════╗
  ║ Welcome to the Web LGSM! ☁️  🕹️                         ║
  ║                                                       ║
@@ -158,10 +163,14 @@ def print_start_banner():
  ║ server to a real web server such as Apache or Nginx   ║
  ║ with SSL encryption! See the Readme for more info.    ║
  ╚═══════════════════════════════════════════════════════╝
-    """)
+    """
+    )
+
 
 def start_server():
-    status_result = subprocess.run(["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True)
+    status_result = subprocess.run(
+        ["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True
+    )
     if status_result.returncode == 0:
         print(" [!] Server Already Running!")
         exit()
@@ -171,28 +180,37 @@ def start_server():
     # Try to start the gunicorn server as a detached proc.
     try:
         process = subprocess.Popen(
-            ["gunicorn", 
-             "--access-logfile", f"{SCRIPTPATH}/web-lgsm.log",
-             f"--bind={HOST}:{PORT}",
-             "--daemon",
-             "--worker-class", "gevent",
-             "app:main()"],
+            [
+                "gunicorn",
+                "--access-logfile",
+                f"{SCRIPTPATH}/web-lgsm.log",
+                f"--bind={HOST}:{PORT}",
+                "--daemon",
+                "--worker-class",
+                "gevent",
+                "app:main()",
+            ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
         print(f" [*] Launched Gunicorn server with PID: {process.pid}")
     except Exception as e:
         print(f" [!] Failed to launch Gunicorn server: {e}")
 
+
 def start_debug():
     """Starts the app in debug mode"""
     os.environ["DEBUG"] = "true"
     from app import main
+
     # For clean ctrl + c handling.
     signal.signal(signal.SIGINT, signalint_handler)
     app = main()
     app.run(debug=True, host=HOST, port=PORT)
 
+
+# TODO: Just import this from utils.py script. A copy of it is fine for now,
+# but really shouldn't duplicate code like this.
 def validate_password(username, password1, password2):
     # Make sure required form items are supplied.
     for form_item in (username, password1, password2):
@@ -222,7 +240,10 @@ def validate_password(username, password1, password2):
 
     # Verify password passes basic strength tests.
     if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
-        return False, "Password doesn't meet criteria! Must contain: an upper case character, a number, and a special character"
+        return (
+            False,
+            "Password doesn't meet criteria! Must contain: an upper case character, a number, and a special character",
+        )
 
     # To try to nip xss & template injection in the bud.
     if contains_bad_chars(username):
@@ -235,6 +256,7 @@ def validate_password(username, password1, password2):
         return False, "Password is too short!"
 
     return True, ""
+
 
 def change_password():
     """Change the password for a given user."""
@@ -258,7 +280,7 @@ def change_password():
         return
 
     # Update the user's password hash
-    user.password = generate_password_hash(password1, method='pbkdf2:sha256')
+    user.password = generate_password_hash(password1, method="pbkdf2:sha256")
     db.session.commit()
 
     print("Password updated successfully!")
@@ -266,7 +288,7 @@ def change_password():
 
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
-    lgsmsh = SCRIPTPATH + '/scripts/linuxgsm.sh'
+    lgsmsh = SCRIPTPATH + "/scripts/linuxgsm.sh"
     check_and_get_lgsmsh(lgsmsh)
 
     servers_list = os.popen(f"{lgsmsh} list").read()
@@ -275,50 +297,48 @@ def update_gs_list():
     long_names = []
     gs_mapping = dict()
 
-    for line in servers_list.split('\n'):
+    for line in servers_list.split("\n"):
         if len(line.strip()) == 0:
             continue
         if "serverlist.csv" in line:
             continue
         short_name = line.split()[0]
-        long_name = ' '.join(line.split()[1:]).replace("'", "").replace("&", "and")
+        long_name = " ".join(line.split()[1:]).replace("'", "").replace("&", "and")
 
         short_names.append(short_name)
         long_names.append(long_name)
         gs_mapping[short_name] = long_name
 
-    test_json = 'test_data.json'
+    test_json = "test_data.json"
     test_src = os.path.join(SCRIPTPATH, test_json)
-    test_dst = os.path.join(SCRIPTPATH, f'json/{test_json}')
+    test_dst = os.path.join(SCRIPTPATH, f"json/{test_json}")
     map_json = open(test_json, "w")
-    map_json.write(json.dumps(gs_mapping, indent = 4))
+    map_json.write(json.dumps(gs_mapping, indent=4))
     map_json.close()
     compare_and_move(test_src, test_dst)
 
-    gs_dict = {
-        "servers": short_names,
-        "server_names": long_names
-    }
+    gs_dict = {"servers": short_names, "server_names": long_names}
 
-    servers_json = 'game_servers.json'
+    servers_json = "game_servers.json"
     gs_src = os.path.join(SCRIPTPATH, servers_json)
-    gs_dst = os.path.join(SCRIPTPATH, f'json/{servers_json}')
+    gs_dst = os.path.join(SCRIPTPATH, f"json/{servers_json}")
     gs_json = open(servers_json, "w")
-    gs_json.write(json.dumps(gs_dict, indent = 4))
+    gs_json.write(json.dumps(gs_dict, indent=4))
     gs_json.close()
     compare_and_move(gs_src, gs_dst)
+
 
 def compare_and_move(src_file, dst_file):
     """Diff's two files and moves src to dst if they differ."""
     file_name = os.path.basename(src_file)
     try:
-        with open(src_file, 'r') as file1, open(dst_file, 'r') as file2:
+        with open(src_file, "r") as file1, open(dst_file, "r") as file2:
             src_content = file1.read()
             dst_content = file2.read()
 
         if src_content != dst_content:
             print(f" [*] Backing up {file_name} to {file_name}.bak")
-            shutil.copy(dst_file, dst_file+'.bak')
+            shutil.copy(dst_file, dst_file + ".bak")
             shutil.move(src_file, dst_file)
             print(f" [!] File {file_name} JSON updated!")
         else:
@@ -329,23 +349,28 @@ def compare_and_move(src_file, dst_file):
     except IOError as e:
         print(f"Error: {e}")
 
+
 def run_command(command):
-    if O['verbose']:
+    if O["verbose"]:
         print(f" [*] Running command: {command}")
 
-    result = subprocess.run(command, shell=True, capture_output=True, text=True, env=os.environ)
+    result = subprocess.run(
+        command, shell=True, capture_output=True, text=True, env=os.environ
+    )
 
-    if O['verbose']:
+    if O["verbose"]:
         print(result.stdout.strip())
 
     return result.stdout.strip()
 
+
 def get_git_info():
-    upstream = '@{u}'
-    local = run_command('git rev-parse @')
-    remote = run_command(f'git rev-parse {upstream}')
-    base = run_command(f'git merge-base @ {upstream}')
+    upstream = "@{u}"
+    local = run_command("git rev-parse @")
+    remote = run_command(f"git rev-parse {upstream}")
+    base = run_command(f"git merge-base @ {upstream}")
     return local, remote, base
+
 
 def backup_file(filename):
     if not os.path.isfile(filename):
@@ -358,10 +383,13 @@ def backup_file(filename):
     print(f" [*] Backing up {filename} to {backup_filename}")
     return backup_filename
 
+
 def backup_dir(dirname, tar=None):
     """Back's up directories using shutil.copydirtree, optionally tar's them too"""
     if not os.path.isdir(dirname):
-        print(f" [!] Warning: The directory '{dirname}' does not exist. No backup created!")
+        print(
+            f" [!] Warning: The directory '{dirname}' does not exist. No backup created!"
+        )
         return None
 
     epoc = int(time.time())
@@ -379,6 +407,7 @@ def backup_dir(dirname, tar=None):
 
     return backup_dirname
 
+
 def update_weblgsm():
     local, remote, base = get_git_info()
 
@@ -393,26 +422,26 @@ def update_weblgsm():
 
         if not O["auto"]:
             resp = input(" [*] Would you like to update now? (y/n): ")
-            if resp.lower() != 'y':
+            if resp.lower() != "y":
                 exit()
 
         # Backup whole web-lgsm folder.
         backup_dir(SCRIPTPATH, True)
 
-        backup_file('main.conf')
+        backup_file("main.conf")
 
-        run_command('git clean -f')
+        run_command("git clean -f")
 
         print(" [*] Pulling update from github...")
-        run_command('git pull')
+        run_command("git pull")
 
         epoc = int(time.time())
         print(f" [*] Backing up venv to venv.{epoc}.bak and creating a new one.")
-        backup_dir('venv')
-        run_command('python3 -m venv venv')
-        run_command('source venv/bin/activate')
+        backup_dir("venv")
+        run_command("python3 -m venv venv")
+        run_command("source venv/bin/activate")
         print(" [*] Installing new pip reqs...")
-        run_command('python3 -m pip install -r requirements.txt')
+        run_command("python3 -m pip install -r requirements.txt")
         print(" [*] Update completed!")
         return
 
@@ -425,35 +454,41 @@ def update_weblgsm():
     print(" [-] It's possible your local repo has diverged.", file=sys.stderr)
     sys.exit(2)
 
+
 def check_sudo():
     try:
         # Run the sudo command with the -v option to validate the current timestamp.
-        result = subprocess.run(['sudo', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(
+            ["sudo", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if result.returncode != 0:
-            print(" [*] No active sudo tty ticket. Please run the script with an active sudo session.")
+            print(
+                " [*] No active sudo tty ticket. Please run the script with an active sudo session."
+            )
             sys.exit(1)
     except Exception as e:
         print(f" [!] An error occurred while checking sudo status: {e}")
         sys.exit(1)
 
+
 def run_tests():
     # Source env vars.
-    env_path = os.path.join(SCRIPTPATH, 'tests/test.vars')
+    env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
     load_dotenv(dotenv_path=env_path)
-    os.environ['HOME'] = SCRIPTPATH
-    os.environ['APP_PATH'] = SCRIPTPATH
+    os.environ["HOME"] = SCRIPTPATH
+    os.environ["APP_PATH"] = SCRIPTPATH
 
-    if O['verbose']:
+    if O["verbose"]:
         for key, value in os.environ.items():
-            print(f'{key}={value}')
+            print(f"{key}={value}")
 
     # Backup Database.
-    db_file = os.path.join(SCRIPTPATH, 'app/database.db')
+    db_file = os.path.join(SCRIPTPATH, "app/database.db")
     db_backup = backup_file(db_file)
 
     # Setup Mockcraft testdir.
-    mockcraft_dir = os.path.join(SCRIPTPATH, 'tests/test_data/Mockcraft')
-    cfg_dir = os.path.join(mockcraft_dir, 'lgsm/config-lgsm/mcserver/')
+    mockcraft_dir = os.path.join(SCRIPTPATH, "tests/test_data/Mockcraft")
+    cfg_dir = os.path.join(mockcraft_dir, "lgsm/config-lgsm/mcserver/")
     if not os.path.isdir(mockcraft_dir):
         # will make mockcraft dir in the process.
         os.makedirs(cfg_dir)
@@ -465,28 +500,30 @@ def run_tests():
         os.chdir(SCRIPTPATH)
 
     # Reset test server cfg.
-    common_cfg = os.path.join(SCRIPTPATH, 'tests/test_data/common.cfg')
+    common_cfg = os.path.join(SCRIPTPATH, "tests/test_data/common.cfg")
     shutil.copy(common_cfg, cfg_dir)
 
     # Enable verbose even if disabled by default just for test printing.
-    if not O['verbose']:
-        O['verbose'] = True
+    if not O["verbose"]:
+        O["verbose"] = True
 
-    if O['test_full']:
+    if O["test_full"]:
         # Need to get a sudo tty ticket for full game server install.
         check_sudo()
         # Backup Existing MC install, if one exists.
-        mcdir = os.path.join(SCRIPTPATH, 'Minecraft')
+        mcdir = os.path.join(SCRIPTPATH, "Minecraft")
         if os.path.isdir(mcdir):
             backup_dir(mcdir)
 
             # Then torch dir.
             shutil.rmtree(mcdir)
 
-        run_command_popen('python -m pytest -v --maxfail=1')
+        run_command_popen("python -m pytest -v --maxfail=1")
 
     else:
-        run_command_popen("python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1")
+        run_command_popen(
+            "python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1"
+        )
 
     # Restore Database.
     if db_backup:
@@ -500,7 +537,8 @@ def add_valid_gs_user(gs_user):
 
 def print_help():
     """Prints help menu"""
-    print("""
+    print(
+        """
   ╔══════════════════════════════════════════════════════════╗  
   ║ Usage: web-lgsm.py [options]                             ║
   ║                                                          ║
@@ -522,15 +560,30 @@ def print_help():
   ║   -x, --test_full     Run ALL project's pytest tests     ║
   ║   -j, --valid [user]  Add valid gs_user to allow list    ║
   ╚══════════════════════════════════════════════════════════╝
-    """)
+    """
+    )
     exit()
 
 
 def main(argv):
     try:
-        longopts = ["help", "start", "stop", "status", "restart", "debug",
-                    "verbose", "passwd", "update", "check", "auto", "fetch_json",
-                    "test", "test_full", "valid="]
+        longopts = [
+            "help",
+            "start",
+            "stop",
+            "status",
+            "restart",
+            "debug",
+            "verbose",
+            "passwd",
+            "update",
+            "check",
+            "auto",
+            "fetch_json",
+            "test",
+            "test_full",
+            "valid=",
+        ]
         opts, args = getopt.getopt(argv, "hsmrqdvpucaftxj:", longopts)
     except getopt.GetoptError as e:
         print(e)
@@ -570,9 +623,6 @@ def main(argv):
         elif opt in ("-q", "--stop"):
             stop_server()
             return
-        elif opt in ("-d", "--debug") or DEBUG:
-            start_debug()
-            return
         elif opt in ("-u", "--update", "-c", "--check", "-a", "--auto"):
             update_weblgsm()
             return
@@ -593,7 +643,14 @@ def main(argv):
             print(arg)
             add_valid_gs_user(arg)
             return
+        elif opt in ("-d", "--debug") or DEBUG:
+            # Put debug last because main.conf var.
+            # Just because I have debug set in the conf doesn't mean I want to
+            # start the server in debug mode when just trying to run tests or
+            # something.
+            start_debug()
+            return
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-

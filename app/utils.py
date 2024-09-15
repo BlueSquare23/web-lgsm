@@ -27,6 +27,7 @@ prev_bytes_sent = psutil.net_io_counters().bytes_sent
 prev_bytes_recv = psutil.net_io_counters().bytes_recv
 prev_time = time.time()
 
+
 def debug_handler(item_name, item, debug):
     """
     Kindly handles the debug output / logging.
@@ -40,9 +41,9 @@ def debug_handler(item_name, item, debug):
         None: Only does the needful, no return.
     """
     # Env var debug take precedence over config var.
-    env_debug = os.getenv('DEBUG')
+    env_debug = os.getenv("DEBUG")
     if env_debug != None:
-        if env_debug == 'true':
+        if env_debug == "true":
             debug = True
 
     if not debug:
@@ -51,10 +52,10 @@ def debug_handler(item_name, item, debug):
     now = datetime.now()
     formatted_time = now.strftime("[%d/%b/%Y %H:%M:%S]")
 
-    pre_str = f'     DEBUG     - - {formatted_time} {item_name} {str(type(item))}: '
-    print(pre_str, end='')
+    pre_str = f"     DEBUG     - - {formatted_time} {item_name} {str(type(item))}: "
+    print(pre_str, end="")
     print(item)
-    
+
 
 def check_require_auth_setup_fields(username, password1, password2):
     """Ensure supplied auth fields for creating a new user are supplied.
@@ -62,22 +63,25 @@ def check_require_auth_setup_fields(username, password1, password2):
     # Make sure required form items are supplied.
     for form_item in (username, password1, password2):
         if form_item == None or form_item == "":
-            flash("Missing required form field(s)!", category='error')
+            flash("Missing required form field(s)!", category="error")
             return False
 
         # Check input lengths.
         if len(form_item) > 150:
-            flash("Form field too long!", category='error')
+            flash("Form field too long!", category="error")
             return False
 
     # To try to nip sql, xss, template injections in the bud.
     if contains_bad_chars(username):
         flash("Username Contains Illegal Character(s)", category="error")
-        flash(r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""", \
-                                                    category="error")
+        flash(
+            r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""",
+            category="error",
+        )
         return False
 
     return True
+
 
 def valid_password(password1, password2):
     """Runs supplied auth route passwords against some basic checks. Returns
@@ -102,17 +106,20 @@ def valid_password(password1, password2):
     ## Check if submitted form data for issues.
     # Verify password passes basic strength tests.
     if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
-        flash("Passwords doesn't meet criteria!", category='error')
-        flash("Must contain: an upper case character, a number, and a \
-                                special character", category='error')
+        flash("Passwords doesn't meet criteria!", category="error")
+        flash(
+            "Must contain: an upper case character, a number, and a \
+                                special character",
+            category="error",
+        )
         return False
 
     elif password1 != password2:
-        flash('Passwords don\'t match!', category='error')
+        flash("Passwords don't match!", category="error")
         return False
 
     elif len(password1) < 12:
-        flash('Password is too short!', category='error')
+        flash("Password is too short!", category="error")
         return False
 
     return True
@@ -129,14 +136,13 @@ class OutputContainer:
         self.pid = pid
 
     def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__,
-            sort_keys=True, indent=4)
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
 # Shell executor subprocess.Popen wrapper function. Runs a command through the
 # shell and returns output in realtime by appending it to output object, which
 # is read by output api.
-def shell_exec(cmd, output=OutputContainer([''], False)):
+def shell_exec(cmd, output=OutputContainer([""], False)):
     # Clear any previous output.
     output.output_lines.clear()
 
@@ -147,10 +153,8 @@ def shell_exec(cmd, output=OutputContainer([''], False)):
     print(cmd)
     print(" ".join(cmd))
 
-    proc = subprocess.Popen(cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
 
     output.pid = proc.pid
@@ -182,22 +186,20 @@ def kill_watchers(last_request_for_output):
 
     # Get all processes named 'watch'
     watch_processes = []
-    for proc in psutil.process_iter(['pid', 'name', 'username']):
-        if proc.info['name'] == 'watch':
+    for proc in psutil.process_iter(["pid", "name", "username"]):
+        if proc.info["name"] == "watch":
             watch_processes.append((proc.pid, proc.username()))
-    
+
     for pid, user in watch_processes:
         cmd = []
         if user != getpass.getuser():
-            cmd += ['/usr/bin/sudo', '-n', '-u', user]
-        cmd += ['/usr/bin/kill', '-9', str(pid)]
+            cmd += ["/usr/bin/sudo", "-n", "-u", user]
+        cmd += ["/usr/bin/kill", "-9", str(pid)]
 
-        proc = subprocess.run(cmd,
-                stdout = subprocess.DEVNULL,
-                stderr = subprocess.DEVNULL)
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         if proc.returncode != 0:
-#            print("Cant kill proc")
+            #            print("Cant kill proc")
             pass
 
 
@@ -207,11 +209,11 @@ def cancel_install(output):
 
     # Set Ansible playbook vars.
     ansible_vars = dict()
-    ansible_vars['action'] = 'cancel'
-    ansible_vars['pid'] = pid
+    ansible_vars["action"] = "cancel"
+    ansible_vars["pid"] = pid
     write_ansible_vars_json(ansible_vars)
 
-    cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+    cmd = ["/usr/bin/sudo", "-n", os.path.join(CWD, "playbooks/ansible_connector.py")]
     shell_exec(cmd, output)
 
 
@@ -228,7 +230,7 @@ def get_uid(username):
 # returns empty string.
 def get_gs_id(id_file_path):
     if os.path.isfile(id_file_path):
-        with open(id_file_path, 'r') as file:
+        with open(id_file_path, "r") as file:
             return file.read()
     else:
         return ""
@@ -239,10 +241,10 @@ def get_server_statuses(all_game_servers):
     # Initialize all servers inactive to start with.
     server_statuses = {}
     for server in all_game_servers:
-        server_statuses[server.install_name] = 'inactive'
+        server_statuses[server.install_name] = "inactive"
 
     # List all tmux sessions for all users.
-    tmux_socdir_regex = '/tmp/tmux-*'
+    tmux_socdir_regex = "/tmp/tmux-*"
     socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
 
     # Handle no sockets yet.
@@ -252,34 +254,34 @@ def get_server_statuses(all_game_servers):
     # Find all unique server ids.
     gs_ids = {}
     for server in all_game_servers:
-        id_file_path = server.install_path + f'/lgsm/data/{server.script_name}.uid'
+        id_file_path = server.install_path + f"/lgsm/data/{server.script_name}.uid"
         gs_id = get_gs_id(id_file_path).strip()
         gs_ids[server.install_name] = gs_id
 
     # Now that we have all gs_ids, we can check if those tmux socket sessions
     # are running.
     for server in all_game_servers:
-        socket = server.script_name + '-' + gs_ids[server.install_name]
+        socket = server.script_name + "-" + gs_ids[server.install_name]
         cmd = []
         if server.username != getpass.getuser():
-            cmd += ['/usr/bin/sudo', '-n', '-u', server.username]
+            cmd += ["/usr/bin/sudo", "-n", "-u", server.username]
 
-        cmd += ['/usr/bin/tmux', '-L', socket, 'list-session']
-        proc = subprocess.run(cmd,
-                stdout = subprocess.DEVNULL,
-                stderr = subprocess.DEVNULL)
+        cmd += ["/usr/bin/tmux", "-L", socket, "list-session"]
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         if proc.returncode == 0:
-            server_statuses[server.install_name] = 'active'
+            server_statuses[server.install_name] = "active"
 
     return server_statuses
 
 
 # Get's socket file name for a given game server name.
 def get_socket_for_gs(server):
-    id_file_path = os.path.join(server.install_path, f'lgsm/data/{server.script_name}.uid')
+    id_file_path = os.path.join(
+        server.install_path, f"lgsm/data/{server.script_name}.uid"
+    )
     gs_id = get_gs_id(id_file_path).strip()
-    socket_file_path = server.script_name + '-' + gs_id
+    socket_file_path = server.script_name + "-" + gs_id
     return socket_file_path
 
 
@@ -299,7 +301,7 @@ def get_running_installs():
 def find_cfg_paths(search_path):
     # Try except in case problem with json files.
     try:
-        cfg_whitelist = open('json/accepted_cfgs.json', 'r')
+        cfg_whitelist = open("json/accepted_cfgs.json", "r")
         json_data = json.load(cfg_whitelist)
         cfg_whitelist.close()
     except:
@@ -311,7 +313,7 @@ def find_cfg_paths(search_path):
     # Find all cfgs under search_path using os.walk.
     for root, dirs, files in os.walk(search_path):
         # Ignore default cfgs.
-        if 'config-default' in root:
+        if "config-default" in root:
             continue
         for file in files:
             if file in valid_gs_cfgs:
@@ -330,7 +332,7 @@ def del_server(server, remove_files):
     db.session.commit()
 
     if not remove_files:
-        flash(f'Game server, {server_name} deleted!')
+        flash(f"Game server, {server_name} deleted!")
         return
 
     web_lgsm_user = getpass.getuser()
@@ -339,33 +341,38 @@ def del_server(server, remove_files):
         if os.path.isdir(install_path):
             shutil.rmtree(install_path)
     else:
-        sudo_rule_name = f'{web_lgsm_user}-{username}'
+        sudo_rule_name = f"{web_lgsm_user}-{username}"
         # Set Ansible playbook vars.
         ansible_vars = dict()
-        ansible_vars['action'] = 'delete'
-        ansible_vars['gs_user'] = username
-        ansible_vars['sudo_rule_name'] = sudo_rule_name
+        ansible_vars["action"] = "delete"
+        ansible_vars["gs_user"] = username
+        ansible_vars["sudo_rule_name"] = sudo_rule_name
         write_ansible_vars_json(ansible_vars)
 
-        cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+        cmd = [
+            "/usr/bin/sudo",
+            "-n",
+            os.path.join(CWD, "playbooks/ansible_connector.py"),
+        ]
         shell_exec(cmd)
 
-    flash(f'Game server, {server_name} deleted!')
+    flash(f"Game server, {server_name} deleted!")
     return
 
+
 def write_ansible_vars_json(ansible_vars):
-    ansible_vars_json_file = os.path.join(CWD, 'json/ansible_vars.json')
+    ansible_vars_json_file = os.path.join(CWD, "json/ansible_vars.json")
     # Write json to file.
-    with open(ansible_vars_json_file, 'w') as json_file:
+    with open(ansible_vars_json_file, "w") as json_file:
         json.dump(ansible_vars, json_file, indent=4)
 
 
 # Validates submitted cfg_file for edit route.
 def valid_cfg_name(cfg_file):
-    gs_cfgs = open('json/accepted_cfgs.json', 'r')
+    gs_cfgs = open("json/accepted_cfgs.json", "r")
     json_data = json.load(gs_cfgs)
     gs_cfgs.close()
-    
+
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
     for cfg in valid_gs_cfgs:
@@ -373,7 +380,7 @@ def valid_cfg_name(cfg_file):
             return True
 
     return False
-    
+
 
 def get_commands(server, send_cmd, current_user):
     """
@@ -388,10 +395,10 @@ def get_commands(server, send_cmd, current_user):
     """
     commands = []
 
-    with open('json/commands.json', 'r') as commands_json:
+    with open("json/commands.json", "r") as commands_json:
         json_data = json.load(commands_json)
 
-    with open('json/ctrl_exemptions.json', 'r') as exemptions_json:
+    with open("json/ctrl_exemptions.json", "r") as exemptions_json:
         exemptions_data = json.load(exemptions_json)
 
     # Remove send cmd if option disabled in main.conf.
@@ -402,18 +409,20 @@ def get_commands(server, send_cmd, current_user):
 
     # Remove exempted cmds.
     if server in exemptions_data:
-        for short_cmd in exemptions_data[server]['short_cmds']:
+        for short_cmd in exemptions_data[server]["short_cmds"]:
             json_data["short_cmds"].remove(short_cmd)
-        for long_cmd in exemptions_data[server]['long_cmds']:
+        for long_cmd in exemptions_data[server]["long_cmds"]:
             json_data["long_cmds"].remove(long_cmd)
-        for desc in exemptions_data[server]['descriptions']:
+        for desc in exemptions_data[server]["descriptions"]:
             json_data["descriptions"].remove(desc)
 
-    cmds = zip(json_data["short_cmds"], json_data["long_cmds"], json_data["descriptions"])
+    cmds = zip(
+        json_data["short_cmds"], json_data["long_cmds"], json_data["descriptions"]
+    )
 
     class CmdDescriptor:
         def __init__(self):
-            self.long_cmd  = ""
+            self.long_cmd = ""
             self.short_cmd = ""
             self.description = ""
 
@@ -427,8 +436,8 @@ def get_commands(server, send_cmd, current_user):
     user_perms = json.loads(current_user.permissions)
 
     for short_cmd, long_cmd, description in cmds:
-        if current_user.role != 'admin':
-            if long_cmd not in user_perms['controls']:
+        if current_user.role != "admin":
+            if long_cmd not in user_perms["controls"]:
                 continue
 
         cmd = CmdDescriptor()
@@ -444,10 +453,10 @@ def get_commands(server, send_cmd, current_user):
 def get_servers():
     # Try except in case problem with json files.
     try:
-        servers_json = open('json/game_servers.json', 'r')
+        servers_json = open("json/game_servers.json", "r")
         json_data = json.load(servers_json)
         servers_json.close()
-        return dict(zip(json_data['servers'], json_data['server_names']))
+        return dict(zip(json_data["servers"], json_data["server_names"]))
     except:
         # Return empty dict triggers error. In python empty dict == False.
         return {}
@@ -467,6 +476,7 @@ def valid_command(cmd, server, send_cmd, current_user):
 
 
 ## Install Page Utils.
+
 
 # Validates form submitted server_script_name and server_full_name options.
 def valid_install_options(script_name, full_name):
@@ -514,9 +524,9 @@ def check_and_get_lgsmsh(lgsmsh):
 def get_lgsmsh(lgsmsh):
     # Pretend to be wget to fetch linuxgsm.sh.
     try:
-        headers = {'User-Agent': 'Wget/1.20.3 (linux-gnu)'}
-        response = requests.get('https://linuxgsm.sh', headers=headers)
-        with open(lgsmsh, 'wb') as f:
+        headers = {"User-Agent": "Wget/1.20.3 (linux-gnu)"}
+        response = requests.get("https://linuxgsm.sh", headers=headers)
+        with open(lgsmsh, "wb") as f:
             f.write(response.content)
         os.chmod(lgsmsh, 0o755)
     except Exception as e:
@@ -524,10 +534,34 @@ def get_lgsmsh(lgsmsh):
         print(e)
     print("Got linuxgsm.sh!")
 
+
 # Checks for the presense of bad chars in input.
 def contains_bad_chars(i):
-    bad_chars = { " ", "$", "'", '"', "\\", "#", "=", "[", "]", "!", "<", ">",
-                  "|", ";", "{", "}", "(", ")", "*", ",", "?", "~", "&" }
+    bad_chars = {
+        " ",
+        "$",
+        "'",
+        '"',
+        "\\",
+        "#",
+        "=",
+        "[",
+        "]",
+        "!",
+        "<",
+        ">",
+        "|",
+        ";",
+        "{",
+        "}",
+        "(",
+        ")",
+        "*",
+        ",",
+        "?",
+        "~",
+        "&",
+    }
     if i is None:
         return False
 
@@ -540,7 +574,11 @@ def contains_bad_chars(i):
 
 # Returns a string comma separated game server script paths for a given user.
 def get_user_script_paths(install_path, script_name):
-    paths_query_result = GameServer.query.filter_by(username=script_name).with_entities(GameServer.install_path).all()
+    paths_query_result = (
+        GameServer.query.filter_by(username=script_name)
+        .with_entities(GameServer.install_path)
+        .all()
+    )
     game_server_paths = [path[0] for path in paths_query_result]
     user_script_paths = os.path.join(install_path, script_name)
 
@@ -553,29 +591,33 @@ def get_user_script_paths(install_path, script_name):
 
 # Run's self update script.
 def update_self():
-    update_cmd = ['./web-lgsm.py', '--auto']
-    proc = subprocess.run(update_cmd,
-            stdout = subprocess.PIPE,
-            stderr = subprocess.PIPE,
-            universal_newlines=True)
+    update_cmd = ["./web-lgsm.py", "--auto"]
+    proc = subprocess.run(
+        update_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
 
     if proc.returncode != 0:
         return f"Error: {proc.stderr}"
 
-    if 'up to date' in proc.stdout:
-        return 'Already up to date!'
+    if "up to date" in proc.stdout:
+        return "Already up to date!"
 
-    if 'Update Required' in proc.stdout:
-        return 'Web LGSM Upgraded! Restarting momentarily...'
+    if "Update Required" in proc.stdout:
+        return "Web LGSM Upgraded! Restarting momentarily..."
 
 
 # Sleep's 5 seconds then restarts the app.
 def restart_self(restart_cmd):
     time.sleep(5)
-    proc = subprocess.run(restart_cmd,
-            stdout = subprocess.PIPE,
-            stderr = subprocess.PIPE,
-            universal_newlines=True)
+    proc = subprocess.run(
+        restart_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
 
 
 # Gets bytes in/out per second. Stores last value in global.
@@ -589,54 +631,55 @@ def get_network_stats():
     current_time = time.time()
 
     # Calculate the rate of bytes sent and received per second.
-    bytes_sent_rate = (current_bytes_sent - prev_bytes_sent) / (current_time - prev_time)
-    bytes_recv_rate = (current_bytes_recv - prev_bytes_recv) / (current_time - prev_time)
+    bytes_sent_rate = (current_bytes_sent - prev_bytes_sent) / (
+        current_time - prev_time
+    )
+    bytes_recv_rate = (current_bytes_recv - prev_bytes_recv) / (
+        current_time - prev_time
+    )
 
     # Update previous counters and timestamp.
     prev_bytes_sent = current_bytes_sent
     prev_bytes_recv = current_bytes_recv
     prev_time = current_time
 
-    return {
-        'bytes_sent_rate': bytes_sent_rate,
-        'bytes_recv_rate': bytes_recv_rate
-    }
+    return {"bytes_sent_rate": bytes_sent_rate, "bytes_recv_rate": bytes_recv_rate}
 
 
 # Returns disk, cpu, mem, and network stats. Later turned into json for home
 # page resource usage charts.
 def get_server_stats():
-    stats = dict() 
+    stats = dict()
 
     # Disk
     total, used, free = shutil.disk_usage("/")
     # Add ~4% for ext4 filesystem metadata usage.
-    percent_used = (((total * .04) + used) / total) * 100
+    percent_used = (((total * 0.04) + used) / total) * 100
     stats["disk"] = {
-        'total': total, 
-        'used': used, 
-        'free': free, 
-        'percent_used': percent_used
+        "total": total,
+        "used": used,
+        "free": free,
+        "percent_used": percent_used,
     }
 
     # CPU
     load1, load5, load15 = psutil.getloadavg()
-    cpu_usage = (load1/os.cpu_count()) * 100
+    cpu_usage = (load1 / os.cpu_count()) * 100
     stats["cpu"] = {
-        'load1': load1,
-        'load5': load5,
-        'load15': load15,
-        'cpu_usage': cpu_usage
+        "load1": load1,
+        "load5": load5,
+        "load15": load15,
+        "cpu_usage": cpu_usage,
     }
 
     # Mem
     mem = psutil.virtual_memory()
     # Total, used, available, percent_used.
     stats["mem"] = {
-        'total': mem[0], 
-        'used': mem[3],
-        'free': mem[1],
-        'percent_used': mem[2]
+        "total": mem[0],
+        "used": mem[3],
+        "free": mem[1],
+        "percent_used": mem[2],
     }
 
     # Network
@@ -656,7 +699,7 @@ def get_verbosity(verbostiy):
 
     # Only allow levels 1-3.
     if v > 3:
-        v = 1 
+        v = 1
 
     return v
 
@@ -676,38 +719,56 @@ def user_has_permissions(current_user, route, server_name=None):
 
     """
     # Admins can always do anything.
-    if current_user.role == 'admin':
+    if current_user.role == "admin":
         return True
 
     user_perms = json.loads(current_user.permissions)
 
-    if route == 'install':
-        if not user_perms['install_servers']:
-            flash("Your user does NOT have permission access the install page!", category="error")
+    if route == "install":
+        if not user_perms["install_servers"]:
+            flash(
+                "Your user does NOT have permission access the install page!",
+                category="error",
+            )
             return False
 
-    if route == 'add':
-        if not user_perms['add_servers']:
-            flash("Your user does NOT have permission access the add page!", category="error")
+    if route == "add":
+        if not user_perms["add_servers"]:
+            flash(
+                "Your user does NOT have permission access the add page!",
+                category="error",
+            )
             return False
 
-    if route == 'delete':
-        if not user_perms['delete_server']:
-            flash("Your user does NOT have permission to delete servers!", category="error")
+    if route == "delete":
+        if not user_perms["delete_server"]:
+            flash(
+                "Your user does NOT have permission to delete servers!",
+                category="error",
+            )
             return False
 
-        if server_name not in user_perms['servers']:
-            flash("Your user does NOT have permission to delete this game server!", category="error")
+        if server_name not in user_perms["servers"]:
+            flash(
+                "Your user does NOT have permission to delete this game server!",
+                category="error",
+            )
             return False
 
-    if route == 'settings':
-        if not user_perms['mod_settings']:
-            flash("Your user does NOT have permission access the settings page!", category="error")
+    if route == "settings":
+        if not user_perms["mod_settings"]:
+            flash(
+                "Your user does NOT have permission access the settings page!",
+                category="error",
+            )
             return False
 
-    if route == 'controls':
-        if server_name not in user_perms['servers']:
-            flash("Your user does NOT have permission access this game server!", category="error")
+    if route == "controls":
+        if server_name not in user_perms["servers"]:
+            flash(
+                "Your user does NOT have permission access this game server!",
+                category="error",
+            )
             return False
 
     return True
@@ -725,15 +786,15 @@ def install_path_exists(install_path):
     """
     # Set Ansible playbook vars.
     ansible_vars = dict()
-    ansible_vars['action'] = 'checkdir'
-    ansible_vars['install_path'] = install_path
+    ansible_vars["action"] = "checkdir"
+    ansible_vars["install_path"] = install_path
     write_ansible_vars_json(ansible_vars)
 
-    output=OutputContainer([''], False)
-    cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+    output = OutputContainer([""], False)
+    cmd = ["/usr/bin/sudo", "-n", os.path.join(CWD, "playbooks/ansible_connector.py")]
     shell_exec(cmd, output)
     for line in output.output_lines:
-        if 'Path exists' in line:
+        if "Path exists" in line:
             return True
 
     print(output.output_lines)

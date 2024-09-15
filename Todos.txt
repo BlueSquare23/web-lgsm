@@ -1,17 +1,5 @@
 ## Beta Version 1.8.0 Todos
 
-### v1.8.0 Pt 2. Add Multi Web Interface Users
----
-
-* Make `web-lgsm.py` script change password for supplied user.
-  - Already has a change pass option.
-  - Make it now accept an optarg for user and then change that users password.
-  - Default to first primary admin user.
-
-* Apply autoformatting via `black`.
-  - No not the award winning ps2 game from 2006.
-  - The python module.
-
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 

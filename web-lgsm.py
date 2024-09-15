@@ -72,10 +72,13 @@ def relaunch_in_venv():
 
     run_command_popen(activate_command)
 
+
 # Protection in case user is not in venv.
 if os.getenv('VIRTUAL_ENV') is None:
+    print(" [!] Relaunching in venv!")
     relaunch_in_venv()
     exit(0)
+
 
 # Continue imports once we know we're in a venv.
 import json

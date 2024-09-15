@@ -90,9 +90,6 @@ def home():
     # or not via a util function.
     server_status_dict = get_server_statuses(installed_servers)
 
-    global SERVERS
-    SERVERS = {}
-
     if DEBUG and verbosity >= 1:
         print(f"##### DEBUG config_options {config_options}")
         print(f"##### DEBUG installed_servers {installed_servers}")
@@ -167,7 +164,7 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for('views.home'))
 
-    if not os.path.isdir(server.install_path):
+    if not install_path_exists(server.install_path):
         flash("No game server installation directory found!", category="error")
         return redirect(url_for('views.home'))
 
@@ -429,7 +426,7 @@ def install():
             ansible_vars['install_path'] = os.path.join(f'/home/{server_script_name}', server_full_name)
             ansible_vars['script_paths'] = get_user_script_paths(ansible_vars['install_path'], server_script_name)
 
-        if os.path.exists(ansible_vars['install_path']):
+        if install_path_exists(ansible_vars['install_path']:
             flash('Install directory already exists.', category='error')
             flash('Did you perhaps have this server installed previously?', category='error')
             return redirect(url_for('views.install'))
@@ -783,10 +780,12 @@ def add():
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
-        elif not os.path.exists(install_path) or not os.path.isdir(install_path):
-            flash('Directory path does not exist.', category='error')
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
+
+# TODO: This doesn't work anymore, fix. Can't check dir for other users.
+#        elif not os.path.exists(install_path) or not os.path.isdir(install_path):
+#            flash('Directory path does not exist.', category='error')
+#            status_code = 400
+#            return render_template("add.html", user=current_user), status_code
 
         if not valid_script_name(script_name):
             flash('Invalid game server script file name!', category='error')
@@ -794,10 +793,11 @@ def add():
             return render_template("add.html", user=current_user), status_code
 
         script_path = os.path.join(install_path, script_name) 
-        if not os.path.exists(script_path) or \
-                not os.path.isfile(script_path):
-            flash('Script file does not exist.', category='error')
-            status_code = 400
+# TODO: This doesn't work anymore, fix. Can't check dir for other users.
+#        if not os.path.exists(script_path) or \
+#                not os.path.isfile(script_path):
+#            flash('Script file does not exist.', category='error')
+#            status_code = 400
             return render_template("add.html", user=current_user), status_code
 
         # Add sudoers rules automatically if game server not owned by web-lgsm
@@ -822,9 +822,8 @@ def add():
                 pprint(ansible_vars)
 
             # TODO: Add debug options to print this hidden output.
-            output_obj = OutputContainer([''], False)
             cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
-            shell_exec(cmd, output_obj)
+            shell_exec(cmd)
 
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(install_name=install_name, \

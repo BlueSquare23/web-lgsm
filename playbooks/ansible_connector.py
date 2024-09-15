@@ -26,6 +26,7 @@ O = { "debug": False,
 
 ## Subroutines.
 
+
 def print_help():
     """Help menu"""
     print(f"""Usage: {os.path.basename(__file__)}  [-h] [-d] [-k]
@@ -35,6 +36,7 @@ def print_help():
       -k, --keep      Keep json file, don't delete after run
     """)
     exit()
+
 
 # Main.
 def main(argv):
@@ -54,23 +56,29 @@ def main(argv):
 
     playbook_vars_data = load_json(JSON_VARS_FILE)
 
-    if playbook_vars_data.get('action') == 'install':
-        run_install_new_game_server(playbook_vars_data)
+    if playbook_vars_data.get('action') == 'create':
+        run_create_sudoers_rules(playbook_vars_data)
         cleanup()
 
     if playbook_vars_data.get('action') == 'delete':
         run_delete_user(playbook_vars_data)
         cleanup()
 
-    if playbook_vars_data.get('action') == 'create':
-        run_create_sudoers_rules(playbook_vars_data)
+    if playbook_vars_data.get('action') == 'checkdir':
+        check_dir_exists(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get('action') == 'install':
+        run_install_new_game_server(playbook_vars_data)
         cleanup()
 
     if playbook_vars_data.get('action') == 'cancel':
         cancel_install(playbook_vars_data)
         cleanup()
 
+
     print(' [!] No action taken! Are you sure you supplied valid json?')
+
 
 # Cleans up json & exits.
 def cleanup(exit_status=0):
@@ -81,6 +89,7 @@ def cleanup(exit_status=0):
             print(f" [!] An error occurred deleting json: {e}")
             exit(1) 
     exit(exit_status)
+
 
 def load_json(file_path):
     try:
@@ -96,6 +105,7 @@ def load_json(file_path):
     except Exception as e:
         print(f" [!] An unexpected error occurred: {e}")
         exit(1)
+
 
 def run_cmd(cmd, exec_dir=os.getcwd()):
     """Main subprocess wrapper function, runs cmds via Popen"""
@@ -131,6 +141,7 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
     except Exception as e:
         print(f"An unexpected error occurred while running '{cmd}': {str(e)}")
 
+
 def check_required_vars_are_set(vars_dict, required_vars):
     """Checks that required json var values are supplied. DOES NOT VALIDATE
     CONTENT! Just checks that the required var is set."""
@@ -138,6 +149,7 @@ def check_required_vars_are_set(vars_dict, required_vars):
         if vars_dict.get(var) is None:
             print(f" [!] Required var '{var}' is missing from json!")
             cleanup(11)
+
 
 def validate_gs_user(gs_user):
     yaml_file_path = os.path.join(CWD, 'playbooks/vars/accepted_gs_users.yml')
@@ -151,6 +163,7 @@ def validate_gs_user(gs_user):
     if gs_user not in accepted_gs_users:
         print(" [!] Invalid user!")
         cleanup(77)
+
 
 def run_delete_user(vars_data):
     """Wraps the invocation of the delete_user.yml playbook"""
@@ -172,6 +185,50 @@ def run_delete_user(vars_data):
         exit()
 
     run_cmd(cmd)
+
+
+def validate_install_path(install_path):
+    """
+    Check's if install path is in accepted list.
+
+    Args:
+        install_path: Path to game server install.
+
+    Returns:
+        bool: True if path in accepted list, False otherwise
+    """
+    try:
+        install_path_list = os.path.join(CWD, 'playbooks/gs_allowed_paths.txt')
+        with open(install_path_list, 'r') as file:
+            return any(line.strip() == install_path for line in file)
+    except FileNotFoundError:
+        print(f" [!] Error: File {file_path} not found.")
+        return False
+    except IOError:
+        print(f" [!] Error: Problem reading file {file_path}.")
+        return False
+
+
+def check_dir_exists(vars_data):
+    """
+    Wraps checking game server install path exists.
+
+    Args:
+        vars_data (dict): Contains install_path to check.
+
+    Returns:
+        str: An output string indicating if the file is there or not.
+    """
+    required_vars = ['install_path']
+    check_required_vars_are_set(vars_data, required_vars)
+
+    install_path = vars_data.get('install_path')
+    validate_install_path(install_path)
+    if os.path.isdir(install_path):
+        print(" [*] Path exists")
+    else:
+        print(" [*] No such dir")
+
 
 def run_create_sudoers_rules(vars_data):
     """Wraps the invocation of the create_sudoers_rules.yml playbook"""
@@ -203,86 +260,6 @@ def run_create_sudoers_rules(vars_data):
 
     run_cmd(create_rules_cmd)
 
-def run_install_new_game_server(vars_data):
-    """Wraps the invocation of the install_new_game_server.yml playbook"""
-    required_vars = ['gs_user', 'install_path', 'server_script_name',
-                     'script_paths', 'web_lgsm_user']
-    check_required_vars_are_set(vars_data, required_vars)
-
-    gs_user = vars_data.get('gs_user')
-    validate_gs_user(gs_user)
-
-    install_path = vars_data.get('install_path')
-    server_script_name = vars_data.get('server_script_name')
-    script_paths = vars_data.get('script_paths')
-    web_lgsm_user = vars_data.get('web_lgsm_user')
-    same_user = vars_data.get('same_user', False)
-
-    sudo_rule_name = f'{web_lgsm_user}-{gs_user}'
-    ansible_cmd_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
-    install_gs_playbook_path = os.path.join(CWD, 'playbooks/install_new_game_server.yml')
-    lgsmsh_path = os.path.join(CWD, f'scripts/linuxgsm.sh')
-
-    sudo_pre_cmd = ['/usr/bin/sudo', '-n']
-
-    pre_install_cmd = sudo_pre_cmd + [ ansible_cmd_path,
-                      install_gs_playbook_path,
-                      '-e', f'gs_user={gs_user}',
-                      '-e', f'install_path={install_path}',
-                      '-e', f'lgsmsh_path={lgsmsh_path}',
-                      '-e', f'server_script_name={server_script_name}',
-                      '-e', f'script_paths={script_paths}',
-                      '-e', f'sudo_rule_name={sudo_rule_name}',
-                      '-e', f'web_lgsm_user={web_lgsm_user}' ]
-
-    # Set playbook flag to not run user / sudo setup steps.
-    if same_user == 'true':
-        pre_install_cmd += ['-e', 'same_user=true']
-
-    # Run pre-install playbook.
-    run_cmd(pre_install_cmd)
-
-    subcmd1 = sudo_pre_cmd + ['-u', gs_user]
-    subcmd2 = [f'{install_path}/{server_script_name}', 'auto-install']
-    install_cmd = subcmd1 + subcmd2
-
-    if O['debug']:
-        print(install_cmd)
-        exit()
-
-    # Actually run install!
-    run_cmd(install_cmd, install_path)
-
-    # Post install cfg fix.
-    post_install_cfg_fix(install_path, gs_user)
-
-    # Remove temp sudoers rule for new user.
-    try:
-        os.remove(f'/etc/sudoers.d/{gs_user}-temp-auto-install')
-    except OSError as e:
-        print(f" [!] An error occurred deleting temp sudoers rule: {e}")
-
-    print(f"\033[92m ✓  Game server successfully installed!\033[0m")
-
-def post_install_cfg_fix(gs_dir, gs_user):
-    """Sets up persistent game server cfg files post install"""
-    # Find the default and common configs.
-    default_cfg = next(os.path.join(root, name) \
-        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
-            for name in files if name == "_default.cfg")
-    common_cfg = next(os.path.join(root, name) \
-        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
-            for name in files if name == "common.cfg")
-
-    # Strip the first 9 lines of warning comments from _default.cfg and write
-    # the rest to the common.cfg.
-    with open(default_cfg, 'r') as default_file, open(common_cfg, 'w') as common_file:
-        for _ in range(9):
-            next(default_file)  # Skip the first 9 lines
-        for line in default_file:
-            common_file.write(line)
-
-    print("Configuration file common.cgf updated!")
 
 def get_script_cmd_from_pid(pid):
     try:
@@ -336,6 +313,116 @@ def cancel_install(vars_data):
 
     cmd = ['pkill', '-P', f'{pid}']
     run_cmd(cmd)
+
+
+def post_install_cfg_fix(gs_dir, gs_user):
+    """Sets up persistent game server cfg files post install"""
+    # Find the default and common configs.
+    default_cfg = next(os.path.join(root, name) \
+        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
+            for name in files if name == "_default.cfg")
+    common_cfg = next(os.path.join(root, name) \
+        for root, _, files in os.walk(f"{gs_dir}/lgsm/config-lgsm") \
+            for name in files if name == "common.cfg")
+
+    # Strip the first 9 lines of warning comments from _default.cfg and write
+    # the rest to the common.cfg.
+    with open(default_cfg, 'r') as default_file, open(common_cfg, 'w') as common_file:
+        for _ in range(9):
+            next(default_file)  # Skip the first 9 lines
+        for line in default_file:
+            common_file.write(line)
+
+    print("Configuration file common.cgf updated!")
+
+
+def whitelist_install_path(install_path):
+    """
+    Adds install_path to allowed install path list after a successful install.
+
+    Args:
+        install_path (str): Path to add to allow list.
+
+    Returns:
+        bool: True if write successful, False otherwise.
+    """
+    try:
+        install_path_list = os.path.join(CWD, 'playbooks/gs_allowed_paths.txt')
+        with open(install_path_list, 'a') as file:
+            file.write(install_path + "\n")
+        return True
+    except FileNotFoundError:
+        print(f" [!] Error: File {file_path} not found.")
+        return False
+    except IOError:
+        print(f" [!] Error: Problem writing to file {file_path}.")
+        return False
+
+
+def run_install_new_game_server(vars_data):
+    """Wraps the invocation of the install_new_game_server.yml playbook"""
+    required_vars = ['gs_user', 'install_path', 'server_script_name',
+                     'script_paths', 'web_lgsm_user']
+    check_required_vars_are_set(vars_data, required_vars)
+
+    gs_user = vars_data.get('gs_user')
+    validate_gs_user(gs_user)
+
+    install_path = vars_data.get('install_path')
+    server_script_name = vars_data.get('server_script_name')
+    script_paths = vars_data.get('script_paths')
+    web_lgsm_user = vars_data.get('web_lgsm_user')
+    same_user = vars_data.get('same_user', False)
+
+    sudo_rule_name = f'{web_lgsm_user}-{gs_user}'
+    ansible_cmd_path = os.path.join(CWD, 'venv/bin/ansible-playbook')
+    install_gs_playbook_path = os.path.join(CWD, 'playbooks/install_new_game_server.yml')
+    lgsmsh_path = os.path.join(CWD, f'scripts/linuxgsm.sh')
+
+    sudo_pre_cmd = ['/usr/bin/sudo', '-n']
+
+    pre_install_cmd = sudo_pre_cmd + [ ansible_cmd_path,
+                      install_gs_playbook_path,
+                      '-e', f'gs_user={gs_user}',
+                      '-e', f'install_path={install_path}',
+                      '-e', f'lgsmsh_path={lgsmsh_path}',
+                      '-e', f'server_script_name={server_script_name}',
+                      '-e', f'script_paths={script_paths}',
+                      '-e', f'sudo_rule_name={sudo_rule_name}',
+                      '-e', f'web_lgsm_user={web_lgsm_user}' ]
+
+    # Set playbook flag to not run user / sudo setup steps.
+    if same_user == 'true':
+        pre_install_cmd += ['-e', 'same_user=true']
+
+    # Run pre-install playbook.
+    run_cmd(pre_install_cmd)
+
+    subcmd1 = sudo_pre_cmd + ['-u', gs_user]
+    subcmd2 = [f'{install_path}/{server_script_name}', 'auto-install']
+    install_cmd = subcmd1 + subcmd2
+
+    if O['debug']:
+        print(install_cmd)
+        exit()
+
+    # Actually run install!
+    run_cmd(install_cmd, install_path)
+
+    # After install append install dir to allowed paths file.
+    whitelist_install_path(install_path)
+
+    # Post install cfg fix.
+    post_install_cfg_fix(install_path, gs_user)
+
+    # Remove temp sudoers rule for new user.
+    try:
+        os.remove(f'/etc/sudoers.d/{gs_user}-temp-auto-install')
+    except OSError as e:
+        print(f" [!] An error occurred deleting temp sudoers rule: {e}")
+
+    print(f"\033[92m ✓  Game server successfully installed!\033[0m")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

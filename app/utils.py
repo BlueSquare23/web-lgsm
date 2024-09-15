@@ -103,16 +103,17 @@ class OutputContainer:
             sort_keys=True, indent=4)
 
 
-# Shell executor subprocess.Popen wrapper generator function. Runs a command
-# through the shell and returns output in realtime by appending it to output
-# object, which is read by output api.
-def shell_exec(cmd, output, gs_dir=None):
+# Shell executor subprocess.Popen wrapper function. Runs a command through the
+# shell and returns output in realtime by appending it to output object, which
+# is read by output api.
+def shell_exec(cmd, output=OutputContainer([''], False)):
     # Clear any previous output.
     output.output_lines.clear()
 
     # Set lock flag to true.
     output.process_lock = True
 
+    # TODO: Turn into debug msgs.
     print(cmd)
     print(" ".join(cmd))
 
@@ -126,6 +127,7 @@ def shell_exec(cmd, output, gs_dir=None):
 
     for stdout_line in iter(proc.stdout.readline, ""):
         output.output_lines.append(stdout_line)
+        print(stdout_line)
 
     for stderr_line in iter(proc.stderr.readline, ""):
         output.output_lines.append(stderr_line)
@@ -289,7 +291,7 @@ def find_cfg_paths(search_path):
 
 
 # Does the actual deletions for the /delete route.
-def del_server(server, remove_files, output):
+def del_server(server, remove_files):
     install_path = server.install_path
     server_name = server.install_name
     username = server.username
@@ -316,7 +318,7 @@ def del_server(server, remove_files, output):
         write_ansible_vars_json(ansible_vars)
 
         cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
-        shell_exec(cmd, output)
+        shell_exec(cmd)
 
     flash(f'Game server, {server_name} deleted!')
     return
@@ -679,3 +681,31 @@ def user_has_permissions(current_user, route, server_name=None):
             return False
 
     return True
+
+
+def install_path_exists(install_path):
+    """
+    Check's that the install_path via connector.
+
+    Args:
+        install_path (str): Installation path to check.
+
+    Returns:
+        bool: True if path exists, False otherwise.
+    """
+    # Set Ansible playbook vars.
+    ansible_vars = dict()
+    ansible_vars['action'] = 'checkdir'
+    ansible_vars['install_path'] = install_path
+    write_ansible_vars_json(ansible_vars)
+
+    output=OutputContainer([''], False)
+    cmd = ['/usr/bin/sudo', '-n', os.path.join(CWD, 'playbooks/ansible_connector.py')]
+    shell_exec(cmd, output)
+    for line in output.output_lines:
+        if 'Path exists' in line:
+            return True
+
+    print(output.output_lines)
+
+    return False

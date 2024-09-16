@@ -20,7 +20,7 @@
           <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none">New User</a>
           {% endif %}
 
-          {% for user in all_users %}
+          {% for user in all_users if user.id != 1 %}
             {% if user.username == selected_user %}
           <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none active" aria-current="true">{{user.username}}</a>
             {% else %}

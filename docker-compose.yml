@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  web-lgsm:
+    build: .
+    container_name: web-lgsm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./main.conf:/home/web-lgsm/main.conf:rw
+      - ./app/database.db:/home/web-lgsm/database.db:rw
+    networks:
+      - web-lgsm-net
+
+networks:
+  web-lgsm-net:
+    driver: bridge
+

@@ -45,28 +45,28 @@ if [[ ! $sys_name =~ Ubuntu|Debian ]]; then
 fi
 
 echo -e "${green}####### Pulling in apt updates...${reset}"
-sudo apt update
+sudo apt-get update
 
 for req in $(cat 'apt-reqs.txt'); do
     if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"
-        sudo apt install -y $req
+        sudo apt-get install -y $req
     fi
 done
 
 if ! which python3  &>/dev/null; then
     echo -e "${green}####### Installing \`python3\`...${reset}"
-    sudo apt install -y python3
+    sudo apt-get install -y python3
 fi
 
 if ! which pip3 &>/dev/null; then
     echo -e "${green}####### Installing \`pip3\`...${reset}"
-    sudo apt install -y python3-pip
+    sudo apt-get install -y python3-pip
 
-    if [[ $sys_name =~ Ubuntu ]]; then
-        echo -e "${green}####### Upgrading \`pip3\`...${reset}"
-        python3 -m pip install --upgrade pip
-    fi
+#    if [[ $sys_name =~ Ubuntu ]]; then
+#        echo -e "${green}####### Upgrading \`pip3\`...${reset}"
+#        python3 -m pip install --upgrade pip
+#    fi
 fi
 
 echo -e "${green}####### Setting up Virtual Env...${reset}"

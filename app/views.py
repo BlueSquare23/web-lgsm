@@ -51,7 +51,6 @@ views = Blueprint("views", __name__)
 
 ######### Home Page #########
 
-
 @views.route("/", methods=["GET"])
 @views.route("/home", methods=["GET"])
 @login_required
@@ -120,7 +119,6 @@ def home():
 
 ######### XtermJS Test Page #########
 
-
 @views.route("/xtermjs", methods=["GET"])
 @login_required
 def xtermjs():
@@ -142,7 +140,6 @@ def xtermjs():
 
 
 ######### Controls Page #########
-
 
 @views.route("/controls", methods=["GET"])
 @login_required
@@ -366,7 +363,6 @@ def controls():
 
 ######### Install Page #########
 
-
 @views.route("/install", methods=["GET", "POST"])
 @login_required
 def install():
@@ -561,6 +557,7 @@ def install():
 
 
 ######### API System Usage #########
+
 @views.route("/api/system-usage", methods=["GET"])
 @login_required
 def get_stats():
@@ -572,7 +569,6 @@ def get_stats():
 
 
 ######### API CMD Output Page #########
-
 
 @views.route("/api/cmd-output", methods=["GET"])
 @login_required
@@ -612,7 +608,6 @@ def no_output():
 
 
 ######### Settings Page #########
-
 
 @views.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -767,7 +762,6 @@ def settings():
 
 ######### About Page #########
 
-
 @views.route("/about", methods=["GET"])
 @login_required
 def about():
@@ -784,7 +778,6 @@ def about():
 
 
 ######### Add Page #########
-
 
 @views.route("/add", methods=["GET", "POST"])
 @login_required

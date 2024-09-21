@@ -25,7 +25,6 @@ O = {"debug": False, "keep": False}
 
 ## Subroutines.
 
-
 def print_help():
     """Help menu"""
     print(
@@ -37,47 +36,6 @@ def print_help():
     """
     )
     exit()
-
-
-# Main.
-def main(argv):
-    """Process getopts, loads json vars, runs appropriate playbook"""
-    try:
-        opts, args = getopt.getopt(argv, "hdk", ["help", "debug", "keep"])
-    except getopt.GetoptError:
-        print_help()
-
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            print_help()
-        if opt in ("-d", "--debug"):
-            O["debug"] = True
-        if opt in ("-k", "--keep"):
-            O["keep"] = True
-
-    playbook_vars_data = load_json(JSON_VARS_FILE)
-
-    if playbook_vars_data.get("action") == "create":
-        run_create_sudoers_rules(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "delete":
-        run_delete_user(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "checkdir":
-        check_dir_exists(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "install":
-        run_install_new_game_server(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "cancel":
-        cancel_install(playbook_vars_data)
-        cleanup()
-
-    print(" [!] No action taken! Are you sure you supplied valid json?")
 
 
 # Cleans up json & exits.
@@ -105,6 +63,35 @@ def load_json(file_path):
     except Exception as e:
         print(f" [!] An unexpected error occurred: {e}")
         exit(1)
+
+
+def touch(fname, times=None):
+    """Re-implement unix touch in python."""
+    with open(fname, "a"):
+        os.utime(fname, times)
+
+
+def check_required_vars_are_set(vars_dict, required_vars):
+    """Checks that required json var values are supplied. DOES NOT VALIDATE
+    CONTENT! Just checks that the required var is set."""
+    for var in required_vars:
+        if vars_dict.get(var) is None:
+            print(f" [!] Required var '{var}' is missing from json!")
+            cleanup(11)
+
+
+def validate_gs_user(gs_user):
+    yaml_file_path = os.path.join(CWD, "playbooks/vars/accepted_gs_users.yml")
+
+    with open(yaml_file_path, "r") as file:
+        data = yaml.safe_load(file)
+
+    # Extract the accepted_gs_users variable into a list.
+    accepted_gs_users = data.get("accepted_gs_users", [])
+
+    if gs_user not in accepted_gs_users:
+        print(" [!] Invalid user!")
+        cleanup(77)
 
 
 def run_cmd(cmd, exec_dir=os.getcwd()):
@@ -143,27 +130,43 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
         print(f"An unexpected error occurred while running '{cmd}': {str(e)}")
 
 
-def check_required_vars_are_set(vars_dict, required_vars):
-    """Checks that required json var values are supplied. DOES NOT VALIDATE
-    CONTENT! Just checks that the required var is set."""
-    for var in required_vars:
-        if vars_dict.get(var) is None:
-            print(f" [!] Required var '{var}' is missing from json!")
-            cleanup(11)
+def run_create_sudoers_rules(vars_data):
+    """Wraps the invocation of the create_sudoers_rules.yml playbook"""
+    required_vars = ["gs_user", "script_paths", "web_lgsm_user"]
+    check_required_vars_are_set(vars_data, required_vars)
 
+    gs_user = vars_data.get("gs_user")
+    validate_gs_user(gs_user)
 
-def validate_gs_user(gs_user):
-    yaml_file_path = os.path.join(CWD, "playbooks/vars/accepted_gs_users.yml")
+    script_paths = vars_data.get("script_paths")
+    web_lgsm_user = vars_data.get("web_lgsm_user")
 
-    with open(yaml_file_path, "r") as file:
-        data = yaml.safe_load(file)
+    sudo_rule_name = f"{web_lgsm_user}-{gs_user}"
+    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
+    create_sudoers_rules_playbook_path = os.path.join(
+        CWD, "playbooks/create_sudoers_rules.yml"
+    )
 
-    # Extract the accepted_gs_users variable into a list.
-    accepted_gs_users = data.get("accepted_gs_users", [])
+    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
 
-    if gs_user not in accepted_gs_users:
-        print(" [!] Invalid user!")
-        cleanup(77)
+    create_rules_cmd = sudo_pre_cmd + [
+        ansible_cmd_path,
+        create_sudoers_rules_playbook_path,
+        "-e",
+        f"gs_user={gs_user}",
+        "-e",
+        f"sudo_rule_name={sudo_rule_name}",
+        "-e",
+        f"script_paths={script_paths}",
+        "-e",
+        f"web_lgsm_user={web_lgsm_user}",
+    ]
+
+    if O["debug"]:
+        print(create_rules_cmd)
+        exit()
+
+    run_cmd(create_rules_cmd)
 
 
 def run_delete_user(vars_data):
@@ -193,12 +196,6 @@ def run_delete_user(vars_data):
         exit()
 
     run_cmd(cmd)
-
-
-def touch(fname, times=None):
-    """Re-implement unix touch in python."""
-    with open(fname, "a"):
-        os.utime(fname, times)
 
 
 def validate_install_path(install_path):
@@ -245,97 +242,27 @@ def check_dir_exists(vars_data):
         print(" [*] No such dir")
 
 
-def run_create_sudoers_rules(vars_data):
-    """Wraps the invocation of the create_sudoers_rules.yml playbook"""
-    required_vars = ["gs_user", "script_paths", "web_lgsm_user"]
-    check_required_vars_are_set(vars_data, required_vars)
+def whitelist_install_path(install_path):
+    """
+    Adds install_path to allowed install path list after a successful install.
 
-    gs_user = vars_data.get("gs_user")
-    validate_gs_user(gs_user)
+    Args:
+        install_path (str): Path to add to allow list.
 
-    script_paths = vars_data.get("script_paths")
-    web_lgsm_user = vars_data.get("web_lgsm_user")
-
-    sudo_rule_name = f"{web_lgsm_user}-{gs_user}"
-    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
-    create_sudoers_rules_playbook_path = os.path.join(
-        CWD, "playbooks/create_sudoers_rules.yml"
-    )
-
-    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
-
-    create_rules_cmd = sudo_pre_cmd + [
-        ansible_cmd_path,
-        create_sudoers_rules_playbook_path,
-        "-e",
-        f"gs_user={gs_user}",
-        "-e",
-        f"sudo_rule_name={sudo_rule_name}",
-        "-e",
-        f"script_paths={script_paths}",
-        "-e",
-        f"web_lgsm_user={web_lgsm_user}",
-    ]
-
-    if O["debug"]:
-        print(create_rules_cmd)
-        exit()
-
-    run_cmd(create_rules_cmd)
-
-
-def get_script_cmd_from_pid(pid):
+    Returns:
+        bool: True if write successful, False otherwise.
+    """
     try:
-        # Get script name from ps cmd output.
-        proc = subprocess.run(
-            ["ps", "-o", "cmd=", str(pid)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True,
-        )
-        stderr = proc.stderr.strip()
-        proc.check_returncode()
-
-        script_path = proc.stdout.strip()
-
-        # If the script path is empty, it might mean the PID does not exist
-        if not script_path:
-            print(f" [!] Error No script found for PID {pid}")
-            cleanup(23)
-
-        return script_path
-
-    except subprocess.CalledProcessError as e:
-        # Handle errors during command execution.
-        print(f" [!] Error running ps command: {e}")
-        cleanup(23)
-
-    except ValueError as e:
-        # Handle any specific value errors.
-        print(e)
-        cleanup(23)
-
-    except Exception as e:
-        # Catch any other unforeseen errors.
-        print(f" [!] An unexpected error occurred: {str(e)}")
-        cleanup(23)
-
-
-def cancel_install(vars_data):
-    required_vars = ["pid"]
-    check_required_vars_are_set(vars_data, required_vars)
-    pid = vars_data.get("pid")
-
-    pid_cmd = get_script_cmd_from_pid(pid)
-    self_path = os.path.join(SCRIPTPATH, __file__)
-    self_cmd = f"/usr/bin/sudo -n {self_path}"
-    if pid_cmd != self_cmd:
-        print(f" [!] Not allowed to kill pid: {pid}!")
-        cleanup()
-
-    cmd = ["pkill", "-P", f"{pid}"]
-    run_cmd(cmd)
+        install_path_list = os.path.join(CWD, "playbooks/gs_allowed_paths.txt")
+        with open(install_path_list, "a") as file:
+            file.write(install_path + "\n")
+        return True
+    except FileNotFoundError:
+        print(f" [!] Error: File {file_path} not found.")
+        return False
+    except IOError:
+        print(f" [!] Error: Problem writing to file {file_path}.")
+        return False
 
 
 def post_install_cfg_fix(gs_dir, gs_user):
@@ -363,29 +290,6 @@ def post_install_cfg_fix(gs_dir, gs_user):
             common_file.write(line)
 
     print("Configuration file common.cgf updated!")
-
-
-def whitelist_install_path(install_path):
-    """
-    Adds install_path to allowed install path list after a successful install.
-
-    Args:
-        install_path (str): Path to add to allow list.
-
-    Returns:
-        bool: True if write successful, False otherwise.
-    """
-    try:
-        install_path_list = os.path.join(CWD, "playbooks/gs_allowed_paths.txt")
-        with open(install_path_list, "a") as file:
-            file.write(install_path + "\n")
-        return True
-    except FileNotFoundError:
-        print(f" [!] Error: File {file_path} not found.")
-        return False
-    except IOError:
-        print(f" [!] Error: Problem writing to file {file_path}.")
-        return False
 
 
 def run_install_new_game_server(vars_data):
@@ -467,6 +371,101 @@ def run_install_new_game_server(vars_data):
         print(f" [!] An error occurred deleting temp sudoers rule: {e}")
 
     print(f"\033[92m ✓  Game server successfully installed!\033[0m")
+
+
+def get_script_cmd_from_pid(pid):
+    try:
+        # Get script name from ps cmd output.
+        proc = subprocess.run(
+            ["ps", "-o", "cmd=", str(pid)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        stderr = proc.stderr.strip()
+        proc.check_returncode()
+
+        script_path = proc.stdout.strip()
+
+        # If the script path is empty, it might mean the PID does not exist
+        if not script_path:
+            print(f" [!] Error No script found for PID {pid}")
+            cleanup(23)
+
+        return script_path
+
+    except subprocess.CalledProcessError as e:
+        # Handle errors during command execution.
+        print(f" [!] Error running ps command: {e}")
+        cleanup(23)
+
+    except ValueError as e:
+        # Handle any specific value errors.
+        print(e)
+        cleanup(23)
+
+    except Exception as e:
+        # Catch any other unforeseen errors.
+        print(f" [!] An unexpected error occurred: {str(e)}")
+        cleanup(23)
+
+
+def cancel_install(vars_data):
+    required_vars = ["pid"]
+    check_required_vars_are_set(vars_data, required_vars)
+    pid = vars_data.get("pid")
+
+    pid_cmd = get_script_cmd_from_pid(pid)
+    self_path = os.path.join(SCRIPTPATH, __file__)
+    self_cmd = f"/usr/bin/sudo -n {self_path}"
+    if pid_cmd != self_cmd:
+        print(f" [!] Not allowed to kill pid: {pid}!")
+        cleanup()
+
+    cmd = ["pkill", "-P", f"{pid}"]
+    run_cmd(cmd)
+
+
+# Main.
+def main(argv):
+    """Process getopts, loads json vars, runs appropriate playbook"""
+    try:
+        opts, args = getopt.getopt(argv, "hdk", ["help", "debug", "keep"])
+    except getopt.GetoptError:
+        print_help()
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print_help()
+        if opt in ("-d", "--debug"):
+            O["debug"] = True
+        if opt in ("-k", "--keep"):
+            O["keep"] = True
+
+    playbook_vars_data = load_json(JSON_VARS_FILE)
+
+    if playbook_vars_data.get("action") == "create":
+        run_create_sudoers_rules(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get("action") == "delete":
+        run_delete_user(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get("action") == "checkdir":
+        check_dir_exists(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get("action") == "install":
+        run_install_new_game_server(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get("action") == "cancel":
+        cancel_install(playbook_vars_data)
+        cleanup()
+
+    print(" [!] No action taken! Are you sure you supplied valid json?")
 
 
 if __name__ == "__main__":

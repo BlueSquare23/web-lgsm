@@ -3,6 +3,15 @@
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
+* Duh just discovered the server status indicators don't work without group
+  permissions (ugh sigh).
+  - I think I did already know this actually just forgot it (see Plato's Meno -
+    theory of recollection). 
+  - Going to stick with no same group perms and run server check through
+    ansible_connector.
+  - Also going to rename that to sudo ansible connector since that's really
+    moreso what it is.
+
 * Create a `docker-setup.py` script which will build the `Dockerfile` &
   `docker-compose.yml` files for whatever game servers the user chooses to
   install.
@@ -19,7 +28,6 @@
       docker-compose.yml directly.
     - However, having a tool just makes it smoother and less error prone.
     
-
 * Figure out container volume mounts & permissions.
   - Change app code to work within a container.
     - Put new game server installs down in a dir called `GameServers`.
@@ -39,6 +47,9 @@
     this hanging without any automated testing...
 
 * Apply autoformatting via `black`.
+
+* Add show_stderr main.conf option to suppress stderr_messages.
+  - Not everything that comes out of stderr is fatal.
 
 ### v1.8.0 Pt 4. The Rest...
 ---

@@ -100,7 +100,7 @@ sed -i '$ d' $accpt_gs_users
 # Lock playbook files down for security reasons.
 sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
 sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;
-sudo chmod 755 $apb
+sudo chmod 755 $apb $ansible_connector
 sudo chown root:root $apb
 sudo chown -R root:root $SCRIPTPATH/playbooks
 

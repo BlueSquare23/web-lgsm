@@ -453,7 +453,9 @@ def get_commands(server, send_cmd, current_user):
 def get_servers():
     # Try except in case problem with json files.
     try:
-        servers_json = open("json/game_servers.json", "r")
+        with open("json/game_servers.json", "r") as file:
+            servers_json = file.read()
+
         json_data = json.load(servers_json)
         servers_json.close()
         return dict(zip(json_data["servers"], json_data["server_names"]))

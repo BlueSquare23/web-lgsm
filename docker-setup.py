@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+# Creates docker-compose.yml file from template based on user supplied servers.
+# Saves persistent docker server config data to .docker-data.json.
+# Rewritten in Python by John R. July 2024.
+
+import os
+import sys
+import json
+import getopt
+from jinja2 import Environment, FileSystemLoader
+
+# Therefore it's all pure feeling, it's completely honest. If you can trace the
+# origins of your fear, it will disappear.
+SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
+os.chdir(SCRIPTPATH)
+
+docker_data = []
+docker_data_file = ".docker-data.json"
+if os.path.isfile(docker_data_file) and os.access(docker_data_file, os.R_OK):
+    with open(docker_data_file, "r") as file:
+        docker_data = json.load(file)
+
+with open("json/game_servers.json", "r") as file:
+    servers_data = json.load(file)
+game_servers = dict(zip(servers_data["servers"], servers_data["server_names"]))
+
+opts = {
+    "verbose": True,
+    "debug": False,
+    "dry": False,
+    "name": None,
+    "port": None
+}
+
+
+def print_help():
+    """Prints help menu"""
+    print(
+        """
+  ╔═════════════════════════════════════════════════════╗  
+  ║ docker-setup.py - Builds docker-compose.yml file    ║
+  ║                                                     ║
+  ║ Usage: docker-setup.py [options]                    ║
+  ║                                                     ║
+  ║   Options:                                          ║
+  ║                                                     ║
+  ║   -h, --help          Prints this help menu         ║
+  ║   -v, --verbose       Prints more output            ║
+  ║   -d, --debug         Prints new files contents     ║
+  ║   -x, --dry           Doesn't actually change files ║
+  ║   -a, --add           Add game server               ║
+  ║   -n, --name [name]   Game server name              ║
+  ║   -p, --port [int]    Game server port number       ║
+  ╚═════════════════════════════════════════════════════╝
+    """
+    )
+    exit()
+
+
+def validate_game_server(game_server):
+    """
+    Check's that the supplied game server name is legit.
+
+    Args:
+        game_server (str): Name of game server to add.
+
+    Returns:
+        bool: True if game_server name is valid, False otherwise.
+    """
+    global game_servers
+
+    if game_server in game_servers.values():
+        return True
+    else:
+        return False
+
+
+def already_in_docker_data(game_server):
+    """
+    Check's if game_server is already in docker data list to prevent users from
+    adding the same game server twice.
+
+    Args:
+        game_server (str): Game server to check.
+
+    Returns:
+        bool: True game_server in docker data, False otherwise.
+    """
+    global docker_data
+
+    for item in docker_data:
+        if item["long_name"] == game_server:
+            return True
+
+    return False
+
+
+def save_json():
+    """
+    Saves docker_data json to file.
+
+    Returns:
+        None: Doesn't return, just does.
+    """
+    global docker_data
+    global opts
+
+    with open(docker_data_file, 'w') as file:
+        json.dump(docker_data, file)
+
+    if opts["verbose"]:
+        print(" [*] Game server info updated!")
+
+
+def gather_info():
+    """
+    Gathers new game server info either from opt args or directly from stdin by
+    prompting user for it.
+
+    Returns:
+        None: Simply adds user input to global data structure.
+    """
+    global docker_data
+    global game_servers
+    global opts
+
+    if opts["name"] == None:
+        game_server = input("Enter game server name: ").strip()
+    else:
+        game_server = opts["name"]
+
+    if not validate_game_server(game_server):
+        print(" [*] Valid game servers:")
+        for short_name in game_servers.keys():
+            long_name = game_servers[short_name]
+            print(f"  -  {long_name}")
+        print(" [!] Invalid game server name!")
+        print(" [*] Please enter valid game server name!")
+        exit(11)
+
+    for short_name in game_servers.keys():
+        if game_servers[short_name] == game_server:
+            script_name = short_name
+
+    if opts["port"] == None:
+        try:
+            port = int(input("Server port to expose (int): "))
+        except:
+            print(" [!] Integers only!")
+            exit(13)
+    else:
+        port = opts["port"]
+
+    if already_in_docker_data(game_server):
+        if opts["verbose"]:
+            print(" [*] Game server already added. Continuing...")
+        return
+
+    context = {
+        'short_name': script_name,
+        'long_name': game_server,
+        'port': port
+    }
+
+    docker_data.append(context)
+    save_json()
+
+
+def template_file():
+    """
+    Builds the file docker-compose.yml file from templates + user input &
+    stored docker json data.
+    """
+    global opts
+    global docker_data
+
+    env = Environment(loader=FileSystemLoader('app/templates'))
+    template = env.get_template('docker-compose.jinja')
+    
+    # Build from template.
+    context = {"servers": docker_data}
+    output = template.render(context)
+
+    if opts["debug"]:
+        print(" [*] New docker-compose.yml contents:")
+        print(output)
+
+    if not opts["dry"]:
+        with open('docker-compose.yml', 'w') as file:
+            file.write(output)
+
+        if opts["verbose"]:
+            print(" [*] New docker-compose.yml file written!")
+            print(" [*] Run the command below to build & start the container:")
+            print("         export GID=$(id -g) && docker-compose up")
+
+
+def main(argv):
+    global opts
+
+    try:
+        longopts = [
+            "help",
+            "verbose",
+            "debug",
+            "dry",
+            "add",
+            "name=",
+            "port=",
+        ]
+        options, args = getopt.getopt(argv, "hvdxan:p:", longopts)
+    except getopt.GetoptError as e:
+        print(e)
+        print_help()
+
+    # First push required opts to global dict.
+    for opt, arg in options:
+        if opt in ("-h", "--help"):
+            print_help()
+        if opt in ("-v", "--verbose"):
+            opts["verbose"] = True
+        if opt in ("-d", "--debug"):
+            opts["debug"] = True
+        if opt in ("-x", "--dry"):
+            opts["dry"] = True
+        if opt in ("-n", "--name"):
+            opts["name"] = arg
+        if opt in ("-p", "--port"):
+            opts["port"] = arg
+
+    # Then act based of options.
+    for opt, _ in options:
+        if opt in ("-a", "--add"):
+            gather_info()
+
+    # Builds new docker-compose.yml file.
+    template_file()
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+

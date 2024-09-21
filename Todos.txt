@@ -3,20 +3,27 @@
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
+* Create a `docker-setup.py` script which will build the `Dockerfile` &
+  `docker-compose.yml` files for whatever game servers the user chooses to
+  install.
+  - The game server files are persistent as they'll be in the GameServers dir
+    which is mounted to the real file system.
+  - However, I need a way to make other system level configuration changes
+    exist after machine tear down.
+    - User for game server needs re-created.
+    - Mount for persistent GameServers files need recreated.
+    - Ports for game server need mapped.
+  - So I'm going to create python script that builds the docker-compose.yml and
+    Dockerfile from templates.
+    - Yes users could and can always just edit the Dockerfile and
+      docker-compose.yml directly.
+    - However, having a tool just makes it smoother and less error prone.
+    
+
 * Figure out container volume mounts & permissions.
-  - Two reasons why:
-    - 1) The main.conf file and app/database.db file need to be writable by the
-      container user.
-    - 2) The game servers files themselves need to read / writable to the
-      container user.
-      - We don't want game server files in the container obviously or they'll
-        be deleted on tear-down. But they still need to be writable.
-  - I'm thinking one solution is a docker install script.
-    - Or rather a docker flag on the install script.
-    - This would install docker and docker-compose and then create a web-lgsm
-      real system group with some random gid and then give the user in the
-      container that uid/gid. Then finally it would run `docker-compose build`
-      and tell the user to run `docker-compose up` to start the container.
+  - Change app code to work within a container.
+    - Put new game server installs down in a dir called `GameServers`.
+    - Mount this in the container to the real web-lgsm/GameServers dir.
 
 * Add Support for game servers in containers!
   - User requested project support for game servers that are running in
@@ -201,6 +208,14 @@
   - kill_watchers gets the job done alright for rn.
   - But this whole system is probably one of those targets for refactoring &
     rethinking.
+
+* Add export game servers list to json (admin only).
+  - Allow admin users to export a list of currently installed / added lgsm game
+    servers to json.
+
+* Add import game servers list from json (admin only).
+  - Basically I want to make it easy for people to re-install or migrate
+    instances, etc.
 
 ## Pie in the Sky
 

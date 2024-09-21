@@ -451,7 +451,7 @@ def install():
         ansible_vars = dict()
         ansible_vars["action"] = "install"
         ansible_vars["gs_user"] = USER
-        ansible_vars["install_path"] = os.path.join(CWD, server_full_name)
+        ansible_vars["install_path"] = os.path.join(CWD, f'GameServers/{server_full_name}')
         ansible_vars["server_script_name"] = server_script_name
         ansible_vars["script_paths"] = ""
         ansible_vars["web_lgsm_user"] = USER
@@ -465,7 +465,8 @@ def install():
         if create_new_user:
             ansible_vars["gs_user"] = server_script_name
             ansible_vars["install_path"] = os.path.join(
-                f"/home/{server_script_name}", server_full_name
+                f"/home/{server_script_name}",
+                f"GameServers/{server_full_name}"
             )
             ansible_vars["script_paths"] = get_user_script_paths(
                 ansible_vars["install_path"], server_script_name

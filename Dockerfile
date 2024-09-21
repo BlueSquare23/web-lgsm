@@ -1,12 +1,15 @@
 FROM ubuntu:latest
+ENV CONTAINER=YES
 
 # Install apt deps.
 RUN apt-get update 
 RUN apt-get upgrade -y
 RUN apt-get install -y sudo
 
-# Create a non-root user 'web-lgsm'.
+# Create user and add to GID group.
+ARG GID=1000 # Defaults to 1000, overridden by env var.
 RUN useradd -m web-lgsm
+RUN GROUP=`getent group $GID | cut -d: -f1` && usermod -a -G $GROUP web-lgsm 
 
 # Temp allow 'web-lgsm' to use sudo without a password.
 RUN echo "web-lgsm ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers

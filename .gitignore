@@ -16,3 +16,4 @@ package.json
 ansible_vars.json
 gs_allowed_paths.txt
 GameServers/*
+.docker-data.json

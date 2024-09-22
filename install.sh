@@ -85,7 +85,7 @@ chmod 600 .secret
 echo -e "${green}####### Setting up Sudoers Rules...${reset}"
 
 apb="$SCRIPTPATH/venv/bin/ansible-playbook"
-ansible_connector="$SCRIPTPATH/playbooks/ansible_connector.py"
+ansible_connector="$SCRIPTPATH/playbooks/sudo_ansible_connector.py"
 create_sudo_rule="$SCRIPTPATH/playbooks/create_sudoers_rules.yml"
 accpt_gs_users="$SCRIPTPATH/playbooks/vars/accepted_gs_users.yml"
 

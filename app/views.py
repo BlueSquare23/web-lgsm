@@ -38,6 +38,7 @@ SPINNER_COLORS = [
     "info",
     "light",
 ]
+ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
 
 # Globals.
 servers = {}  # Holds output objects.
@@ -89,19 +90,11 @@ def home():
     installed_servers = GameServer.query.all()
     servers_to_users = {}
     for server in installed_servers:
-        # TODO: Remove support for legacy db's. App min supported version will
-        # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
-        # have a legacy DB. If you haven't upgraded by now you might as well
-        # just re-install newest version and re-add your game servers.
-        # Account for legacy db's that don't have a user field.
-        if server.username == None:
-            server.username = USER
-
         servers_to_users[server.install_name] = server.username
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
-    server_status_dict = get_server_statuses(installed_servers)
+    server_status_dict = get_server_statuses()
 
     debug_handler("config_options", config_options, debug)
     debug_handler("installed_servers", installed_servers, debug)
@@ -126,14 +119,14 @@ def xtermjs():
 
     server_name = "testingxtermjs"
     if not server_name in servers:
-        output_obj = OutputContainer([""], False)
-        servers[server_name] = output_obj
+        proc_info = ProcInfoVessel()
+        servers[server_name] = proc_info
 
     # Set the output object to the one stored in the global dictionary.
     output = servers[server_name]
 
     cmd = ["/home/blue/Projects/web-lgsm/scripts/random.sh"]
-    daemon = Thread(target=shell_exec, args=(cmd, output), daemon=True, name="Command")
+    daemon = Thread(target=run_cmd_popen, args=(cmd, output), daemon=True, name="Command")
 
     daemon.start()
     return render_template("xtermjs.html", user=current_user, server_name=server_name)
@@ -204,15 +197,15 @@ def controls():
         return redirect(url_for("views.home"))
 
     # Object to hold output from any running daemon threads.
-    output_obj = OutputContainer([""], False)
+    proc_info = ProcInfoVessel()
 
     # If this is the first time we're ever seeing the server_name then put it
-    # and its associated output_obj in the global servers dictionary.
+    # and its associated proc_info in the global servers dictionary.
     if not server_name in servers:
-        servers[server_name] = output_obj
+        servers[server_name] = proc_info
 
     # Set the output object to the one stored in the global dictionary.
-    output = servers[server_name]
+    proc_info = servers[server_name]
 
     script_path = os.path.join(server.install_path, server.script_name)
 
@@ -222,14 +215,6 @@ def controls():
     if short_cmd:
         # For running cmds as alt users.
         sudo_prepend = ["/usr/bin/sudo", "-n", "-u", server.username]
-
-        # TODO: Remove support for legacy db's. App min supported version will
-        # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
-        # have a legacy DB. If you haven't upgraded by now you might as well
-        # just re-install newest version and re-add your game servers.
-        # Account for legacy db's that don't have a user field.
-        if server.username == None:
-            server.username = getpass.getuser()
 
         # Validate short_cmd against contents of commands.json file.
         if not valid_command(short_cmd, server.script_name, send_cmd, current_user):
@@ -241,26 +226,17 @@ def controls():
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
 
-            # TODO: Remove support for legacy db's. App min supported version will
-            # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
-            # have a legacy DB. If you haven't upgraded by now you might as well
-            # just re-install newest version and re-add your game servers.
-            # Account for legacy db's that don't have a user field.
-            for server in installed_servers:
-                if server.username == None:
-                    server.username = getpass.getuser()
-
-            # Fetch dict containing all servers and flag specifying if they're running
-            # or not via a util function.
-            server_status_dict = get_server_statuses(installed_servers)
+            server_status_dict = get_server_statuses()
             if server_status_dict[server_name] == "inactive":
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            tmux_socket = get_socket_for_gs(server)
-            if tmux_socket == None:
+            servers_to_sockets = get_sockets()
+            if servers_to_sockets[server.install_name] == None:
                 flash("Cannot find socket for server!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
+
+            tmux_socket = server.script_name + '-' + servers_to_sockets[server.install_name]
 
             cmd = []
             # If gs not owned by system user, prepend sudo -n -u user to cmd.
@@ -279,7 +255,7 @@ def controls():
                 server.script_name,
             ]
             daemon = Thread(
-                target=shell_exec, args=(cmd, output), daemon=True, name="Console"
+                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="Console"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -297,18 +273,9 @@ def controls():
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
 
-            # TODO: Remove support for legacy db's. App min supported version will
-            # be 1.7.0 once 1.8.0 is released. No one running 1.7.0 should still
-            # have a legacy DB. If you haven't upgraded by now you might as well
-            # just re-install newest version and re-add your game servers.
-            # Account for legacy db's that don't have a user field.
-            for server in installed_servers:
-                if server.username == None:
-                    server.username = getpass.getuser()
-
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
-            server_status_dict = get_server_statuses(installed_servers)
+            server_status_dict = get_server_statuses()
             if server_status_dict[server_name] == "inactive":
                 flash(
                     "Server is Off! Cannot send commands to console!", category="error"
@@ -322,7 +289,7 @@ def controls():
 
             cmd += [script_path, short_cmd, console_cmd]
             daemon = Thread(
-                target=shell_exec, args=(cmd, output), daemon=True, name="ConsoleCMD"
+                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="ConsoleCMD"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -336,7 +303,7 @@ def controls():
 
             cmd += [script_path, short_cmd]
             daemon = Thread(
-                target=shell_exec, args=(cmd, output), daemon=True, name="Command"
+                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="Command"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -356,7 +323,7 @@ def controls():
         server_commands=cmds_list,
         text_color=text_color,
         terminal_height=terminal_height,
-        spinners_colors=SPINNER_COLORS,
+        spinner_colors=SPINNER_COLORS,
         cfg_paths=cfg_paths,
     )
 
@@ -431,10 +398,8 @@ def install():
         # Used to pass install_name to frontend js.
         install_name = server_full_name
 
-        # Object to hold output from any running daemon threads. Since this is
-        # the install route delete any previously held output objects for
-        # server name. Clearly this is the output we want to look at.
-        servers[server_full_name] = OutputContainer([""], False, "")
+        # Clobber any previously held proc_info objects for server.
+        servers[server_full_name] = ProcInfoVessel()
 
         # Set the output object to the one stored in the global dictionary.
         output = servers[server_full_name]
@@ -503,7 +468,8 @@ def install():
         cmd = [
             "/usr/bin/sudo",
             "-n",
-            os.path.join(CWD, "playbooks/ansible_connector.py"),
+            os.path.join(CWD, "venv/bin/python"),
+            ANSIBLE_CONNECTOR
         ]
 
         debug_handler("ansible_vars", ansible_vars, debug)
@@ -511,7 +477,7 @@ def install():
         debug_handler("servers", servers, debug)
 
         install_daemon = Thread(
-            target=shell_exec,
+            target=run_cmd_popen,
             args=(cmd, output),
             daemon=True,
             name=f"Install_{server_full_name}",
@@ -899,13 +865,14 @@ def add():
 
             debug_handler("ansible_vars", ansible_vars, debug)
 
-            # TODO: Add debug options to print this hidden output.
             cmd = [
                 "/usr/bin/sudo",
                 "-n",
-                os.path.join(CWD, "playbooks/ansible_connector.py"),
+                os.path.join(CWD, "venv/bin/python"),
+                ANSIBLE_CONNECTOR
             ]
-            shell_exec(cmd)
+            # TODO: Add debug options to print this hidden output.
+            run_cmd_popen(cmd)
 
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(
@@ -970,7 +937,7 @@ def delete():
             # TODO: Add debug level 2 hidden output printing here.
             if server_name in servers:
                 del servers[server_name]
-            output_obj = OutputContainer([""], False)
+            proc_info = ProcInfoVessel()
 
             debug_handler("servers", servers, debug)
 

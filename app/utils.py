@@ -21,6 +21,7 @@ from flask import flash
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
+ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
 
 # Network stats globals.
 prev_bytes_sent = psutil.net_io_counters().bytes_sent
@@ -125,53 +126,79 @@ def valid_password(password1, password2):
     return True
 
 
-# Holds the output from a running daemon thread.
-class OutputContainer:
-    def __init__(self, output_lines, process_lock, pid=False):
-        # Lines of output delivered by running daemon threat.
-        self.output_lines = output_lines
-        # Boolean to act as a lock and tell if process is already running and
-        # output is being appended.
-        self.process_lock = process_lock
-        self.pid = pid
+class ProcInfoVessel:
+    """
+    Class used to create objects that hold information about processes launched
+    via the subprocess Popen wrapper.
+    """
+    def __init__(self):
+        """
+        Args:
+            stdout (list): Lines of stdout delivered by subprocess.Popen call.
+            stderr (list): Lines of stderr delivered by subprocess.Popen call.
+            process_lock (bool): Acts as lock to tell if process is still 
+                                 running and output is being appended.
+            pid (int): Process id.
+            exit_status (int): Exit status of cmd in Popen call.
+        """
+        self.stdout = []
+        self.stderr = []
+        self.process_lock = None
+        self.pid = None
+        self.exit_status = None
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
+    def __str__(self):
+        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
 
-# Shell executor subprocess.Popen wrapper function. Runs a command through the
-# shell and returns output in realtime by appending it to output object, which
-# is read by output api.
-def shell_exec(cmd, output=OutputContainer([""], False)):
+    def __repr__(self):
+        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+
+
+def run_cmd_popen(cmd, proc_info=ProcInfoVessel()):
+    """
+    General purpose subprocess.Popen wrapper function.
+
+    Args:
+        cmd (list): Command to be run via subprocess.Popen.
+        proc_info (obj): Optional object to store info about running process.
+    """
     # Clear any previous output.
-    output.output_lines.clear()
+    proc_info.stdout.clear()
+    proc_info.stderr.clear()
 
     # Set lock flag to true.
-    output.process_lock = True
+    proc_info.process_lock = True
 
-    # TODO: Turn into debug msgs.
-    print(cmd)
-    print(" ".join(cmd))
+    # TODO: Passthrough debug setting for real instead of hardcoding True.
+    debug_handler('cmd', cmd, True)
 
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
 
-    output.pid = proc.pid
+    proc_info.pid = proc.pid
 
     for stdout_line in iter(proc.stdout.readline, ""):
-        output.output_lines.append(stdout_line)
-        print(stdout_line)
+        proc_info.stdout.append(stdout_line)
+        debug_handler('stdout', stdout_line.replace('\n', ''), True)
 
     for stderr_line in iter(proc.stderr.readline, ""):
-        output.output_lines.append(stderr_line)
+        proc_info.stderr.append(stderr_line)
+        debug_handler('stderr', stderr_line.replace('\n', ''), True)
+
+    proc_info.exit_status = proc.wait()
 
     # Reset process_lock flag.
-    output.process_lock = False
+    proc_info.process_lock = False
 
 
 # Snips any lingering `watch` processes.
 def kill_watchers(last_request_for_output):
+    # TODO: Refactor this whole thing. We can keep track of watch pid's now so
+    # use that do do the snipping I think.
     # Add three minutes to last_request_for_output time as a timeout. In other
     # words, only kill lingering watch processes if output page hasn't been
     # requested for past three minutes.
@@ -203,9 +230,9 @@ def kill_watchers(last_request_for_output):
             pass
 
 
-def cancel_install(output):
+def cancel_install(proc_info):
     """Calls the ansible playbook connector to kill running installs"""
-    pid = output.pid
+    pid = proc_info.pid
 
     # Set Ansible playbook vars.
     ansible_vars = dict()
@@ -213,8 +240,12 @@ def cancel_install(output):
     ansible_vars["pid"] = pid
     write_ansible_vars_json(ansible_vars)
 
-    cmd = ["/usr/bin/sudo", "-n", os.path.join(CWD, "playbooks/ansible_connector.py")]
-    shell_exec(cmd, output)
+    cmd = [
+        "/usr/bin/sudo", "-n", 
+        os.path.join(CWD, "venv/bin/python"),
+        ANSIBLE_CONNECTOR
+    ]
+    run_cmd_popen(cmd, proc_info)
 
 
 # Translates a username to a uid using pwd module.
@@ -226,63 +257,74 @@ def get_uid(username):
         return None
 
 
-# Get's game server ids from id file path, if id file exists. If it doesn't
-# returns empty string.
-def get_gs_id(id_file_path):
-    if os.path.isfile(id_file_path):
-        with open(id_file_path, "r") as file:
-            return file.read()
-    else:
-        return ""
+def get_server_statuses():
+    """
+    Uses sudo connector script to get list of active game servers.
 
+    Returns:
+        dict: Returns server_status dictionary with mapping of server name to
+              active / inactive.
+    """
 
-# Get's the list of servers that are currently turned on.
-def get_server_statuses(all_game_servers):
-    # Initialize all servers inactive to start with.
-    server_statuses = {}
-    for server in all_game_servers:
-        server_statuses[server.install_name] = "inactive"
+    # Set Ansible playbook vars.
+    ansible_vars = dict()
+    ansible_vars["action"] = "statuses"
+    write_ansible_vars_json(ansible_vars)
 
-    # List all tmux sessions for all users.
-    tmux_socdir_regex = "/tmp/tmux-*"
-    socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
+    cmd = [
+        "/usr/bin/sudo",
+        "-n",
+        os.path.join(CWD, "venv/bin/python"),
+        ANSIBLE_CONNECTOR
+    ]
+    proc_info = ProcInfoVessel()
+    run_cmd_popen(cmd, proc_info)
 
-    # Handle no sockets yet.
-    if not socket_dirs:
-        return server_statuses
+    if proc_info.exit_status != 0:
+        return dict()
 
-    # Find all unique server ids.
-    gs_ids = {}
-    for server in all_game_servers:
-        id_file_path = server.install_path + f"/lgsm/data/{server.script_name}.uid"
-        gs_id = get_gs_id(id_file_path).strip()
-        gs_ids[server.install_name] = gs_id
-
-    # Now that we have all gs_ids, we can check if those tmux socket sessions
-    # are running.
-    for server in all_game_servers:
-        socket = server.script_name + "-" + gs_ids[server.install_name]
-        cmd = []
-        if server.username != getpass.getuser():
-            cmd += ["/usr/bin/sudo", "-n", "-u", server.username]
-
-        cmd += ["/usr/bin/tmux", "-L", socket, "list-session"]
-        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        if proc.returncode == 0:
-            server_statuses[server.install_name] = "active"
+    server_statuses = dict()
+    for line in proc_info.stdout:
+        line = line.replace('\n', '')
+        server_status = json.loads(line)
+        server_statuses.update(server_status)
 
     return server_statuses
 
 
-# Get's socket file name for a given game server name.
-def get_socket_for_gs(server):
-    id_file_path = os.path.join(
-        server.install_path, f"lgsm/data/{server.script_name}.uid"
-    )
-    gs_id = get_gs_id(id_file_path).strip()
-    socket_file_path = server.script_name + "-" + gs_id
-    return socket_file_path
+def get_sockets():
+    """
+    Gets a dictionary mapping of game servers to tmux socket files via sudo
+    connector script.
+
+    Returns:
+        servers_to_tmux_sockets (dict): List of socket files.
+    """
+    servers_to_tmux_sockets = dict()
+
+    # Set sudo connector vars.
+    ansible_vars = dict()
+    ansible_vars["action"] = "tmuxsocks"
+    write_ansible_vars_json(ansible_vars)
+
+    cmd = [
+        "/usr/bin/sudo",
+        "-n",
+        os.path.join(CWD, "venv/bin/python"),
+        ANSIBLE_CONNECTOR
+    ]
+    proc_info = ProcInfoVessel()
+    run_cmd_popen(cmd, proc_info)
+
+    if proc_info.exit_status != 0:
+        return dict()
+
+    for line in proc_info.stdout:
+        line = line.replace('\n', '')
+        server_2_sock = json.loads(line)
+        servers_to_tmux_sockets.update(server_2_sock)
+
+    return servers_to_tmux_sockets 
 
 
 def get_running_installs():
@@ -352,9 +394,10 @@ def del_server(server, remove_files):
         cmd = [
             "/usr/bin/sudo",
             "-n",
-            os.path.join(CWD, "playbooks/ansible_connector.py"),
+            os.path.join(CWD, "venv/bin/python"),
+            ANSIBLE_CONNECTOR
         ]
-        shell_exec(cmd)
+        run_cmd_popen(cmd)
 
     flash(f"Game server, {server_name} deleted!")
     return
@@ -454,10 +497,8 @@ def get_servers():
     # Try except in case problem with json files.
     try:
         with open("json/game_servers.json", "r") as file:
-            servers_json = file.read()
+            json_data = json.load(file)
 
-        json_data = json.load(servers_json)
-        servers_json.close()
         return dict(zip(json_data["servers"], json_data["server_names"]))
     except:
         # Return empty dict triggers error. In python empty dict == False.
@@ -786,19 +827,23 @@ def install_path_exists(install_path):
     Returns:
         bool: True if path exists, False otherwise.
     """
-    # Set Ansible playbook vars.
+    # Set sudo connector vars.
     ansible_vars = dict()
     ansible_vars["action"] = "checkdir"
     ansible_vars["install_path"] = install_path
     write_ansible_vars_json(ansible_vars)
 
-    output = OutputContainer([""], False)
-    cmd = ["/usr/bin/sudo", "-n", os.path.join(CWD, "playbooks/ansible_connector.py")]
-    shell_exec(cmd, output)
-    for line in output.output_lines:
+    proc_info = ProcInfoVessel()
+    cmd = [
+        "/usr/bin/sudo", "-n", 
+        os.path.join(CWD, "venv/bin/python"),
+        ANSIBLE_CONNECTOR
+    ]
+    run_cmd_popen(cmd, proc_info)
+    for line in proc_info.stdout:
         if "Path exists" in line:
             return True
 
-    print(output.output_lines)
+    print(proc_info.stdout)
 
     return False

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# The Web-LGMS Ansible Connector Script!
+# The Web-LGMS Sudo Ansible Connector Script!
 # Used as an interface between the web-lgsm app process and its associated
 # ansible playbooks. Basically this a standalone wrapper / adapter script for
 # the project's ansible playbooks to allow them to be run by the web app
@@ -9,9 +9,12 @@ import os
 import sys
 import json
 import yaml
+import glob
 import getopt
 import getpass
 import subprocess
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 ## Globals.
 # Plabook dir path.
@@ -19,6 +22,11 @@ SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
 os.chdir(os.path.join(SCRIPTPATH, ".."))
 CWD = os.getcwd()
 JSON_VARS_FILE = os.path.join(CWD, "json/ansible_vars.json")
+
+# Use cwd to import db classes from app.
+sys.path.append(CWD)
+from app import db
+from app.models import User, GameServer
 
 # Global options hash.
 O = {"debug": False, "keep": False}
@@ -427,6 +435,97 @@ def cancel_install(vars_data):
     run_cmd(cmd)
 
 
+def db_connector(wanted):
+    """
+    Connects to the app's DB and returns requested results.
+
+    Args:
+        wanted (str): Type of results wanted.
+
+    Returns:
+        list: List of database objects.
+    """
+    engine = create_engine('sqlite:///app/database.db')
+    
+    with Session(engine) as session:
+        if wanted == 'all_users':
+            return session.query(User).all()
+
+        if wanted == 'all_game_servers':
+            return session.query(GameServer).all()
+
+def get_tmux_sockets():
+    """
+    Gets dict mapping of game servers to socket file names.
+
+    Returns:
+        game_servers_2_socks (dict): Dictionary mapping of game server names to
+                                     socket files.
+    """
+    all_game_servers = db_connector('all_game_servers')
+    game_servers_2_socks = dict()
+
+    # List all tmux sessions for all users.
+    tmux_socdir_regex = "/tmp/tmux-*"
+    socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
+
+    # Handle no sockets yet.
+    if not socket_dirs:
+        return game_servers_2_socks
+
+    # Find all unique lgsm server ids.
+    for server in all_game_servers:
+        id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
+        if not os.path.isfile(id_file_path):
+            return game_servers_2_socks
+
+        with open(id_file_path, "r") as file:
+            gs_id = file.read()
+
+        game_servers_2_socks[server.install_name] = gs_id.replace('\n', '')
+
+    return game_servers_2_socks
+
+
+def get_server_statuses():
+    """
+    Get's a list of game server statuses (on/off) via the game server's
+    corresponding tmux session socket file state.
+
+    Returns:
+        None: Just prints output for main app to use.
+    """
+    all_game_servers = db_connector('all_game_servers')
+
+    # Initialize all servers inactive to start with.
+    server_statuses = dict()
+    for server in all_game_servers:
+        server_statuses[server.install_name] = "inactive"
+
+    game_servers_2_sockets = get_tmux_sockets()
+
+    # Now that we have the game servers to socket files mapping we can check if
+    # those tmux socket sessions are running.
+    for server in all_game_servers:
+        socket = server.script_name + "-" + game_servers_2_sockets[server.install_name]
+
+        cmd = [
+            "/usr/bin/sudo",
+            "-u",
+            server.username,
+            "/usr/bin/tmux",
+            "-L",
+            socket, 
+            "list-session"
+        ]
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        if proc.returncode == 0:
+            server_statuses[server.install_name] = "active"
+
+    print(json.dumps(server_statuses))
+
+
 # Main.
 def main(argv):
     """Process getopts, loads json vars, runs appropriate playbook"""
@@ -463,6 +562,15 @@ def main(argv):
 
     if playbook_vars_data.get("action") == "cancel":
         cancel_install(playbook_vars_data)
+        cleanup()
+
+    if playbook_vars_data.get("action") == "tmuxsocks":
+        game_servers_2_sockets = get_tmux_sockets()
+        print(json.dumps(game_servers_2_sockets))
+        cleanup()
+
+    if playbook_vars_data.get("action") == "statuses":
+        get_server_statuses()
         cleanup()
 
     print(" [!] No action taken! Are you sure you supplied valid json?")

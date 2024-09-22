@@ -20,9 +20,9 @@ function updateTerminal(sName){
       var TerminalText = '';
 
       // Check for new lines.
-      if (respJSON.output_lines.length > lastProcessedIndex) {
-        for (let i = lastProcessedIndex; i < respJSON.output_lines.length; i++){
-          let outputLine = respJSON.output_lines[i];
+      if (respJSON.stdout.length > lastProcessedIndex) {
+        for (let i = lastProcessedIndex; i < respJSON.stdout.length; i++){
+          let outputLine = respJSON.stdout[i];
           // Skip lines that are just a newline char.
           if (outputLine !== '\n'){
             TerminalText += outputLine + '\r';
@@ -30,7 +30,7 @@ function updateTerminal(sName){
         }
 
         // Update the last processed index.
-        lastProcessedIndex = respJSON.output_lines.length;
+        lastProcessedIndex = respJSON.stdout.length;
 
         // Write the new content to the terminal.
         term.write(TerminalText);

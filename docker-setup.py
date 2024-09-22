@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# Creates docker-compose.yml file from template based on user supplied servers.
-# Saves persistent docker server config data to .docker-data.json.
-# Rewritten in Python by John R. July 2024.
+# Builds Dockerfile and docker-compose.yml file from templates based on user
+# supplied game servers. Saves persistent docker server config data to
+# .docker-data.json. Written by John R. September 2024.
 
 import os
 import sys
@@ -37,21 +37,21 @@ def print_help():
     """Prints help menu"""
     print(
         """
-  ╔═════════════════════════════════════════════════════╗  
-  ║ docker-setup.py - Builds docker-compose.yml file    ║
-  ║                                                     ║
-  ║ Usage: docker-setup.py [options]                    ║
-  ║                                                     ║
-  ║   Options:                                          ║
-  ║                                                     ║
-  ║   -h, --help          Prints this help menu         ║
-  ║   -v, --verbose       Prints more output            ║
-  ║   -d, --debug         Prints new files contents     ║
-  ║   -x, --dry           Doesn't actually change files ║
-  ║   -a, --add           Add game server               ║
-  ║   -n, --name [name]   Game server name              ║
-  ║   -p, --port [int]    Game server port number       ║
-  ╚═════════════════════════════════════════════════════╝
+  ╔══════════════════════════════════════════════════════════╗  
+  ║ docker-setup.py - Builds docker-compose.yml & Dockerfile ║
+  ║                                                          ║
+  ║ Usage: docker-setup.py [options]                         ║
+  ║                                                          ║
+  ║   Options:                                               ║
+  ║                                                          ║
+  ║   -h, --help          Prints this help menu              ║
+  ║   -v, --verbose       Prints more output (default on)    ║
+  ║   -d, --debug         Prints new files contents          ║
+  ║   -x, --dry           Doesn't actually change files      ║
+  ║   -a, --add           Add game server to docker setup    ║
+  ║   -n, --name [name]   Game server name                   ║
+  ║   -p, --port [int]    Game server port number            ║
+  ╚══════════════════════════════════════════════════════════╝
     """
     )
     exit()
@@ -166,33 +166,41 @@ def gather_info():
     save_json()
 
 
-def template_file():
+def build_files():
     """
-    Builds the file docker-compose.yml file from templates + user input &
+    Builds new Dockerfile & docker-compose.yml file from jinja templates &
     stored docker json data.
     """
     global opts
     global docker_data
 
     env = Environment(loader=FileSystemLoader('app/templates'))
-    template = env.get_template('docker-compose.jinja')
+    docker_compose_template = env.get_template('docker-compose.jinja')
+    dockerfile_template = env.get_template('Dockerfile.jinja')
     
-    # Build from template.
+    # Build from templates.
     context = {"servers": docker_data}
-    output = template.render(context)
+    docker_compose_output = docker_compose_template.render(context)
+    dockerfile_output = dockerfile_template.render(context)
 
     if opts["debug"]:
         print(" [*] New docker-compose.yml contents:")
-        print(output)
+        print(docker_compose_output)
+        print()
+        print(" [*] New Dockerfile contents:")
+        print(dockerfile_output)
 
     if not opts["dry"]:
         with open('docker-compose.yml', 'w') as file:
-            file.write(output)
+            file.write(docker_compose_output)
+
+        with open('Dockerfile', 'w') as file:
+            file.write(dockerfile_output)
 
         if opts["verbose"]:
-            print(" [*] New docker-compose.yml file written!")
+            print(" [*] New Dockerfile & docker-compose.yml files written!")
             print(" [*] Run the command below to build & start the container:")
-            print("         export GID=$(id -g) && docker-compose up")
+            print("         export GID=$(id -g) && docker-compose up --build")
 
 
 def main(argv):
@@ -233,8 +241,8 @@ def main(argv):
         if opt in ("-a", "--add"):
             gather_info()
 
-    # Builds new docker-compose.yml file.
-    template_file()
+    # Builds new Dockerfile & docker-compose.yml files.
+    build_files()
 
 
 if __name__ == "__main__":

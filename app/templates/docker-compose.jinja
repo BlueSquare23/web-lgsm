@@ -12,7 +12,7 @@ services:
 {% for server in servers %}      - "{{server.port}}:{{server.port}}"{% endfor %}
     volumes:
       - ./main.conf:/home/web-lgsm/main.conf:rw
-      - ./app/database.db:/home/web-lgsm/database.db:rw
+      - ./app/database.db:/home/web-lgsm/app/database.db:rw
       - ./GameServers:/home/web-lgsm/GameServers:rw
 {% for server in servers %}      - ./GameServers:/home/{{server.short_name}}/GameServers:rw{% endfor %}
     environment:

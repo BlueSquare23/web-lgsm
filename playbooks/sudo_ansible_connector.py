@@ -504,6 +504,10 @@ def get_server_statuses():
 
     game_servers_2_sockets = get_tmux_sockets()
 
+    if not game_servers_2_sockets:
+        print(json.dumps(server_statuses))
+        return
+
     # Now that we have the game servers to socket files mapping we can check if
     # those tmux socket sessions are running.
     for server in all_game_servers:

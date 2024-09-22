@@ -85,6 +85,7 @@ chmod 600 .secret
 echo -e "${green}####### Setting up Sudoers Rules...${reset}"
 
 apb="$SCRIPTPATH/venv/bin/ansible-playbook"
+venv_python="$SCRIPTPATH/venv/bin/python"
 ansible_connector="$SCRIPTPATH/playbooks/sudo_ansible_connector.py"
 create_sudo_rule="$SCRIPTPATH/playbooks/create_sudoers_rules.yml"
 accpt_gs_users="$SCRIPTPATH/playbooks/vars/accepted_gs_users.yml"
@@ -93,7 +94,7 @@ accpt_gs_users="$SCRIPTPATH/playbooks/vars/accepted_gs_users.yml"
 echo "  - $USER" >> $accpt_gs_users
 echo "  - root" >> $accpt_gs_users
 # Run sudo rule add playbook.
-$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$ansible_connector'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
+$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$venv_python $ansible_connector'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
 
 # Delete last line (aka root line) from accepted_gs_users.yml.
 sed -i '$ d' $accpt_gs_users

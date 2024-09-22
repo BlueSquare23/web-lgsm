@@ -34,7 +34,6 @@ RUN /home/web-lgsm/install.sh -d
 # Delete temp sudoers rule.
 USER root
 RUN sed -i '$ d' /etc/sudoers
-RUN pip3 install PyYAML --break-system-packages 
 
 # Expose app's port.
 EXPOSE 12357

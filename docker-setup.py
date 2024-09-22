@@ -166,6 +166,12 @@ def gather_info():
     save_json()
 
 
+def touch(fname, times=None):
+    """Re-implement unix touch in python."""
+    with open(fname, 'a'):
+        os.utime(fname, times)
+
+
 def build_files():
     """
     Builds new Dockerfile & docker-compose.yml file from jinja templates &
@@ -196,6 +202,11 @@ def build_files():
 
         with open('Dockerfile', 'w') as file:
             file.write(dockerfile_output)
+
+        # Touch db file and make sure it has the right perms.
+        db_file = 'app/database.db'
+        touch(db_file)
+        os.chmod(db_file, 0o664)
 
         if opts["verbose"]:
             print(" [*] New Dockerfile & docker-compose.yml files written!")

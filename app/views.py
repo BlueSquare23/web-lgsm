@@ -23,6 +23,7 @@ from flask import (
     Response,
     send_from_directory,
     jsonify,
+    current_app
 )
 
 # Constants.
@@ -43,8 +44,6 @@ ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
 # Globals.
 servers = {}  # Holds output objects.
 last_request_for_output = int(time.time())  # Holds last requested output time.
-debug = False
-verbosity = 0
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -56,9 +55,6 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=["GET"])
 @login_required
 def home():
-    global debug
-    global verbosity
-
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
@@ -67,13 +63,11 @@ def home():
     graphs_secondary = config["aesthetic"]["graphs_secondary"]
     show_stats = config["aesthetic"].getboolean("show_stats")
     show_barrel_roll = config["aesthetic"].getboolean("show_barrel_roll")
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
-    debug_handler("current_user.username", current_user.username, debug)
-    debug_handler("current_user.role", current_user.role, debug)
-    debug_handler("current_user.permissions", current_user.permissions, debug)
+    current_app.logger.info(log_wrap("this is a test", "test"))
+    current_app.logger.info(log_wrap("current_user.username", current_user.username))
+    current_app.logger.info(log_wrap("current_user.role", current_user.role))
+    current_app.logger.info(log_wrap("current_user.permissions", current_user.permissions))
 
     config_options = {
         "text_color": text_color,
@@ -96,10 +90,10 @@ def home():
     # or not via a util function.
     server_status_dict = get_server_statuses()
 
-    debug_handler("config_options", config_options, debug)
-    debug_handler("installed_servers", installed_servers, debug)
-    debug_handler("servers_to_users", servers_to_users, debug)
-    debug_handler("server_status_dict", server_status_dict, debug)
+    current_app.logger.info(log_wrap("config_options", config_options))
+    current_app.logger.info(log_wrap("installed_servers", installed_servers))
+    current_app.logger.info(log_wrap("servers_to_users", servers_to_users))
+    current_app.logger.info(log_wrap("server_status_dict", server_status_dict))
 
     return render_template(
         "home.html",
@@ -110,36 +104,11 @@ def home():
     )
 
 
-######### XtermJS Test Page #########
-
-@views.route("/xtermjs", methods=["GET"])
-@login_required
-def xtermjs():
-    global servers
-
-    server_name = "testingxtermjs"
-    if not server_name in servers:
-        proc_info = ProcInfoVessel()
-        servers[server_name] = proc_info
-
-    # Set the output object to the one stored in the global dictionary.
-    output = servers[server_name]
-
-    cmd = ["/home/blue/Projects/web-lgsm/scripts/random.sh"]
-    daemon = Thread(target=run_cmd_popen, args=(cmd, output), daemon=True, name="Command")
-
-    daemon.start()
-    return render_template("xtermjs.html", user=current_user, server_name=server_name)
-
-
 ######### Controls Page #########
 
 @views.route("/controls", methods=["GET"])
 @login_required
 def controls():
-    global debug
-    global verbosity
-
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
@@ -147,9 +116,6 @@ def controls():
     terminal_height = config["aesthetic"]["terminal_height"]
     cfg_editor = config["settings"]["cfg_editor"]
     send_cmd = config["settings"].getboolean("send_cmd")
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -255,7 +221,7 @@ def controls():
                 server.script_name,
             ]
             daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="Console"
+                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Console"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -289,7 +255,7 @@ def controls():
 
             cmd += [script_path, short_cmd, console_cmd]
             daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="ConsoleCMD"
+                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -303,18 +269,17 @@ def controls():
 
             cmd += [script_path, short_cmd]
             daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info), daemon=True, name="Command"
+                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
 
-    if debug and verbosity >= 1:
-        print(f"##### debug server_name {server_name}")
-        print(f"##### debug cmds_list {cmds_list}")
-        print(f"##### debug text_color {text_color}")
-        print(f"##### debug terminal_height {terminal_height}")
-        print(f"##### debug SPINNER_COLORS {SPINNER_COLORS}")
-        print(f"##### debug cfg_paths {cfg_paths}")
+    current_app.logger.info(log_wrap("server_name", server_name))
+    current_app.logger.info(log_wrap("cmds_list", cmds_list))
+    current_app.logger.info(log_wrap("text_color", text_color))
+    current_app.logger.info(log_wrap("terminal_height", terminal_height))
+    current_app.logger.info(log_wrap("SPINNER_COLORS", SPINNER_COLORS))
+    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     return render_template(
         "controls.html",
@@ -334,8 +299,6 @@ def controls():
 @login_required
 def install():
     global servers
-    global debug
-    global verbosity
 
     # Import config data.
     config = configparser.ConfigParser()
@@ -343,9 +306,6 @@ def install():
     text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
     create_new_user = config["settings"].getboolean("install_create_new_user")
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     # Check if user has permissions to install route.
     if not user_has_permissions(current_user, "install"):
@@ -437,13 +397,21 @@ def install():
                 ansible_vars["install_path"], server_script_name
             )
 
-        if install_path_exists(ansible_vars["install_path"]):
-            flash("Install directory already exists.", category="error")
-            flash(
-                "Did you perhaps have this server installed previously?",
-                category="error",
-            )
-            return redirect(url_for("views.install"))
+        if "DOCKER" in os.environ:
+            # If we're in a container and the path doesn't exist we want to
+            # alert the user and tell them the container needs re-built first.
+            if not install_path_exists(ansible_vars["install_path"]):
+                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
+                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
+                return redirect(url_for("views.home"))
+        else:
+            if install_path_exists(ansible_vars["install_path"]):
+                flash("Install directory already exists.", category="error")
+                flash(
+                    "Did you perhaps have this server installed previously?",
+                    category="error",
+                )
+                return redirect(url_for("views.install"))
 
         write_ansible_vars_json(ansible_vars)
 
@@ -472,13 +440,13 @@ def install():
             ANSIBLE_CONNECTOR
         ]
 
-        debug_handler("ansible_vars", ansible_vars, debug)
-        debug_handler("cmd", cmd, debug)
-        debug_handler("servers", servers, debug)
+        current_app.logger.info(log_wrap("ansible_vars", ansible_vars))
+        current_app.logger.info(log_wrap("cmd", cmd))
+        current_app.logger.info(log_wrap("servers", servers))
 
         install_daemon = Thread(
             target=run_cmd_popen,
-            args=(cmd, output),
+            args=(cmd, output, current_app.app_context()),
             daemon=True,
             name=f"Install_{server_full_name}",
         )
@@ -505,8 +473,7 @@ def install():
                     return redirect(url_for("views.install"))
 
                 output = servers[server_name]
-                if verbosity >= 2:
-                    debug_handler("output", output, debug)
+                current_app.logger.info(log_wrap("output", output))
 
                 if output.pid:
                     cancel_install(output)
@@ -579,9 +546,6 @@ def no_output():
 @views.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    global debug
-    global verbosity
-
     # Kill any lingering background watch processes in case console page is
     # clicked away fromleft.
     kill_watchers(last_request_for_output)
@@ -596,9 +560,6 @@ def settings():
     graphs_secondary = config["aesthetic"]["graphs_secondary"]
     show_stats = config["aesthetic"].getboolean("show_stats")
     install_create_new_user = config["settings"].getboolean("install_create_new_user")
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, "settings"):
@@ -614,7 +575,7 @@ def settings():
         "install_create_new_user": install_create_new_user,
     }
 
-    debug_handler("config_options", config_options, debug)
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     if request.method == "GET":
         return render_template(
@@ -708,20 +669,20 @@ def settings():
         # Restart daemon thread sleeps for 5 seconds then restarts app.
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=restart_self, args=(cmd,), daemon=True, name="restart"
+            target=restart_self, args=(cmd, ProcInfoVessel(), current_app.app_context()), daemon=True, name="restart"
         )
         restart_daemon.start()
         return redirect(url_for("views.settings"))
 
     # Debug messages.
-    debug_handler("text_color_pref", text_color_pref, debug)
-    debug_handler("file_pref", file_pref, debug)
-    debug_handler("height_pref", height_pref, debug)
-    debug_handler("update_weblgsm", update_weblgsm, debug)
-    debug_handler("graphs_primary_pref", graphs_primary_pref, debug)
-    debug_handler("graphs_secondary_pref", graphs_secondary_pref, debug)
-    debug_handler("show_stats_pref", show_stats_pref, debug)
-    debug_handler("install_new_user_pref", install_new_user_pref, debug)
+    current_app.logger.info(log_wrap("text_color_pref", text_color_pref))
+    current_app.logger.info(log_wrap("file_pref", file_pref))
+    current_app.logger.info(log_wrap("height_pref", height_pref))
+    current_app.logger.info(log_wrap("update_weblgsm", update_weblgsm))
+    current_app.logger.info(log_wrap("graphs_primary_pref", graphs_primary_pref))
+    current_app.logger.info(log_wrap("graphs_secondary_pref", graphs_secondary_pref))
+    current_app.logger.info(log_wrap("show_stats_pref", show_stats_pref))
+    current_app.logger.info(log_wrap("install_new_user_pref", install_new_user_pref))
 
     flash("Settings Updated!")
     return redirect(url_for("views.settings"))
@@ -749,17 +710,10 @@ def about():
 @views.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
-    global debug
-    global verbosity
-
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
     remove_files = config["settings"].getboolean("remove_files")
-
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     # Check if user has permissions to add route.
     if not user_has_permissions(current_user, "add"):
@@ -863,7 +817,7 @@ def add():
             ansible_vars["web_lgsm_user"] = USER
             write_ansible_vars_json(ansible_vars)
 
-            debug_handler("ansible_vars", ansible_vars, debug)
+            current_app.logger.info(log_wrap("ansible_vars", ansible_vars))
 
             cmd = [
                 "/usr/bin/sudo",
@@ -871,7 +825,6 @@ def add():
                 os.path.join(CWD, "venv/bin/python"),
                 ANSIBLE_CONNECTOR
             ]
-            # TODO: Add debug options to print this hidden output.
             run_cmd_popen(cmd)
 
         # Add the install to the database, then redirect home.
@@ -884,10 +837,10 @@ def add():
         db.session.add(new_game_server)
         db.session.commit()
 
-        debug_handler("install_name", install_name, debug)
-        debug_handler("install_path", install_path, debug)
-        debug_handler("script_name", script_name, debug)
-        debug_handler("username", username, debug)
+        current_app.logger.info(log_wrap("install_name", install_name))
+        current_app.logger.info(log_wrap("install_path", install_path))
+        current_app.logger.info(log_wrap("script_name", script_name))
+        current_app.logger.info(log_wrap("username", username))
 
         flash("Game server added!")
         return redirect(url_for("views.home"))
@@ -902,8 +855,6 @@ def add():
 @login_required
 def delete():
     global servers
-    global debug
-    global verbosity
 
     # TODO: Should eventually make this whole function work via IDs instead of
     # server names. Will get there eventually.
@@ -911,9 +862,6 @@ def delete():
     config = configparser.ConfigParser()
     config.read("main.conf")
     remove_files = config["settings"].getboolean("remove_files")
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
@@ -926,20 +874,19 @@ def delete():
             flash("No such server found!", category="error")
             return redirect(url_for("views.home"))
 
-        debug_handler("server_name", server_name, debug)
-        debug_handler("servers", servers, debug)
-        debug_handler("server.id", server.id, debug)
-        debug_handler("server.install_name", server.install_name, debug)
-        debug_handler("server.username", server.username, debug)
-        debug_handler("server.install_path", server.install_path, debug)
+        current_app.logger.info(log_wrap("server_name", server_name))
+        current_app.logger.info(log_wrap("servers", servers))
+        current_app.logger.info(log_wrap("server.id", server.id))
+        current_app.logger.info(log_wrap("server.install_name", server.install_name))
+        current_app.logger.info(log_wrap("server.username", server.username))
+        current_app.logger.info(log_wrap("server.install_path", server.install_path))
 
         if server:
-            # TODO: Add debug level 2 hidden output printing here.
             if server_name in servers:
                 del servers[server_name]
             proc_info = ProcInfoVessel()
 
-            debug_handler("servers", servers, debug)
+            current_app.logger.info(log_wrap("servers", servers))
 
             del_server(server, remove_files)
 
@@ -963,9 +910,6 @@ def delete():
 @views.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit():
-    global debug
-    global verbosity
-
     # NOTE: The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
@@ -975,9 +919,6 @@ def edit():
     config.read("main.conf")
     text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
-    debug = config["debug"].getboolean("debug")
-    v = config["debug"]["verbosity"]
-    verbosity = get_verbosity(v)
 
     if config["settings"]["cfg_editor"] == "no":
         flash("Config Editor Disabled", category="error")

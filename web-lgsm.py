@@ -103,15 +103,20 @@ try:
     HOST = CONFIG["server"]["host"]
     PORT = CONFIG["server"]["port"]
     DEBUG = CONFIG["debug"].getboolean("debug")
+    LOG_LEVEL = CONFIG["debug"]["log_level"]
 except KeyError as e:
     print(f" [!] Configuration setting {e} not set.")
     HOST = "127.0.0.1"
     PORT = "12357"
     DEBUG = False
+    LOG_LEVEL = "info"
 
 os.environ["COLUMNS"] = "80"
 os.environ["LINES"] = "50"
 os.environ["TERM"] = "xterm-256color"
+if DEBUG:
+    os.environ["DEBUG"] = "YES"
+os.environ["LOG_LEVEL"] = LOG_LEVEL
 
 # Global options hash.
 O = {"verbose": False, "check": False, "auto": False, "test_full": False}
@@ -200,7 +205,6 @@ def start_server():
 
 def start_debug():
     """Starts the app in debug mode"""
-    os.environ["DEBUG"] = "true"
     from app import main
 
     # For clean ctrl + c handling.
@@ -647,7 +651,7 @@ def main(argv):
             # Put debug last because main.conf var.
             # Just because I have debug set in the conf doesn't mean I want to
             # start the server in debug mode when just trying to run tests or
-            # something.
+            # change passwd or something.
             start_debug()
             return
 

@@ -3,35 +3,15 @@
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
-* Duh just discovered the server status indicators don't work without group
-  permissions (ugh sigh).
-  - I think I did already know this actually just forgot it (see Plato's Meno -
-    theory of recollection). 
-  - Going to stick with no same group perms and run server check through
-    ansible_connector.
-  - Also going to rename that to sudo ansible connector since that's really
-    moreso what it is.
-
-* Create a `docker-setup.py` script which will build the `Dockerfile` &
-  `docker-compose.yml` files for whatever game servers the user chooses to
-  install.
-  - The game server files are persistent as they'll be in the GameServers dir
-    which is mounted to the real file system.
-  - However, I need a way to make other system level configuration changes
-    exist after machine tear down.
-    - User for game server needs re-created.
-    - Mount for persistent GameServers files need recreated.
-    - Ports for game server need mapped.
-  - So I'm going to create python script that builds the docker-compose.yml and
-    Dockerfile from templates.
-    - Yes users could and can always just edit the Dockerfile and
-      docker-compose.yml directly.
-    - However, having a tool just makes it smoother and less error prone.
-    
-* Figure out container volume mounts & permissions.
-  - Change app code to work within a container.
-    - Put new game server installs down in a dir called `GameServers`.
-    - Mount this in the container to the real web-lgsm/GameServers dir.
+* Make container specific tweaks.
+  - Pass through `DOCKER=YES` env var.
+  - If in docker container:
+    - Do installs differently. Flash a warning about needing to rebuild
+      container with new mount before installation can continue.
+      - Point user to docs & `docker-setup.py` script.
+    - This will require having the install route check for the presence of the
+      server path (instead of its absence for non-docker) before launching the
+      installation process.
 
 * Add Support for game servers in containers!
   - User requested project support for game servers that are running in
@@ -41,10 +21,12 @@
 
 * Add docs for docker changes.
 
-* Test these changes.
-  - Not quite sure how to yet bc the runner itself is in a container and don't
-    think I can do a container in a container thing so might just have to leave
-    this hanging without any automated testing...
+* Manually run tests against new changes. 
+  - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
+    --test_full` then it should build and run all project tests inside of the
+    container.
+  - I don't have a way to automatically hook this into github actions ci yet so
+    making a note here to just run them by hand.
 
 * Apply autoformatting via `black`.
 
@@ -54,11 +36,12 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* Make use of some sort of logger to send debug message out.
-  - Right now I'm just being very lazy and printing them at various debug
-    levels.
-  - There are almost certainly already logger tools for doing this.
-  - Or I could just write my own logger function.
+* Improve debug logging further.
+  - Continue to use custom debug handler function but also make user of flasks
+    app.logger to log the messages instead of print.
+    - https://flask.palletsprojects.com/en/2.3.x/logging/
+  - Enforce verbosity levels for logging.
+  - Fix / finish run_cmd_popen logging.
 
 * Make config editor work for game servers owned by other system users.
   - Think I'll have to re-write / add-to the write new config data logic.

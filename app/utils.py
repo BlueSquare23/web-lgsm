@@ -6,6 +6,7 @@ import json
 import glob
 import time
 import string
+import logging
 import psutil
 import shutil
 import getpass
@@ -16,7 +17,7 @@ from datetime import datetime
 from threading import Thread
 from . import db
 from .models import GameServer
-from flask import flash
+from flask import flash, current_app
 
 # Constants.
 CWD = os.getcwd()
@@ -29,33 +30,19 @@ prev_bytes_recv = psutil.net_io_counters().bytes_recv
 prev_time = time.time()
 
 
-def debug_handler(item_name, item, debug):
+def log_wrap(item_name, item):
     """
-    Kindly handles the debug output / logging.
+    Kindly handles wrapping the debug output for logging.
 
     Args:
         item_name (str): Name of the thing we're debug printing.
         item (any): Item to be debug printed / logged.
-        debug (bool): True if debug enabled, false otherwise.
 
     Return:
-        None: Only does the needful, no return.
+        log_msg (str): Message to be logged.
     """
-    # Env var debug take precedence over config var.
-    env_debug = os.getenv("DEBUG")
-    if env_debug != None:
-        if env_debug == "true":
-            debug = True
-
-    if not debug:
-        return
-
-    now = datetime.now()
-    formatted_time = now.strftime("[%d/%b/%Y %H:%M:%S]")
-
-    pre_str = f"     DEBUG     - - {formatted_time} {item_name} {str(type(item))}: "
-    print(pre_str, end="")
-    print(item)
+    log_msg = f"{item_name} {str(type(item))}: {item}"
+    return log_msg
 
 
 def check_require_auth_setup_fields(username, password1, password2):
@@ -157,7 +144,7 @@ class ProcInfoVessel:
         return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
 
 
-def run_cmd_popen(cmd, proc_info=ProcInfoVessel()):
+def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     General purpose subprocess.Popen wrapper function.
 
@@ -172,23 +159,28 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel()):
     # Set lock flag to true.
     proc_info.process_lock = True
 
-    # TODO: Passthrough debug setting for real instead of hardcoding True.
-    debug_handler('cmd', cmd, True)
+    # App context needed for logging in threads.
+    if app_context:
+        app_context.push()
 
+    current_app.logger.info(log_wrap('cmd', cmd))
+    
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
     )
-
+    
     proc_info.pid = proc.pid
-
+    
     for stdout_line in iter(proc.stdout.readline, ""):
         proc_info.stdout.append(stdout_line)
-        debug_handler('stdout', stdout_line.replace('\n', ''), True)
-
+        log_msg = log_wrap('stdout', stdout_line.replace('\n', ''))
+        current_app.logger.debug(log_msg)
+    
     for stderr_line in iter(proc.stderr.readline, ""):
         proc_info.stderr.append(stderr_line)
-        debug_handler('stderr', stderr_line.replace('\n', ''), True)
-
+        log_msg = log_wrap('stderr', stderr_line.replace('\n', ''))
+        current_app.logger.debug(log_msg)
+    
     proc_info.exit_status = proc.wait()
 
     # Reset process_lock flag.

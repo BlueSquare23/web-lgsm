@@ -2,10 +2,10 @@ FROM ubuntu:latest
 ENV CONTAINER=YES
 
 # Install apt deps.
-RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo
+RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2
 
 # Create user and add to GID group.
-ARG GID=1000 # Defaults to 1000, overridden by env var.
+ARG GID={{gid}}
 RUN useradd -m web-lgsm
 {% for server in servers %}RUN useradd -m {{server.short_name}}{% endfor %}
 {% for server in servers %}RUN echo 'web-lgsm ALL=({{server.short_name}}) NOPASSWD: /home/{{server.short_name}}/GameServers/{{server.long_name}}/{{server.short_name}}, /usr/bin/watch -te *, /usr/bin/tmux -L *, /usr/bin/kill -9 *' > /etc/sudoers.d/web-lgsm-{{server.short_name}}{% endfor %}

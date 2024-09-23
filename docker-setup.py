@@ -118,7 +118,7 @@ def gather_info():
     prompting user for it.
 
     Returns:
-        None: Simply adds user input to global data structure.
+        None: Simply adds user input to global docker_data structure.
     """
     global docker_data
     global game_servers
@@ -172,6 +172,24 @@ def touch(fname, times=None):
         os.utime(fname, times)
 
 
+def whitelist_install_paths():
+    """
+    Adds install paths to allow list for sudo connector script.
+    """
+    global docker_data
+
+    install_path_list = os.path.join(SCRIPTPATH, "playbooks/gs_allowed_paths.txt")
+    if os.path.isfile(install_path_list):
+        os.remove(install_path_list)  # Cleanup any old ones.
+
+    for server in docker_data:
+        short_name = server["short_name"]
+        install_path = f"/home/{short_name}/GameServers"
+
+        with open(install_path_list, "a") as file:
+            file.write(install_path + "\n")
+
+
 def build_files():
     """
     Builds new Dockerfile & docker-compose.yml file from jinja templates &
@@ -183,9 +201,10 @@ def build_files():
     env = Environment(loader=FileSystemLoader('app/templates'))
     docker_compose_template = env.get_template('docker-compose.jinja')
     dockerfile_template = env.get_template('Dockerfile.jinja')
-    
+    gid = os.getgid()
+
     # Build from templates.
-    context = {"servers": docker_data}
+    context = {"servers": docker_data, "gid":gid}
     docker_compose_output = docker_compose_template.render(context)
     dockerfile_output = dockerfile_template.render(context)
 
@@ -208,10 +227,12 @@ def build_files():
         touch(db_file)
         os.chmod(db_file, 0o664)
 
+        whitelist_install_paths()
+
         if opts["verbose"]:
             print(" [*] New Dockerfile & docker-compose.yml files written!")
             print(" [*] Run the command below to build & start the container:")
-            print("         export GID=$(id -g) && docker-compose up --build")
+            print("         docker-compose up --build")
 
 
 def main(argv):

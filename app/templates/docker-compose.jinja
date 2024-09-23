@@ -4,8 +4,6 @@ services:
   web-lgsm:
     build: 
       context: .
-      args:
-        GID: ${GID}
     container_name: web-lgsm
     ports:
       - "5000:5000"
@@ -15,8 +13,6 @@ services:
       - ./app/database.db:/home/web-lgsm/app/database.db:rw
       - ./GameServers:/home/web-lgsm/GameServers:rw
 {% for server in servers %}      - ./GameServers:/home/{{server.short_name}}/GameServers:rw{% endfor %}
-    environment:
-      - GID=${GID}
     networks:
       - web-lgsm-net
 

@@ -387,20 +387,16 @@ def install():
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
-        if create_new_user:
+        if create_new_user or "CONTAINER" in os.environ:
+            install_path = f"/home/{server_script_name}/GameServers/{server_full_name}"
             ansible_vars["gs_user"] = server_script_name
-            ansible_vars["install_path"] = os.path.join(
-                f"/home/{server_script_name}",
-                f"GameServers/{server_full_name}"
-            )
-            ansible_vars["script_paths"] = get_user_script_paths(
-                ansible_vars["install_path"], server_script_name
-            )
+            ansible_vars["install_path"] = install_path
+            ansible_vars["script_paths"] = get_user_script_paths(install_path, server_script_name)
 
-        if "DOCKER" in os.environ:
+        if "CONTAINER" in os.environ:
             # If we're in a container and the path doesn't exist we want to
             # alert the user and tell them the container needs re-built first.
-            if not install_path_exists(ansible_vars["install_path"]):
+            if not install_path_exists(f"/home/{server_script_name}/GameServers"):
                 flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
                 flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
                 return redirect(url_for("views.home"))

@@ -811,7 +811,7 @@ def user_has_permissions(current_user, route, server_name=None):
 
 def install_path_exists(install_path):
     """
-    Check's that the install_path via connector.
+    Check's that the install_path exists via connector.
 
     Args:
         install_path (str): Installation path to check.

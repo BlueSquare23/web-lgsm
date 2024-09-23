@@ -1156,6 +1156,7 @@ def full_game_server_install(client):
         follow_redirects=True,
     )
     assert response.status_code == 200
+    print(response.data.decode('utf-8'))
     assert b"Installing" in response.data
 
     # Some buffer time.
@@ -1173,10 +1174,10 @@ def full_game_server_install(client):
         # game server install is running.
         response = client.get("/api/cmd-output?server=Minecraft")
         assert response.status_code == 200
-        assert b"output_lines" in response.data
+        assert b"stdout" in response.data
 
         # Check that the output lines are not empty.
-        empty_resp = '{"output_lines": [""], "pid": false, "process_lock": false}'
+        empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
         json_data = json.loads(response.data.decode("utf8"))
         assert empty_resp != json.dumps(json_data)
 
@@ -1210,13 +1211,13 @@ def game_server_start_stop(client):
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
-    assert b"output_lines" in response.data
+    assert b"stdout" in response.data
     print(
         "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
     )
 
     # Check that the output lines are not empty.
-    empty_resp = '{"output_lines": [""], "pid": false, "process_lock": false}'
+    empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
     json_data = json.loads(response.data.decode("utf8"))
     assert empty_resp != json.dumps(json_data)
 
@@ -1320,10 +1321,10 @@ def console_output(client):
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
-    assert b"output_lines" in response.data
+    assert b"stdout" in response.data
 
     # Check that the output lines are not empty.
-    empty_resp = '{"output_lines": [""], "pid": false, "process_lock": false}'
+    empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
     json_data = json.loads(response.data.decode("utf8"))
     assert empty_resp != json.dumps(json_data)
 

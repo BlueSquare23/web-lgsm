@@ -1,5 +1,41 @@
 ## Beta Version 1.8.0 Todos
 
+### v1.8.0 Pt 2.5.  Add Remote Admin Over SSH Support
+
+* Add ability to admin remote game server(s) over SSH through web portal.
+  - The idea here would be to allow the web-lgsm interface running on serverA
+    to connect to another machine on serverB and run game server admin commands
+    (stop, start, restart, etc.).
+    - Basically, exactly the same stuff as for local install's it would just
+      run the command over ssh instead.
+  - Really all I image this involving is more columns in the database to
+    store if game server is remote install or not. And then a different set
+    of commands for if it is a remotely managed server.
+  - I'm not so concerned about the cfg editor right now, probably will just
+    leave it broken for a while.
+  - Obviously, this would be a huge game changer!
+    - Users could run the web-lgsm locally on their windows pc in a docker
+      container and connect it to their vps where their game server is
+      installed.
+
+* One thought I realized is that the above point might allow me revamp the
+  whole auto install via playbooks command.
+  - I'm not gonna lie the sudo ansible connector script I wrote makes me
+    nervous. I'm worried about if a bad actor gets shell access they could try
+    to leverage the connector to get root, which obviously would be very bad.
+  - So the less I have to rely on that the better.
+  - What I'm thinking is, new install's get a new user. But then instead of
+    running commands to admin that new game server via the connector, we run
+    them via ssh instead.
+    - Just local ssh to that new user.
+    - Then instead of locking things down at the sudoers rules level, I can
+      lock them down at the allowed ssh commands level in a
+      .ssh/authorized_keys file.
+    - Wayyyyy safer imho.
+    - Then I can ditch the whole create sudoers rules playbook which would
+      really take a load off my mind in terms of anxieties about getting
+      hacked.
+
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 

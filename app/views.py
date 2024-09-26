@@ -7,9 +7,7 @@ import signal
 import shutil
 import getpass
 import configparser
-from . import db
-from .utils import *
-from .models import *
+
 from threading import Thread
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
@@ -26,9 +24,15 @@ from flask import (
     current_app
 )
 
+from . import db
+from .utils import *
+from .models import *
+from .proc_info_vessel import ProcInfoVessel
+
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
+ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
 # Bootstrap spinner colors.
 SPINNER_COLORS = [
     "primary",
@@ -39,7 +43,6 @@ SPINNER_COLORS = [
     "info",
     "light",
 ]
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
 
 # Globals.
 servers = {}  # Holds output objects.
@@ -64,7 +67,6 @@ def home():
     show_stats = config["aesthetic"].getboolean("show_stats")
     show_barrel_roll = config["aesthetic"].getboolean("show_barrel_roll")
 
-    current_app.logger.info(log_wrap("this is a test", "test"))
     current_app.logger.info(log_wrap("current_user.username", current_user.username))
     current_app.logger.info(log_wrap("current_user.role", current_user.role))
     current_app.logger.info(log_wrap("current_user.permissions", current_user.permissions))
@@ -547,6 +549,7 @@ def settings():
     kill_watchers(last_request_for_output)
 
     # Import config data.
+    # TODO: Make functions for loading in config options for functions.
     config = configparser.ConfigParser()
     config.read("main.conf")
     text_color = config["aesthetic"]["text_color"]

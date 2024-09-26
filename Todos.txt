@@ -4,10 +4,24 @@
 ---
 
 * Add Support for game servers in containers!
-  - User requested project support for game servers that are running in
+  - My thoughts are in this case its much like the add but just for docker
     containers.
-  - Issue: https://github.com/BlueSquare23/web-lgsm/issues/16
-  - The LGSM themselves provide docker images of game servers.
+    - So users would've already setup these containers ahead of time
+      themselves, I'm just allowing users to add their existing lgsm docker
+      containers to the web interface.
+    - Aka instead of running a command like this via the shell:
+      `./csgoserver details`
+    - The app will just be running a command like this via the shell:
+      `docker exec -it --user linuxgsm csgoserver ./csgoserver details`
+  - To do this I think I'll need a toggle on the add page for "game server is
+    in a container".
+  - I'll also need another field in the GameServer model for "in-container" or
+    not.
+    - The thing is I don't want to manage containers, I don't want to stop,
+      start, restart containers themselves with my app. Use Portainer or
+      something if you want that.
+    - Instead my app's just going to check if the game server container is
+      running and if so you can run commands for it through the web interface.
 
 * Add docs for docker changes.
 
@@ -25,6 +39,13 @@
 
 ### v1.8.0 Pt 4. The Rest...
 ---
+
+* Eliminate kill watchers.
+  - This has always been a hack.
+  - Instead just going to put a timeout on the watch thread. It'll die all on
+    its own after an hour or something (don't know why I didn't think of this
+    sooner).
+  - Maybe even make the timeout configurable via the main.conf.
 
 * Make config editor work for game servers owned by other system users.
   - Think I'll have to re-write / add-to the write new config data logic.

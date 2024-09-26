@@ -13,16 +13,25 @@ import getpass
 import requests
 import subprocess
 import threading
+
 from datetime import datetime
 from threading import Thread
+from flask import flash, current_app
+
 from . import db
 from .models import GameServer
-from flask import flash, current_app
+from .proc_info_vessel import ProcInfoVessel
+from .cmd_descriptor import CmdDescriptor
 
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
 ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
+CONNECTOR_CMD = [
+    "/usr/bin/sudo", "-n", 
+    os.path.join(CWD, "venv/bin/python"),
+    ANSIBLE_CONNECTOR
+]
 
 # Network stats globals.
 prev_bytes_sent = psutil.net_io_counters().bytes_sent
@@ -113,37 +122,6 @@ def valid_password(password1, password2):
     return True
 
 
-class ProcInfoVessel:
-    """
-    Class used to create objects that hold information about processes launched
-    via the subprocess Popen wrapper.
-    """
-    def __init__(self):
-        """
-        Args:
-            stdout (list): Lines of stdout delivered by subprocess.Popen call.
-            stderr (list): Lines of stderr delivered by subprocess.Popen call.
-            process_lock (bool): Acts as lock to tell if process is still 
-                                 running and output is being appended.
-            pid (int): Process id.
-            exit_status (int): Exit status of cmd in Popen call.
-        """
-        self.stdout = []
-        self.stderr = []
-        self.process_lock = None
-        self.pid = None
-        self.exit_status = None
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-    def __str__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
-
-    def __repr__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
-
-
 def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     General purpose subprocess.Popen wrapper function.
@@ -232,12 +210,7 @@ def cancel_install(proc_info):
     ansible_vars["pid"] = pid
     write_ansible_vars_json(ansible_vars)
 
-    cmd = [
-        "/usr/bin/sudo", "-n", 
-        os.path.join(CWD, "venv/bin/python"),
-        ANSIBLE_CONNECTOR
-    ]
-    run_cmd_popen(cmd, proc_info)
+    run_cmd_popen(CONNECTOR_CMD, proc_info)
 
 
 # Translates a username to a uid using pwd module.
@@ -263,14 +236,8 @@ def get_server_statuses():
     ansible_vars["action"] = "statuses"
     write_ansible_vars_json(ansible_vars)
 
-    cmd = [
-        "/usr/bin/sudo",
-        "-n",
-        os.path.join(CWD, "venv/bin/python"),
-        ANSIBLE_CONNECTOR
-    ]
     proc_info = ProcInfoVessel()
-    run_cmd_popen(cmd, proc_info)
+    run_cmd_popen(CONNECTOR_CMD, proc_info)
 
     if proc_info.exit_status != 0:
         return dict()
@@ -299,14 +266,8 @@ def get_sockets():
     ansible_vars["action"] = "tmuxsocks"
     write_ansible_vars_json(ansible_vars)
 
-    cmd = [
-        "/usr/bin/sudo",
-        "-n",
-        os.path.join(CWD, "venv/bin/python"),
-        ANSIBLE_CONNECTOR
-    ]
     proc_info = ProcInfoVessel()
-    run_cmd_popen(cmd, proc_info)
+    run_cmd_popen(CONNECTOR_CMD, proc_info)
 
     if proc_info.exit_status != 0:
         return dict()
@@ -383,13 +344,7 @@ def del_server(server, remove_files):
         ansible_vars["sudo_rule_name"] = sudo_rule_name
         write_ansible_vars_json(ansible_vars)
 
-        cmd = [
-            "/usr/bin/sudo",
-            "-n",
-            os.path.join(CWD, "venv/bin/python"),
-            ANSIBLE_CONNECTOR
-        ]
-        run_cmd_popen(cmd)
+        run_cmd_popen(CONNECTOR_CMD)
 
     flash(f"Game server, {server_name} deleted!")
     return
@@ -454,18 +409,6 @@ def get_commands(server, send_cmd, current_user):
     cmds = zip(
         json_data["short_cmds"], json_data["long_cmds"], json_data["descriptions"]
     )
-
-    class CmdDescriptor:
-        def __init__(self):
-            self.long_cmd = ""
-            self.short_cmd = ""
-            self.description = ""
-
-        def __str__(self):
-            return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
-
-        def __repr__(self):
-            return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
 
     # Remove commands for non-admin users. Part of permissions controls.
     user_perms = json.loads(current_user.permissions)
@@ -625,6 +568,7 @@ def get_user_script_paths(install_path, script_name):
 
 
 # Run's self update script.
+# TODO: Rewrite this to use run_cmd_popen.
 def update_self():
     update_cmd = ["./web-lgsm.py", "--auto"]
     proc = subprocess.run(
@@ -645,6 +589,7 @@ def update_self():
 
 
 # Sleep's 5 seconds then restarts the app.
+# TODO: Rewrite this to use run_cmd_popen.
 def restart_self(restart_cmd):
     time.sleep(5)
     proc = subprocess.run(
@@ -826,16 +771,19 @@ def install_path_exists(install_path):
     write_ansible_vars_json(ansible_vars)
 
     proc_info = ProcInfoVessel()
-    cmd = [
-        "/usr/bin/sudo", "-n", 
-        os.path.join(CWD, "venv/bin/python"),
-        ANSIBLE_CONNECTOR
-    ]
-    run_cmd_popen(cmd, proc_info)
+    run_cmd_popen(CONNECTOR_CMD, proc_info)
+
+    if proc_info.exit_status > 0:
+        return False
+
     for line in proc_info.stdout:
         if "Path exists" in line:
             return True
 
-    print(proc_info.stdout)
-
     return False
+
+
+
+
+
+

@@ -8,15 +8,28 @@
     (stop, start, restart, etc.).
     - Basically, exactly the same stuff as for local install's it would just
       run the command over ssh instead.
-  - Really all I image this involving is more columns in the database to
-    store if game server is remote install or not. And then a different set
-    of commands for if it is a remotely managed server.
-  - I'm not so concerned about the cfg editor right now, probably will just
-    leave it broken for a while.
-  - Obviously, this would be a huge game changer!
-    - Users could run the web-lgsm locally on their windows pc in a docker
-      container and connect it to their vps where their game server is
-      installed.
+  - Involves:
+    - New checkbox on add page for local install vs remote gs install.
+    - New js to make extra form fields appear if above checkbox for remote
+      checked.
+    - New database field for local vs remote game server install.
+    - New function for run_cmd_ssh. Going to use `paramiko` Python SSH library.
+      - This will replace run_cmd_popen for remote game server installs.
+    - Key management:
+      - Make it generate an ssh key pair for each user@host and then spit out
+        the public key to the user after add.
+      - The reason to do this is because we want to limit the set of commands
+        the web-lgsm can run on the remote server over ssh.
+    - Figure out delete over ssh.
+      - Right now delete is run via sudo ansible connector because it can also
+        delete the other users.
+      - I might keep that for local installs, but for remote just remove files.
+      - Maybe I should add a toggle / config setting for "cleanup system user
+        on delete" or something like that.
+  - Things I'm not going to do:
+    - Defer install game server over ssh till next release.
+      - More code than I wanna write right now (already a lot in this release)!
+    - Edit files for remote installs might also have to wait for a future release.
 
 * One thought I realized is that the above point might allow me revamp the
   whole auto install via playbooks command.

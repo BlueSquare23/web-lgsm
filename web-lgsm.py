@@ -111,16 +111,10 @@ except KeyError as e:
     DEBUG = False
     LOG_LEVEL = "info"
 
-os.environ["COLUMNS"] = "80"
-os.environ["LINES"] = "50"
-os.environ["TERM"] = "xterm-256color"
-if DEBUG:
-    os.environ["DEBUG"] = "YES"
 os.environ["LOG_LEVEL"] = LOG_LEVEL
 
 # Global options hash.
 O = {"verbose": False, "check": False, "auto": False, "test_full": False}
-
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -182,21 +176,29 @@ def start_server():
 
     print_start_banner()
 
-    # Try to start the gunicorn server as a detached proc.
+    access_log = os.path.join(SCRIPTPATH, "logs/access.log")
+    error_log = os.path.join(SCRIPTPATH, "logs/error.log")
+
     try:
+        cmd = [
+            "gunicorn",
+            "--access-logfile",
+            access_log,
+            "--disable-redirect-access-to-syslog",
+            "--error-logfile",
+            error_log,
+            "--log-level",
+            LOG_LEVEL,
+            f"--bind={HOST}:{PORT}",
+            "--daemon",
+            "app:main()",
+        ]
+        print(cmd)
         process = subprocess.Popen(
-            [
-                "gunicorn",
-                "--access-logfile",
-                f"{SCRIPTPATH}/web-lgsm.log",
-                f"--bind={HOST}:{PORT}",
-                "--daemon",
-                "--worker-class",
-                "gevent",
-                "app:main()",
-            ],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            universal_newlines=True
         )
         print(f" [*] Launched Gunicorn server with PID: {process.pid}")
     except Exception as e:
@@ -206,6 +208,8 @@ def start_server():
 def start_debug():
     """Starts the app in debug mode"""
     from app import main
+    if DEBUG:
+        os.environ["DEBUG"] = "YES"
 
     # For clean ctrl + c handling.
     signal.signal(signal.SIGINT, signalint_handler)

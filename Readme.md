@@ -183,6 +183,8 @@ For more information see: `docs/suggested_deployment.md`.
 * ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
 * CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
+* Web Terminal: [Xterm.js](https://xtermjs.org/)
+* SSH Client [Paramiko](https://www.paramiko.org/)
 * Testing: [Pytest](https://docs.pytest.org/)
 * Automation: [Ansible](https://www.ansible.com/)
 * Web Server: [Gunicorn](https://gunicorn.org/)

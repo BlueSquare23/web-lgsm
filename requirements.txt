@@ -12,3 +12,4 @@ gevent==24.2.1
 ansible>=6.7.0
 ansible-runner>=2.3.1
 PyYAML==6.0.2
+paramiko==3.5.0

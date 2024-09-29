@@ -1,4 +1,4 @@
-## Beta Version 1.8.0 Todos
+## Version 1.8.0 Todos
 
 ### v1.8.0 Pt 2.5.  Add Remote Admin Over SSH Support
 
@@ -9,10 +9,6 @@
     - Basically, exactly the same stuff as for local install's it would just
       run the command over ssh instead.
   - Involves:
-    - New checkbox on add page for local install vs remote gs install.
-    - New js to make extra form fields appear if above checkbox for remote
-      checked.
-    - New database field for local vs remote game server install.
     - New function for run_cmd_ssh. Going to use `paramiko` Python SSH library.
       - This will replace run_cmd_popen for remote game server installs.
     - Key management:
@@ -20,6 +16,13 @@
         the public key to the user after add.
       - The reason to do this is because we want to limit the set of commands
         the web-lgsm can run on the remote server over ssh.
+      - Write ssh_connector.sh shell script. Basically if I want to limit
+        access to multiple commands over ssh I need to do something like this:
+        - https://serverfault.com/questions/749474/ssh-authorized-keys-command-option-multiple-commands
+        - I think doing this in bash is probably safe enough.
+          - Will just have to validate cmds are legit.
+          - Will cross `send` command bridge when we come to it. 
+    - Make controls for local installs owned by other users work over ssh.
     - Figure out delete over ssh.
       - Right now delete is run via sudo ansible connector because it can also
         delete the other users.
@@ -31,23 +34,23 @@
       - More code than I wanna write right now (already a lot in this release)!
     - Edit files for remote installs might also have to wait for a future release.
 
-* One thought I realized is that the above point might allow me revamp the
-  whole auto install via playbooks command.
-  - I'm not gonna lie the sudo ansible connector script I wrote makes me
-    nervous. I'm worried about if a bad actor gets shell access they could try
-    to leverage the connector to get root, which obviously would be very bad.
-  - So the less I have to rely on that the better.
-  - What I'm thinking is, new install's get a new user. But then instead of
-    running commands to admin that new game server via the connector, we run
-    them via ssh instead.
-    - Just local ssh to that new user.
-    - Then instead of locking things down at the sudoers rules level, I can
-      lock them down at the allowed ssh commands level in a
-      .ssh/authorized_keys file.
-    - Wayyyyy safer imho.
-    - Then I can ditch the whole create sudoers rules playbook which would
-      really take a load off my mind in terms of anxieties about getting
-      hacked.
+* Sudo ansible connector script changes.
+  - Keep auto install as new user the same but after install add ssh key, then
+    run commands for local installs owned by different users through ssh.
+  - Remove tmux sock and status from connector script, do these over SSH
+    instead.
+  - The only things that should be in the connector script are: delete,
+    install, & cancel.
+    - And it should only delete if the toggle for "delete game server user" is
+      checked.
+
+* Add clear output on page reload optional setting to main conf / setting page.
+  - Also add backend functionality obviously.
+  - Should be simple enough just need to: 
+    - Add setting page toggles to frontend.
+    - Add main.conf param.
+    - Add add setting route code to control main.conf.
+    - On controls page, add stdout, stderr clear if clear output is enabled.
 
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
@@ -198,7 +201,7 @@
     - I have the community docs for this now.
 
 
-## Beta Version 1.9.0 Todos
+## Version 1.9.0 Todos
 
 * Re-write routes to be all api based.
   - I know it might seem tedious, but what this will give me is an api that

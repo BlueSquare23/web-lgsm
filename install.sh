@@ -62,16 +62,16 @@ fi
 if ! which pip3 &>/dev/null; then
     echo -e "${green}####### Installing \`pip3\`...${reset}"
     sudo apt install -y python3-pip
-
-    if [[ $sys_name =~ Ubuntu ]]; then
-        echo -e "${green}####### Upgrading \`pip3\`...${reset}"
-        python3 -m pip install --upgrade pip
-    fi
 fi
 
 echo -e "${green}####### Setting up Virtual Env...${reset}"
 python3 -m venv venv
 source venv/bin/activate
+
+if [[ $sys_name =~ Ubuntu ]]; then
+    echo -e "${green}####### Upgrading \`pip3\`...${reset}"
+    python3 -m pip install --upgrade pip
+fi
 
 echo -e "${green}####### Install Requirements...${reset}"
 python3 -m pip install -r requirements.txt

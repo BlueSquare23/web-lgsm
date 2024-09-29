@@ -27,6 +27,11 @@
 
             <br />
 
+            <div class="form-floating mb-3">
+              <input value="{{config_options.terminal_height}}" min="5" max="100" class="form-control" type="number" id="terminal-height" name="terminal_height" class="form-control">
+              <label for="text-area-height" style="color:black;">Default Terminal Height</label>
+            </div>
+
             <div class="form-check">
               <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
               <label class="form-check-label" for="delete-files">
@@ -57,10 +62,56 @@
 
             <br />
 
-            <div class="form-floating mb-3">
-              <input value="{{config_options.terminal_height}}" min="5" max="100" class="form-control" type="number" id="terminal-height" name="terminal_height" class="form-control">
-              <label for="text-area-height" style="color:black;">Default Terminal Height</label>
+<!--
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Delete user on game server delete (for game servers not owned by web-lgsm system user)
+              </label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Keep user on game server delete
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="show_stderr">
+                Merge stdout and stderr output streams
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
+              <label class="form-check-label" for="show_stderr">
+                Only show stdout output stream
+              </label>
+            </div>
+
+            <br />
+-->
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="clear_output_on_reload" id="clear_output_on_reload" value="true" {% if config_options.clear_output_on_reload == true %}checked{% endif %}>
+              <label class="form-check-label" for="clear_output_on_reload">
+                Clear web terminal when running new command
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="clear_output_on_reload" id="clear_output_on_reload" value="false" {% if config_options.clear_output_on_reload == false %}checked{% endif %}>
+              <label class="form-check-label" for="clear_output_on_reload">
+                Do not clear web terminal after running command (output is appended to existing output)
+              </label>
+            </div>
+<!--
+delete_user = yes
+show_stderr = no
+clear_output_on_reload = yes
+-->
+            <hr />
 
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="true" id="show_stats" name="show_stats" {% if config_options.show_stats == true %}checked{% endif %}>

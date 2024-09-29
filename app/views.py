@@ -118,6 +118,7 @@ def controls():
     terminal_height = config["aesthetic"]["terminal_height"]
     cfg_editor = config["settings"]["cfg_editor"]
     send_cmd = config["settings"].getboolean("send_cmd")
+    clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -140,7 +141,12 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for("views.home"))
 
-    if not install_path_exists(server.install_path):
+    if server.install_type == 'remote':
+        if not is_ssh_accessible(server.install_host):
+            flash("Unable to access remote server over ssh!", category="error")
+            return redirect(url_for("views.home"))
+
+    if not install_path_exists(server):
         flash("No game server installation directory found!", category="error")
         return redirect(url_for("views.home"))
 
@@ -164,7 +170,7 @@ def controls():
         flash("Error loading commands.json file!", category="error")
         return redirect(url_for("views.home"))
 
-    # Object to hold output from any running daemon threads.
+    # Object to hold process info from cmd in daemon thread.
     proc_info = ProcInfoVessel()
 
     # If this is the first time we're ever seeing the server_name then put it
@@ -174,6 +180,9 @@ def controls():
 
     # Set the output object to the one stored in the global dictionary.
     proc_info = servers[server_name]
+    if clear_output_on_reload == True:
+        proc_info.stdout.clear()
+        proc_info.stderr.clear()
 
     script_path = os.path.join(server.install_path, server.script_name)
 
@@ -181,15 +190,13 @@ def controls():
     # supplied with the GET request. Aka if a user has clicked one of the
     # control button.
     if short_cmd:
-        # For running cmds as alt users.
-        sudo_prepend = ["/usr/bin/sudo", "-n", "-u", server.username]
-
         # Validate short_cmd against contents of commands.json file.
         if not valid_command(short_cmd, server.script_name, send_cmd, current_user):
             flash("Invalid Command!", category="error")
             return redirect(url_for("views.controls", server=server_name))
 
         # Console option, use tmux capture-pane to get output.
+        # TODO: UPDATE THIS TO USE SSH.
         if short_cmd == "c":
             # First check if tmux session is running.
             installed_servers = GameServer.query.all()
@@ -207,9 +214,6 @@ def controls():
             tmux_socket = server.script_name + '-' + servers_to_sockets[server.install_name]
 
             cmd = []
-            # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != USER:
-                cmd += sudo_prepend
 
             # Use daemonized `watch` command to keep live console running.
             cmd += [
@@ -264,17 +268,25 @@ def controls():
 
         # If its not the console or send command
         else:
-            cmd = []
-            # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != USER:
-                cmd += sudo_prepend
+            # Run cmd via ssh.
+            if server.install_type == 'remote' or \
+                (server.install_type == 'local' and server.username != USER):
 
-            cmd += [script_path, short_cmd]
-            daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
-            )
-            daemon.start()
-            return redirect(url_for("views.controls", server=server_name))
+                cmd = f"{script_path} {short_cmd}"
+                pub_key_file = get_ssh_pub_key_file(server.username, server.install_host)
+                daemon = Thread(
+                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context()), daemon=True, name="Command"
+                )
+                daemon.start()
+                return redirect(url_for("views.controls", server=server_name))
+
+            else:
+                cmd += [script_path, short_cmd]
+                daemon = Thread(
+                    target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
+                )
+                daemon.start()
+                return redirect(url_for("views.controls", server=server_name))
 
     current_app.logger.info(log_wrap("server_name", server_name))
     current_app.logger.info(log_wrap("cmds_list", cmds_list))
@@ -555,6 +567,7 @@ def settings():
     text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
     remove_files = config["settings"].getboolean("remove_files")
+    clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
     graphs_primary = config["aesthetic"]["graphs_primary"]
     graphs_secondary = config["aesthetic"]["graphs_secondary"]
     show_stats = config["aesthetic"].getboolean("show_stats")
@@ -568,6 +581,7 @@ def settings():
         "text_color": text_color,
         "terminal_height": terminal_height,
         "remove_files": remove_files,
+        "clear_output_on_reload": clear_output_on_reload,
         "graphs_primary": graphs_primary,
         "graphs_secondary": graphs_secondary,
         "show_stats": show_stats,
@@ -586,6 +600,7 @@ def settings():
 
     text_color_pref = request.form.get("text_color")
     file_pref = request.form.get("delete_files")
+    clear_output_pref = request.form.get("clear_output_on_reload")
     height_pref = request.form.get("terminal_height")
     update_weblgsm = request.form.get("update_weblgsm")
     graphs_primary_pref = request.form.get("graphs_primary")
@@ -597,6 +612,10 @@ def settings():
     config["settings"]["remove_files"] = "yes"
     if file_pref == "false":
         config["settings"]["remove_files"] = "no"
+
+    config["settings"]["clear_output_on_reload"] = "yes"
+    if clear_output_pref == "false":
+        config["settings"]["clear_output_on_reload"] = "no"
 
     # Set New user install setting.
     config["settings"]["install_create_new_user"] = "yes"
@@ -730,19 +749,33 @@ def add():
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
         username = request.form.get("username")
+        install_type = request.form.get("install_type")
+        install_host = request.form.get("install_host")
 
         # Check all required args are submitted.
-        for required_form_item in (install_name, install_path, script_name):
+        for required_form_item in (install_name, install_path, script_name, install_type):
             if required_form_item == None or required_form_item == "":
                 flash("Missing required form field(s)!", category="error")
-                status_code = 400
-                return render_template("add.html", user=current_user), status_code
+                return render_template("add.html", user=current_user), 400
 
             # Check input lengths.
             if len(required_form_item) > 150:
                 flash("Form field too long!", category="error")
-                status_code = 400
-                return render_template("add.html", user=current_user), status_code
+                return render_template("add.html", user=current_user), 400
+
+        # Validate install_type.
+        if not valid_install_type(install_type):
+            flash("Invalid install type!", category="error")
+            return render_template("add.html", user=current_user), 400
+
+        if install_type == 'remote':
+            if install_host == None or install_host == "":
+                flash("Missing required form field(s)!", category="error")
+                return render_template("add.html", user=current_user), 400
+
+            if not is_ssh_accessible(install_host):
+                flash("Server does not appear to be SSH accessible!", category="error")
+                return render_template("add.html", user=current_user), 400
 
         # Set default user if none provided.
         if username == None or username == "":
@@ -750,19 +783,14 @@ def add():
 
         if len(username) > 150:
             flash("Form field too long!", category="error")
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
+            return render_template("add.html", user=current_user), 400
 
-        # Returns None if not valid username.
-        if get_uid(username) == None:
-            flash("User not found on system!", category="error")
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
-
-        # Make install name unix friendly for dir creation.
-        install_name = install_name.replace(" ", "_")
-
-        install_exists = GameServer.query.filter_by(install_name=install_name).first()
+        if install_type == 'local':
+            # Returns None if not valid username.
+            if get_uid(username) == None:
+                flash("User not found on system!", category="error")
+                status_code = 400
+                return render_template("add.html", user=current_user), status_code
 
         # Try to prevent arbitrary bad input.
         for input_item in (install_name, install_path, script_name, username):
@@ -775,16 +803,20 @@ def add():
                 status_code = 400
                 return render_template("add.html", user=current_user), status_code
 
+        # Make install name unix friendly for dir creation.
+        # TODO: Do more here to prevent people from putting in weird names.
+        install_name = install_name.replace(" ", "_")
+
+        install_exists = GameServer.query.filter_by(install_name=install_name).first()
+
         if install_exists:
             flash("An installation by that name already exits.", category="error")
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
-        # TODO: This doesn't work anymore, fix. Can't check dir for other users.
-        #        elif not os.path.exists(install_path) or not os.path.isdir(install_path):
-        #            flash('Directory path does not exist.', category='error')
-        #            status_code = 400
-        #            return render_template("add.html", user=current_user), status_code
+        # Check install path exists.
+        # TODO: Write this function for over ssh.
+#       check_install_path_exists()        
 
         if not valid_script_name(script_name):
             flash("Invalid game server script file name!", category="error")
@@ -792,19 +824,14 @@ def add():
             return render_template("add.html", user=current_user), status_code
 
         script_path = os.path.join(install_path, script_name)
-        # TODO: This doesn't work anymore, fix. Can't check dir for other users.
-        #        if not os.path.exists(script_path) or \
-        #                not os.path.isfile(script_path):
-        #            flash('Script file does not exist.', category='error')
-        #            status_code = 400
-        #            return render_template("add.html", user=current_user), status_code
+        # Check script path exists.
+        # TODO: Write this function for over ssh.
+#        check_script_path_exists(script_path)
 
-        # Add sudoers rules automatically if game server not owned by web-lgsm
-        # system user. To the user, note there is a slight problem with this
-        # code. If you try to add a game server as some user that's not allowed
-        # by the validate_gs_user.yml playbook (aka not a mcserver type name)
-        # then it'll fail.
-        if USER != username:
+        if install_type == 'local':
+            install_host = '127.0.0.1'
+
+        if install_type == 'local' and USER != username:
             # Get a list of all game servers installed for this system user.
             user_script_paths = get_user_script_paths(install_path, script_name)
 
@@ -826,12 +853,22 @@ def add():
             ]
             run_cmd_popen(cmd)
 
+        if install_type == 'remote':
+            pubkey = get_ssh_pub_key(username, install_host)
+            if pubkey == None:
+                flash(f"Problem generating new ssh keys!", category="error")
+                return redirect(url_for("views.add"))
+
+            flash(f"Add this key to the remote hosts ~/.ssh/authorized_keys file:  {pubkey}")
+
         # Add the install to the database, then redirect home.
         new_game_server = GameServer(
             install_name=install_name,
             install_path=install_path,
             script_name=script_name,
             username=username,
+            install_type=install_type,
+            install_host=install_host
         )
         db.session.add(new_game_server)
         db.session.commit()

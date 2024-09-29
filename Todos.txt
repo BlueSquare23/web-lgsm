@@ -44,14 +44,6 @@
     - And it should only delete if the toggle for "delete game server user" is
       checked.
 
-* Add clear output on page reload optional setting to main conf / setting page.
-  - Also add backend functionality obviously.
-  - Should be simple enough just need to: 
-    - Add setting page toggles to frontend.
-    - Add main.conf param.
-    - Add add setting route code to control main.conf.
-    - On controls page, add stdout, stderr clear if clear output is enabled.
-
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 

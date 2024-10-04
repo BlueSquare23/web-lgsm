@@ -5,6 +5,10 @@
 # the project's ansible playbooks to allow them to be run by the web app
 # process. Written by John R. August 2024
 
+# TODO: REWRITE WHOLE THING TO USER DB_CONN TO GRAB DATA. No need to pass input
+# in via json anymore. With DB connection logic now written, connector can just
+# grab data right from app's DB.
+
 import os
 import sys
 import json
@@ -138,45 +142,6 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
         print(f"An unexpected error occurred while running '{cmd}': {str(e)}")
 
 
-def run_create_sudoers_rules(vars_data):
-    """Wraps the invocation of the create_sudoers_rules.yml playbook"""
-    required_vars = ["gs_user", "script_paths", "web_lgsm_user"]
-    check_required_vars_are_set(vars_data, required_vars)
-
-    gs_user = vars_data.get("gs_user")
-    validate_gs_user(gs_user)
-
-    script_paths = vars_data.get("script_paths")
-    web_lgsm_user = vars_data.get("web_lgsm_user")
-
-    sudo_rule_name = f"{web_lgsm_user}-{gs_user}"
-    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
-    create_sudoers_rules_playbook_path = os.path.join(
-        CWD, "playbooks/create_sudoers_rules.yml"
-    )
-
-    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
-
-    create_rules_cmd = sudo_pre_cmd + [
-        ansible_cmd_path,
-        create_sudoers_rules_playbook_path,
-        "-e",
-        f"gs_user={gs_user}",
-        "-e",
-        f"sudo_rule_name={sudo_rule_name}",
-        "-e",
-        f"script_paths={script_paths}",
-        "-e",
-        f"web_lgsm_user={web_lgsm_user}",
-    ]
-
-    if O["debug"]:
-        print(create_rules_cmd)
-        exit()
-
-    run_cmd(create_rules_cmd)
-
-
 def run_delete_user(vars_data):
     """Wraps the invocation of the delete_user.yml playbook"""
     required_vars = ["gs_user", "sudo_rule_name"]
@@ -227,27 +192,6 @@ def validate_install_path(install_path):
     except IOError:
         print(f" [!] Error: Problem reading file {file_path}.")
         return False
-
-
-def check_dir_exists(vars_data):
-    """
-    Wraps checking game server install path exists.
-
-    Args:
-        vars_data (dict): Contains install_path to check.
-
-    Returns:
-        str: An output string indicating if the file is there or not.
-    """
-    required_vars = ["install_path"]
-    check_required_vars_are_set(vars_data, required_vars)
-
-    install_path = vars_data.get("install_path")
-    validate_install_path(install_path)
-    if os.path.isdir(install_path):
-        print(" [*] Path exists")
-    else:
-        print(" [*] No such dir")
 
 
 def whitelist_install_path(install_path):
@@ -454,81 +398,6 @@ def db_connector(wanted):
         if wanted == 'all_game_servers':
             return session.query(GameServer).all()
 
-def get_tmux_sockets():
-    """
-    Gets dict mapping of game servers to socket file names.
-
-    Returns:
-        game_servers_2_socks (dict): Dictionary mapping of game server names to
-                                     socket files.
-    """
-    all_game_servers = db_connector('all_game_servers')
-    game_servers_2_socks = dict()
-
-    # List all tmux sessions for all users.
-    tmux_socdir_regex = "/tmp/tmux-*"
-    socket_dirs = [d for d in glob.glob(tmux_socdir_regex) if os.path.isdir(d)]
-
-    # Handle no sockets yet.
-    if not socket_dirs:
-        return game_servers_2_socks
-
-    # Find all unique lgsm server ids.
-    for server in all_game_servers:
-        id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
-        if not os.path.isfile(id_file_path):
-            return game_servers_2_socks
-
-        with open(id_file_path, "r") as file:
-            gs_id = file.read()
-
-        game_servers_2_socks[server.install_name] = gs_id.replace('\n', '')
-
-    return game_servers_2_socks
-
-
-def get_server_statuses():
-    """
-    Get's a list of game server statuses (on/off) via the game server's
-    corresponding tmux session socket file state.
-
-    Returns:
-        None: Just prints output for main app to use.
-    """
-    all_game_servers = db_connector('all_game_servers')
-
-    # Initialize all servers inactive to start with.
-    server_statuses = dict()
-    for server in all_game_servers:
-        server_statuses[server.install_name] = "inactive"
-
-    game_servers_2_sockets = get_tmux_sockets()
-
-    if not game_servers_2_sockets:
-        print(json.dumps(server_statuses))
-        return
-
-    # Now that we have the game servers to socket files mapping we can check if
-    # those tmux socket sessions are running.
-    for server in all_game_servers:
-        socket = server.script_name + "-" + game_servers_2_sockets[server.install_name]
-
-        cmd = [
-            "/usr/bin/sudo",
-            "-u",
-            server.username,
-            "/usr/bin/tmux",
-            "-L",
-            socket, 
-            "list-session"
-        ]
-        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        if proc.returncode == 0:
-            server_statuses[server.install_name] = "active"
-
-    print(json.dumps(server_statuses))
-
 
 # Main.
 def main(argv):
@@ -548,16 +417,8 @@ def main(argv):
 
     playbook_vars_data = load_json(JSON_VARS_FILE)
 
-    if playbook_vars_data.get("action") == "create":
-        run_create_sudoers_rules(playbook_vars_data)
-        cleanup()
-
     if playbook_vars_data.get("action") == "delete":
         run_delete_user(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "checkdir":
-        check_dir_exists(playbook_vars_data)
         cleanup()
 
     if playbook_vars_data.get("action") == "install":
@@ -566,15 +427,6 @@ def main(argv):
 
     if playbook_vars_data.get("action") == "cancel":
         cancel_install(playbook_vars_data)
-        cleanup()
-
-    if playbook_vars_data.get("action") == "tmuxsocks":
-        game_servers_2_sockets = get_tmux_sockets()
-        print(json.dumps(game_servers_2_sockets))
-        cleanup()
-
-    if playbook_vars_data.get("action") == "statuses":
-        get_server_statuses()
         cleanup()
 
     print(" [!] No action taken! Are you sure you supplied valid json?")

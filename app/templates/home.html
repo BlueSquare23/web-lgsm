@@ -14,10 +14,10 @@
               <div class="list-group form-check form-switch border border-secondary">
                 {# Hacky ass solution to only printing no servers when user has none #}
                 {% set has_server = {'has': False} %}
-                {% for server_name, status in server_status_dict.items() %}
+                {% for server_name, is_on in server_status_dict.items() %}
                   {% if user.role == 'admin' or server_name in parsed_json.servers %}
                     {% if has_server.update({'has': True}) %} {% endif %}
-                    {% if status == "active" %}
+                    {% if is_on %}
                       {% set status_color = '#00FF11' %}
                     {% else %}
                       {% set status_color = 'red' %}

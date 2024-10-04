@@ -67,7 +67,7 @@
                 <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
                 <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
 
-                <input onclick="window.scrollTo(0,0);" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
+                <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
               </form>
             </div>
           {% endif %}
@@ -80,6 +80,12 @@
       </div>
       <br />
 
+      <script>
+        function showSpinners() {
+          const spinners = document.getElementById('spinners');
+          spinners.style.display = 'block';
+        }
+      </script>
       <!-- Set global serverName for update-text-area.js -->
       <script>var serverName = "{{server_name}}"; var textColor = "{{ text_color }}"</script>
       <script src="/static/js/update-xterm.js"></script>

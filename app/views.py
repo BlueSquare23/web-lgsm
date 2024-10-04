@@ -84,13 +84,14 @@ def home():
     kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
-    servers_to_users = {}
+
+    servers_to_users = dict()
     for server in installed_servers:
         servers_to_users[server.install_name] = server.username
 
     # Fetch dict containing all servers and flag specifying if they're running
     # or not via a util function.
-    server_status_dict = get_server_statuses()
+    server_status_dict = get_all_server_statuses(installed_servers)
 
     current_app.logger.info(log_wrap("config_options", config_options))
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
@@ -196,27 +197,17 @@ def controls():
             return redirect(url_for("views.controls", server=server_name))
 
         # Console option, use tmux capture-pane to get output.
-        # TODO: UPDATE THIS TO USE SSH.
         if short_cmd == "c":
-            # First check if tmux session is running.
-            installed_servers = GameServer.query.all()
-
-            server_status_dict = get_server_statuses()
-            if server_status_dict[server_name] == "inactive":
+            gs_id = get_gs_id(server)
+            active = get_server_status(server, gs_id)
+            if not active:
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            servers_to_sockets = get_sockets()
-            if servers_to_sockets[server.install_name] == None:
-                flash("Cannot find socket for server!", category="error")
-                return redirect(url_for("views.controls", server=server_name))
-
-            tmux_socket = server.script_name + '-' + servers_to_sockets[server.install_name]
-
-            cmd = []
+            tmux_socket = server.script_name + "-" + gs_id
 
             # Use daemonized `watch` command to keep live console running.
-            cmd += [
+            cmd = [
                 "/usr/bin/watch",
                 "-te",
                 "/usr/bin/tmux",
@@ -226,6 +217,15 @@ def controls():
                 "-pt",
                 server.script_name,
             ]
+            if should_use_ssh(server):
+                cmd = " ".join(cmd)
+                pub_key_file = get_ssh_key_file(server.username, server.install_host)
+                daemon = Thread(
+                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="Console"
+                )
+                daemon.start()
+                return redirect(url_for("views.controls", server=server_name))
+
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Console"
             )
@@ -234,7 +234,7 @@ def controls():
 
         elif short_cmd == "sd":
             # Check if send_cmd is enabled in main.conf.
-            if send_cmd == "no":
+            if not send_cmd:
                 flash("Send console command button disabled!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
@@ -247,8 +247,8 @@ def controls():
 
             # Fetch dict containing all servers and flag specifying if they're running
             # or not via a util function.
-            server_status_dict = get_server_statuses()
-            if server_status_dict[server_name] == "inactive":
+            server_status_dict = get_all_server_statuses(installed_servers)
+            if not server_status_dict[server_name]:
                 flash(
                     "Server is Off! Cannot send commands to console!", category="error"
                 )
@@ -266,27 +266,22 @@ def controls():
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
 
-        # If its not the console or send command
         else:
-            # Run cmd via ssh.
-            if server.install_type == 'remote' or \
-                (server.install_type == 'local' and server.username != USER):
-
+            if should_use_ssh(server):
                 cmd = f"{script_path} {short_cmd}"
-                pub_key_file = get_ssh_pub_key_file(server.username, server.install_host)
+                pub_key_file = get_ssh_key_file(server.username, server.install_host)
                 daemon = Thread(
                     target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context()), daemon=True, name="Command"
                 )
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
-            else:
-                cmd += [script_path, short_cmd]
-                daemon = Thread(
-                    target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
-                )
-                daemon.start()
-                return redirect(url_for("views.controls", server=server_name))
+            cmd += [script_path, short_cmd]
+            daemon = Thread(
+                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
+            )
+            daemon.start()
+            return redirect(url_for("views.controls", server=server_name))
 
     current_app.logger.info(log_wrap("server_name", server_name))
     current_app.logger.info(log_wrap("cmds_list", cmds_list))
@@ -854,7 +849,7 @@ def add():
             run_cmd_popen(cmd)
 
         if install_type == 'remote':
-            pubkey = get_ssh_pub_key(username, install_host)
+            pubkey = get_ssh_key_file(username, install_host)
             if pubkey == None:
                 flash(f"Problem generating new ssh keys!", category="error")
                 return redirect(url_for("views.add"))

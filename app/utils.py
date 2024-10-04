@@ -9,7 +9,9 @@ import string
 import logging
 import psutil
 import shutil
+import socket
 import getpass
+import paramiko
 import requests
 import subprocess
 import threading
@@ -63,7 +65,6 @@ def check_require_auth_setup_fields(username, password1, password2):
             flash("Missing required form field(s)!", category="error")
             return False
 
-        # Check input lengths.
         if len(form_item) > 150:
             flash("Form field too long!", category="error")
             return False
@@ -222,62 +223,125 @@ def get_uid(username):
         return None
 
 
-def get_server_statuses():
+def should_use_ssh(server):
     """
-    Uses sudo connector script to get list of active game servers.
+    Used to determine if SSH should be used for a particular server.
+
+    Args:
+        server (GameServer): Game server object to check.
+    Returns:
+        bool: True if should connect via ssh, false otherwise.
+    """
+    if server.install_type == 'remote' or \
+        (server.install_type == 'local' and server.username != USER):
+        return True
+    
+    return False
+
+
+def get_gs_id(server):
+    """
+    Get's a game server's unique lgsm id (what I'm calling gs_id) from uid
+    file. Used for determining tmux socket file status, as socket files are
+    named: script_name-uid. Runs over SSH for install_types remote and username
+    other user.
+
+    Args:
+        server (GameServer): Game server object to get gs_id of.
+    Returns:
+        str: Returns lgsm gs_id of game server as string. None if can't get it.
+    """
+    gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
+
+    if should_use_ssh(server):
+        cmd = f"/usr/bin/cat {gs_id_file_path}"
+
+        keyfile = get_ssh_key_file(server.username, server.install_host)
+        proc_info = ProcInfoVessel()
+
+        run_cmd_ssh(
+            cmd,
+            server.install_host,
+            server.username,
+            keyfile, 
+            proc_info
+        )
+
+        if proc_info.exit_status > 0 or len(proc_info.stdout) == 0:
+            return None
+        
+        return proc_info.stdout[0].strip()
+
+    else:
+        if not os.path.isfile(gs_id_file_path):
+            return None
+
+        with open(gs_id_file_path, "r") as file:
+            gs_id = file.read()
+
+        return gs_id
+
+
+def get_server_status(server, gs_id=None):
+    """
+    Get's the game server status (on/off) for a specific game server. Does so
+    by checking game server's assigned tmux socket file state. Runs over SSH
+    for install_types remote and username other user.
+
+    Args:
+        server (GameServer): Game server object to check status of.
+        gs_id (str): Optional gs_id, saves a lookup in some cases.
+    Returns:
+        bool: True if game server is active, False otherwise.
+    """
+    if gs_id == None:
+        gs_id = get_gs_id(server)
+        if gs_id == None:
+            return False
+
+    socket = server.script_name + "-" + gs_id
+    proc_info = ProcInfoVessel()
+
+    if should_use_ssh(server):
+        keyfile = get_ssh_key_file(server.username, server.install_host)
+        cmd = f"/usr/bin/tmux -L {socket} list-session"
+        run_cmd_ssh(
+            cmd,
+            server.install_host,
+            server.username,
+            keyfile, 
+            proc_info
+        )
+    else:
+        cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
+        run_cmd_popen(cmd, proc_info)
+
+    if proc_info.exit_status > 0:
+        return False
+
+    return True
+
+
+def get_all_server_statuses(all_game_servers):
+    """
+    Get's a list of game server statuses (on/off) for all installed game
+    servers. Does so by wrapping get_server_status().
+
+    Args:
+        all_game_servers (list): List of all installed/added game servers.
 
     Returns:
-        dict: Returns server_status dictionary with mapping of server name to
-              active / inactive.
+        dict: Dictionary of game server names to status (on/off = True/False).
     """
-
-    # Set Ansible playbook vars.
-    ansible_vars = dict()
-    ansible_vars["action"] = "statuses"
-    write_ansible_vars_json(ansible_vars)
-
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(CONNECTOR_CMD, proc_info)
-
-    if proc_info.exit_status != 0:
-        return dict()
 
     server_statuses = dict()
-    for line in proc_info.stdout:
-        line = line.replace('\n', '')
-        server_status = json.loads(line)
-        server_statuses.update(server_status)
+
+    for server in all_game_servers:
+        # Initialize all servers False (aka inactive) to start with.
+        server_statuses[server.install_name] = False
+        server_statuses[server.install_name] = get_server_status(server)
 
     return server_statuses
-
-
-def get_sockets():
-    """
-    Gets a dictionary mapping of game servers to tmux socket files via sudo
-    connector script.
-
-    Returns:
-        servers_to_tmux_sockets (dict): List of socket files.
-    """
-    servers_to_tmux_sockets = dict()
-
-    # Set sudo connector vars.
-    ansible_vars = dict()
-    ansible_vars["action"] = "tmuxsocks"
-    write_ansible_vars_json(ansible_vars)
-
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(CONNECTOR_CMD, proc_info)
-
-    if proc_info.exit_status != 0:
-        return dict()
-
-    for line in proc_info.stdout:
-        line = line.replace('\n', '')
-        server_2_sock = json.loads(line)
-        servers_to_tmux_sockets.update(server_2_sock)
-
-    return servers_to_tmux_sockets 
 
 
 def get_running_installs():
@@ -322,6 +386,7 @@ def del_server(server, remove_files):
     install_path = server.install_path
     server_name = server.install_name
     username = server.username
+    install_type = server.install_type
 
     GameServer.query.filter_by(install_name=server_name).delete()
     db.session.commit()
@@ -332,22 +397,28 @@ def del_server(server, remove_files):
 
     web_lgsm_user = getpass.getuser()
 
-    if username == web_lgsm_user:
-        if os.path.isdir(install_path):
-            shutil.rmtree(install_path)
-    else:
-        sudo_rule_name = f"{web_lgsm_user}-{username}"
-        # Set Ansible playbook vars.
-        ansible_vars = dict()
-        ansible_vars["action"] = "delete"
-        ansible_vars["gs_user"] = username
-        ansible_vars["sudo_rule_name"] = sudo_rule_name
-        write_ansible_vars_json(ansible_vars)
+    if install_type == 'local':
+        if username == web_lgsm_user:
+            if os.path.isdir(install_path):
+                shutil.rmtree(install_path)
+        else:
+            sudo_rule_name = f"{web_lgsm_user}-{username}"
+            # Set Ansible playbook vars.
+            ansible_vars = dict()
+            ansible_vars["action"] = "delete"
+            ansible_vars["gs_user"] = username
+            ansible_vars["sudo_rule_name"] = sudo_rule_name
+            write_ansible_vars_json(ansible_vars)
 
-        run_cmd_popen(CONNECTOR_CMD)
+            run_cmd_popen(CONNECTOR_CMD)
 
-    flash(f"Game server, {server_name} deleted!")
-    return
+        flash(f"Game server, {server_name} deleted!")
+        return
+
+    if install_type == 'remote':
+        # TODO: Finish this, figure out how I want to do delete for remote.
+        flash(f"Game server, {server_name} deleted!")
+        pass
 
 
 def write_ansible_vars_json(ansible_vars):
@@ -444,8 +515,6 @@ def get_servers():
 def valid_command(cmd, server, send_cmd, current_user):
     commands = get_commands(server, send_cmd, current_user)
     for command in commands:
-        print(command.short_cmd)
-        print(command.long_cmd)
         # Aka is valid command.
         if cmd == command.short_cmd:
             return True
@@ -754,33 +823,346 @@ def user_has_permissions(current_user, route, server_name=None):
     return True
 
 
-def install_path_exists(install_path):
+def install_path_exists(server):
     """
-    Check's that the install_path exists via connector.
+    Check's that the game server install_path exists for server.install_types.
+    I only care about install types local & remote, just fake docker.
 
     Args:
         install_path (str): Installation path to check.
-
     Returns:
         bool: True if path exists, False otherwise.
     """
-    # Set sudo connector vars.
-    ansible_vars = dict()
-    ansible_vars["action"] = "checkdir"
-    ansible_vars["install_path"] = install_path
-    write_ansible_vars_json(ansible_vars)
+    if server.install_type == 'docker':
+        return True
 
+    if server.install_type == 'local' and server.username == USER:
+        if os.path.isdir(server.install_path):
+            return True
+
+        return False
+
+    # Otherwise install_type is either local diff user or remote aka use SSH.
+    keyfile = get_ssh_key_file(server.username, server.install_host)
+#    cmd = ['bash', '-c', '[[', '-d', server.install_path, ']]']
+    cmd = f"bash -c '[[ -d {server.install_path} ]]'"
     proc_info = ProcInfoVessel()
-    run_cmd_popen(CONNECTOR_CMD, proc_info)
+
+    run_cmd_ssh(cmd, server.install_host, server.username, keyfile, proc_info)
 
     if proc_info.exit_status > 0:
         return False
 
-    for line in proc_info.stdout:
-        if "Path exists" in line:
-            return True
+    return True
+
+
+def valid_install_type(install_type):
+    """
+    Check's install type is one of the allowed three types.
+
+    Args:
+        install_type (str): User supplied install_type
+
+    Returns:
+        bool: True if valid install_type, False otherwise.
+    """
+    valid_install_types = ['local', 'remote', 'docker']
+
+    if install_type in valid_install_types:
+        return True
 
     return False
+
+
+def is_ssh_accessible(hostname):
+    """
+    Checks if a hostname/IP has an accessible SSH server on port 22.
+
+    Args:
+        hostname (str): The hostname or IP address to check.
+    Returns:
+        bool: True if SSH is accessible, False otherwise.
+    """
+    port=22
+    timeout=5
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        
+        result = sock.connect_ex((hostname, port))
+        
+        # Check the result: 0 means the port is open.
+        if result == 0:
+            return True
+        else:
+            return False
+    except socket.gaierror:
+        return False
+    except socket.error as e:
+        return False
+    finally:
+        sock.close()
+
+
+def generate_ecdsa_ssh_keypair(key_name):
+    """
+    Wraps the ssh-keygen shell util to generate a 256 bit ecdsa ssh key.
+
+    Args:
+        key_name (str): Name of key files to be generated.
+    Returns:
+        bool: True if key files created successfully, False otherwise.
+    """
+    key_path = os.path.expanduser(f"~/.ssh/{key_name}")
+    key_size = 256
+
+    # Build ssh-keygen command.
+    cmd = [
+        "/usr/bin/ssh-keygen",
+        "-t", "ecdsa",
+        "-b", str(key_size),
+        "-f", key_path,
+        "-N", ""
+    ]
+
+    proc_info = ProcInfoVessel()
+    run_cmd_popen(cmd, proc_info)
+    if proc_info.exit_status > 0:
+        return False
+
+    return True
+
+
+def get_ssh_key_file(user, host):
+    """
+    Fetches ssh private key file for user:host from ~/.ssh. If user:host key
+    does not exist yet, it creates one.
+
+    Args:
+        user (str): Username of remote user.
+        host (str): Hostname of remote server.
+    Returns:
+        str: Path to public ssh key file for user:host.
+    """
+    home_dir = os.path.expanduser("~")
+    ssh_dir = os.path.join(home_dir, ".ssh")
+    all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith('.pub')]
+
+    key_name = f"id_ecdsa_{user}_{host}"
+
+    # If no key files for user@server yet, create new one.
+    if key_name + '.pub' not in all_pub_keys:
+        # Log keygen failures.
+        if not generate_ecdsa_ssh_keypair(key_name):
+            log_msg = f"Failed to generate new key pair for {user}:{server}!"
+            current_app.logger.info(log_msg)
+            return
+    
+    keyfile = os.path.join(ssh_dir, key_name)
+    return keyfile
+
+
+# TODO: Finish this!
+def gen_ssh_rule(pub_key):
+    """
+    Creates an ssh rule for a specified key.
+
+    Args:
+        pub_key (str): Public key to use to generate rule.
+    Returns:
+        ssh_rule (str): Ssh rule string. 
+    """
+    return f'{pub_key} command="/path/to/ssh_connector.sh"'
+
+    # ...
+    
+
+def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(), app_context=False, timeout=5.0):
+    """
+    Runs remote commands over ssh to admin game servers.
+
+    Args:
+        cmd (str): Command to run over SSH.
+        hostname (str): The hostname or IP address of the server.
+        username (str): The username to use for the SSH connection.
+        key_filename (str): The path to the private key file.
+        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
+                                    process information in a thread.
+        app_context (AppContext): Optional Current app context needed for
+                                  logging in a thread.
+        timeout (float): Timeout in seconds for ssh command. None = no timeout.
+    Returns:
+        None: The function updates the proc_info output object.
+    """
+    # App context needed for logging in threads.
+    if app_context:
+        app_context.push()
+
+    # Log info.
+    current_app.logger.info(cmd)
+    current_app.logger.info(hostname)
+    current_app.logger.info(username)
+    current_app.logger.info(key_filename)
+    
+    # Initialize SSH client.
+    client = paramiko.SSHClient()
+    # Automatically add the host key.
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    try:
+        client.connect(hostname, username=username, key_filename=key_filename)
+        current_app.logger.debug(cmd)
+
+        proc_info.process_lock = True
+        # Open a new session and request a PTY.
+        channel = client.get_transport().open_session()
+        channel.get_pty()
+        channel.exec_command(cmd)
+
+        # Optionally set timeout (if provided).
+        if timeout:
+            channel.settimeout(timeout)
+
+# WORKS, CONSOLE BROKEN, BUT CLOSE TO WORKING...
+#        stdout_buffer = ""
+#        stderr_buffer = ""
+#
+#        while True:
+#            if channel.recv_ready():
+#                stdout_buffer += channel.recv(1024).decode('utf-8')
+#                stdout_lines = stdout_buffer.splitlines(keepends=True)
+#
+#                for line in stdout_lines:
+#                    if line.endswith('\n'):
+#                        proc_info.stdout.append(line)
+#                        log_msg = log_wrap('stdout', line.strip())
+#                        current_app.logger.debug(log_msg)
+#                    else:
+#                        stdout_buffer = line  # Save incomplete line in buffer.
+#
+#            if channel.recv_stderr_ready():
+#                stderr_buffer += channel.recv_stderr(1024).decode('utf-8')
+#                stderr_lines = stderr_buffer.splitlines(keepends=True)
+#
+#                for line in stderr_lines:
+#                    if line.endswith('\n'):
+#                        proc_info.stderr.append(line)
+#                        log_msg = log_wrap('stderr', line.strip())
+#                        current_app.logger.debug(log_msg)
+#                    else:
+#                        stderr_buffer = line  # Save incomplete line in buffer.
+#
+#            if channel.exit_status_ready():
+#                break
+#
+#            time.sleep(0.1)
+
+# WORKS!!! BUT BUFF NOT BROKEN BY NEWLINE.
+        # Read stdout and stderr line by line.
+        while True:
+            if channel.recv_ready():
+                stdout_data = channel.recv(1024).decode('utf-8')
+                proc_info.stdout.append(stdout_data)
+                log_msg = log_wrap('stdout', stdout_data)
+                current_app.logger.debug(log_msg)
+
+            if channel.recv_stderr_ready():
+                stderr_data = channel.recv_stderr(1024).decode('utf-8')
+                proc_info.stderr.append(stderr_data)
+                log_msg = log_wrap('stderr', stderr_data)
+                current_app.logger.debug(log_msg)
+
+            if channel.exit_status_ready():
+                break
+
+            # Small delay to prevent tight while high CPU.
+            time.sleep(0.1)
+
+
+# BROKEN.
+        # Read stdout and stderr line by line.
+#        stdout_buffer = ''
+#        stderr_buffer = ''
+#        while True:
+#            if channel.recv_ready():
+#                stdout_data = channel.recv(1024).decode('utf-8')
+#                stdout_buffer += stdout_data
+#                # Process full lines.
+#                while '\n' in stdout_buffer:
+#                    line, stdout_buffer = stdout_buffer.split('\n', 1)
+#                    proc_info.stdout.append(line)
+#                    log_msg = log_wrap('stdout', line)
+#                    current_app.logger.debug(log_msg)
+#
+#            if channel.recv_stderr_ready():
+#                stderr_data = channel.recv_stderr(1024).decode('utf-8')
+#                stderr_buffer += stderr_data
+#                # Process full lines.
+#                while '\n' in stderr_buffer:
+#                    line, stderr_buffer = stderr_buffer.split('\n', 1)
+#                    proc_info.stderr.append(line)
+#                    log_msg = log_wrap('stderr', line)
+#                    current_app.logger.debug(log_msg)
+#
+#            if channel.exit_status_ready():
+#                break
+#
+#            # Small delay to prevent tight while high CPU.
+#            time.sleep(0.1)
+#
+#        # Add any remaining buffered stdout/stderr (if no newline at the end).
+#        if stdout_buffer:
+#            proc_info.stdout.append(stdout_buffer)
+#            log_msg = log_wrap('stderr', stdout_buffer)
+#            current_app.logger.debug(log_msg)
+#
+#        if stderr_buffer:
+#            proc_info.stderr.append(stderr_buffer)
+#            log_msg = log_wrap('stderr', stderr_buffer)
+#            current_app.logger.debug(log_msg)
+
+# WORKS, CAN'T HANDLE LIVE CONSOLE.
+#        # Start the process and get the stdout, stderr, and exit status.
+#        proc_info.process_lock = True
+#        stdin, stdout, stderr = client.exec_command(cmd, bufsize=-1, timeout=timeout, get_pty=True)
+#        
+#        for stdout_line in iter(stdout.readline, ""):
+#            proc_info.stdout.append(stdout_line)
+#            log_msg = log_wrap('stdout', stdout_line.replace('\n', ''))
+#            current_app.logger.debug(log_msg)
+#
+#        for stderr_line in iter(stderr.readline, ""):
+#            proc_info.stderr.append(stderr_line)
+#            log_msg = log_wrap('stderr', stderr_line.replace('\n', ''))
+#            current_app.logger.debug(log_msg)
+
+        # Wait for the command to finish and get the exit status.
+        proc_info.exit_status = channel.recv_exit_status()
+        proc_info.process_lock = False
+        
+    except paramiko.SSHException as e:
+        current_app.logger.debug(str(e))
+        proc_info.stderr.append(str(e))
+        proc_info.exit_status = -1
+        proc_info.process_lock = False
+    finally:
+        client.close()
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

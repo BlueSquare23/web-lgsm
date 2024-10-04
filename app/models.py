@@ -22,3 +22,10 @@ class GameServer(db.Model):
     script_name = db.Column(db.String(150))
     # Username of game server user.
     username = db.Column(db.String(150))
+    # Is game server in a docker container or not.
+    is_container = db.Column(db.Boolean())
+    # Can be either local, remote, or docker.
+    install_type = db.Column(db.String(150))
+    # Hostname of remote installs.
+    install_host = db.Column(db.String(150))
+

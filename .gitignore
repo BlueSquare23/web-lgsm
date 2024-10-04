@@ -19,3 +19,4 @@ GameServers/*
 .docker-data.json
 Dockerfile
 docker-compose.yml
+logs/*

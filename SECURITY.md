@@ -7,9 +7,10 @@ security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.7.x   | :white_check_mark: |
-| 1.6.x   | :white_check_mark: |
-| < 1.5   | :x:                |
+| 1.8.0   | :white_check_mark: |
+| 1.7.1   | :white_check_mark: |
+| 1.7.0   | :x:                |
+| < 1.6   | :x:                |
 
 ## Reporting a Vulnerability
 

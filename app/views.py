@@ -85,24 +85,13 @@ def home():
 
     installed_servers = GameServer.query.all()
 
-    servers_to_users = dict()
-    for server in installed_servers:
-        servers_to_users[server.install_name] = server.username
-
-    # Fetch dict containing all servers and flag specifying if they're running
-    # or not via a util function.
-    server_status_dict = get_all_server_statuses(installed_servers)
-
     current_app.logger.info(log_wrap("config_options", config_options))
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
-    current_app.logger.info(log_wrap("servers_to_users", servers_to_users))
-    current_app.logger.info(log_wrap("server_status_dict", server_status_dict))
 
     return render_template(
         "home.html",
         user=current_user,
-        servers_to_users=servers_to_users,
-        server_status_dict=server_status_dict,
+        all_game_servers=installed_servers,
         config_options=config_options,
     )
 
@@ -147,7 +136,7 @@ def controls():
             flash("Unable to access remote server over ssh!", category="error")
             return redirect(url_for("views.home"))
 
-    if not install_path_exists(server):
+    if not local_install_path_exists(server):
         flash("No game server installation directory found!", category="error")
         return redirect(url_for("views.home"))
 
@@ -276,7 +265,7 @@ def controls():
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
-            cmd += [script_path, short_cmd]
+            cmd = [script_path, short_cmd]
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
             )
@@ -392,6 +381,17 @@ def install():
 
         if not create_new_user:
             ansible_vars["same_user"] = "true"
+            install_type = 'local' 
+
+        new_game_server = GameServer(
+            install_name=server_full_name,
+            install_path=ansible_vars["install_path"],
+            script_name=server_script_name,
+            username=ansible_vars["gs_user"],
+            is_container = False,
+            install_type = install_type,
+            install_host = '127.0.0.1'
+        )
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
@@ -405,12 +405,12 @@ def install():
         if "CONTAINER" in os.environ:
             # If we're in a container and the path doesn't exist we want to
             # alert the user and tell them the container needs re-built first.
-            if not install_path_exists(f"/home/{server_script_name}/GameServers"):
+            if not local_install_path_exists(new_game_server):
                 flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
                 flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
                 return redirect(url_for("views.home"))
         else:
-            if install_path_exists(ansible_vars["install_path"]):
+            if local_install_path_exists(new_game_server):
                 flash("Install directory already exists.", category="error")
                 flash(
                     "Did you perhaps have this server installed previously?",
@@ -421,12 +421,6 @@ def install():
         write_ansible_vars_json(ansible_vars)
 
         # Add the install to the database.
-        new_game_server = GameServer(
-            install_name=server_full_name,
-            install_path=ansible_vars["install_path"],
-            script_name=server_script_name,
-            username=ansible_vars["gs_user"],
-        )
         db.session.add(new_game_server)
         db.session.commit()
 
@@ -495,11 +489,50 @@ def install():
     )
 
 
+######### API Server Statuses #########
+
+@views.route("/api/server-status", methods=["GET"])
+@login_required
+def get_status():
+# TODO: Write permissions controls for these api routes.
+#    if not user_has_permissions(current_user, "server-statuses"):
+#        return redirect(url_for("views.home"))
+
+    # Collect args from GET request.
+    server_id = request.args.get("id")
+
+    if server_id == None:
+        resp_dict = {"error": "No id supplied"}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
+        )
+        return response
+
+    server = GameServer.query.get(server_id)
+    if server == None:
+        resp_dict = {"error": "Invalid id"}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
+        )
+        return response
+
+    server_status = get_server_status(server)
+    resp_dict = {"id": int(server_id), "status": server_status}
+    response = Response(
+        json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
+    )
+    return response
+
+
 ######### API System Usage #########
 
 @views.route("/api/system-usage", methods=["GET"])
 @login_required
 def get_stats():
+# TODO: Write permissions controls for these api routes.
+#    if not user_has_permissions(current_user, "system-usage"):
+#        return redirect(url_for("views.home"))
+
     server_stats = get_server_stats()
     response = Response(
         json.dumps(server_stats, indent=4), status=200, mimetype="application/json"
@@ -512,6 +545,10 @@ def get_stats():
 @views.route("/api/cmd-output", methods=["GET"])
 @login_required
 def no_output():
+# TODO: Write permissions controls for these api routes.
+#    if not user_has_permissions(current_user, "cmd-output"):
+#        return redirect(url_for("views.home"))
+
     global servers
 
     # Collect args from GET request.
@@ -808,10 +845,6 @@ def add():
             flash("An installation by that name already exits.", category="error")
             status_code = 400
             return render_template("add.html", user=current_user), status_code
-
-        # Check install path exists.
-        # TODO: Write this function for over ssh.
-#       check_install_path_exists()        
 
         if not valid_script_name(script_name):
             flash("Invalid game server script file name!", category="error")

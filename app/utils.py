@@ -241,10 +241,7 @@ def should_use_ssh(server):
 
 def get_gs_id(server):
     """
-    Get's a game server's unique lgsm id (what I'm calling gs_id) from uid
-    file. Used for determining tmux socket file status, as socket files are
-    named: script_name-uid. Runs over SSH for install_types remote and username
-    other user.
+    Get's gs_id for local same user install_type's.
 
     Args:
         server (GameServer): Game server object to get gs_id of.
@@ -254,35 +251,18 @@ def get_gs_id(server):
     gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
 
     if should_use_ssh(server):
-        cmd = f"/usr/bin/cat {gs_id_file_path}"
+        return None
 
-        keyfile = get_ssh_key_file(server.username, server.install_host)
-        proc_info = ProcInfoVessel()
+    if not os.path.isfile(gs_id_file_path):
+        return None
 
-        run_cmd_ssh(
-            cmd,
-            server.install_host,
-            server.username,
-            keyfile, 
-            proc_info
-        )
+    with open(gs_id_file_path, "r") as file:
+        gs_id = file.read()
 
-        if proc_info.exit_status > 0 or len(proc_info.stdout) == 0:
-            return None
-        
-        return proc_info.stdout[0].strip()
-
-    else:
-        if not os.path.isfile(gs_id_file_path):
-            return None
-
-        with open(gs_id_file_path, "r") as file:
-            gs_id = file.read()
-
-        return gs_id
+    return gs_id
 
 
-def get_server_status(server, gs_id=None):
+def get_server_status(server):
     """
     Get's the game server status (on/off) for a specific game server. Does so
     by checking game server's assigned tmux socket file state. Runs over SSH
@@ -294,17 +274,12 @@ def get_server_status(server, gs_id=None):
     Returns:
         bool: True if game server is active, False otherwise.
     """
-    if gs_id == None:
-        gs_id = get_gs_id(server)
-        if gs_id == None:
-            return False
-
-    socket = server.script_name + "-" + gs_id
     proc_info = ProcInfoVessel()
 
     if should_use_ssh(server):
+        gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
         keyfile = get_ssh_key_file(server.username, server.install_host)
-        cmd = f"/usr/bin/tmux -L {socket} list-session"
+        cmd = f"/usr/bin/tmux -L {server.script_name}-$(cat {gs_id_file_path}) list-session"
         run_cmd_ssh(
             cmd,
             server.install_host,
@@ -313,6 +288,11 @@ def get_server_status(server, gs_id=None):
             proc_info
         )
     else:
+        gs_id = get_gs_id(server)
+        if gs_id == None:
+            return False
+
+        socket = server.script_name + "-" + gs_id
         cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
         run_cmd_popen(cmd, proc_info)
 
@@ -823,34 +803,20 @@ def user_has_permissions(current_user, route, server_name=None):
     return True
 
 
-def install_path_exists(server):
+def local_install_path_exists(server):
     """
-    Check's that the game server install_path exists for server.install_types.
-    I only care about install types local & remote, just fake docker.
+    Check's that the game server install_path exists for install_type local
+    same user, everything else return true.
 
     Args:
-        install_path (str): Installation path to check.
+        server (GameServer): Game server to check.
     Returns:
         bool: True if path exists, False otherwise.
     """
-    if server.install_type == 'docker':
-        return True
-
     if server.install_type == 'local' and server.username == USER:
         if os.path.isdir(server.install_path):
             return True
 
-        return False
-
-    # Otherwise install_type is either local diff user or remote aka use SSH.
-    keyfile = get_ssh_key_file(server.username, server.install_host)
-#    cmd = ['bash', '-c', '[[', '-d', server.install_path, ']]']
-    cmd = f"bash -c '[[ -d {server.install_path} ]]'"
-    proc_info = ProcInfoVessel()
-
-    run_cmd_ssh(cmd, server.install_host, server.username, keyfile, proc_info)
-
-    if proc_info.exit_status > 0:
         return False
 
     return True
@@ -1011,7 +977,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
     try:
-        client.connect(hostname, username=username, key_filename=key_filename)
+        client.connect(hostname, username=username, key_filename=key_filename, timeout=3)
         current_app.logger.debug(cmd)
 
         proc_info.process_lock = True
@@ -1142,6 +1108,11 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         proc_info.process_lock = False
         
     except paramiko.SSHException as e:
+        current_app.logger.debug(str(e))
+        proc_info.stderr.append(str(e))
+        proc_info.exit_status = -1
+        proc_info.process_lock = False
+    except TimeoutError as e:
         current_app.logger.debug(str(e))
         proc_info.stderr.append(str(e))
         proc_info.exit_status = -1

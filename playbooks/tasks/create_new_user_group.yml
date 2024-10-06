@@ -1,6 +1,6 @@
-- name: Create new {{ gs_user }} group 
+- name: Create new {{ username }} group 
   group:
-    name: "{{ gs_user }}"
+    name: "{{ username }}"
     state: present
   when: same_user is not defined or same_user == false
 

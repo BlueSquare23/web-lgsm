@@ -11,6 +11,12 @@ class User(db.Model, UserMixin):
     permissions = db.Column(db.String(300))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
+    def __repr__(self):
+        return f"<User(id={self.id}, username='{self.username}', role='{self.role}', date_created='{self.date_created}')>"
+
+    def __str__(self):
+        return f"User {self.username} (ID: {self.id}, Role: {self.role}, Created: {self.date_created})"
+
 
 class GameServer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,4 +34,14 @@ class GameServer(db.Model):
     install_type = db.Column(db.String(150))
     # Hostname of remote installs.
     install_host = db.Column(db.String(150))
+    # Has the game server installation finished.
+    install_finished = db.Column(db.Boolean())
+
+    def __repr__(self):
+        return (f"<GameServer(id={self.id}, install_name='{self.install_name}', script_name='{self.script_name}', "
+                f"install_type='{self.install_type}', install_finished={self.install_finished})>")
+
+    def __str__(self):
+        return (f"GameServer '{self.install_name}' (ID: {self.id}, Script: {self.script_name}, "
+                f"Type: {self.install_type}, Finished: {self.install_finished})")
 

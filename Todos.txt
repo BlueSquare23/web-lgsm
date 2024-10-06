@@ -27,14 +27,9 @@
       - More code than I wanna write right now (already a lot in this release)!
     - Edit files for remote installs might also have to wait for a future release.
 
-* Sudo ansible connector script changes.
-  - Make connector script pull everything from DB!
-  - Ditch reading input json, was always a hack anyways.
-    - Handle delete, install, cancel, via opt args.
-  - The only things that should be in the connector script are: delete,
-    install, & cancel.
-    - And it should only delete if the toggle for "delete game server user" is
-      checked.
+* Fix tests broken by changes.
+
+* Write new tests.
 
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---

@@ -28,7 +28,7 @@ from .cmd_descriptor import CmdDescriptor
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
+ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
 CONNECTOR_CMD = [
     "/usr/bin/sudo", "-n", 
     os.path.join(CWD, "venv/bin/python"),
@@ -270,9 +270,9 @@ def get_server_status(server):
 
     Args:
         server (GameServer): Game server object to check status of.
-        gs_id (str): Optional gs_id, saves a lookup in some cases.
     Returns:
-        bool: True if game server is active, False otherwise.
+        bool|None: True if game server is active, False if inactive, None if
+                   indeterminate.
     """
     proc_info = ProcInfoVessel()
 
@@ -280,13 +280,15 @@ def get_server_status(server):
         gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
         keyfile = get_ssh_key_file(server.username, server.install_host)
         cmd = f"/usr/bin/tmux -L {server.script_name}-$(cat {gs_id_file_path}) list-session"
-        run_cmd_ssh(
+        success = run_cmd_ssh(
             cmd,
             server.install_host,
             server.username,
             keyfile, 
             proc_info
         )
+        if not success:
+            return None
     else:
         gs_id = get_gs_id(server)
         if gs_id == None:
@@ -399,13 +401,6 @@ def del_server(server, remove_files):
         # TODO: Finish this, figure out how I want to do delete for remote.
         flash(f"Game server, {server_name} deleted!")
         pass
-
-
-def write_ansible_vars_json(ansible_vars):
-    ansible_vars_json_file = os.path.join(CWD, "json/ansible_vars.json")
-    # Write json to file.
-    with open(ansible_vars_json_file, "w") as json_file:
-        json.dump(ansible_vars, json_file, indent=4)
 
 
 # Validates submitted cfg_file for edit route.
@@ -597,23 +592,6 @@ def contains_bad_chars(i):
             return True
 
     return False
-
-
-# Returns a string comma separated game server script paths for a given user.
-def get_user_script_paths(install_path, script_name):
-    paths_query_result = (
-        GameServer.query.filter_by(username=script_name)
-        .with_entities(GameServer.install_path)
-        .all()
-    )
-    game_server_paths = [path[0] for path in paths_query_result]
-    user_script_paths = os.path.join(install_path, script_name)
-
-    # Add any other game server paths for gs_user.
-    for path in game_server_paths:
-        user_script_paths += f",{path}"
-
-    return user_script_paths
 
 
 # Run's self update script.
@@ -959,7 +937,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
                                   logging in a thread.
         timeout (float): Timeout in seconds for ssh command. None = no timeout.
     Returns:
-        None: The function updates the proc_info output object.
+        bool: True if command runs successfully, False otherwise.
     """
     # App context needed for logging in threads.
     if app_context:
@@ -1106,19 +1084,25 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         # Wait for the command to finish and get the exit status.
         proc_info.exit_status = channel.recv_exit_status()
         proc_info.process_lock = False
-        
+
     except paramiko.SSHException as e:
         current_app.logger.debug(str(e))
         proc_info.stderr.append(str(e))
-        proc_info.exit_status = -1
+        proc_info.exit_status = 5
         proc_info.process_lock = False
     except TimeoutError as e:
         current_app.logger.debug(str(e))
         proc_info.stderr.append(str(e))
-        proc_info.exit_status = -1
+        proc_info.exit_status = 7
         proc_info.process_lock = False
     finally:
         client.close()
+
+        if proc_info.exit_status > 0:
+            return False
+
+        return True 
+
     
 
 

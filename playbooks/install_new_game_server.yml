@@ -1,12 +1,8 @@
 ---
 ## Playbook required vars.
-# gs_user
-# install_path
-# lgsmsh_path
+# username 
+# server_install_path
 # server_script_name
-# script_paths
-# sudo_rule_name
-# web_lgsm_user
 
 - name: Runs Pre-Install Steps for New Auto Installations
   hosts: localhost
@@ -17,34 +13,37 @@
     same_user: false
     setup: false
   vars_files:
-    - vars/accepted_gs_users.yml
+    - vars/accepted_usernames.yml
+    - vars/web_lgsm_user.yml
 
   tasks:
+    - name: Check if username is equal to web_lgsm_user
+      set_fact:
+        same_user: "{{ username == web_lgsm_user }}"
+
     - name: Include sub tasks
       include_tasks: "{{ item }}"
       loop:
-        - tasks/validate_gs_user.yml
-        - tasks/create_gs_user_group.yml
-        - tasks/create_gs_user.yml
-        - tasks/set_default_gs_user_group.yml
-        - tasks/add_sudoers_rules.yml
-        - tasks/fix_sudoers_rule.yml
+        - tasks/validate_username.yml
+        - tasks/create_new_user_group.yml
+        - tasks/create_new_user.yml
+        - tasks/set_default_new_user_group.yml
         - tasks/add_temp_nopass_rule.yml
         - tasks/fix_temp_nopass_rule.yml
 
     - name: Create new game server directory
       file:
-        path: "{{ install_path }}"
+        path: "{{ server_install_path }}"
         state: directory
-        owner: "{{ gs_user }}"
-        group: "{{ gs_user }}"
+        owner: "{{ username }}"
+        group: "{{ username }}"
         mode: '0755'
 
     - name: Use linuxgsm.sh to fetch {{ server_script_name }}
       command:
-        chdir: "{{ lgsmsh_path | dirname }}"
+        chdir: "{{ playbook_dir }}/../scripts"
         argv:
-          - "{{ lgsmsh_path }}"
+          - ./linuxgsm.sh 
           - "{{ server_script_name }}"
       register: lgsmsh_result
       become: yes
@@ -56,14 +55,14 @@
 
     - name: Copy {{ server_script_name }} into new server dir
       copy:
-        src: "{{ lgsmsh_path | dirname }}/{{ server_script_name }}"
-        dest: "{{ install_path }}"
-        owner: "{{ gs_user }}"
-        group: "{{ gs_user }}"
+        src: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
+        dest: "{{ server_install_path }}"
+        owner: "{{ username }}"
+        group: "{{ username }}"
         mode: '0750'
 
     - name: Delete {{ server_script_name }} file
       file:
-        path: "{{ lgsmsh_path | dirname }}/{{ server_script_name }}"
+        path: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
         state: absent
 ...

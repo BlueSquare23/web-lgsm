@@ -1,7 +1,7 @@
-# We want to validate the gs_user var to prevent sudo rules getting created
-# as users like ALL or root. Problem with the below list is rn I'll have to
+# We want to validate the username var to prevent sudo rules getting created as
+# users like ALL or root. Problem with the below list is rn I'll have to
 # remember to update it by hand when they add a new lgsm servers.
-accepted_gs_users:
+accepted_usernames:
   - acserver
   - ahlserver
   - ahl2server

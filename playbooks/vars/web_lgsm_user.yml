@@ -1,0 +1,3 @@
+# Rather than pass this var in every time playbook is run, just hard-coding it
+# down here. Will be setup by install script.
+web_lgsm_user: blue

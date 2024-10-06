@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+# The Web-LGMS Sudo Ansible Connector Script!
+# Used as an interface between the web-lgsm app process and its associated
+# ansible playbooks. Basically this a standalone wrapper / adapter script for
+# the project's ansible playbooks to allow them to be run by the web app
+# process. Written by John R. August 2024
+
+import os
+import sys
+import json
+import yaml
+import glob
+import getopt
+import getpass
+import subprocess
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+## Globals.
+# Plabook dir path.
+SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
+os.chdir(os.path.join(SCRIPTPATH, ".."))
+CWD = os.getcwd()
+JSON_VARS_FILE = os.path.join(CWD, "json/ansible_vars.json")
+
+# Use cwd to import db classes from app.
+sys.path.append(CWD)
+from app import db
+from app.models import User, GameServer
+
+# Global options hash.
+O = {"dry": False, "keep": False}
+
+## Subroutines.
+
+def print_help(msg=None):
+    if msg:
+        print(msg)
+    """Help menu"""
+    print(
+        f"""Usage: {os.path.basename(__file__)} -i|-c|-d <id> [-h] [-n] 
+    Options:
+      -h, --help            Show this help message and exit
+      -n, --dry             Dry run mode, print only don't run cmd
+      -i, --install <id>    Install new game server
+      -c, --cancel <id>     Cancel an ongoing installation
+      -d, --delete <id>     Delete an installation & its user
+    """
+    )
+    exit()
+
+
+def db_get(wanted, server_id=None):
+    """
+    Connects to the app's DB and returns requested results.
+
+    Args:
+        wanted (str): Type of results wanted.
+        server_id (int): Id of GameServer obj to fetch.
+    Returns:
+        list: List of GameServer objects.
+    """
+    engine = create_engine('sqlite:///app/database.db')
+    
+    with Session(engine) as session:
+        if wanted == 'all_users':
+            return session.query(User).all()
+
+        if wanted == 'all_game_servers':
+            return session.query(GameServer).all()
+
+        if wanted == 'server':
+            server = session.get(GameServer, server_id)
+            if server == None:
+                print("Error: No server with ID found.")
+                exit(69)
+            return server
+
+def validate_username(username):
+    """Checks supplied username is in accepted usernames."""
+    yaml_file_path = os.path.join(CWD, "playbooks/vars/accepted_usernames.yml")
+
+    with open(yaml_file_path, "r") as file:
+        data = yaml.safe_load(file)
+
+    # Extract the accepted_usernames list.
+    accepted_usernames = data.get("accepted_usernames", [])
+
+    if username not in accepted_usernames:
+        print(" [!] Invalid user!")
+        exit(77)
+
+
+def run_cmd(cmd, exec_dir=os.getcwd()):
+    """Main subprocess wrapper function, runs cmds via Popen"""
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=exec_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+
+        for stdout_line in iter(proc.stdout.readline, ""):
+            print(stdout_line, end="", flush=True)
+
+        for stderr_line in iter(proc.stderr.readline, ""):
+            print(stderr_line, end="", flush=True)
+
+        proc.wait()
+        exit_status = proc.returncode
+        # Debugging...
+        print(f"######### EXIT STATUS: {exit_status}")
+
+        if exit_status != 0:
+            print("\033[91mCommand failed!\033[0m")
+            exit(exit_status)
+
+        print(f"Command '{cmd}' executed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Command '{cmd}' failed with return code {e.returncode}.")
+        print("Error output:", e.stderr)
+    except FileNotFoundError:
+        print(f"Command '{cmd}' not found.")
+    except Exception as e:
+        print(f"An unexpected error occurred while running '{cmd}': {str(e)}")
+
+
+def post_install_cfg_fix(install_path):
+    """Sets up persistent game server cfg files post install"""
+    # Find the default and common configs.
+    default_cfg = next(
+        os.path.join(root, name)
+        for root, _, files in os.walk(f"{install_path}/lgsm/config-lgsm")
+        for name in files
+        if name == "_default.cfg"
+    )
+    common_cfg = next(
+        os.path.join(root, name)
+        for root, _, files in os.walk(f"{install_path}/lgsm/config-lgsm")
+        for name in files
+        if name == "common.cfg"
+    )
+
+    # Strip the first 9 lines of warning comments from _default.cfg and write
+    # the rest to the common.cfg.
+    with open(default_cfg, "r") as default_file, open(common_cfg, "w") as common_file:
+        for _ in range(9):
+            next(default_file)  # Skip the first 9 lines
+        for line in default_file:
+            common_file.write(line)
+
+    print("Configuration file common.cgf updated!")
+
+
+def get_ssh_key(server):
+    """
+    Get's the public ssh key text for given server.
+
+    Args:
+        server (GameServer): Server to get pubkey for.
+
+    Returns:
+        str: Public key file text for server.
+    """
+    # TODO: Finish this. I've hit a wall, how to get user's ssh key. Thinking
+    # of adding another db field. But then I don't really like that.
+    pass
+
+
+def run_install_new_game_server(server_id):
+    """
+    Wraps the invocation of the install_new_game_server.yml playbook
+
+    Args:
+        server_id (int): Id of GameServer to install.
+    """
+    server = db_get('server', server_id)
+
+    if server.install_finished:
+        print("Installation for server already completed!")
+        exit(123)
+
+    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
+    install_gs_playbook_path = os.path.join(
+        CWD, "playbooks/install_new_game_server.yml"
+    )
+
+    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
+
+    pre_install_cmd = sudo_pre_cmd + [
+        ansible_cmd_path,
+        install_gs_playbook_path,
+        "-e",
+        f"username={server.username}",
+        "-e",
+        f"server_install_path={server.install_path}",
+        "-e",
+        f"server_script_name={server.script_name}",
+    ]
+
+    # Run pre-install playbook.
+    if O["dry"]:
+        print(pre_install_cmd)
+    else:
+        run_cmd(pre_install_cmd)
+
+    subcmd1 = sudo_pre_cmd + ["-u", server.username]
+    subcmd2 = [f"{server.install_path}/{server.script_name}", "auto-install"]
+    install_cmd = subcmd1 + subcmd2
+
+    if O["dry"]:
+        print(install_cmd)
+        exit()
+
+    # Actually run install!
+    run_cmd(install_cmd, server.install_path)
+
+    # Post install cfg fix.
+    post_install_cfg_fix(server.install_path, server.username)
+
+    # Cleanup temp sudoers rule.
+    os.remove(f"/etc/sudoers.d/{server.username}-temp-auto-install")
+
+    # Post install ssh setup.
+#    pubkey = get_ssh_key(server)
+#    append_new_authorized_key(server.username, pubkey)
+
+    print(f"\033[92m ✓  Game server successfully installed!\033[0m")
+    exit()
+
+
+def get_script_cmd_from_pid(pid):
+    try:
+        # Get script name from ps cmd output.
+        proc = subprocess.run(
+            ["ps", "-o", "cmd=", str(pid)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
+        stderr = proc.stderr.strip()
+        proc.check_returncode()
+
+        script_path = proc.stdout.strip()
+
+        # If the script path is empty, it might mean the PID does not exist
+        if not script_path:
+            print(f" [!] Error No script found for PID {pid}")
+            exit(23)
+
+        return script_path
+
+    except subprocess.CalledProcessError as e:
+        # Handle errors during command execution.
+        print(f" [!] Error running ps command: {e}")
+        exit(23)
+
+    except ValueError as e:
+        # Handle any specific value errors.
+        print(e)
+        exit(23)
+
+    except Exception as e:
+        # Catch any other unforeseen errors.
+        print(f" [!] An unexpected error occurred: {str(e)}")
+        exit(23)
+
+
+def cancel_install(pid):
+    """
+    Cancels a running installation via its pid.
+
+    Args:
+        pid (int): pid to kill.
+    """
+    pid_cmd = get_script_cmd_from_pid(pid)
+    self_path = os.path.join(SCRIPTPATH, __file__)
+    self_cmd = f"/usr/bin/sudo -n {self_path}"
+    if pid_cmd != self_cmd:
+        print(f"Error: Not allowed to kill pid: {pid}!")
+        exit(4)
+
+    cmd = ["pkill", "-P", str(pid)]
+    run_cmd(cmd)
+    exit()
+
+
+def run_delete_user(server_id):
+    """
+    Wraps the invocation of the delete_user.yml playbook.
+
+    Args:
+       server_id (int): Id of server to delete. 
+    """
+    server = db_get('server', server_id)
+
+    validate_username(server.username)
+
+    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
+    del_user_path = os.path.join(CWD, "playbooks/delete_user.yml")
+    cmd = [
+        "/usr/bin/sudo",
+        "-n",
+        ansible_cmd_path,
+        del_user_path,
+        "-e",
+        f"username={server.username}",
+    ]
+
+    if O["dry"]:
+        print(cmd)
+        exit()
+
+    run_cmd(cmd)
+    exit()
+
+
+# Main.
+def main(argv):
+    """Process getopts, loads json vars, runs appropriate playbook"""
+    try:
+        opts, args = getopt.getopt(argv, "hnki:c:d:", ["help", "dry", "install=", "cancel=", "delete="])
+    except getopt.GetoptError:
+        print_help("Invalid option!")
+
+    # First store global options.
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print_help()
+        if opt in ("-d", "--dry"):
+            O["dry"] = True
+
+    # Then parse opts to determine action.
+    for opt, arg in opts:
+        if opt in ("-h", "--help", "-d", "--dry"):
+            continue
+
+        try:
+            server_id = int(arg)
+        except ValueError:
+            print_help("Error: Arg <id> must be int!")
+
+        if opt in ("-i", "--install"):
+            run_install_new_game_server(server_id)
+
+        if opt in ("-c", "--cancel"):
+            cancel_install(server_id)
+
+        if opt in ("-x", "--delete"):
+            run_delete_user(server_id)
+
+
+    print(" [!] No action taken!")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -1,18 +1,31 @@
 ---
-- name: Removes Additional Game Server Users & Sudo Rules
+## Playbook required vars.
+# username 
+
+- name: Removes Game Server User
   hosts: localhost
   connection: local
   become: true
+  vars:
+    same_user: false
+  vars_files:
+    - vars/accepted_usernames.yml
+    - vars/web_lgsm_user.yml
 
   tasks:
-    - name: Delete sudoers rule
-      community.general.sudoers:
-        name: "{{ sudo_rule_name }}"
-        state: absent
+    - name: Check if username is equal to web_lgsm_user
+      set_fact:
+        same_user: "{{ username == web_lgsm_user }}"
+
+    - name: Include sub tasks
+      include_tasks: "{{ item }}"
+      loop:
+        - tasks/validate_username.yml
 
     - name: Delete user
       user:
-        name: "{{ gs_user }}"
+        name: "{{ username }}"
         state: absent
         remove: yes
+      when: same_user is not defined or same_user == false
 ...

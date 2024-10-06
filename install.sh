@@ -86,18 +86,15 @@ echo -e "${green}####### Setting up Sudoers Rules...${reset}"
 
 apb="$SCRIPTPATH/venv/bin/ansible-playbook"
 venv_python="$SCRIPTPATH/venv/bin/python"
-ansible_connector="$SCRIPTPATH/playbooks/sudo_ansible_connector.py"
-create_sudo_rule="$SCRIPTPATH/playbooks/create_sudoers_rules.yml"
-accpt_gs_users="$SCRIPTPATH/playbooks/vars/accepted_gs_users.yml"
+ansible_connector="$SCRIPTPATH/playbooks/ansible_connector.py"
+accpt_usernames="$SCRIPTPATH/playbooks/vars/accepted_usernames.yml"
 
 # Hardcode web-lgsm system user into accepted_users validation list.
-echo "  - $USER" >> $accpt_gs_users
-echo "  - root" >> $accpt_gs_users
+echo "  - $USER" >> $accpt_usernames
 # Run sudo rule add playbook.
-$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$venv_python $ansible_connector'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
+# TODO: Do this in a different way. Ansible connector no longer supports create sudoers rule.
+#$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$venv_python $ansible_connector'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
 
-# Delete last line (aka root line) from accepted_gs_users.yml.
-sed -i '$ d' $accpt_gs_users
 # Lock playbook files down for security reasons.
 sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
 sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;

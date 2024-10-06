@@ -32,7 +32,7 @@ from .proc_info_vessel import ProcInfoVessel
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/sudo_ansible_connector.py")
+ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
 # Bootstrap spinner colors.
 SPINNER_COLORS = [
     "primary",
@@ -78,6 +78,7 @@ def home():
         "show_stats": show_stats,
         "show_barrel_roll": show_barrel_roll,
     }
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     # Kill any lingering background watch processes
     # Used in case console page is clicked away from.
@@ -85,7 +86,6 @@ def home():
 
     installed_servers = GameServer.query.all()
 
-    current_app.logger.info(log_wrap("config_options", config_options))
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
 
     return render_template(
@@ -328,130 +328,7 @@ def install():
     # Check if any installs are currently running.
     running_installs = get_running_installs()
 
-    # Post logic only triggered after install form submission.
-    if request.method == "POST":
-        server_script_name = request.form.get("server_name")
-        server_full_name = request.form.get("full_name")
-
-        # Make sure required options are supplied.
-        for required_form_item in (server_script_name, server_full_name):
-            if required_form_item == None:
-                flash("Missing Required Form Field!", category="error")
-                return redirect(url_for("views.install"))
-
-            # Check input lengths.
-            if len(required_form_item) > 150:
-                flash("Form field too long!", category="error")
-                return redirect(url_for("views.install"))
-
-        # Validate form submission data against install list in json file.
-        if not valid_install_options(server_script_name, server_full_name):
-            flash("Invalid Installation Option(s)!", category="error")
-            return redirect(url_for("views.install"))
-
-        # Make server_full_name a unix friendly directory name.
-        server_full_name = server_full_name.replace(" ", "_")
-        server_full_name = server_full_name.replace(":", "")
-
-        # Used to pass install_name to frontend js.
-        install_name = server_full_name
-
-        # Clobber any previously held proc_info objects for server.
-        servers[server_full_name] = ProcInfoVessel()
-
-        # Set the output object to the one stored in the global dictionary.
-        output = servers[server_full_name]
-
-        install_exists = GameServer.query.filter_by(
-            install_name=server_full_name
-        ).first()
-
-        if install_exists:
-            flash("An installation by that name already exits.", category="error")
-            return redirect(url_for("views.install"))
-
-        # Set Ansible playbook vars.
-        ansible_vars = dict()
-        ansible_vars["action"] = "install"
-        ansible_vars["gs_user"] = USER
-        ansible_vars["install_path"] = os.path.join(CWD, f'GameServers/{server_full_name}')
-        ansible_vars["server_script_name"] = server_script_name
-        ansible_vars["script_paths"] = ""
-        ansible_vars["web_lgsm_user"] = USER
-
-        if not create_new_user:
-            ansible_vars["same_user"] = "true"
-            install_type = 'local' 
-
-        new_game_server = GameServer(
-            install_name=server_full_name,
-            install_path=ansible_vars["install_path"],
-            script_name=server_script_name,
-            username=ansible_vars["gs_user"],
-            is_container = False,
-            install_type = install_type,
-            install_host = '127.0.0.1'
-        )
-
-        # If install_create_new_user config parameter is true then create a new
-        # user for the new game server and set install path to the path in that
-        # new users home directory.
-        if create_new_user or "CONTAINER" in os.environ:
-            install_path = f"/home/{server_script_name}/GameServers/{server_full_name}"
-            ansible_vars["gs_user"] = server_script_name
-            ansible_vars["install_path"] = install_path
-            ansible_vars["script_paths"] = get_user_script_paths(install_path, server_script_name)
-
-        if "CONTAINER" in os.environ:
-            # If we're in a container and the path doesn't exist we want to
-            # alert the user and tell them the container needs re-built first.
-            if not local_install_path_exists(new_game_server):
-                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
-                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
-                return redirect(url_for("views.home"))
-        else:
-            if local_install_path_exists(new_game_server):
-                flash("Install directory already exists.", category="error")
-                flash(
-                    "Did you perhaps have this server installed previously?",
-                    category="error",
-                )
-                return redirect(url_for("views.install"))
-
-        write_ansible_vars_json(ansible_vars)
-
-        # Add the install to the database.
-        db.session.add(new_game_server)
-        db.session.commit()
-
-        # Update web user's permissions.
-        if current_user.role != "admin":
-            user_ident = User.query.filter_by(username=current_user.username).first()
-            user_perms = json.loads(user_ident.permissions)
-            user_perms["servers"].append(server_full_name)
-            user_ident.permissions = json.dumps(user_perms)
-            db.session.commit()
-
-        cmd = [
-            "/usr/bin/sudo",
-            "-n",
-            os.path.join(CWD, "venv/bin/python"),
-            ANSIBLE_CONNECTOR
-        ]
-
-        current_app.logger.info(log_wrap("ansible_vars", ansible_vars))
-        current_app.logger.info(log_wrap("cmd", cmd))
-        current_app.logger.info(log_wrap("servers", servers))
-
-        install_daemon = Thread(
-            target=run_cmd_popen,
-            args=(cmd, output, current_app.app_context()),
-            daemon=True,
-            name=f"Install_{server_full_name}",
-        )
-        install_daemon.start()
-
-    elif request.method == "GET":
+    if request.method == "GET":
         server_name = request.args.get("server")
         cancel = request.args.get("cancel")
         if server_name != None:
@@ -471,22 +348,154 @@ def install():
                     )
                     return redirect(url_for("views.install"))
 
-                output = servers[server_name]
-                current_app.logger.info(log_wrap("output", output))
+                proc_info = servers[server_name]
+                current_app.logger.info(log_wrap("proc_info", proc_info))
 
-                if output.pid:
-                    cancel_install(output)
+                if proc_info.pid:
+                    cancel_install(proc_info)
 
-    return render_template(
-        "install.html",
-        user=current_user,
-        servers=install_list,
-        text_color=text_color,
-        spinner_colors=SPINNER_COLORS,
-        install_name=install_name,
-        terminal_height=terminal_height,
-        running_installs=running_installs,
-    )
+        return render_template(
+            "install.html",
+            user=current_user,
+            servers=install_list,
+            text_color=text_color,
+            spinner_colors=SPINNER_COLORS,
+            install_name=install_name,
+            terminal_height=terminal_height,
+            running_installs=running_installs,
+        )
+
+    if request.method == "POST":
+        server_script_name = request.form.get("server_name")
+        server_install_name = request.form.get("full_name")
+
+        # Make sure required options are supplied.
+        for required_form_item in (server_script_name, server_install_name):
+            if required_form_item == None:
+                flash("Missing Required Form Field!", category="error")
+                return redirect(url_for("views.install"))
+
+            # Check input lengths.
+            if len(required_form_item) > 150:
+                flash("Form field too long!", category="error")
+                return redirect(url_for("views.install"))
+
+        # Validate form submission data against install list in json file.
+        if not valid_install_options(server_script_name, server_install_name):
+            flash("Invalid Installation Option(s)!", category="error")
+            return redirect(url_for("views.install"))
+
+        # Make server_install_name a unix friendly directory name.
+        server_install_name = server_install_name.replace(" ", "_")
+        server_install_name = server_install_name.replace(":", "")
+
+        # Used to pass install_name to frontend js.
+        install_name = server_install_name
+
+        # TODO: Make all this work via game server ID's, more reliable that
+        # names.
+        # Clobber any previously held proc_info objects for server.
+        servers[server_install_name] = ProcInfoVessel()
+        proc_info = servers[server_install_name]
+
+        install_exists = GameServer.query.filter_by(
+            install_name=server_install_name
+        ).first()
+
+        if install_exists:
+            flash("An installation by that name already exits.", category="error")
+            return redirect(url_for("views.install"))
+
+        # If running in a container always install as create new user.
+        if "CONTAINER" in os.environ:
+            create_new_user = True
+
+        server = GameServer()
+        server.install_name = server_install_name
+        server.install_path = os.path.join(CWD, f'GameServers/{server_install_name}')
+        server.script_name = server_script_name
+        server.username = USER
+        server.is_container = False
+        server.install_type = 'local' 
+        server.install_host = '127.0.0.1'
+        server.install_finished = False
+
+        # If install_create_new_user config parameter is true then create a new
+        # user for the new game server and set install path to the path in that
+        # new users home directory.
+        if create_new_user:
+            server.username = server_script_name
+            server.install_path = f"/home/{server_script_name}/GameServers/{server_install_name}"
+
+# TODO: Redo this. I know what I was trying to do but things have changed and I
+#       don't like this anymore.
+#
+#        if "CONTAINER" in os.environ:
+#            # If we're in a container and the path doesn't exist we want to
+#            # alert the user and tell them the container needs re-built first.
+#            if not local_install_path_exists(new_game_server):
+#                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
+#                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
+#                return redirect(url_for("views.home"))
+#        else:
+#            if local_install_path_exists(new_game_server):
+#                flash("Install directory already exists.", category="error")
+#                flash(
+#                    "Did you perhaps have this server installed previously?",
+#                    category="error",
+#                )
+#                return redirect(url_for("views.install"))
+
+        current_app.logger.info(log_wrap("server", server))
+
+        # Add the install to the database.
+        db.session.add(server)
+        db.session.commit()
+
+        server_id = GameServer.query.filter_by(
+            install_name=server_install_name
+        ).first().id
+
+        current_app.logger.info(log_wrap("server_id", server_id))
+
+        # Update web user's permissions.
+        if current_user.role != "admin":
+            user_ident = User.query.filter_by(username=current_user.username).first()
+            user_perms = json.loads(user_ident.permissions)
+            user_perms["servers"].append(server_install_name)
+            user_ident.permissions = json.dumps(user_perms)
+            db.session.commit()
+
+        cmd = [
+            "/usr/bin/sudo",
+            "-n",
+            os.path.join(CWD, "venv/bin/python"),
+            ANSIBLE_CONNECTOR,
+            '--install',
+            server_id
+        ]
+
+        current_app.logger.info(log_wrap("cmd", cmd))
+        current_app.logger.info(log_wrap("servers", servers))
+
+#        install_daemon = Thread(
+#            target=run_cmd_popen,
+#            args=(cmd, proc_info, current_app.app_context()),
+#            daemon=True,
+#            name=f"Install_{server_install_name}",
+#        )
+#        install_daemon.start()
+
+        return render_template(
+            "install.html",
+            user=current_user,
+            servers=install_list,
+            text_color=text_color,
+            spinner_colors=SPINNER_COLORS,
+            install_name=install_name,
+            terminal_height=terminal_height,
+            running_installs=running_installs,
+        )
 
 
 ######### API Server Statuses #########

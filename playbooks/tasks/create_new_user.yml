@@ -1,7 +1,7 @@
-- name: Creating new {{ gs_user}} user
+- name: Creating new {{ username}} user
   user:
-    name: "{{ gs_user }}"
-    groups: "{{ gs_user }}"
+    name: "{{ username }}"
+    groups: "{{ username }}"
     state: present
     shell: /bin/bash
     create_home: yes

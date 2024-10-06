@@ -1,9 +1,9 @@
-- name: Modify the primary group of gs_user
+- name: Modify the primary group of new user
   ansible.builtin.command:
-    cmd: "usermod -g {{ gs_user }} {{ gs_user }}"
+    cmd: "usermod -g {{ username }} {{ username }}"
   become: yes
   register: usermod_output
-  when: gs_user is defined
+  when: username is defined
 
 - name: Display the output of usermod
   ansible.builtin.debug:

@@ -50,31 +50,26 @@ def print_help(msg=None):
     exit()
 
 
-def db_get(wanted, server_id=None):
+def db_get(server_id):
     """
-    Connects to the app's DB and returns requested results.
+    Connects to app's DB and returns GameServer object macthing ID.
 
     Args:
-        wanted (str): Type of results wanted.
         server_id (int): Id of GameServer obj to fetch.
     Returns:
-        list: List of GameServer objects.
+        GameServer: GameServer object matching ID.
     """
     engine = create_engine('sqlite:///app/database.db')
     
+    # Use new db session context.
+    # Can't use app context in ansible connector.
     with Session(engine) as session:
-        if wanted == 'all_users':
-            return session.query(User).all()
+        server = session.get(GameServer, server_id)
+        if server == None:
+            print("Error: No server with ID found.")
+            exit(69)
+        return server
 
-        if wanted == 'all_game_servers':
-            return session.query(GameServer).all()
-
-        if wanted == 'server':
-            server = session.get(GameServer, server_id)
-            if server == None:
-                print("Error: No server with ID found.")
-                exit(69)
-            return server
 
 def validate_username(username):
     """Checks supplied username is in accepted usernames."""
@@ -154,19 +149,30 @@ def post_install_cfg_fix(install_path):
     print("Configuration file common.cgf updated!")
 
 
-def get_ssh_key(server):
+def append_new_authorized_key(server):
     """
-    Get's the public ssh key text for given server.
+    Add's server's SSH keyfile to new user's ~/.ssh/authorized_keys for new
+    servers installed as other users.
 
     Args:
-        server (GameServer): Server to get pubkey for.
+        server (GameServer): The server to add the key for.
 
     Returns:
-        str: Public key file text for server.
+        None: Just does or dies.
     """
-    # TODO: Finish this. I've hit a wall, how to get user's ssh key. Thinking
-    # of adding another db field. But then I don't really like that.
-    pass
+    public_key_file = server.keyfile_path + '.pub'
+    home_dir = os.path.expanduser(f'~{server.username}')
+    ssh_dir = os.path.join(home_dir, '.ssh')
+    authorized_keys_file = os.path.join(ssh_dir, 'authorized_keys')
+
+    # Read in public key.
+    with open(public_key_file, 'r') as f:
+        public_key = f.read()
+
+    # Write new public key file.
+    with open(authorized_keys_file, 'a') as f:
+        f.write(public_key + '\n')
+        print('Appended public key to authorized_keys!')
 
 
 def run_install_new_game_server(server_id):
@@ -176,7 +182,7 @@ def run_install_new_game_server(server_id):
     Args:
         server_id (int): Id of GameServer to install.
     """
-    server = db_get('server', server_id)
+    server = db_get(server_id)
 
     if server.install_finished:
         print("Installation for server already completed!")
@@ -218,14 +224,21 @@ def run_install_new_game_server(server_id):
     run_cmd(install_cmd, server.install_path)
 
     # Post install cfg fix.
-    post_install_cfg_fix(server.install_path, server.username)
+    post_install_cfg_fix(server.install_path)
 
     # Cleanup temp sudoers rule.
     os.remove(f"/etc/sudoers.d/{server.username}-temp-auto-install")
 
     # Post install ssh setup.
-#    pubkey = get_ssh_key(server)
-#    append_new_authorized_key(server.username, pubkey)
+    append_new_authorized_key(server)
+
+    # Mark finished with new session context.
+    # Can't use app context in ansible connector.
+    engine = create_engine('sqlite:///app/database.db')
+    with Session(engine) as session:
+        server = session.get(GameServer, server_id)
+        server.install_finished = True
+        session.commit()
 
     print(f"\033[92m ✓  Game server successfully installed!\033[0m")
     exit()
@@ -295,7 +308,7 @@ def run_delete_user(server_id):
     Args:
        server_id (int): Id of server to delete. 
     """
-    server = db_get('server', server_id)
+    server = db_get(server_id)
 
     validate_username(server.username)
 

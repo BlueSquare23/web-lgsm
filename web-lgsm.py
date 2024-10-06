@@ -77,7 +77,7 @@ def relaunch_in_venv():
 
 # Protection in case user is not in venv.
 if os.getenv("VIRTUAL_ENV") is None:
-    print(" [!] Relaunching in venv!")
+    print(" [*] Sourcing venv!")
     relaunch_in_venv()
     exit(0)
 

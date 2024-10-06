@@ -22,6 +22,12 @@
       loop:
         - tasks/validate_username.yml
 
+    - name: Kill all user processes before delete
+      command: /usr/bin/pkill -9 -u "{{ username }}"
+      register: pkill_result
+      failed_when: pkill_result.rc not in [0, 1]
+      when: same_user is not defined or same_user == false
+
     - name: Delete user
       user:
         name: "{{ username }}"

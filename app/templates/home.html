@@ -12,27 +12,41 @@
           {% if user.role == 'admin' or parsed_json.servers|length > 0 %}
             <form method="POST" action="/delete">
               <div class="list-group form-check form-switch border border-secondary">
-                {# Hacky ass solution to only printing no servers when user has none #}
+                {# Hacky ass solution to printing no servers when user has none #}
                 {% set has_server = {'has': False} %}
                 {% for server in all_game_servers %}
-                  {% if user.role == 'admin' or server.install_name in parsed_json.servers %}
-                    {% if has_server.update({'has': True}) %} {% endif %}
-                  <div class="list-group-item list-group-item-action">
-                    <div class="d-flex align-items-center">
-                      <a href="/controls?server={{server.install_name}}" class="game_server_link text-decoration-none flex-grow-1">
-                        <!-- Glow via text-shadow -->
-                        <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}
-                      </a>
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="server_num_{{loop.index}}" value="{{server.install_name}}" />
+                  {% if not server.install_finished %}
+                    <div class="list-group-item list-group-item-action">
+                      <div class="d-flex align-items-center">
+                        <a href="/install?server={{server.install_name}}" class="game_server_link text-decoration-none flex-grow-1">
+                          <!-- Glow via text-shadow -->
+                          <span class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}&nbsp&nbsp;&nbsp <b>Installation Not Finished!</b>
+                        </a>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="server_num_{{loop.index}}" value="{{server.install_name}}" />
+                        </div>
                       </div>
                     </div>
-                  </div>
                   {% else %}
-                    {% if loop.last and not has_server.has %}
-                  <ul class="list-group border border-secondary">
-                    <li class="list-group-item">Your user does not have access to any game servers yet...</li>
-                  </ul>
+                    {% if user.role == 'admin' or server.install_name in parsed_json.servers %}
+                      {% if has_server.update({'has': True}) %} {% endif %}
+                    <div class="list-group-item list-group-item-action">
+                      <div class="d-flex align-items-center">
+                        <a href="/controls?server={{server.install_name}}" class="game_server_link text-decoration-none flex-grow-1">
+                          <!-- Glow via text-shadow -->
+                          <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}
+                        </a>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="server_num_{{loop.index}}" value="{{server.install_name}}" />
+                        </div>
+                      </div>
+                    </div>
+                    {% else %}
+                      {% if loop.last and not has_server.has %}
+                    <ul class="list-group border border-secondary">
+                      <li class="list-group-item">Your user does not have access to any game servers yet...</li>
+                    </ul>
+                      {% endif %}
                     {% endif %}
                   {% endif %}
                 {% endfor %}

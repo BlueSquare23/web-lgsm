@@ -287,7 +287,10 @@ def get_server_status(server):
             keyfile, 
             proc_info
         )
+
+        # If the ssh connection itself fails return None.
         if not success:
+            current_app.logger.info(proc_info)
             return None
     else:
         gs_id = get_gs_id(server)
@@ -298,6 +301,7 @@ def get_server_status(server):
         cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
         run_cmd_popen(cmd, proc_info)
 
+    current_app.logger.info(proc_info)
     if proc_info.exit_status > 0:
         return False
 
@@ -363,44 +367,37 @@ def find_cfg_paths(search_path):
     return cfg_paths
 
 
-# Does the actual deletions for the /delete route.
-def del_server(server, remove_files):
-    install_path = server.install_path
-    server_name = server.install_name
-    username = server.username
-    install_type = server.install_type
+# TODO (maybe): Make this return T/F if delete fails and flash user.
+def delete_server(server, remove_files):
+    """
+    Does the actual deletions for the /delete route.
 
-    GameServer.query.filter_by(install_name=server_name).delete()
-    db.session.commit()
-
+    Args:
+        server (GameServer): Game server to delete.
+        remove_file (bool): Config setting to keep/remove files on delete.
+    Returns:
+        None: Just does the delete.
+    """
     if not remove_files:
-        flash(f"Game server, {server_name} deleted!")
+        server.delete()
+        flash(f"Game server, {server.install_name} deleted!")
         return
 
-    web_lgsm_user = getpass.getuser()
-
-    if install_type == 'local':
-        if username == web_lgsm_user:
-            if os.path.isdir(install_path):
-                shutil.rmtree(install_path)
+    if server.install_type == 'local':
+        if server.username == USER:
+            if os.path.isdir(server.install_path):
+                shutil.rmtree(server.install_path)
         else:
-            sudo_rule_name = f"{web_lgsm_user}-{username}"
-            # Set Ansible playbook vars.
-            ansible_vars = dict()
-            ansible_vars["action"] = "delete"
-            ansible_vars["gs_user"] = username
-            ansible_vars["sudo_rule_name"] = sudo_rule_name
-            write_ansible_vars_json(ansible_vars)
+            cmd = CONNECTOR_CMD + ['--delete', str(server.id)]
+            run_cmd_popen(cmd)
 
-            run_cmd_popen(CONNECTOR_CMD)
-
-        flash(f"Game server, {server_name} deleted!")
-        return
-
-    if install_type == 'remote':
+    if server.install_type == 'remote':
         # TODO: Finish this, figure out how I want to do delete for remote.
-        flash(f"Game server, {server_name} deleted!")
+        flash(f"Game server, {server.install_name} deleted!")
         pass
+
+    flash(f"Game server, {server.install_name} deleted!")
+    server.delete()
 
 
 # Validates submitted cfg_file for edit route.
@@ -1084,24 +1081,25 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         # Wait for the command to finish and get the exit status.
         proc_info.exit_status = channel.recv_exit_status()
         proc_info.process_lock = False
+        ret_status = True 
 
     except paramiko.SSHException as e:
         current_app.logger.debug(str(e))
         proc_info.stderr.append(str(e))
         proc_info.exit_status = 5
         proc_info.process_lock = False
+        ret_status = False
+
     except TimeoutError as e:
         current_app.logger.debug(str(e))
         proc_info.stderr.append(str(e))
         proc_info.exit_status = 7
         proc_info.process_lock = False
+        ret_status = False
+
     finally:
         client.close()
-
-        if proc_info.exit_status > 0:
-            return False
-
-        return True 
+        return ret_status
 
     
 

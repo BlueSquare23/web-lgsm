@@ -1,7 +1,14 @@
 // Function to update the status indicator based on server status.
 function updateStatusIndicator(serverId, status) {
-  // Green if the server is on, red if off.
-  const statusColor = status ? 'green' : 'red';
+  // Default to green, set to red if explicitly false.
+  let statusColor = 'green';
+  if (status === false) {
+     statusColor = 'red';
+  } else if (status === null) { 
+    // If explicitly null, stay grey. Aka problem with ssh conn.
+    return;
+  } 
+
   const indicator = $(`#${serverId}`);
 
   // Set the style of the status indicator.
@@ -31,6 +38,6 @@ function getServerStatus() {
 // Initial call to update the indicators when the page loads.
 getServerStatus();
 
-// Set an interval to refresh the status every 60 seconds (60000 milliseconds).
-setInterval(getServerStatus, 60000);
+// Refresh every 300000 milliseconds (aka 5 minutes).
+setInterval(getServerStatus, 300000);
 

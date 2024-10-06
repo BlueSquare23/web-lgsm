@@ -101,6 +101,11 @@
   - So first mcserver install would just be mcserver but then a second one the
     user would be mcserver2, mcserver3, etc.
 
+* Standardize greens.
+  - I'm using too many different shades of green all over.
+  - ![3 different greens](https://johnlradford.io/static/img/3differentgreens.png)
+  - Make them all the same.
+
 * Make game server name editable.
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`

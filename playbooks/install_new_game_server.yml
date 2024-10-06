@@ -65,4 +65,20 @@
       file:
         path: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
         state: absent
+
+    - name: Create ~/.ssh directory exists and set perms
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Create ~/.ssh/authorized_keys file and set perms 
+      file:
+        path: "/home/{{ username }}/.ssh/authorized_keys"
+        state: touch
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0600'
 ...

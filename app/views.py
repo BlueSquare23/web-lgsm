@@ -419,6 +419,7 @@ def install():
         server.install_type = 'local' 
         server.install_host = '127.0.0.1'
         server.install_finished = False
+        server.keyfile_path = ''
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
@@ -426,6 +427,10 @@ def install():
         if create_new_user:
             server.username = server_script_name
             server.install_path = f"/home/{server_script_name}/GameServers/{server_install_name}"
+
+            # Add keyfile path for server to DB.
+            keyfile = get_ssh_key_file(server.username, server.install_host)
+            server.keyfile_path = keyfile
 
 # TODO: Redo this. I know what I was trying to do but things have changed and I
 #       don't like this anymore.
@@ -472,19 +477,19 @@ def install():
             os.path.join(CWD, "venv/bin/python"),
             ANSIBLE_CONNECTOR,
             '--install',
-            server_id
+            str(server_id)
         ]
 
         current_app.logger.info(log_wrap("cmd", cmd))
         current_app.logger.info(log_wrap("servers", servers))
 
-#        install_daemon = Thread(
-#            target=run_cmd_popen,
-#            args=(cmd, proc_info, current_app.app_context()),
-#            daemon=True,
-#            name=f"Install_{server_install_name}",
-#        )
-#        install_daemon.start()
+        install_daemon = Thread(
+            target=run_cmd_popen,
+            args=(cmd, proc_info, current_app.app_context()),
+            daemon=True,
+            name=f"Install_{server_install_name}",
+        )
+        install_daemon.start()
 
         return render_template(
             "install.html",
@@ -526,7 +531,9 @@ def get_status():
         return response
 
     server_status = get_server_status(server)
-    resp_dict = {"id": int(server_id), "status": server_status}
+    resp_dict = {"id": server.id, "status": server_status}
+    current_app.logger.info(log_wrap("resp_dict", resp_dict))
+
     response = Response(
         json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
     )
@@ -786,6 +793,9 @@ def add():
     status_code = 200
 
     if request.method == "POST":
+        server = GameServer()
+        server.install_finished = True  # All server adds are auto marked finished.
+
         install_name = request.form.get("install_name")
         install_path = request.form.get("install_path")
         script_name = request.form.get("script_name")
@@ -793,6 +803,7 @@ def add():
         install_type = request.form.get("install_type")
         install_host = request.form.get("install_host")
 
+        ## Validation Logic.
         # Check all required args are submitted.
         for required_form_item in (install_name, install_path, script_name, install_type):
             if required_form_item == None or required_form_item == "":
@@ -804,19 +815,10 @@ def add():
                 flash("Form field too long!", category="error")
                 return render_template("add.html", user=current_user), 400
 
-        # Validate install_type.
-        if not valid_install_type(install_type):
-            flash("Invalid install type!", category="error")
-            return render_template("add.html", user=current_user), 400
-
-        if install_type == 'remote':
-            if install_host == None or install_host == "":
-                flash("Missing required form field(s)!", category="error")
-                return render_template("add.html", user=current_user), 400
-
-            if not is_ssh_accessible(install_host):
-                flash("Server does not appear to be SSH accessible!", category="error")
-                return render_template("add.html", user=current_user), 400
+        if not valid_script_name(script_name):
+            flash("Invalid game server script file name!", category="error")
+            status_code = 400
+            return render_template("add.html", user=current_user), status_code
 
         # Set default user if none provided.
         if username == None or username == "":
@@ -825,13 +827,6 @@ def add():
         if len(username) > 150:
             flash("Form field too long!", category="error")
             return render_template("add.html", user=current_user), 400
-
-        if install_type == 'local':
-            # Returns None if not valid username.
-            if get_uid(username) == None:
-                flash("User not found on system!", category="error")
-                status_code = 400
-                return render_template("add.html", user=current_user), status_code
 
         # Try to prevent arbitrary bad input.
         for input_item in (install_name, install_path, script_name, username):
@@ -845,8 +840,49 @@ def add():
                 return render_template("add.html", user=current_user), status_code
 
         # Make install name unix friendly for dir creation.
-        # TODO: Do more here to prevent people from putting in weird names.
         install_name = install_name.replace(" ", "_")
+        install_name = install_name.replace(".", "_")
+        install_name = install_name.replace(":", "")
+
+        # Validate install_type.
+        if not valid_install_type(install_type):
+            flash("Invalid install type!", category="error")
+            return render_template("add.html", user=current_user), 400
+
+        ## Log & set GameServer obj vars after most of the validation is done.
+        current_app.logger.info(log_wrap("install_name", install_name))
+        current_app.logger.info(log_wrap("install_path", install_path))
+        current_app.logger.info(log_wrap("script_name", script_name))
+        current_app.logger.info(log_wrap("username", username))
+        current_app.logger.info(log_wrap("install_type", install_type))
+
+        server.install_name = install_name
+        server.install_path = install_path
+        server.script_name = script_name
+        server.username = username
+        server.install_type = install_type
+
+        if install_type == 'remote':
+            if install_host == None or install_host == "":
+                flash("Missing required form field(s)!", category="error")
+                return render_template("add.html", user=current_user), 400
+
+            if not is_ssh_accessible(install_host):
+                flash("Server does not appear to be SSH accessible!", category="error")
+                return render_template("add.html", user=current_user), 400
+
+            server.install_type = 'remote'
+            server.install_host = install_host
+
+        if install_type == 'local':
+            server.install_type = 'local'
+            server.install_host = '127.0.0.1'
+
+            # Returns None if not valid username.
+            if get_uid(username) == None:
+                flash("User not found on system!", category="error")
+                status_code = 400
+                return render_template("add.html", user=current_user), status_code
 
         install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
@@ -855,65 +891,16 @@ def add():
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
-        if not valid_script_name(script_name):
-            flash("Invalid game server script file name!", category="error")
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
-
-        script_path = os.path.join(install_path, script_name)
-        # Check script path exists.
-        # TODO: Write this function for over ssh.
-#        check_script_path_exists(script_path)
-
-        if install_type == 'local':
-            install_host = '127.0.0.1'
-
-        if install_type == 'local' and USER != username:
-            # Get a list of all game servers installed for this system user.
-            user_script_paths = get_user_script_paths(install_path, script_name)
-
-            # Set Ansible playbook vars.
-            ansible_vars = dict()
-            ansible_vars["action"] = "create"
-            ansible_vars["gs_user"] = username
-            ansible_vars["script_paths"] = user_script_paths
-            ansible_vars["web_lgsm_user"] = USER
-            write_ansible_vars_json(ansible_vars)
-
-            current_app.logger.info(log_wrap("ansible_vars", ansible_vars))
-
-            cmd = [
-                "/usr/bin/sudo",
-                "-n",
-                os.path.join(CWD, "venv/bin/python"),
-                ANSIBLE_CONNECTOR
-            ]
-            run_cmd_popen(cmd)
-
-        if install_type == 'remote':
-            pubkey = get_ssh_key_file(username, install_host)
-            if pubkey == None:
+        if should_use_ssh(server):
+            keyfile = get_ssh_key_file(username, server.install_host)
+            if keyfile == None:
                 flash(f"Problem generating new ssh keys!", category="error")
                 return redirect(url_for("views.add"))
 
-            flash(f"Add this key to the remote hosts ~/.ssh/authorized_keys file:  {pubkey}")
+            flash(f"Add this public key: {keyfile}.pub to the ~{username}/.ssh/authorized_keys file!")
 
-        # Add the install to the database, then redirect home.
-        new_game_server = GameServer(
-            install_name=install_name,
-            install_path=install_path,
-            script_name=script_name,
-            username=username,
-            install_type=install_type,
-            install_host=install_host
-        )
-        db.session.add(new_game_server)
+        db.session.add(server)
         db.session.commit()
-
-        current_app.logger.info(log_wrap("install_name", install_name))
-        current_app.logger.info(log_wrap("install_path", install_path))
-        current_app.logger.info(log_wrap("script_name", script_name))
-        current_app.logger.info(log_wrap("username", username))
 
         flash("Game server added!")
         return redirect(url_for("views.home"))
@@ -947,21 +934,15 @@ def delete():
             flash("No such server found!", category="error")
             return redirect(url_for("views.home"))
 
-        current_app.logger.info(log_wrap("server_name", server_name))
+        current_app.logger.info(server)
+
+        if server_name in servers:
+            del servers[server_name]
+
+        # Log to ensure delete from global servers worked.
         current_app.logger.info(log_wrap("servers", servers))
-        current_app.logger.info(log_wrap("server.id", server.id))
-        current_app.logger.info(log_wrap("server.install_name", server.install_name))
-        current_app.logger.info(log_wrap("server.username", server.username))
-        current_app.logger.info(log_wrap("server.install_path", server.install_path))
 
-        if server:
-            if server_name in servers:
-                del servers[server_name]
-            proc_info = ProcInfoVessel()
-
-            current_app.logger.info(log_wrap("servers", servers))
-
-            del_server(server, remove_files)
+        delete_server(server, remove_files)
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.

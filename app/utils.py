@@ -5,6 +5,7 @@ import pwd
 import json
 import glob
 import time
+import shlex
 import string
 import logging
 import psutil
@@ -16,7 +17,7 @@ import requests
 import subprocess
 import threading
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Thread
 from flask import flash, current_app
 
@@ -239,19 +240,133 @@ def should_use_ssh(server):
     return False
 
 
-def get_gs_id(server):
+def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
     """
-    Get's gs_id for local same user install_type's.
+    Uses SSH to get tmux socket name for remote and non-same user installs.
 
     Args:
-        server (GameServer): Game server object to get gs_id of.
+        server (GameServer): Game Server to get tmux socket name for.
+        gs_id_file_path (str): Path to gs_id file for game server.
+
     Returns:
-        str: Returns lgsm gs_id of game server as string. None if can't get it.
+        str: Returns the socket name for game server. None if can't get
+             socket name.
+    """
+    proc_info = ProcInfoVessel()
+    cmd = ['cat', gs_id_file_path]
+    keyfile = get_ssh_key_file(server.username, server.install_host)
+
+    success = run_cmd_ssh(
+        cmd,
+        server.install_host,
+        server.username,
+        keyfile, 
+        proc_info
+    )
+
+    # If the ssh connection itself fails return None.
+    if not success:
+        current_app.logger.info(proc_info)
+        return None
+
+    if proc_info.exit_status > 0:
+        current_app.logger.info(proc_info)
+        return None
+
+    gs_id = proc_info.stdout[0].strip()
+
+    if len(gs_id) == 0:
+        return None
+
+    return server.script_name + "-" + gs_id
+
+
+def update_tmux_socket_name_cache(server_id, socket_name):
+    """
+    Writes to tmux socket name cache with fresh data.
+    """
+    cache_file = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+    cache_data = dict()
+
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r') as file:
+            cache_data = json.load(file)
+
+    cache_data[server_id] = socket_name
+
+    with open(cache_file, 'w') as file:
+        json.dump(cache_data, file)
+
+
+def get_tmux_socket_name_from_cache(server, gs_id_file_path):
+    """
+    Get's the tmux socket name for remote and non-same user installs from the
+    cache. If there is no cache file get socket for server and create cache. If
+    the cache file is older than a week get socket name and update cache.
+    Otherwise just pull the socket name value from the json cache.
+
+    Args:
+        server (GameServer): Game Server to get tmux socket name for.
+        gs_id_file_path (str): Path to gs_id file for game server.
+
+    Returns:
+        str: Returns the socket name for game server. None if cant get
+             one.
+    """
+    cache_file = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+
+    if not os.path.exists(cache_file):
+        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        update_tmux_socket_name_cache(server.id, socket_name)
+        return socket_name
+
+    # Check if cache has expired.
+    cache_mtime = os.path.getmtime(cache_file)
+
+    # Convert the mtime to a datetime object.
+    cache_time = datetime.fromtimestamp(cache_mtime)
+
+    current_time = datetime.now()
+    one_week_ago = current_time - timedelta(weeks=1)
+
+    # Time comparisons always confuse me. With Epoch time, bigger number ==
+    # more recent. Aka if the epoch time of one week ago is larger than the
+    # epoch timestamp of cache file than the cache must be older than a week.
+    if cache_time < one_week_ago:
+        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        update_tmux_socket_name_cache(server.id, socket_name)
+        return socket_name
+
+    with open(cache_file, 'r') as file:
+        cache_data = json.load(file)
+
+    if str(server.id) not in cache_data:
+        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        update_tmux_socket_name_cache(server.id, socket_name)
+        return socket_name
+
+    socket_name = cache_data[str(server.id)]
+    return socket_name
+
+
+def get_tmux_socket_name(server):
+    """
+    Get's the tmux socket file name for a given game server. Will call
+    get_tmux_socket_name_from_cache() for remote & non-same user installs,
+    otherwise will just read the gs_id value from the local file system to
+    build the socket name.
+
+    Args:
+        server (GameServer): Game Server to get tmux socket name for.
+
+    Returns:
+        str: Returns the socket name for game server. None if can't get socket
+             name.
     """
     gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
 
     if should_use_ssh(server):
-        return None
+        return get_tmux_socket_name_from_cache(server, gs_id_file_path)
 
     if not os.path.isfile(gs_id_file_path):
         return None
@@ -259,7 +374,7 @@ def get_gs_id(server):
     with open(gs_id_file_path, "r") as file:
         gs_id = file.read()
 
-    return gs_id
+    return server.script_name + "-" + gs_id
 
 
 def get_server_status(server):
@@ -276,10 +391,15 @@ def get_server_status(server):
     """
     proc_info = ProcInfoVessel()
 
+    socket = get_tmux_socket_name(server)
+    if socket == None:
+        return None
+
+    cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
+
     if should_use_ssh(server):
         gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
         keyfile = get_ssh_key_file(server.username, server.install_host)
-        cmd = f"/usr/bin/tmux -L {server.script_name}-$(cat {gs_id_file_path}) list-session"
         success = run_cmd_ssh(
             cmd,
             server.install_host,
@@ -297,8 +417,6 @@ def get_server_status(server):
         if gs_id == None:
             return False
 
-        socket = server.script_name + "-" + gs_id
-        cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
         run_cmd_popen(cmd, proc_info)
 
     current_app.logger.info(proc_info)
@@ -917,14 +1035,14 @@ def gen_ssh_rule(pub_key):
     return f'{pub_key} command="/path/to/ssh_connector.sh"'
 
     # ...
-    
+
 
 def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(), app_context=False, timeout=5.0):
     """
     Runs remote commands over ssh to admin game servers.
 
     Args:
-        cmd (str): Command to run over SSH.
+        cmd (list): Command to run over SSH.
         hostname (str): The hostname or IP address of the server.
         username (str): The username to use for the SSH connection.
         key_filename (str): The path to the private key file.
@@ -940,8 +1058,11 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     if app_context:
         app_context.push()
 
+    safe_cmd = shlex.join(cmd)
+
     # Log info.
     current_app.logger.info(cmd)
+    current_app.logger.info(safe_cmd)
     current_app.logger.info(hostname)
     current_app.logger.info(username)
     current_app.logger.info(key_filename)
@@ -959,7 +1080,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         # Open a new session and request a PTY.
         channel = client.get_transport().open_session()
         channel.get_pty()
-        channel.exec_command(cmd)
+        channel.exec_command(safe_cmd)
 
         # Optionally set timeout (if provided).
         if timeout:

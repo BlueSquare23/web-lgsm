@@ -151,6 +151,7 @@ def controls():
 
     # Pull in commands list from commands.json file.
     cmds_list = get_commands(server.script_name, send_cmd, current_user)
+
     # TODO: Remove / change this as a way to check if json file is okay. Right
     # now this is serving the purposes of telling if the json file has become
     # mangled or not, in case users have edited it by hand and left off a comma
@@ -187,13 +188,12 @@ def controls():
 
         # Console option, use tmux capture-pane to get output.
         if short_cmd == "c":
-            gs_id = get_gs_id(server)
-            active = get_server_status(server, gs_id)
+            active = get_server_status(server)
             if not active:
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            tmux_socket = server.script_name + "-" + gs_id
+            tmux_socket = get_tmux_socket_name(server)
 
             # Use daemonized `watch` command to keep live console running.
             cmd = [
@@ -206,8 +206,8 @@ def controls():
                 "-pt",
                 server.script_name,
             ]
+
             if should_use_ssh(server):
-                cmd = " ".join(cmd)
                 pub_key_file = get_ssh_key_file(server.username, server.install_host)
                 daemon = Thread(
                     target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="Console"
@@ -231,24 +231,21 @@ def controls():
                 flash("No command provided!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            # First check if tmux session is running.
-            installed_servers = GameServer.query.all()
-
-            # Fetch dict containing all servers and flag specifying if they're running
-            # or not via a util function.
-            server_status_dict = get_all_server_statuses(installed_servers)
-            if not server_status_dict[server_name]:
-                flash(
-                    "Server is Off! Cannot send commands to console!", category="error"
-                )
+            active = get_server_status(server)
+            if not active:
+                flash("Server is Off! Cannot send commands to console!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            cmd = []
-            # If gs not owned by system user, prepend sudo -n -u user to cmd.
-            if server.username != USER:
-                cmd += sudo_prepend
+            cmd = [script_path, short_cmd, console_cmd]
 
-            cmd += [script_path, short_cmd, console_cmd]
+            if should_use_ssh(server):
+                pub_key_file = get_ssh_key_file(server.username, server.install_host)
+                daemon = Thread(
+                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="send"
+                )
+                daemon.start()
+                return redirect(url_for("views.controls", server=server_name))
+
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
             )
@@ -256,8 +253,9 @@ def controls():
             return redirect(url_for("views.controls", server=server_name))
 
         else:
+            cmd = [script_path, short_cmd]
+
             if should_use_ssh(server):
-                cmd = f"{script_path} {short_cmd}"
                 pub_key_file = get_ssh_key_file(server.username, server.install_host)
                 daemon = Thread(
                     target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context()), daemon=True, name="Command"
@@ -265,7 +263,6 @@ def controls():
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
-            cmd = [script_path, short_cmd]
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
             )

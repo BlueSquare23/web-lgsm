@@ -10,14 +10,22 @@
       run the command over ssh instead.
   - Involves:
     - [x] Make main controls for local installs owned by other users work over ssh.
-    - [ ] Get Send command working over SSH.
+    - [x] Get Send command working over SSH.
       - Just some backend logic needs written.
     - [ ] Get live console output working over SSH.
-      - I'm so close I can taste it. There's a buncha commented example in the
-        util function for this.
-        - Right now I can get the live output to work by reading in chunks.
-        - But as soon as I try to ingest by newlines it all falls apart and the
-          live output from the console (aka tmux watch cmd run over ssh) fails.
+      - [ ] Rebuild watch code with frontend ajax instead.
+        - I've decided to finally ditch the long running `watch` process as a
+          simulacrum of a running console.
+        - Instead, I've tweaked the tmux capture pane cmd to get all text from
+          the session.
+        - I'm going to make a new POST api route, /api/refresh_console.
+          - The /controls page console command will, send a post (aka trigger
+            an ssh connection, to tmux capture the output).
+          - Then once that returns ok, the `updateTerminal()` js will run
+            fetching the latest output from /api/cmd-output.
+          - This way don't need to do whole page reload.
+          - Just some js for when in console mode, post to refresh api, fetch
+            output api.
     - [ ] Figure out delete over ssh.
       - Right now delete is run via sudo ansible connector because it can also
         delete the other users.
@@ -33,7 +41,7 @@
           necessary.
       - Problem is this might then interfere with my vision for the below
         bullet point.
-    - [ ] Write ssh_connector.sh shell script. Basically if I want to limit
+    - [ ] Write `ssh_connector.sh` shell script. Basically if I want to limit
       access to multiple commands over ssh I need to do something like this:
       - https://serverfault.com/questions/749474/ssh-authorized-keys-command-option-multiple-commands
       - I think doing this in bash is probably safe enough.

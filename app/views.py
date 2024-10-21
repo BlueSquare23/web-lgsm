@@ -195,16 +195,23 @@ def controls():
 
             tmux_socket = get_tmux_socket_name(server)
 
-            # Use daemonized `watch` command to keep live console running.
+            # Experimenting. Doesn't work. Empty stdout.
+#            cmd = [
+#                '/usr/bin/tail',
+#                '-f',
+#                f'{server.install_path}/log/console/{server.script_name}-console.log'
+#            ]
+
             cmd = [
-                "/usr/bin/watch",
-                "-te",
                 "/usr/bin/tmux",
                 "-L",
                 tmux_socket,
                 "capture-pane",
                 "-pt",
                 server.script_name,
+                "-S", "-", 
+                "-E", "-", 
+                "-J",
             ]
 
             if should_use_ssh(server):

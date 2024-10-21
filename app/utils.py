@@ -1054,6 +1054,9 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+    proc_info.stdout.clear()
+    proc_info.stderr.clear()
+
     # App context needed for logging in threads.
     if app_context:
         app_context.push()
@@ -1066,6 +1069,8 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     current_app.logger.info(hostname)
     current_app.logger.info(username)
     current_app.logger.info(key_filename)
+    current_app.logger.info('pre stdout: ' + str(proc_info.stdout))
+    current_app.logger.info('pre stderr: ' + str(proc_info.stderr))
     
     # Initialize SSH client.
     client = paramiko.SSHClient()
@@ -1086,20 +1091,65 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         if timeout:
             channel.settimeout(timeout)
 
-# WORKS, CONSOLE BROKEN, BUT CLOSE TO WORKING...
+        stdout_buffer = ""
+        stderr_buffer = ""
+
+        while True:
+            # Check if stdout is ready and process it in chunks.
+            while channel.recv_ready():
+                stdout_chunk = channel.recv(1024).decode('utf-8')
+                stdout_buffer += stdout_chunk
+                stdout_lines = stdout_buffer.splitlines(keepends=True)
+
+                for line in stdout_lines:
+                    line = line.replace('\r', '')
+                    if line.endswith('\n'):
+                        if line not in proc_info.stdout:
+                            proc_info.stdout.append(line)
+                            log_msg = log_wrap('stdout', line.strip())
+                            current_app.logger.debug(log_msg)
+                    else:
+                        stdout_buffer = line  # Save incomplete line in buffer.
+
+            # Check if stderr is ready and process it in chunks.
+            while channel.recv_stderr_ready():
+                stderr_chunk = channel.recv_stderr(1024).decode('utf-8')
+                stderr_buffer += stderr_chunk
+                stderr_lines = stderr_buffer.splitlines(keepends=True)
+
+                for line in stderr_lines:
+                    line = line.replace('\r', '')
+                    if line.endswith('\n'):
+                        if line not in proc_info.stderr:
+                            proc_info.stderr.append(line)
+                            log_msg = log_wrap('stderr', line.strip())
+                            current_app.logger.debug(log_msg)
+                    else:
+                        stderr_buffer = line  # Save incomplete line in buffer.
+
+            # Break if the command is done.
+            if channel.exit_status_ready():
+                break
+
+            time.sleep(0.1)
+
+## WORKS, CONSOLE BROKEN, BUT CLOSE TO WORKING...
 #        stdout_buffer = ""
 #        stderr_buffer = ""
 #
-#        while True:
+##        while True:
+#        while not channel.exit_status_ready():
 #            if channel.recv_ready():
 #                stdout_buffer += channel.recv(1024).decode('utf-8')
 #                stdout_lines = stdout_buffer.splitlines(keepends=True)
 #
 #                for line in stdout_lines:
+#                    line = line.replace('\r', '')
 #                    if line.endswith('\n'):
-#                        proc_info.stdout.append(line)
-#                        log_msg = log_wrap('stdout', line.strip())
-#                        current_app.logger.debug(log_msg)
+#                        if line not in proc_info.stdout:
+#                            proc_info.stdout.append(line)
+#                            log_msg = log_wrap('stdout', line.strip())
+#                            current_app.logger.debug(log_msg)
 #                    else:
 #                        stdout_buffer = line  # Save incomplete line in buffer.
 #
@@ -1108,96 +1158,19 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
 #                stderr_lines = stderr_buffer.splitlines(keepends=True)
 #
 #                for line in stderr_lines:
+#                    line = line.replace('\r', '')
 #                    if line.endswith('\n'):
-#                        proc_info.stderr.append(line)
-#                        log_msg = log_wrap('stderr', line.strip())
-#                        current_app.logger.debug(log_msg)
+#                        if line not in proc_info.stderr:
+#                            proc_info.stderr.append(line)
+#                            log_msg = log_wrap('stderr', line.strip())
+#                            current_app.logger.debug(log_msg)
 #                    else:
 #                        stderr_buffer = line  # Save incomplete line in buffer.
 #
-#            if channel.exit_status_ready():
-#                break
+##            if channel.exit_status_ready():
+##                break
 #
 #            time.sleep(0.1)
-
-# WORKS!!! BUT BUFF NOT BROKEN BY NEWLINE.
-        # Read stdout and stderr line by line.
-        while True:
-            if channel.recv_ready():
-                stdout_data = channel.recv(1024).decode('utf-8')
-                proc_info.stdout.append(stdout_data)
-                log_msg = log_wrap('stdout', stdout_data)
-                current_app.logger.debug(log_msg)
-
-            if channel.recv_stderr_ready():
-                stderr_data = channel.recv_stderr(1024).decode('utf-8')
-                proc_info.stderr.append(stderr_data)
-                log_msg = log_wrap('stderr', stderr_data)
-                current_app.logger.debug(log_msg)
-
-            if channel.exit_status_ready():
-                break
-
-            # Small delay to prevent tight while high CPU.
-            time.sleep(0.1)
-
-
-# BROKEN.
-        # Read stdout and stderr line by line.
-#        stdout_buffer = ''
-#        stderr_buffer = ''
-#        while True:
-#            if channel.recv_ready():
-#                stdout_data = channel.recv(1024).decode('utf-8')
-#                stdout_buffer += stdout_data
-#                # Process full lines.
-#                while '\n' in stdout_buffer:
-#                    line, stdout_buffer = stdout_buffer.split('\n', 1)
-#                    proc_info.stdout.append(line)
-#                    log_msg = log_wrap('stdout', line)
-#                    current_app.logger.debug(log_msg)
-#
-#            if channel.recv_stderr_ready():
-#                stderr_data = channel.recv_stderr(1024).decode('utf-8')
-#                stderr_buffer += stderr_data
-#                # Process full lines.
-#                while '\n' in stderr_buffer:
-#                    line, stderr_buffer = stderr_buffer.split('\n', 1)
-#                    proc_info.stderr.append(line)
-#                    log_msg = log_wrap('stderr', line)
-#                    current_app.logger.debug(log_msg)
-#
-#            if channel.exit_status_ready():
-#                break
-#
-#            # Small delay to prevent tight while high CPU.
-#            time.sleep(0.1)
-#
-#        # Add any remaining buffered stdout/stderr (if no newline at the end).
-#        if stdout_buffer:
-#            proc_info.stdout.append(stdout_buffer)
-#            log_msg = log_wrap('stderr', stdout_buffer)
-#            current_app.logger.debug(log_msg)
-#
-#        if stderr_buffer:
-#            proc_info.stderr.append(stderr_buffer)
-#            log_msg = log_wrap('stderr', stderr_buffer)
-#            current_app.logger.debug(log_msg)
-
-# WORKS, CAN'T HANDLE LIVE CONSOLE.
-#        # Start the process and get the stdout, stderr, and exit status.
-#        proc_info.process_lock = True
-#        stdin, stdout, stderr = client.exec_command(cmd, bufsize=-1, timeout=timeout, get_pty=True)
-#        
-#        for stdout_line in iter(stdout.readline, ""):
-#            proc_info.stdout.append(stdout_line)
-#            log_msg = log_wrap('stdout', stdout_line.replace('\n', ''))
-#            current_app.logger.debug(log_msg)
-#
-#        for stderr_line in iter(stderr.readline, ""):
-#            proc_info.stderr.append(stderr_line)
-#            log_msg = log_wrap('stderr', stderr_line.replace('\n', ''))
-#            current_app.logger.debug(log_msg)
 
         # Wait for the command to finish and get the exit status.
         proc_info.exit_status = channel.recv_exit_status()

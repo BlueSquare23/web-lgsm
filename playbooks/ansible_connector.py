@@ -160,6 +160,9 @@ def append_new_authorized_key(server):
     Returns:
         None: Just does or dies.
     """
+    if server.keyfile_path == '' or server.keyfile_path == None:
+        return
+
     public_key_file = server.keyfile_path + '.pub'
     home_dir = os.path.expanduser(f'~{server.username}')
     ssh_dir = os.path.join(home_dir, '.ssh')
@@ -227,7 +230,9 @@ def run_install_new_game_server(server_id):
     post_install_cfg_fix(server.install_path)
 
     # Cleanup temp sudoers rule.
-    os.remove(f"/etc/sudoers.d/{server.username}-temp-auto-install")
+    tmp_sudoers = f"/etc/sudoers.d/{server.username}-temp-auto-install"
+    if os.path.isfile(tmp_sudoers): 
+        os.remove(tmp_sudoers)
 
     # Post install ssh setup.
     append_new_authorized_key(server)

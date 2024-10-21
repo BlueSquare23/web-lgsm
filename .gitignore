@@ -13,7 +13,7 @@ Mockcraft
 node_modules
 package-lock.json
 package.json
-ansible_vars.json
+tmux_socket_name_cache.json
 gs_allowed_paths.txt
 GameServers/*
 .docker-data.json

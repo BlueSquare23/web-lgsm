@@ -68,7 +68,6 @@
     "mcbserver": "Minecraft Bedrock",
     "mhserver": "MORDHAU",
     "mohaaserver": "Medal of Honor: Allied Assault",
-    "momserver": "Memories of Mars",
     "mtaserver": "Multi Theft Auto",
     "ndserver": "Nuclear Dawn",
     "necserver": "Necesse",
@@ -105,6 +104,7 @@
     "sdtdserver": "7 Days to Die",
     "sfserver": "Satisfactory",
     "sfcserver": "SourceForts Classic",
+    "smserver": "Soulmask",
     "sof2server": "Soldier Of Fortune 2: Gold Edition",
     "solserver": "Soldat",
     "squadserver": "Squad",
@@ -133,6 +133,7 @@
     "wfserver": "Warfork",
     "wmcserver": "WaterfallMC",
     "wurmserver": "Wurm Unlimited",
+    "xntserver": "Xonotic",
     "zmrserver": "Zombie Master: Reborn",
     "zpsserver": "Zombie Panic! Source"
 }

@@ -304,6 +304,7 @@ def install():
 
         # Make server_full_name a unix friendly directory name.
         server_full_name = server_full_name.replace(" ", "_")
+        server_full_name = server_full_name.replace(":", "_")
 
         # Used to pass install_name to frontend js.
         install_name = server_full_name
@@ -599,6 +600,7 @@ def add():
 
         # Make install name unix friendly for dir creation.
         install_name = install_name.replace(" ", "_")
+        install_name = install_name.replace(":", "_")
 
         install_exists = GameServer.query.filter_by(install_name=install_name).first()
 

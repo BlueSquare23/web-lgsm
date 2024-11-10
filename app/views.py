@@ -33,6 +33,8 @@ from .proc_info_vessel import ProcInfoVessel
 CWD = os.getcwd()
 USER = getpass.getuser()
 ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+# TODO: Move these into the jinja template for this. Not sure why I ever passed
+# them through the route code to begin with. Used to be much dumber.
 # Bootstrap spinner colors.
 SPINNER_COLORS = [
     "primary",
@@ -193,40 +195,44 @@ def controls():
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-            tmux_socket = get_tmux_socket_name(server)
-
-            # Experimenting. Doesn't work. Empty stdout.
+#            tmux_socket = get_tmux_socket_name(server)
+#
 #            cmd = [
-#                '/usr/bin/tail',
-#                '-f',
-#                f'{server.install_path}/log/console/{server.script_name}-console.log'
+#                "/usr/bin/tmux",
+#                "-L",
+#                tmux_socket,
+#                "capture-pane",
+#                "-pt",
+#                server.script_name,
+#                "-S", "-", 
+#                "-E", "-", 
+#                "-J",
 #            ]
-
-            cmd = [
-                "/usr/bin/tmux",
-                "-L",
-                tmux_socket,
-                "capture-pane",
-                "-pt",
-                server.script_name,
-                "-S", "-", 
-                "-E", "-", 
-                "-J",
-            ]
-
-            if should_use_ssh(server):
-                pub_key_file = get_ssh_key_file(server.username, server.install_host)
-                daemon = Thread(
-                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="Console"
-                )
-                daemon.start()
-                return redirect(url_for("views.controls", server=server_name))
-
-            daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Console"
+#
+#            if should_use_ssh(server):
+#                pub_key_file = get_ssh_key_file(server.username, server.install_host)
+#                daemon = Thread(
+#                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="Console"
+#                )
+#                daemon.start()
+#                return redirect(url_for("views.controls", server=server_name))
+#
+#            daemon = Thread(
+#                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Console"
+#            )
+#            daemon.start()
+#            return redirect(url_for("views.controls", server=server_name))
+            return render_template(
+                "controls.html",
+                user=current_user,
+                server_name=server_name,
+                server_commands=cmds_list,
+                text_color=text_color,
+                terminal_height=terminal_height,
+                spinner_colors=SPINNER_COLORS,
+                cfg_paths=cfg_paths, 
+                console=True
             )
-            daemon.start()
-            return redirect(url_for("views.controls", server=server_name))
 
         elif short_cmd == "sd":
             # Check if send_cmd is enabled in main.conf.
@@ -505,6 +511,77 @@ def install():
             terminal_height=terminal_height,
             running_installs=running_installs,
         )
+
+
+######### API Update Console #########
+
+@views.route("/api/update-console", methods=["GET", "POST"])
+@login_required
+def update_console():
+# TODO: Write permissions controls for these api routes.
+#    if not user_has_permissions(current_user, "server-statuses"):
+#        return redirect(url_for("views.home"))
+    global servers
+
+    # Collect var from POST request.
+#    server_name = request.args.get("server")
+    server_name = request.form.get("server")
+
+    # Can't do needful without a server specified.
+    if server_name == None:
+        resp_dict = {'Error': 'Required var: server'}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
+        )
+        return response
+
+    # Check that the submitted server exists in db.
+    server = GameServer.query.filter_by(install_name=server_name).first()
+    if server == None:
+        resp_dict = {'Error': 'Supplied server does not exist!'}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
+        )
+        return response
+
+    tmux_socket = get_tmux_socket_name(server)
+
+    cmd = [
+        "/usr/bin/tmux",
+        "-L",
+        tmux_socket,
+        "capture-pane",
+        "-pt",
+        server.script_name,
+        "-S", "-", 
+        "-E", "-", 
+        "-J",
+    ]
+
+    if server.install_name in servers:
+        proc_info = servers[server.install_name]
+    else:
+        proc_info = ProcInfoVessel()
+        servers[server.install_name] = proc_info
+
+    if should_use_ssh(server):
+        pub_key_file = get_ssh_key_file(server.username, server.install_host)
+        run_cmd_ssh(cmd, server.install_host, server.username, pub_key_file, proc_info, None, None)
+    else:
+        run_cmd_popen(cmd, proc_info)
+
+    if proc_info.exit_status > 0:
+        resp_dict = {'Error': 'Refresh cmd failed!'}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=503, mimetype="application/json"
+        )
+        return response
+
+    resp_dict = {'Success': 'Output updated!'}
+    response = Response(
+        json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
+    )
+    return response
 
 
 ######### API Server Statuses #########

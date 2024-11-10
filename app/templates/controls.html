@@ -87,8 +87,19 @@
         }
       </script>
       <!-- Set global serverName for update-text-area.js -->
-      <script>var serverName = "{{server_name}}"; var textColor = "{{ text_color }}"</script>
+      <script>
+        let serverName = "{{ server_name }}";
+        let textColor = "{{ text_color }}";
+      {# If console var True #}
+      {% if console is defined and console %}
+        let sConsole = true;
+      {% else %}
+        let sConsole = false;
+      {% endif %}
+      </script>
       <script src="/static/js/update-xterm.js"></script>
+      <script>
+      </script>
 
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
         /\ Top /\

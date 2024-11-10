@@ -1094,43 +1094,50 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         stdout_buffer = ""
         stderr_buffer = ""
 
+        # RANT: Because of course, why would the most popular ssh module for
+        # Python make it easy to read output by newlines? Paramiko's opinion is
+        # "hey developer you can go fuck yourself and parse the raw byte chucks
+        # by hand!" Also there's like no sample code for this in the docs so
+        # I'm just making shit up. Wish I had Perl's Net::OpenSSH right about
+        # now...
         while True:
-            # Check if stdout is ready and process it in chunks.
             while channel.recv_ready():
-                stdout_chunk = channel.recv(1024).decode('utf-8')
-                stdout_buffer += stdout_chunk
-                stdout_lines = stdout_buffer.splitlines(keepends=True)
+                # I tried to be smart and use a buffer and chunks. Didn't work
+                # so screw it. If you're over 8192 bytes long too bad.
+                stdout_chunk = channel.recv(8192).decode('utf-8')
+                stdout_lines = stdout_chunk.splitlines(keepends=True)
 
                 for line in stdout_lines:
-                    line = line.replace('\r', '')
-                    if line.endswith('\n'):
-                        if line not in proc_info.stdout:
-                            proc_info.stdout.append(line)
-                            log_msg = log_wrap('stdout', line.strip())
-                            current_app.logger.debug(log_msg)
-                    else:
-                        stdout_buffer = line  # Save incomplete line in buffer.
+                    # xterm.js print chokes if last line arr is \r\n and then
+                    # gets updated to something else.
+                    if line == '\r\n':
+                        continue
 
-            # Check if stderr is ready and process it in chunks.
+                    if line not in proc_info.stdout:
+                        proc_info.stdout.append(line)
+                        log_msg = log_wrap('stdout', line.strip())
+                        current_app.logger.debug(log_msg)
+
             while channel.recv_stderr_ready():
                 stderr_chunk = channel.recv_stderr(1024).decode('utf-8')
-                stderr_buffer += stderr_chunk
-                stderr_lines = stderr_buffer.splitlines(keepends=True)
+                stderr_lines = stderr_chunk.splitlines(keepends=True)
 
                 for line in stderr_lines:
-                    line = line.replace('\r', '')
-                    if line.endswith('\n'):
-                        if line not in proc_info.stderr:
-                            proc_info.stderr.append(line)
-                            log_msg = log_wrap('stderr', line.strip())
-                            current_app.logger.debug(log_msg)
-                    else:
-                        stderr_buffer = line  # Save incomplete line in buffer.
+                    # xterm.js print chokes if last line arr is \r\n and then
+                    # gets updated to something else.
+                    if line == '\r\n':
+                        continue
+
+                    if line not in proc_info.stderr:
+                        proc_info.stderr.append(line)
+                        log_msg = log_wrap('stderr', line.strip())
+                        current_app.logger.debug(log_msg)
 
             # Break if the command is done.
             if channel.exit_status_ready():
                 break
 
+            # Keep CPU from burning.
             time.sleep(0.1)
 
 ## WORKS, CONSOLE BROKEN, BUT CLOSE TO WORKING...

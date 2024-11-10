@@ -12,8 +12,8 @@
     - [x] Make main controls for local installs owned by other users work over ssh.
     - [x] Get Send command working over SSH.
       - Just some backend logic needs written.
-    - [ ] Get live console output working over SSH.
-      - [ ] Rebuild watch code with frontend ajax instead.
+    - [x] Get live console output working over SSH.
+      - [x] Rebuild watch code with frontend ajax instead.
         - I've decided to finally ditch the long running `watch` process as a
           simulacrum of a running console.
         - Instead, I've tweaked the tmux capture pane cmd to get all text from

@@ -26,7 +26,7 @@
           - This way don't need to do whole page reload.
           - Just some js for when in console mode, post to refresh api, fetch
             output api.
-    - [ ] Figure out delete over ssh.
+    - [x] Figure out delete over ssh.
       - Right now delete is run via sudo ansible connector because it can also
         delete the other users.
       - I might keep that for local installs, but for remote just remove files.
@@ -106,6 +106,16 @@
 * [ ] **Add search bar to install page.**
   - User brought up in [this Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/27).
   - I can do this all in JS on top of the existing page.
+
+* [ ] **Make main.conf option & settings page toggle for: 'convert carriage returns to newlines'**
+  - This is the old style and some people might like the ability to switch back.
+  - Now with xterm.js I can take advantage of proper carriage return chars \r
+    so I'm now using those, might as well. Makes things look a little more
+    anitmated.
+  - But some folks might still prefer the old style and I think it should be an
+    easy enough fix to add the \r -> \n conversion back in to the backend ssh
+    wrap function as an optional setting.
+  - Write a test for this new settings option.
 
 * [ ] **Add show_stderr main.conf option to suppress stderr_messages.**
   - Not everything that comes out of stderr is fatal.
@@ -269,9 +279,6 @@
   - Try to thoroughly test site functionality, basically redo all of the same
     things the functional tests do through raw GET/POST requests, but instead
     through the selenium browser.
-
-* [x] ~**Think of way to do watch thread timeout. Not terribly important**~
-  - Kill watchers is dead, no need for this anymore.
 
 * [ ] **Add export game servers list to json (admin only).**
   - Allow admin users to export a list of currently installed / added lgsm game

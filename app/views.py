@@ -195,33 +195,6 @@ def controls():
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
-#            tmux_socket = get_tmux_socket_name(server)
-#
-#            cmd = [
-#                "/usr/bin/tmux",
-#                "-L",
-#                tmux_socket,
-#                "capture-pane",
-#                "-pt",
-#                server.script_name,
-#                "-S", "-", 
-#                "-E", "-", 
-#                "-J",
-#            ]
-#
-#            if should_use_ssh(server):
-#                pub_key_file = get_ssh_key_file(server.username, server.install_host)
-#                daemon = Thread(
-#                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="Console"
-#                )
-#                daemon.start()
-#                return redirect(url_for("views.controls", server=server_name))
-#
-#            daemon = Thread(
-#                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Console"
-#            )
-#            daemon.start()
-#            return redirect(url_for("views.controls", server=server_name))
             return render_template(
                 "controls.html",
                 user=current_user,
@@ -695,6 +668,7 @@ def settings():
     config.read("main.conf")
     text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
+    delete_user = config["settings"].getboolean("delete_user")
     remove_files = config["settings"].getboolean("remove_files")
     clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
     graphs_primary = config["aesthetic"]["graphs_primary"]
@@ -709,6 +683,7 @@ def settings():
     config_options = {
         "text_color": text_color,
         "terminal_height": terminal_height,
+        "delete_user": delete_user,
         "remove_files": remove_files,
         "clear_output_on_reload": clear_output_on_reload,
         "graphs_primary": graphs_primary,
@@ -728,6 +703,7 @@ def settings():
         )
 
     text_color_pref = request.form.get("text_color")
+    user_del_pref = request.form.get("delete_user")
     file_pref = request.form.get("delete_files")
     clear_output_pref = request.form.get("clear_output_on_reload")
     height_pref = request.form.get("terminal_height")
@@ -736,6 +712,11 @@ def settings():
     graphs_secondary_pref = request.form.get("graphs_secondary")
     show_stats_pref = request.form.get("show_stats")
     install_new_user_pref = request.form.get("install_new_user")
+
+    # Set Remove user setting.
+    config["settings"]["delete_user"] = "yes"
+    if user_del_pref == "false":
+        config["settings"]["delete_user"] = "no"
 
     # Set Remove files setting.
     config["settings"]["remove_files"] = "yes"
@@ -1002,7 +983,18 @@ def delete():
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
+    delete_user = config["settings"].getboolean("delete_user")
     remove_files = config["settings"].getboolean("remove_files")
+
+    # NOTE: For everyone's safety, if config options are incongruous, default
+    # to safer keep user, keep files option. (ie. If delete_user is True and
+    # remove_files is False, default to keep user. Cannot delete the user and
+    # keep their files. That is technically possible in Linux. However, to make
+    # things easier on me and hid some unnecessary complexity, my app does not
+    # allow it and will default to keeping users & files.)
+    if delete_user and not remove_files:
+        flash("Incongruous config options detected. Defaulting to safer keep user, keep files option", category="error")
+        delete_user = False
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
@@ -1023,7 +1015,8 @@ def delete():
         # Log to ensure delete from global servers worked.
         current_app.logger.info(log_wrap("servers", servers))
 
-        delete_server(server, remove_files)
+        if not delete_server(server, remove_files, delete_user):
+            flash(f"Something's gone wrong deleting server, {server_name}", category="error")
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.

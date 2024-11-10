@@ -485,37 +485,83 @@ def find_cfg_paths(search_path):
     return cfg_paths
 
 
-# TODO (maybe): Make this return T/F if delete fails and flash user.
-def delete_server(server, remove_files):
+def normalize_path(path):
+    """
+    Little helper function used to normalize supplied path in order to check if
+    two path str's are equivalent.
+    """
+    # Remove extra slashes.
+    path = re.sub(r'/{2,}', '/', path)
+
+    # Remove trailing slash unless it's the root path "/".
+    if path != '/' and path.endswith('/'):
+        path = path[:-1]
+
+    return path
+
+
+def delete_server(server, remove_files, delete_user):
     """
     Does the actual deletions for the /delete route.
 
     Args:
         server (GameServer): Game server to delete.
         remove_file (bool): Config setting to keep/remove files on delete.
+        delete_user (bool): Config setting to keep/remove user on delete.
+
     Returns:
-        None: Just does the delete.
+        Bool: True if deletion was successful, False if something went wrong.
     """
     if not remove_files:
         server.delete()
         flash(f"Game server, {server.install_name} deleted!")
-        return
+        return True
 
     if server.install_type == 'local':
         if server.username == USER:
             if os.path.isdir(server.install_path):
                 shutil.rmtree(server.install_path)
-        else:
+
+        if delete_user and server.username != USER:
             cmd = CONNECTOR_CMD + ['--delete', str(server.id)]
             run_cmd_popen(cmd)
 
     if server.install_type == 'remote':
-        # TODO: Finish this, figure out how I want to do delete for remote.
-        flash(f"Game server, {server.install_name} deleted!")
-        pass
+        if delete_user:
+            flash(f"Warning: Cannot delete game server users for remote installs. Only removing files!")
+
+        # Check to ensure is not a home directory before delete. Just some
+        # idiot proofing, myself being the chief idiot.
+        if normalize_path(f'/home/{server.username}') == normalize_path(server.install_path):
+            flash("Will not delete remote users home directories!", category="error")
+            return False
+
+        proc_info = ProcInfoVessel()
+        keyfile = get_ssh_key_file(server.username, server.install_host)
+        cmd = ['rm', '-rf', server.install_path]
+
+        success = run_cmd_ssh(
+            cmd,
+            server.install_host,
+            server.username,
+            keyfile, 
+            proc_info
+        )
+
+        # If the ssh connection itself fails return False.
+        if not success:
+            current_app.logger.info(proc_info)
+            flash("Problem connecting to remote host!", category="error")
+            return False
+
+        if proc_info.exit_status > 0:
+            current_app.logger.info(proc_info)
+            flash("Delete command failed! Check logs for more info.", category="error")
+            return False
 
     flash(f"Game server, {server.install_name} deleted!")
     server.delete()
+    return True
 
 
 # Validates submitted cfg_file for edit route.
@@ -1119,7 +1165,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
                         current_app.logger.debug(log_msg)
 
             while channel.recv_stderr_ready():
-                stderr_chunk = channel.recv_stderr(1024).decode('utf-8')
+                stderr_chunk = channel.recv_stderr(8192).decode('utf-8')
                 stderr_lines = stderr_chunk.splitlines(keepends=True)
 
                 for line in stderr_lines:

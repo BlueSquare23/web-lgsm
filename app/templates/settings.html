@@ -33,13 +33,30 @@
             </div>
 
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="true" onchange="checkDelFiles()" {% if config_options.delete_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Delete game server's system user on delete (for game servers not owned by web-lgsm system user)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_user" id="keep_user" value="false" {% if config_options.delete_user== false %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Keep user on game server delete
+              </label>
+            </div>
+
+            📍 <i><u>Note: When the system users are deleted, game server files owned by them are automatically deleted as well.</u></i>
+            <br />
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_files" id="delete_files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
               <label class="form-check-label" for="delete-files">
                 Remove game server files on delete
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if config_options.remove_files == false %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="delete_files" id="leave_files" value="false" onchange="checkKeepUser()" {% if config_options.remove_files == false %}checked{% endif %}>
               <label class="form-check-label" for="leave-files">
                 Leave game server files on delete
               </label>
@@ -63,21 +80,6 @@
             <br />
 
 <!--
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
-              <label class="form-check-label" for="delete_user">
-                Delete user on game server delete (for game servers not owned by web-lgsm system user)
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
-              <label class="form-check-label" for="delete_user">
-                Keep user on game server delete
-              </label>
-            </div>
-
-            <br />
-
             <div class="form-check">
               <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
               <label class="form-check-label" for="show_stderr">
@@ -138,4 +140,28 @@ clear_output_on_reload = yes
           </div>
         </form>
       </div>
+      <script>
+        // Marks delete_user checkbox as checked when delete_user is selected.
+        function checkDelFiles() {
+          const deleteUser = document.getElementById('delete_user');
+          const deleteFiles = document.getElementById('delete_files');
+          if (deleteUser.checked) {
+            deleteFiles.checked = true;
+          }
+        }
+        // Marks keep_user checkbox as checked when leave game servers is selected.
+        function checkKeepUser() {
+          const leaveFiles = document.getElementById('leave_files');
+          const keepUser = document.getElementById('keep_user');
+          if (leaveFiles.checked) {
+            keepUser.checked = true;
+          }
+        }
+        // Initial call to set the correct state on page load. Defaults to
+        // checkKeepUser if conf is conflicted for end user safety. Safer to
+        // default to keep, than delete.
+        document.addEventListener('DOMContentLoaded', function() {
+          checkKeepUser();
+        });
+      </script>
 {% endblock %}

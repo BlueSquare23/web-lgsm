@@ -42,6 +42,11 @@
               <a class="nav-link" href="/settings">Settings</a>
             </li>
               {% endif %}
+              {% if user.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="/edit_users">Edit Users</a>
+            </li>
+              {% endif %}
             <li class="nav-item">
               <a class="nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
             </li>

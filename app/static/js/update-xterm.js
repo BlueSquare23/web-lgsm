@@ -56,23 +56,24 @@ function updateTerminal(sName){
       term.write(textStatus + '\n' + errorThrown);
     },
     success: function(respJSON, textStatus, reqObj) {
-      console.log("respJSON.stdout: ");
-      console.log(respJSON.stdout);
-
-      console.log("previousOutput: ");
-      console.log(previousOutput);
 
       // Extract stdout array from the JSON response.
       const currentOutput = respJSON.stdout || [];
-      console.log("currentOutput: ");
-      console.log(currentOutput);
 
       // Find new lines by comparing with previousOutput.
       const newLines = currentOutput.slice(previousOutput.length);
+
+      /* Debugging stuff
+      console.log("respJSON.stdout: ");
+      console.log(respJSON.stdout);
+      console.log("previousOutput: ");
+      console.log(previousOutput);
+      console.log("currentOutput: ");
+      console.log(currentOutput);
       console.log("newLines: ");
       console.log(newLines);
-
       console.log('--------------------------------------------------------');
+      */
 
       if (newLines.length > 0) {
         newLines.forEach(line => {
@@ -110,7 +111,6 @@ if (typeof serverName === 'undefined' || serverName === null || !serverName) {
   }, 5000);
 } else {
   var interval = setInterval(function() {
-    console.log(sConsole);
     updateTerminal(serverName);
   }, 500);
 }

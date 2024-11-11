@@ -1,4 +1,5 @@
 import os
+import io
 import re
 import sys
 import json
@@ -19,6 +20,7 @@ from flask import (
     url_for,
     redirect,
     Response,
+    send_file,
     send_from_directory,
     jsonify,
     current_app
@@ -108,7 +110,7 @@ def controls():
     config.read("main.conf")
     text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
-    cfg_editor = config["settings"]["cfg_editor"]
+    cfg_editor = config["settings"].getboolean("cfg_editor")
     send_cmd = config["settings"].getboolean("send_cmd")
     clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
 
@@ -143,10 +145,10 @@ def controls():
         return redirect(url_for("views.home"))
 
     # If config editor is disabled in the main.conf.
-    if cfg_editor == "no":
+    if not cfg_editor:
         cfg_paths = []
     else:
-        cfg_paths = find_cfg_paths(server.install_path)
+        cfg_paths = find_cfg_paths(server)
         if cfg_paths == "failed":
             flash("Error reading accepted_cfgs.json!", category="error")
             cfg_paths = []
@@ -1075,11 +1077,6 @@ def edit():
         flash("Invalid game server name!", category="error")
         return redirect(url_for("views.home"))
 
-    # Checks that install dir exists.
-    if not os.path.isdir(server.install_path):
-        flash("No game server installation directory found!", category="error")
-        return redirect(url_for("views.home"))
-
     # Try to pull script's basename from supplied cfg_path.
     try:
         cfg_file = os.path.basename(cfg_path)
@@ -1092,38 +1089,59 @@ def edit():
         flash("Invalid config file name!", category="error")
         return redirect(url_for("views.home"))
 
-    # Check that file exists before allowing writes to it. Aka don't allow
-    # arbitrary file creation. Even though the above should block creating
-    # files with arbitrary names, we still don't want to allow arbitrary file
-    # creation anywhere on the file system the app has write perms to.
-    if not os.path.isfile(cfg_path):
-        flash("No such file!", category="error")
-        return redirect(url_for("views.home"))
+    if should_use_ssh(server):
+        # If new contents are supplied via POST, write them to file over ssh.
+        if new_file_contents:
+            written = write_file_over_ssh(server, cfg_path, new_file_contents.replace("\r", ""))
+            if written:
+                flash("Cfg file updated!", category="success")
+            else:
+                flash("Error writing to cfg file!", category="error")
+                return redirect(url_for("views.home"))
 
-    # If new_file_contents supplied in post request, write the new file
-    # contents to the cfg file.
-    if new_file_contents:
+        # Read in file contents over ssh.
+        file_contents = read_file_over_ssh(server, cfg_path)
+        if file_contents == None:
+            flash("Problem reading cfg file!", category="error")
+            return redirect(url_for("views.home"))
+            
+        # If is download request.
+        if download == "yes":
+            file_like_thingy = io.BytesIO(file_contents.encode('utf-8'))
+            return send_file(file_like_thingy, as_attachment=True, download_name=cfg_file, mimetype="text/plain")
+    else:
+        # Check that file exists before allowing writes to it. Aka don't allow
+        # arbitrary file creation. Even though the above should block creating
+        # files with arbitrary names, we still don't want to allow arbitrary file
+        # creation anywhere on the file system the app has write perms to.
+        if not os.path.isfile(cfg_path):
+            flash("No such file!", category="error")
+            return redirect(url_for("views.home"))
+
+        # If new_file_contents supplied in post request, write the new file
+        # contents to the cfg file.
+        if new_file_contents:
+            try:
+                with open(cfg_path, "w") as f:
+                    f.write(new_file_contents.replace("\r", ""))
+                flash("Cfg file updated!", category="success")
+            except:
+                flash("Error writing to cfg file!", category="error")
+
+        # Read in file contents from cfg file.
+        file_contents = ""
+        # Try except in case problem with file.
         try:
-            with open(cfg_path, "w") as f:
-                f.write(new_file_contents.replace("\r", ""))
-            flash("Config Updated!", category="success")
+            with open(cfg_path) as f:
+                file_contents = f.read()
         except:
-            flash("Error writing to config!", category="error")
+            flash("Error reading config!", category="error")
+            return redirect(url_for("views.home"))
 
-    # Read in file contents from cfg file.
-    file_contents = ""
-    # Try except incase problem with file.
-    try:
-        with open(cfg_path) as f:
-            file_contents = f.read()
-    except:
-        flash("Error reading config!", category="error")
-        return redirect(url_for("views.home"))
-
-    # If is download request.
-    if download == "yes":
-        basedir, basename = os.path.split(cfg_path)
-        return send_from_directory(basedir, basename, as_attachment=True)
+        # If is download request.
+        if download == "yes":
+            basedir, basename = os.path.split(cfg_path)
+            return send_from_directory(basedir, basename, as_attachment=True)
 
     return render_template(
         "edit.html",

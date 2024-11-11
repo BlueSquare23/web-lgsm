@@ -32,7 +32,7 @@
       - I might keep that for local installs, but for remote just remove files.
       - Maybe I should add a toggle / config setting for "cleanup system user
         on delete" or something like that.
-    - [ ] Figure out update config files over SSH.
+    - [x] Figure out update config files over SSH.
       - I was going to put this off for a future release, but then there's no
         good way to do edit cfg files for game servers installed as other
         system users.

@@ -459,28 +459,72 @@ def get_running_installs():
     return thread_names
 
 
-# Returns list of any game server cfg listed in accepted_cfgs.json under the
-# search_path.
-def find_cfg_paths(search_path):
+def find_cfg_paths(server):
+    """
+    Finds a list of all valid cfg files for a given game server.
+
+    Args:
+        server (GameServer): Game server to find cfg files for.
+
+    Returns:
+        cfg_paths (list): List of found valid config files.
+    """
+    cfg_paths = []
+
     # Try except in case problem with json files.
     try:
         cfg_whitelist = open("json/accepted_cfgs.json", "r")
         json_data = json.load(cfg_whitelist)
         cfg_whitelist.close()
     except:
-        return "failed"
+        return cfg_paths
 
-    cfg_paths = []
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
-    # Find all cfgs under search_path using os.walk.
-    for root, dirs, files in os.walk(search_path):
-        # Ignore default cfgs.
-        if "config-default" in root:
-            continue
-        for file in files:
-            if file in valid_gs_cfgs:
-                cfg_paths.append(os.path.join(root, file))
+    if server.install_type == 'local':
+        # Find all cfgs under install_path using os.walk.
+        for root, dirs, files in os.walk(server.install_path):
+            # Ignore default cfgs.
+            if "config-default" in root:
+                continue
+            for file in files:
+                if file in valid_gs_cfgs:
+                    cfg_paths.append(os.path.join(root, file))
+
+    if server.install_type == 'remote':
+        proc_info = ProcInfoVessel()
+        keyfile = get_ssh_key_file(server.username, server.install_host)
+        wanted = []
+        for cfg in valid_gs_cfgs:
+            wanted += ['-name', cfg, '-o']
+        cmd = ['/usr/bin/find', server.install_path, '-name', 'config-default', '-prune', '-type', 'f'] + wanted[:-1]
+
+        success = run_cmd_ssh(
+            cmd,
+            server.install_host,
+            server.username,
+            keyfile, 
+            proc_info
+        )
+
+        # If the ssh connection itself fails return False.
+        if not success:
+            current_app.logger.info(proc_info)
+            flash("Problem connecting to remote host!", category="error")
+            return cfg_paths
+
+        if proc_info.exit_status > 0:
+            current_app.logger.info(proc_info)
+            flash("Problem running find cfg cmd. Check logs for more details.", category="error")
+            return cfg_paths
+
+        for item in proc_info.stdout:
+            item = item.strip()
+            current_app.logger.info(item)
+
+            # Check str coming back is valid cfg name str.
+            if os.path.basename(item) in valid_gs_cfgs:
+                cfg_paths.append(item)
 
     return cfg_paths
 
@@ -1080,7 +1124,7 @@ def gen_ssh_rule(pub_key):
     """
     return f'{pub_key} command="/path/to/ssh_connector.sh"'
 
-    # ...
+    # TODO: Finish this.
 
 
 def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(), app_context=False, timeout=5.0):
@@ -1100,6 +1144,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+    # TODO: Make not clear if config/settings option for keep output is set.
     proc_info.stdout.clear()
     proc_info.stderr.clear()
 
@@ -1136,9 +1181,6 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         # Optionally set timeout (if provided).
         if timeout:
             channel.settimeout(timeout)
-
-        stdout_buffer = ""
-        stderr_buffer = ""
 
         # RANT: Because of course, why would the most popular ssh module for
         # Python make it easy to read output by newlines? Paramiko's opinion is
@@ -1186,45 +1228,6 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
             # Keep CPU from burning.
             time.sleep(0.1)
 
-## WORKS, CONSOLE BROKEN, BUT CLOSE TO WORKING...
-#        stdout_buffer = ""
-#        stderr_buffer = ""
-#
-##        while True:
-#        while not channel.exit_status_ready():
-#            if channel.recv_ready():
-#                stdout_buffer += channel.recv(1024).decode('utf-8')
-#                stdout_lines = stdout_buffer.splitlines(keepends=True)
-#
-#                for line in stdout_lines:
-#                    line = line.replace('\r', '')
-#                    if line.endswith('\n'):
-#                        if line not in proc_info.stdout:
-#                            proc_info.stdout.append(line)
-#                            log_msg = log_wrap('stdout', line.strip())
-#                            current_app.logger.debug(log_msg)
-#                    else:
-#                        stdout_buffer = line  # Save incomplete line in buffer.
-#
-#            if channel.recv_stderr_ready():
-#                stderr_buffer += channel.recv_stderr(1024).decode('utf-8')
-#                stderr_lines = stderr_buffer.splitlines(keepends=True)
-#
-#                for line in stderr_lines:
-#                    line = line.replace('\r', '')
-#                    if line.endswith('\n'):
-#                        if line not in proc_info.stderr:
-#                            proc_info.stderr.append(line)
-#                            log_msg = log_wrap('stderr', line.strip())
-#                            current_app.logger.debug(log_msg)
-#                    else:
-#                        stderr_buffer = line  # Save incomplete line in buffer.
-#
-##            if channel.exit_status_ready():
-##                break
-#
-#            time.sleep(0.1)
-
         # Wait for the command to finish and get the exit status.
         proc_info.exit_status = channel.recv_exit_status()
         proc_info.process_lock = False
@@ -1249,12 +1252,75 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         return ret_status
 
     
+def read_file_over_ssh(server, file_path):
+    """
+    Reads a file from a remote server over SSH and returns its content. Used
+    for updating config files for remote installs. However, its been built as a
+    general purpose read file over ssh using paramiko sftp.
+
+    Args:
+        server (GameServer): Server to get file for.
+        file_path: The path of the file to read on the remote machine.
+
+    Returns:
+        str: Returns the contents of the file as a string.
+    """
+    current_app.logger.info(log_wrap('file_path', file_path))
+    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+
+    try:
+        # Open ssh client conn.
+        with paramiko.SSHClient() as ssh:
+            # Automatically add the host key.
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(server.install_host, username=server.username, key_filename=pub_key_file, timeout=3)
+
+            # Open sftp session.
+            with ssh.open_sftp() as sftp:
+                # Open file over sftp.
+                with sftp.open(file_path, "r") as file:
+                    content = file.read()
+
+            return content.decode()
+
+    except Exception as e:
+        current_app.logger.debug(e) 
+        return None
 
 
+def write_file_over_ssh(server, file_path, content):
+    """
+    Writes a string to a file on a remote server over SSH. Similarly to
+    read_file_over_ssh(), this function is used to update cfg files for remote
+    game servers. However, it is written as a general purpose write over ssh
+    using paramiko sftp.
 
+    Parameters:
+        server (GameServer): Game Server to write the cfg file changes for.
+        file_path (str): The path of the file to write on the remote server.
+        content (str): The string content to write to the file.
 
+    Returns:
+        Bool: True if the write was successful, False otherwise.
+    """
+    current_app.logger.info(log_wrap('file_path', file_path))
+    pub_key_file = get_ssh_key_file(server.username, server.install_host)
 
+    try:
+        with paramiko.SSHClient() as ssh:
+            # Automatically add the host key.
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(server.install_host, username=server.username, key_filename=pub_key_file, timeout=3)
 
+            with ssh.open_sftp() as sftp:
+                with sftp.open(file_path, "w") as file:
+                    file.write(content)
+        
+        return True
+
+    except Exception as e:
+        current_app.logger.debug(e) 
+        return False
 
 
 

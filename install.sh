@@ -99,7 +99,8 @@ echo "  - $USER" >> $accpt_usernames
 sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
 sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;
 sudo chmod 755 $apb $ansible_connector
-sudo chown -R root:root $apb "$SCRIPTPATH/playbooks" "$SCRIPTPATH/venv"
+sudo chown -R root:root $apb "$SCRIPTPATH/playbooks"
+sudo chattr +i $apb $ansible_connector
 
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"

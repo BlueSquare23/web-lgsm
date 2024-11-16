@@ -23,7 +23,8 @@ def test_start_server(setup_venv):
 
 
 def test_stop_server(setup_venv):
-    subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
+    result = subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
+    print(result.stdout)
     # Sleep to ensure the server has started.
     time.sleep(4)
     result = subprocess.run([SCRIPT, "--stop"], capture_output=True, text=True)

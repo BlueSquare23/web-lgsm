@@ -25,7 +25,7 @@ def test_start_server(setup_venv):
 def test_stop_server(setup_venv):
     subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
     # Sleep to ensure the server has started.
-    time.sleep(2)
+    time.sleep(4)
     result = subprocess.run([SCRIPT, "--stop"], capture_output=True, text=True)
     assert "Server Killed!" in result.stdout
 
@@ -33,7 +33,7 @@ def test_stop_server(setup_venv):
 def test_check_status_running(setup_venv):
     subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
     # Sleep to ensure the server has started.
-    time.sleep(2)
+    time.sleep(4)
     result = subprocess.run([SCRIPT, "--status"], capture_output=True, text=True)
     assert "Server Currently Running." in result.stdout
     # Stop server after test.

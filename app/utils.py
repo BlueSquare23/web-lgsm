@@ -240,6 +240,17 @@ def should_use_ssh(server):
     return False
 
 
+def purge_tmux_socket_cache():
+    """
+    Deletes local cache of sock file names for installs. Used by setting page
+    option. Useful for when game server has been re-installed to get status
+    indicators working again.
+    """
+    socket_file_name_cache = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+    if os.path.exists(socket_file_name_cache):
+        os.remove(socket_file_name_cache)
+
+
 def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
     """
     Uses SSH to get tmux socket name for remote and non-same user installs.

@@ -2,7 +2,7 @@
 
 ### v1.8.0 Pt 2.5.  Add Remote Admin Over SSH Support
 
-* [ ] **Add ability to admin remote game server(s) over SSH through web portal.**
+* [x] **Add ability to admin remote game server(s) over SSH through web portal.**
   - The idea here would be to allow the web-lgsm interface running on serverA
     to connect to another machine on serverB and run game server admin commands
     (stop, start, restart, etc.).
@@ -41,12 +41,6 @@
           necessary.
       - Problem is this might then interfere with my vision for the below
         bullet point.
-    - [ ] Write `ssh_connector.sh` shell script. Basically if I want to limit
-      access to multiple commands over ssh I need to do something like this:
-      - https://serverfault.com/questions/749474/ssh-authorized-keys-command-option-multiple-commands
-      - I think doing this in bash is probably safe enough.
-        - Will just have to validate cmds are legit.
-        - Will cross `send` command bridge when we come to it. 
   - Things I'm not going to do:
     - Defer install game server over ssh till next release.
       - More code than I wanna write right now (already a lot in this release)!
@@ -228,6 +222,13 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] Write `ssh_connector.sh` shell script.
+  - Basically if I want to limit access to multiple commands over ssh I need to
+    do something like this: https://serverfault.com/questions/749474/ssh-authorized-keys-command-option-multiple-commands
+  - I think doing this in bash is probably safe enough.
+    - Will just have to validate cmds are legit.
+    - Will cross `send` command bridge when we come to it. 
 
 * [ ] **Re-write routes to be all api based.**
   - I know it might seem tedious, but what this will give me is an api that

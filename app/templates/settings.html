@@ -96,6 +96,8 @@
             <br />
 -->
 
+            <!-- TODO: FIX THIS 👇 Pretty sure I broke it while reworking the console code. Have to poke around and see if this can be fixed. -->
+            <p><b style="color:yellow">NOTE TO SELF: BROKEN ATM 👇 </b></p>
             <div class="form-check">
               <input class="form-check-input" type="radio" name="clear_output_on_reload" id="clear_output_on_reload" value="true" {% if config_options.clear_output_on_reload == true %}checked{% endif %}>
               <label class="form-check-label" for="clear_output_on_reload">
@@ -108,17 +110,23 @@
                 Do not clear web terminal after running command (output is appended to existing output)
               </label>
             </div>
-<!--
-delete_user = yes
-show_stderr = no
-clear_output_on_reload = yes
--->
+
             <hr />
 
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="true" id="show_stats" name="show_stats" {% if config_options.show_stats == true %}checked{% endif %}>
               <label class="form-check-label" for="show_stats">
                 Show Live Server Stats on Home Page 📈
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="true" id="purge_tmux_cache" name="purge_tmux_cache">
+              <label class="form-check-label" for="purge_tmux_cache">
+                Delete local tmux socket file name cache<br>
+                <i>Helps fix broken status indicators after game server reinstallation / upgrades.</i>
               </label>
             </div>
 
@@ -141,6 +149,7 @@ clear_output_on_reload = yes
         </form>
       </div>
       <script>
+        // TODO: Move into its own script file.
         // Marks delete_user checkbox as checked when delete_user is selected.
         function checkDelFiles() {
           const deleteUser = document.getElementById('delete_user');

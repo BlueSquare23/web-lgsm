@@ -713,7 +713,11 @@ def settings():
     graphs_primary_pref = request.form.get("graphs_primary")
     graphs_secondary_pref = request.form.get("graphs_secondary")
     show_stats_pref = request.form.get("show_stats")
+    purge_tmux_cache = request.form.get("purge_tmux_cache")
     install_new_user_pref = request.form.get("install_new_user")
+
+    if purge_tmux_cache != None:
+        purge_tmux_socket_cache()
 
     # Set Remove user setting.
     config["settings"]["delete_user"] = "yes"

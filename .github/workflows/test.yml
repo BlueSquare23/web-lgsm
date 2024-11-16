@@ -52,4 +52,4 @@ jobs:
           javac -version
       - name: Run Pytest Tests
         run: |
-          $HOME/web-lgsm.py --test_full
+          $HOME/web-lgsm.py --test

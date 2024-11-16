@@ -2,61 +2,10 @@
 
 ### v1.8.0 Pt 2.5.  Add Remote Admin Over SSH Support
 
-* [x] **Add ability to admin remote game server(s) over SSH through web portal.**
-  - The idea here would be to allow the web-lgsm interface running on serverA
-    to connect to another machine on serverB and run game server admin commands
-    (stop, start, restart, etc.).
-    - Basically, exactly the same stuff as for local install's it would just
-      run the command over ssh instead.
-  - Involves:
-    - [x] Make main controls for local installs owned by other users work over ssh.
-    - [x] Get Send command working over SSH.
-      - Just some backend logic needs written.
-    - [x] Get live console output working over SSH.
-      - [x] Rebuild watch code with frontend ajax instead.
-        - I've decided to finally ditch the long running `watch` process as a
-          simulacrum of a running console.
-        - Instead, I've tweaked the tmux capture pane cmd to get all text from
-          the session.
-        - I'm going to make a new POST api route, /api/refresh_console.
-          - The /controls page console command will, send a post (aka trigger
-            an ssh connection, to tmux capture the output).
-          - Then once that returns ok, the `updateTerminal()` js will run
-            fetching the latest output from /api/cmd-output.
-          - This way don't need to do whole page reload.
-          - Just some js for when in console mode, post to refresh api, fetch
-            output api.
-    - [x] Figure out delete over ssh.
-      - Right now delete is run via sudo ansible connector because it can also
-        delete the other users.
-      - I might keep that for local installs, but for remote just remove files.
-      - Maybe I should add a toggle / config setting for "cleanup system user
-        on delete" or something like that.
-    - [x] Figure out update config files over SSH.
-      - I was going to put this off for a future release, but then there's no
-        good way to do edit cfg files for game servers installed as other
-        system users.
-      - I don't want to run that through the ansible connector script.
-        - Once again should only really elevate privs when absolutely
-          necessary.
-      - Problem is this might then interfere with my vision for the below
-        bullet point.
-  - Things I'm not going to do:
-    - Defer install game server over ssh till next release.
-      - More code than I wanna write right now (already a lot in this release)!
-
-* [ ] **Fix tests broken by recent changes.**
+* [x] **Fix tests broken by recent changes.**
   - I don't even know what all is broken yet, that's next step is run em and
     start fixing them after above changes are done.
 
-* [ ] **Write new tests for recent changes.**
-  - Includes:
-    - [ ] Test add game server `install_type` remote.
-      - Will use some dummy hostname or IP that's open on ssh I got plenty of
-        hosts I can pick from.
-      - Also can't really run commands on a dummy remote but should basically
-        be no different from running commands as a different system user over
-        ssh. So probably going to say that's good enough for this release.
 
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
@@ -201,6 +150,18 @@
 
 * [ ] **Apply autoformatting via `black`.**
 
+* [ ] **Write new tests for SSH and docker changes.**
+  - After refactor go through and add new tests for new ssh and docker main
+    features. Test code itself all needs refactored and re-written. But that's
+    a job for another day, for now it works.
+  - Includes:
+    - [ ] Test add game server `install_type` remote.
+      - Will use some dummy hostname or IP that's open on ssh I got plenty of
+        hosts I can pick from.
+      - Also can't really run commands on a dummy remote but should basically
+        be no different from running commands as a different system user over
+        ssh. So probably going to say that's good enough for this release.
+
 * [ ] **MANUAL QA TESTING.**
   - [ ] Going to try to bribe my friends with pizza and or fine lettuces to go
     through and make sure its doing the needful.
@@ -223,12 +184,17 @@
 
 ## Version 1.9.0 Todos
 
-* [ ] Write `ssh_connector.sh` shell script.
+* [ ] **Write `ssh_connector.sh` shell script.**
   - Basically if I want to limit access to multiple commands over ssh I need to
     do something like this: https://serverfault.com/questions/749474/ssh-authorized-keys-command-option-multiple-commands
   - I think doing this in bash is probably safe enough.
     - Will just have to validate cmds are legit.
     - Will cross `send` command bridge when we come to it. 
+
+* [ ] **Allow remote game server installs over SSH.**
+  - I already have a lot of the install process setup as playbooks anyways.
+  - Would just need to do install type remote `./gsserver ai` via
+    `run_cmd_ssh()` instead of using ansible connector.
 
 * [ ] **Re-write routes to be all api based.**
   - I know it might seem tedious, but what this will give me is an api that

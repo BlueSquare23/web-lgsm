@@ -1,12 +1,5 @@
 ## Version 1.8.0 Todos
 
-### v1.8.0 Pt 2.5.  Add Remote Admin Over SSH Support
-
-* [x] **Fix tests broken by recent changes.**
-  - I don't even know what all is broken yet, that's next step is run em and
-    start fixing them after above changes are done.
-
-
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
@@ -29,6 +22,14 @@
       something if you want that.
     - Instead my app's just going to check if the game server container is
       running and if so you can run commands for it through the web interface.
+  - [x] Get add game server in container working.
+  - [ ] Get docker install status indicators working.
+    - [ ] Get tmux socket cache functions to work for docker installs. 
+      - Didn't realize it before but this is required for live console too duh.
+  - [x] Get general controls for game server in container working.
+    - Run commands through: `docker exec -it --user server.username server.server_name gsserver cmd`
+  - [x] Get send command working for containers.
+  - [ ] Get live console working for containers.
 
 * [ ] **Add docs for docker changes.**
 
@@ -150,7 +151,7 @@
 
 * [ ] **Apply autoformatting via `black`.**
 
-* [ ] **Write new tests for SSH and docker changes.**
+* [ ] **Write new tests for SSH, docker changes, and the rest.**
   - After refactor go through and add new tests for new ssh and docker main
     features. Test code itself all needs refactored and re-written. But that's
     a job for another day, for now it works.

@@ -234,6 +234,9 @@ def controls():
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
+            if server.install_type == 'docker':
+                cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
+
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
             )
@@ -250,6 +253,10 @@ def controls():
                 )
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
+
+            if server.install_type == 'docker':
+                # Example: docker exec bf1942server /usr/bin/sudo -u linuxgsm /app/bf1942server dt
+                cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
@@ -490,6 +497,7 @@ def install():
 
 ######### API Update Console #########
 
+# TODO: Remove GET method, just here for testing.
 @views.route("/api/update-console", methods=["GET", "POST"])
 @login_required
 def update_console():
@@ -498,8 +506,10 @@ def update_console():
 #        return redirect(url_for("views.home"))
     global servers
 
-    # Collect var from POST request.
+# FOR TESTING VIA GET.
 #    server_name = request.args.get("server")
+
+    # Collect var from POST request.
     server_name = request.form.get("server")
 
     # Can't do needful without a server specified.
@@ -532,6 +542,9 @@ def update_console():
         "-E", "-", 
         "-J",
     ]
+
+    if server.install_type == 'docker':
+        cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
 
     if server.install_name in servers:
         proc_info = servers[server.install_name]

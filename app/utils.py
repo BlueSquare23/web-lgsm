@@ -311,7 +311,7 @@ def update_tmux_socket_name_cache(server_id, socket_name):
 
 def get_tmux_socket_name_from_cache(server, gs_id_file_path):
     """
-    Get's the tmux socket name for remote and non-same user installs from the
+    Get's the tmux socket name for remote, and non-same user installs from the
     cache. If there is no cache file get socket for server and create cache. If
     the cache file is older than a week get socket name and update cache.
     Otherwise just pull the socket name value from the json cache.
@@ -363,9 +363,9 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
 def get_tmux_socket_name(server):
     """
     Get's the tmux socket file name for a given game server. Will call
-    get_tmux_socket_name_from_cache() for remote & non-same user installs,
-    otherwise will just read the gs_id value from the local file system to
-    build the socket name.
+    get_tmux_socket_name_from_cache() for remote & non-same user
+    installs, otherwise will just read the gs_id value from the local file
+    system to build the socket name.
 
     Args:
         server (GameServer): Game Server to get tmux socket name for.
@@ -390,9 +390,10 @@ def get_tmux_socket_name(server):
 
 def get_server_status(server):
     """
-    Get's the game server status (on/off) for a specific game server. Does so
-    by checking game server's assigned tmux socket file state. Runs over SSH
-    for install_types remote and username other user.
+    Get's the game server status (on/off) for a specific game server. For
+    install_type local same user, does so by running tmux cmd locally. For
+    install_type remote and local not same user, fetches status by running tmux
+    cmd over SSH. For install_type docker, uses docker cmd to fetch status.
 
     Args:
         server (GameServer): Game server object to check status of.
@@ -402,11 +403,12 @@ def get_server_status(server):
     """
     proc_info = ProcInfoVessel()
 
-    socket = get_tmux_socket_name(server)
-    if socket == None:
-        return None
+    if server.install_type != 'docker':
+        socket = get_tmux_socket_name(server)
+        if socket == None:
+            return None
 
-    cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
+        cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
 
     if should_use_ssh(server):
         gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
@@ -423,11 +425,19 @@ def get_server_status(server):
         if not success:
             current_app.logger.info(proc_info)
             return None
-    else:
-        gs_id = get_gs_id(server)
-        if gs_id == None:
-            return False
 
+    # For docker installs just check if container is running.
+    elif server.install_type == 'docker':
+        cmd = ['/usr/bin/docker', 'ps', '--filter', f'name={server.script_name}', '--format', '{{.State}}']
+        run_cmd_popen(cmd, proc_info)
+
+        if 'running\n' in proc_info.stdout:
+            return True
+
+        return False
+
+    # Else type local same user.
+    else:
         run_cmd_popen(cmd, proc_info)
 
     current_app.logger.info(proc_info)

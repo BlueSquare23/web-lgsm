@@ -251,6 +251,36 @@ def purge_tmux_socket_cache():
         os.remove(socket_file_name_cache)
 
 
+def get_tmux_socket_name_docker(server, gs_id_file_path):
+    """
+    Gets tmux socket name for docker type installs by running commands through
+    run_cmd_popen().
+
+    Args:
+        server (GameServer): Game Server to get tmux socket name for.
+        gs_id_file_path (str): Path to gs_id file for game server.
+
+    Returns:
+        str: Returns the socket name for game server. None if can't get
+             socket name.
+    """
+    proc_info = ProcInfoVessel()
+    cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/cat', gs_id_file_path]
+
+    run_cmd_popen(cmd, proc_info)
+
+    if proc_info.exit_status > 0:
+        current_app.logger.info(proc_info)
+        return None
+
+    gs_id = proc_info.stdout[0].strip()
+
+    if len(gs_id) == 0:
+        return None
+
+    return server.script_name + "-" + gs_id
+
+
 def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
     """
     Uses SSH to get tmux socket name for remote and non-same user installs.
@@ -264,7 +294,7 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = ['cat', gs_id_file_path]
+    cmd = ['/usr/bin/cat', gs_id_file_path]
     keyfile = get_ssh_key_file(server.username, server.install_host)
 
     success = run_cmd_ssh(
@@ -311,10 +341,10 @@ def update_tmux_socket_name_cache(server_id, socket_name):
 
 def get_tmux_socket_name_from_cache(server, gs_id_file_path):
     """
-    Get's the tmux socket name for remote, and non-same user installs from the
-    cache. If there is no cache file get socket for server and create cache. If
-    the cache file is older than a week get socket name and update cache.
-    Otherwise just pull the socket name value from the json cache.
+    Get's the tmux socket name for remote, docker, and non-same user installs
+    from the cache. If there is no cache file get socket for server and create
+    cache. If the cache file is older than a week get socket name and update
+    cache. Otherwise just pull the socket name value from the json cache.
 
     Args:
         server (GameServer): Game Server to get tmux socket name for.
@@ -327,7 +357,10 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
     cache_file = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
 
     if not os.path.exists(cache_file):
-        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        if server.install_type == 'docker':
+            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+        else:
+            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
         update_tmux_socket_name_cache(server.id, socket_name)
         return socket_name
 
@@ -344,7 +377,11 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
     # more recent. Aka if the epoch time of one week ago is larger than the
     # epoch timestamp of cache file than the cache must be older than a week.
     if cache_time < one_week_ago:
-        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        if server.install_type == 'docker':
+            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+        else:
+            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+
         update_tmux_socket_name_cache(server.id, socket_name)
         return socket_name
 
@@ -352,7 +389,11 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
         cache_data = json.load(file)
 
     if str(server.id) not in cache_data:
-        socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+        if server.install_type == 'docker':
+            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+        else:
+            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+
         update_tmux_socket_name_cache(server.id, socket_name)
         return socket_name
 
@@ -363,7 +404,7 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
 def get_tmux_socket_name(server):
     """
     Get's the tmux socket file name for a given game server. Will call
-    get_tmux_socket_name_from_cache() for remote & non-same user
+    get_tmux_socket_name_from_cache() for remote, docker, & non-same user
     installs, otherwise will just read the gs_id value from the local file
     system to build the socket name.
 
@@ -376,7 +417,7 @@ def get_tmux_socket_name(server):
     """
     gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
 
-    if should_use_ssh(server):
+    if should_use_ssh(server) or server.install_type == 'docker':
         return get_tmux_socket_name_from_cache(server, gs_id_file_path)
 
     if not os.path.isfile(gs_id_file_path):
@@ -403,12 +444,11 @@ def get_server_status(server):
     """
     proc_info = ProcInfoVessel()
 
-    if server.install_type != 'docker':
-        socket = get_tmux_socket_name(server)
-        if socket == None:
-            return None
+    socket = get_tmux_socket_name(server)
+    if socket == None:
+        return None
 
-        cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
+    cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
 
     if should_use_ssh(server):
         gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
@@ -426,15 +466,9 @@ def get_server_status(server):
             current_app.logger.info(proc_info)
             return None
 
-    # For docker installs just check if container is running.
     elif server.install_type == 'docker':
-        cmd = ['/usr/bin/docker', 'ps', '--filter', f'name={server.script_name}', '--format', '{{.State}}']
+        cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
         run_cmd_popen(cmd, proc_info)
-
-        if 'running\n' in proc_info.stdout:
-            return True
-
-        return False
 
     # Else type local same user.
     else:

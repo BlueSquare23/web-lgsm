@@ -3,7 +3,7 @@
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
-* [ ] **Add Support for game servers in containers!**
+* [x] **Add Support for game servers in containers!**
   - My thoughts are in this case its much like the add but just for docker
     containers.
     - So users would've already setup these containers ahead of time
@@ -23,13 +23,13 @@
     - Instead my app's just going to check if the game server container is
       running and if so you can run commands for it through the web interface.
   - [x] Get add game server in container working.
-  - [ ] Get docker install status indicators working.
-    - [ ] Get tmux socket cache functions to work for docker installs. 
+  - [x] Get docker install status indicators working.
+    - [x] Get tmux socket cache functions to work for docker installs. 
       - Didn't realize it before but this is required for live console too duh.
   - [x] Get general controls for game server in container working.
     - Run commands through: `docker exec -it --user server.username server.server_name gsserver cmd`
   - [x] Get send command working for containers.
-  - [ ] Get live console working for containers.
+  - [x] Get live console working for containers.
 
 * [ ] **Add docs for docker changes.**
 
@@ -42,10 +42,13 @@
   - I mean its kinda silly cause the actions themself are in a container so
     afaic same thing.
 
-* [ ] **Apply autoformatting via `black`.**
-
 ### v1.8.0 Pt 4. The Rest...
 ---
+
+* [ ] **Create a APP_PATHS global dictionary to store full paths for shell utils**
+  - Should be using variables for full paths.
+  - [ ] Maybe also add to main.conf as optional configurable parameters.
+    - Have to see how config parse stores dictionaries, there's probably some way...
 
 * [ ] **Add search bar to install page.**
   - User brought up in [this Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/27).

@@ -197,6 +197,8 @@ def controls():
                 flash("Server is Off! No Console Output!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
+            # Console mode is trigger in JS, set off by console=True. Nothing
+            # for backend console happens here. See /api/update-console route!
             return render_template(
                 "controls.html",
                 user=current_user,

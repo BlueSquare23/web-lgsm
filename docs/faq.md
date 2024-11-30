@@ -29,6 +29,7 @@
       server specific console commands to the running tmux session for your
       game server.
 
+<!-- TODO: UPDATE THIS ONE!!! -->
 5. Question: I just updated to version 1.6.0 (or greater) from v1.5.0 (or below)
    and now my web-lgsm instance wont start. How do I fix this?
   - Answer: The database changed slightly with the release of v1.6.0. If you've
@@ -38,12 +39,18 @@
     the password in the database changed slightly. You can change it to the
     same password as what it already was, the hash just needs regenerated.
 
-6. Questions: Where's the `init.sh` script?
+6. Question: Why are some of my home page "Installed Servers" status indicators grey?
+  - Answer: If a server's status (on/off) cannot be determined, its status
+    indicator will be left grey. This will happen if the game server cannot be
+    reached over SSH (for remote & non-same user install types) or if the
+    docker container can't be reached.
+
+7. Question: Where's the `init.sh` script?
   - Answer: In version 1.7.0 the `init.sh` script was replaced with the all in
     one `web-lgsm.py` script. It now does all of the old things the init script
     did plus lots more! Run `./web-lgsm.py --help` to see all options!
 
-7. Question: Why don't any of my sudo rules work? / Why does the web app say
+8. Question: Why don't any of my sudo rules work? / Why does the web app say
    _"sudo: a password is required"_?
    - It may be the case that you have `/etc/sudoers.d` disabled or have
      additional entries for your user after the `#includedir /etc/sudoers.d`

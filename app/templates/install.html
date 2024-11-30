@@ -30,24 +30,38 @@
         </div>
 
         <br />
+
+        <h2>Search</h2>
+        <div class="row">
+          <div class="col">
+            <div class="mb-3">
+              <label for="search-form" style="color:white" class="form-label">Game Server:</label>
+              <input type="text" class="form-control" id="search-form" placeholder="Example: Minecraft">
+            </div>
+          </div>
+        </div>
+
+        <br />
         <h2 style="color: white;">Install a New LGSM Server</h2>
         <hr />
 
         {% for script_name, full_name in servers.items() %}
-        <div class="row">
-          <div class="col">
-            <form method="POST" class="form-group" id="install-form" action="/install">
-              <input type="hidden" id="server_name" name="server_name" value="{{script_name}}" class="form-control" />
-              <input type="hidden" id="full_name" name="full_name" value="{{full_name}}" class="form-control" />
+        <div id="form-{{script_name}}">
+          <div class="row" id="row-{{script_name}}">
+            <div class="col">
+              <form method="POST" class="form-group" id="install-form" action="/install">
+                <input type="hidden" id="server_name" name="server_name" value="{{script_name}}" class="form-control" />
+                <input type="hidden" id="full_name" name="full_name" value="{{full_name}}" class="form-control" />
 
-              <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
-            </form>
+                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
+              </form>
+            </div>
+            <div class="col text-primary">
+              {{full_name}}
+            </div>
           </div>
-          <div class="col text-primary">
-            {{full_name}}
-          </div>
+          <br />
         </div>
-        <br />
         {% endfor %}
       </div>
       <br />
@@ -55,7 +69,7 @@
       <!-- Set global serverName for update-xterm.js -->
       <script>var serverName = "{{ install_name }}"; var textColor = "{{ text_color }}"</script>
       <script src="/static/js/update-xterm.js"></script>
-
+      <script src="static/js/update-install-search.js"></script>
 
       {% if install_name %}
         <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server={{install_name}}&cancel=true" role="button">Cancel Install</a>

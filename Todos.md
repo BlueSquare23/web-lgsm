@@ -3,10 +3,7 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Create a PATHS global dictionary to store full paths for shell utils**
-  - Should be using variables for full paths.
-
-* [ ] **Add search bar to install page.**
+* [x] **Add search bar to install page.**
   - User brought up in [this Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/27).
   - I can do this all in JS on top of the existing page.
 
@@ -62,6 +59,12 @@
 * [ ] **Make install.sh setup npm pkgs at the end.**
   - I'm using xterm.js and a plugin for them that can only be installed via
     npm.
+
+* [ ] **Make install.sh support --docker flag to install container components**
+  - Just to install docker & docker-compose if they're not already installed.
+  - My app also wants it to be user in docker group, run docker cmds without
+    sudo.
+    - Maybe can change that and sudo prepend and have docker add sudoers rules. 
 
 * [ ] **Add support for Ubuntu 24.04.**
   - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`

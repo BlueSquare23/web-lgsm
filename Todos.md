@@ -1,18 +1,10 @@
 ## Version 1.8.0 Todos
 
-### v1.8.0 Pt 3. Dockerize and Shine
----
-
-* [x] **Add docs for docker changes.**
-
-
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [ ] **Create a APP_PATHS global dictionary to store full paths for shell utils**
+* [x] **Create a PATHS global dictionary to store full paths for shell utils**
   - Should be using variables for full paths.
-  - [ ] Maybe also add to main.conf as optional configurable parameters.
-    - Have to see how config parse stores dictionaries, there's probably some way...
 
 * [ ] **Add search bar to install page.**
   - User brought up in [this Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/27).
@@ -222,6 +214,18 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **Make PATHS options configurable in main.conf**
+  - What I'm thinking is that the main.conf could have a section for [paths]
+    and then specific utils paths could be set in there and passed through to
+    the web app.
+    - For example:
+    ```
+    [paths]
+    cat = /bin/cat
+    ```
+  - [!] Might kinda be a security issue, have to think more about how to do
+    this safely. Maybe only allow paths under the user real PATH var...
 
 * [ ] **Make cfg editor work for `install_type` docker.**
   - Never got around to making this work for the v1.8 release. Just had too

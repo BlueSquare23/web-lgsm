@@ -30,9 +30,18 @@ from .cmd_descriptor import CmdDescriptor
 CWD = os.getcwd()
 USER = getpass.getuser()
 ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+PATHS = {
+    "docker": "/usr/bin/docker",
+    "sudo": "/usr/bin/sudo",
+    "tmux": "/usr/bin/tmux",
+    "cat": "/usr/bin/cat",
+    "kill": "/usr/bin/kill",
+    "find": "/usr/bin/find",
+    "ssh-keygen": "/usr/bin/ssh-keygen"
+}
 CONNECTOR_CMD = [
-    "/usr/bin/sudo", "-n", 
-    os.path.join(CWD, "venv/bin/python"),
+    PATHS['sudo'], '-n',
+    os.path.join(CWD, 'venv/bin/python'),
     ANSIBLE_CONNECTOR
 ]
 
@@ -192,8 +201,8 @@ def kill_watchers(last_request_for_output):
     for pid, user in watch_processes:
         cmd = []
         if user != getpass.getuser():
-            cmd += ["/usr/bin/sudo", "-n", "-u", user]
-        cmd += ["/usr/bin/kill", "-9", str(pid)]
+            cmd += [PATHS['sudo'], "-n", "-u", user]
+        cmd += [PATHS['kill'], "-9", str(pid)]
 
         proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -265,7 +274,7 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/cat', gs_id_file_path]
+    cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['cat'], gs_id_file_path]
 
     run_cmd_popen(cmd, proc_info)
 
@@ -294,7 +303,7 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = ['/usr/bin/cat', gs_id_file_path]
+    cmd = [PATHS['cat'], gs_id_file_path]
     keyfile = get_ssh_key_file(server.username, server.install_host)
 
     success = run_cmd_ssh(
@@ -448,7 +457,7 @@ def get_server_status(server):
     if socket == None:
         return None
 
-    cmd = ["/usr/bin/tmux", "-L", socket, "list-session"]
+    cmd = [PATHS['tmux'], "-L", socket, "list-session"]
 
     if should_use_ssh(server):
         gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
@@ -467,7 +476,7 @@ def get_server_status(server):
             return None
 
     elif server.install_type == 'docker':
-        cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
+        cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
         run_cmd_popen(cmd, proc_info)
 
     # Else type local same user.
@@ -552,7 +561,7 @@ def find_cfg_paths(server):
         wanted = []
         for cfg in valid_gs_cfgs:
             wanted += ['-name', cfg, '-o']
-        cmd = ['/usr/bin/find', server.install_path, '-name', 'config-default', '-prune', '-type', 'f'] + wanted[:-1]
+        cmd = [PATHS['find'], server.install_path, '-name', 'config-default', '-prune', '-type', 'f'] + wanted[:-1]
 
         success = run_cmd_ssh(
             cmd,
@@ -1123,7 +1132,7 @@ def generate_ecdsa_ssh_keypair(key_name):
 
     # Build ssh-keygen command.
     cmd = [
-        "/usr/bin/ssh-keygen",
+        PATHS['ssh-keygen'],
         "-t", "ecdsa",
         "-b", str(key_size),
         "-f", key_path,

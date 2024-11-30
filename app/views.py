@@ -35,6 +35,12 @@ from .proc_info_vessel import ProcInfoVessel
 CWD = os.getcwd()
 USER = getpass.getuser()
 ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+PATHS = {
+    "docker":"/usr/bin/docker",
+    "sudo":"/usr/bin/sudo",
+    "tmux":"/usr/bin/tmux",
+}
+
 # TODO: Move these into the jinja template for this. Not sure why I ever passed
 # them through the route code to begin with. Used to be much dumber.
 # Bootstrap spinner colors.
@@ -237,7 +243,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
+                cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
@@ -257,8 +263,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                # Example: docker exec bf1942server /usr/bin/sudo -u linuxgsm /app/bf1942server dt
-                cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
+                cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
@@ -466,7 +471,7 @@ def install():
             db.session.commit()
 
         cmd = [
-            "/usr/bin/sudo",
+            PATHS['sudo'],
             "-n",
             os.path.join(CWD, "venv/bin/python"),
             ANSIBLE_CONNECTOR,
@@ -534,7 +539,7 @@ def update_console():
     tmux_socket = get_tmux_socket_name(server)
 
     cmd = [
-        "/usr/bin/tmux",
+        PATHS['tmux'],
         "-L",
         tmux_socket,
         "capture-pane",
@@ -546,7 +551,7 @@ def update_console():
     ]
 
     if server.install_type == 'docker':
-        cmd = ['/usr/bin/docker', 'exec', server.script_name, '/usr/bin/sudo', '-u', server.username] + cmd
+        cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
 
     if server.install_name in servers:
         proc_info = servers[server.install_name]

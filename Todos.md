@@ -3,44 +3,8 @@
 ### v1.8.0 Pt 3. Dockerize and Shine
 ---
 
-* [x] **Add Support for game servers in containers!**
-  - My thoughts are in this case its much like the add but just for docker
-    containers.
-    - So users would've already setup these containers ahead of time
-      themselves, I'm just allowing users to add their existing lgsm docker
-      containers to the web interface.
-    - Aka instead of running a command like this via the shell:
-      `./csgoserver details`
-    - The app will just be running a command like this via the shell:
-      `docker exec -it --user linuxgsm csgoserver ./csgoserver details`
-  - [x] To do this I think I'll need a toggle on the add page for "game server is
-    in a container".
-  - [x] I'll also need another field in the GameServer model for "install_type"
-    and set it to docker.
-    - The thing is I don't want to manage containers, I don't want to stop,
-      start, restart containers themselves with my app. Use Portainer or
-      something if you want that.
-    - Instead my app's just going to check if the game server container is
-      running and if so you can run commands for it through the web interface.
-  - [x] Get add game server in container working.
-  - [x] Get docker install status indicators working.
-    - [x] Get tmux socket cache functions to work for docker installs. 
-      - Didn't realize it before but this is required for live console too duh.
-  - [x] Get general controls for game server in container working.
-    - Run commands through: `docker exec -it --user server.username server.server_name gsserver cmd`
-  - [x] Get send command working for containers.
-  - [x] Get live console working for containers.
+* [x] **Add docs for docker changes.**
 
-* [ ] **Add docs for docker changes.**
-
-* [ ] **Manually run tests against new changes in container.**
-  - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
-    --test_full` then it should build and run all project tests inside of the
-    container.
-  - I don't have a way to automatically hook this into github actions ci yet so
-    making a note here to just run them by hand.
-  - I mean its kinda silly cause the actions themself are in a container so
-    afaic same thing.
 
 ### v1.8.0 Pt 4. The Rest...
 ---
@@ -166,6 +130,15 @@
         be no different from running commands as a different system user over
         ssh. So probably going to say that's good enough for this release.
 
+* [ ] **Manually run tests against new changes in container.**
+  - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
+    --test_full` then it should build and run all project tests inside of the
+    container.
+  - I don't have a way to automatically hook this into github actions ci yet so
+    making a note here to just run them by hand.
+  - I mean its kinda silly cause the actions themself are in a container so
+    afaic same thing.
+
 * [ ] **MANUAL QA TESTING.**
   - [ ] Going to try to bribe my friends with pizza and or fine lettuces to go
     through and make sure its doing the needful.
@@ -175,18 +148,86 @@
       release.
     - Feature suggestions can go into the next release.
 
+* [ ] **Do trial run of Youtube video tutorials (not recorded)**
+  - Want to make sure everything really works before release obviously.
+  - It'd be really embarrassing if when I go to record videos some part of the
+    app doesn't fucking work. So besides manual and automated qa testing, going
+    to consider YT videos as sorta checklist to make sure its all doing the
+    needful before relase.
+
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
 
+* [ ] **Make a github wiki and turn docs into wiki pages**
+  - [More info on gh wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages)
+
+* [ ] **Create a discord server for project / community**
+  - [ ] Update community docs to also point to discord server.
+
 * [ ] **Fix up Readme.**
   - [ ] Update Readme gifs with newest look of interface.
+  - [ ] Add links to discord server.
+  - [ ] Add links to new Basic Setup & Docker YouTube Videos.
   - [ ] Add contribute section pointing users to submitting an issue or submitting a
     pull request.
     - I have the community docs for this now.
 
+### v1.8.0 Pt 6. Post Release PR
+
+* [ ] **YouTube Video Tutorials**
+  - [ ] Basic Web-LGSM Installation, Setup, Key Features Overview (aka Project Update).
+    - This is basically a replacement of the existing YT video I have linked in
+      the Readme.
+    - That video is for v1.3 I think, so pretty outta date now. Kinda still
+      works but not using an init script anymore etc.
+    - Plus also want to give people an update on the state of the project!
+    - Basic Script:
+      1. Install the web-lgsm itself, just a normal installation.
+      2. Install a new game server via the install page.
+        - Show off settings page option for install as new user vs same user.
+      3. Add a new web interface user.
+        - Explain difference between web inteface user and system level user.
+        - Configure some permissions for this user.
+      4. Logout then back in as new user and show off newly installed game
+         server.
+      5. Add a game server via ssh.
+        - Will already have one setup beforehand, just need to add it to the web interface.
+      6. Add a game server via docker.
+        - Will already have one setup beforehand, just need to add it to the web interface.
+  - [ ] Add "OLD VERSION" to the title of old video.
+    - [ ] Also link to newest video in the endcard and description.
+  - [ ] Full Web-LGSM Docker Installation, Setup, Overview w/ Portainer & Nginx Proxy Manager.
+    - The idea here is everything's in a container. 
+    - Basic Script:
+      1. Install Web-LGSM itself inside of a container.
+        - Show off ./install.sh --docker to install docker and other deps.
+        - Start the app in a container.
+      2. Show how to install one game server inside of the web-lgsm container
+         via normal install route. Probably Minecraft. Explain how it works n'@.
+      3. Show how to install a different game server inside of its OWN container.
+        - The manual way from the cli, fetching docker-compose.yml files from
+          their github repo, docker-compose up. 
+      4. Show how to add our newly setup sister container to web interface via
+         SSH option.
+        - Explain how can't install a container when already in a container.
+      5. Show both game servers working in app and all that jazz.
+      6. Setup Nginx Proxy Manager
+        - Add Web-LGSM to proxy manager.
+        - Get an SSL cert for it.
+      7. Setup Portainer and add containers to it.
+        - Add Web-LGSM container to it.
+        - Add Standalone Game Server to it.
+        - Add Nginx Proxy Manager to it.
+
 
 ## Version 1.9.0 Todos
+
+* [ ] **Make cfg editor work for `install_type` docker.**
+  - Never got around to making this work for the v1.8 release. Just had too
+    much stuff to get done so this got left out.
+  - Basically, I just need to make `find_cfg_paths()` work for
+    `server.install_type` 'docker' too. Already works for remote and local.
 
 * [ ] **Write `ssh_connector.sh` shell script.**
   - Basically if I want to limit access to multiple commands over ssh I need to

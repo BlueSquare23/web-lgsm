@@ -4,12 +4,17 @@
   - Answer: You can now run `./web-lgsm.py --passwd` to change the web admin
     user password for the web-lgsm. Simply run the script then enter the
     required prompts to update the web login password.
+    - Note: Using `./web-lgsm.py --passwd` is the ONLY way to change the main
+      admin users password. All other users passwords (even other admin users)
+      can be changed from within the web interface by an admin.
 
 2. Question: How do I enable the game server cfg file editor?
   - Answer: The cfg file editor editor can be enabled by setting `cfg_editor`
     to `yes` in the main.conf file.
-    - Note: The cfg editor is disabled by default for security reasons, for
+    - Note 1: The cfg editor is disabled by default for security reasons, for
       more information see, `docs/config_options.md`.
+    - Note 2: Version 1.8 does not yet support the cfg editor for game servers
+      in stand alone docker containers.
 
 3. Question: How do I enable the game server console commands Send button?
   - Answer: You can enable game server console commands by setting `send_cmd` to
@@ -20,15 +25,9 @@
       disabled by default out of an abunance of security precausion. For more
       information see, `docs/config_options.md`.
     - Note 2: This is NOT the same thing as sending shell commands to server.
-      If you want to do that use SSH. This option is only for sending game
+      If you want to do that, use SSH. This option is only for sending game
       server specific console commands to the running tmux session for your
       game server.
-
-4. Question: Why am I getting permission denied when trying to start my newly
-   added game server?
-  - Answer: Game servers owned by other users require that you add a special
-    sudoers rule in order to make the web-lgsm work properly. For more
-    information please see, `docs/sudoers_info.md`.
 
 5. Question: I just updated to version 1.6.0 (or greater) from v1.5.0 (or below)
    and now my web-lgsm instance wont start. How do I fix this?

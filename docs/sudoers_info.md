@@ -1,26 +1,32 @@
 # Sudoers Info
 
-In order to allow the web-lgsm to control game servers owned by other users,
-you have to manually add a line like the following to your sudoers rules.
+In order for the Web-LGSM's automatic game server install feature to work
+properly, the install.sh script will setup the following sudoers rule.
 
 ```
-user1 ALL=(user2) NOPASSWD: /home/user2/gameserver_script, /usr/bin/watch, /usr/bin/tmux, /usr/bin/kill
+(root) NOPASSWD: /path/to/web-lgsm/venv/bin/python /path/to/web-lgsm/playbooks/ansible_connector.py *
 ```
 
-Where `user1` is the user the web-lgsm itself is running as, `user2` is the
-user the other game server is running as, and `/home/user2/gameserver_script`
-is the path to the game server lgsm script file (For example, `mcserver` for
-Minecraft, `bf1942server` for Battlefield 1942 ect.).
-
-Use this command to edit your sudoers file:
+The actual sudoers file will live in /etc/sudoers.d and look something like this:
 
 ```
-sudo visudo
+sudo cat /etc/sudoers.d/$USER-$USER
+blue ALL=(root) NOPASSWD: /home/blue/web-lgsm/venv/bin/python /home/blue/web-lgsm/playbooks/ansible_connector.py *
 ```
 
-Then add the above NOPASSWD line, filled in with your user setting, to the
-bottom of it.
+This rule allows the Web-LGSM to run its `ansible_connector.py` script, which
+wraps the game server installation and delete playbooks, as root without
+needing to prompt for a sudo password every time.
 
-Then your web-lgsm process should be able to manage game servers owned by other
-users!
+The `install.sh` script also makes the `venv/bin/python` and
+`ansible_connector.py` scripts immutable, and chown's them to root, as a
+security precaution.
+
+Note: If this sudoers rule is disabled the app will no longer be able to
+install new game servers or delete users and files for existing installs owned
+by other users. Although all other functionality should continue to work as
+normal. If you choose to disable this rule as an additional security measure,
+feel free! Just be aware it will break your ability to: A) Install new game
+servers from scratch, and B) fully delete game servers owned by other system
+users, through the web interface.
 

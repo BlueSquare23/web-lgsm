@@ -79,6 +79,21 @@
 
             <br />
 
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newline_ending" id="newlines" value="true" {% if config_options.end_in_newlines == true %}checked{% endif %}>
+              <label class="form-check-label" for="newlines">
+                Terminate lines with a newline (Classic web-lgsm term display)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newline_ending" id="nonewlines" value="false" {% if config_options.end_in_newlines == false %}checked{% endif %}>
+              <label class="form-check-label" for="show_stderr">
+                Do not enforce newline termination (New web-lgsm term display)
+              </label>
+            </div>
+
+            <br />
+
 <!--
             <div class="form-check">
               <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>

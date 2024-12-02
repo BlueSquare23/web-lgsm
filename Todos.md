@@ -3,11 +3,7 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Add search bar to install page.**
-  - User brought up in [this Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/27).
-  - I can do this all in JS on top of the existing page.
-
-* [ ] **Make main.conf option & settings page toggle for: 'convert carriage returns to newlines'**
+* [x] **Make main.conf option & settings page toggle for: 'convert carriage returns to newlines'**
   - This is the old style and some people might like the ability to switch back.
   - Now with xterm.js I can take advantage of proper carriage return chars \r
     so I'm now using those, might as well. Makes things look a little more

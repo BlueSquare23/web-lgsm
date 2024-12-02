@@ -697,6 +697,7 @@ def settings():
     graphs_secondary = config["aesthetic"]["graphs_secondary"]
     show_stats = config["aesthetic"].getboolean("show_stats")
     install_create_new_user = config["settings"].getboolean("install_create_new_user")
+    end_in_newlines = config["settings"].getboolean("end_in_newlines")
 
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, "settings"):
@@ -712,6 +713,7 @@ def settings():
         "graphs_secondary": graphs_secondary,
         "show_stats": show_stats,
         "install_create_new_user": install_create_new_user,
+        "end_in_newlines": end_in_newlines,
     }
 
     current_app.logger.info(log_wrap("config_options", config_options))
@@ -735,6 +737,7 @@ def settings():
     show_stats_pref = request.form.get("show_stats")
     purge_tmux_cache = request.form.get("purge_tmux_cache")
     install_new_user_pref = request.form.get("install_new_user")
+    newline_ending_pref = request.form.get("newline_ending")
 
     if purge_tmux_cache != None:
         purge_tmux_socket_cache()
@@ -757,6 +760,11 @@ def settings():
     config["settings"]["install_create_new_user"] = "yes"
     if install_new_user_pref == "false":
         config["settings"]["install_create_new_user"] = "no"
+
+    # Newline ending settings.
+    config["settings"]["end_in_newlines"] = "yes"
+    if newline_ending_pref == "false":
+        config["settings"]["end_in_newlines"] = "no"
 
     # Text color settings.
     def valid_color(color):

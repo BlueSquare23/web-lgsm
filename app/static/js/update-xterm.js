@@ -78,7 +78,7 @@ function updateTerminal(sName){
       if (newLines.length > 0) {
         newLines.forEach(line => {
           if (line.trim() !== '') {
-            term.write(line + '\r');
+            term.write(`\r${line}`);
           }
         });
 

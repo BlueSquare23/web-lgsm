@@ -16,6 +16,7 @@ import paramiko
 import requests
 import subprocess
 import threading
+import configparser
 
 from datetime import datetime, timedelta
 from threading import Thread
@@ -141,6 +142,10 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
         cmd (list): Command to be run via subprocess.Popen.
         proc_info (obj): Optional object to store info about running process.
     """
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    end_in_newlines = config["settings"].getboolean("end_in_newlines")
+
     # Clear any previous output.
     proc_info.stdout.clear()
     proc_info.stderr.clear()
@@ -154,22 +159,58 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
 
     current_app.logger.info(log_wrap('cmd', cmd))
     
+    # subproc call, Bytes mode, not buffered.
     proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, bufsize=-1
     )
     
     proc_info.pid = proc.pid
-    
-    for stdout_line in iter(proc.stdout.readline, ""):
-        proc_info.stdout.append(stdout_line)
-        log_msg = log_wrap('stdout', stdout_line.replace('\n', ''))
-        current_app.logger.debug(log_msg)
-    
-    for stderr_line in iter(proc.stderr.readline, ""):
-        proc_info.stderr.append(stderr_line)
-        log_msg = log_wrap('stderr', stderr_line.replace('\n', ''))
-        current_app.logger.debug(log_msg)
-    
+
+    while True:
+        stdout_line = proc.stdout.read1().decode("utf-8")
+
+        if not stdout_line:
+            break
+
+        for line in stdout_line.split('\r'):
+            if line == "":
+                continue
+
+            # Add back in carriage returns, ignoring lines terminated with a newline.
+            if not line.endswith('\r') and not line.endswith('\n'):
+                line = line + '\r'
+
+            # Add the newlines for optional old-style setting.
+            if end_in_newlines:
+                if not line.endswith('\n'):
+                    line = line + '\n'
+
+            proc_info.stdout.append(line)
+            log_msg = log_wrap('stdout', line.replace('\n', ''))
+            current_app.logger.debug(log_msg)
+
+    while True:
+        stderr_line = proc.stderr.read1().decode("utf-8")
+
+        if not stderr_line:
+            break
+
+        for line in stderr_line.split('\r'):
+            if line == "":
+                continue
+
+            # Add back in carriage returns, ignoring lines terminated with a newline.
+            if not line.endswith('\r') and not line.endswith('\n'):
+                line = line + '\r'
+
+            # Add the newlines for optional old-style setting.
+            if not line.endswith('\n'):
+                line = line + '\n'
+
+            proc_info.stderr.append(line)
+            log_msg = log_wrap('stderr', line.replace('\n', ''))
+            current_app.logger.debug(log_msg)
+
     proc_info.exit_status = proc.wait()
 
     # Reset process_lock flag.
@@ -1208,6 +1249,10 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    end_in_newlines = config["settings"].getboolean("end_in_newlines")
+
     # TODO: Make not clear if config/settings option for keep output is set.
     proc_info.stdout.clear()
     proc_info.stderr.clear()
@@ -1266,6 +1311,10 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
                         continue
 
                     if line not in proc_info.stdout:
+                        if end_in_newlines:
+                            if not line.endswith('\n') and not line.endswith('\r'):
+                                line = line + '\n'
+
                         proc_info.stdout.append(line)
                         log_msg = log_wrap('stdout', line.strip())
                         current_app.logger.debug(log_msg)
@@ -1281,6 +1330,9 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
                         continue
 
                     if line not in proc_info.stderr:
+                        if end_in_newlines:
+                            if not line.endswith('\n') and not line.endswith('\r'):
+                                line = line + '\n'
                         proc_info.stderr.append(line)
                         log_msg = log_wrap('stderr', line.strip())
                         current_app.logger.debug(log_msg)

@@ -3,17 +3,10 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Add show_stderr main.conf option to suppress stderr_messages.**
-  - Not everything that comes out of stderr is fatal.
-  - [x] Refactor output producing `run_cmd_` functions to make sure output
-    splitting is actually happening correclty.
-    - Had some weirdness with ssh, stderr stream not coming correctly, think I
-      figured it out, silly pty blocks stderr stream in paramiko.
-
-* [ ] **Make config editor work for game servers owned by other system users.**
-  - [ ] Think I'll have to re-write / add-to the write new config data logic.
+* [x] **Make config editor work for game servers owned by other system users.**
+  - [x] Think I'll have to re-write / add-to the write new config data logic.
   - Right now it just writes to disk as the current user.
-  - [ ] Instead I think I'll have it send the data over SSH (somehow) and chown
+  - [x] Instead I think I'll have it send the data over SSH (somehow) and chown
     it to the new user.
   - Will be a little more complicated but shouldn't be too crazy.
 

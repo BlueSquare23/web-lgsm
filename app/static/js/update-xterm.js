@@ -1,7 +1,8 @@
 // Track the last line processed.
 //let lastProcessedIndex = 0;
 // Keep track of last pulled output as source of truth.
-let previousOutput = [];
+let previousStdOutput = [];
+let previousStdErrput = [];
 
 var spinners = document.getElementById("spinners");
 
@@ -58,33 +59,66 @@ function updateTerminal(sName){
     success: function(respJSON, textStatus, reqObj) {
 
       // Extract stdout array from the JSON response.
-      const currentOutput = respJSON.stdout || [];
+      const currentStdOutput = respJSON.stdout || [];
 
-      // Find new lines by comparing with previousOutput.
-      const newLines = currentOutput.slice(previousOutput.length);
+      // Find new lines by comparing with previousStdOutput.
+      const newOutLines = currentStdOutput.slice(previousStdOutput.length);
 
       /* Debugging stuff
       console.log("respJSON.stdout: ");
       console.log(respJSON.stdout);
-      console.log("previousOutput: ");
-      console.log(previousOutput);
-      console.log("currentOutput: ");
-      console.log(currentOutput);
-      console.log("newLines: ");
-      console.log(newLines);
+      console.log("previousStdOutput: ");
+      console.log(previousStdOutput);
+      console.log("currentStdOutput: ");
+      console.log(currentStdOutput);
+      console.log("newOutLines: ");
+      console.log(newOutLines);
       console.log('--------------------------------------------------------');
       */
 
-      if (newLines.length > 0) {
-        newLines.forEach(line => {
+      if (newOutLines.length > 0) {
+        newOutLines.forEach(line => {
           if (line.trim() !== '') {
             term.write(`\r${line}`);
           }
         });
 
         // Update the previously processed output to the current output.
-        previousOutput = currentOutput;
+        previousStdOutput = currentStdOutput;
       }
+
+      if ( showStderr ) {
+        // Extract stderr array from the JSON response.
+        const currentStdErrput = respJSON.stderr || [];
+
+        // Find new lines by comparing with previousStdErrput.
+        const newErrLines = currentStdErrput.slice(previousStdErrput.length);
+
+        /* Debugging stuff
+        console.log("respJSON.stdout: ");
+        console.log(respJSON.stdout);
+        console.log("previousStdErrput: ");
+        console.log(previousStdErrput);
+        console.log("currentStdErrput: ");
+        console.log(currentStdErrput);
+        console.log("newErrLines: ");
+        console.log(newErrLines);
+        console.log('--------------------------------------------------------');
+        */
+
+        if (newErrLines.length > 0) {
+          newErrLines.forEach(line => {
+            if (line.trim() !== '') {
+              // Print "STDERR" red bold, before stderr text.
+              term.write(`\r\x1b[1m\x1b[31mSTDERR:\x1b[0m ${line}`);
+            }
+          });
+
+          // Update the previously processed err output to the current output.
+          previousStdErrput = currentStdErrput;
+        }
+      }
+
       // If not in console mode, display none spinners after proc finishes.
       if (!sConsole) {
         if (respJSON.process_lock === true){

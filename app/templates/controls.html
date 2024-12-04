@@ -86,10 +86,17 @@
           spinners.style.display = 'block';
         }
       </script>
-      <!-- Set global serverName for update-text-area.js -->
+      <!-- Set JS vars from Jinja vars. -->
       <script>
         let serverName = "{{ server_name }}";
         let textColor = "{{ text_color }}";
+      {# If show_stderr var True #}
+      {% if show_stderr is defined and show_stderr %}
+        let showStderr = true;
+      {% else %}
+        let showStderr = false;
+      {% endif %}
+
       {# If console var True #}
       {% if console is defined and console %}
         let sConsole = true;

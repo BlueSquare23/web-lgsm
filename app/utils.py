@@ -166,28 +166,38 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     
     proc_info.pid = proc.pid
 
+    # TODO: Refactor duplicate code below into one `process_output` function.
+    # Just from after break on down. Can reuse code for stdout & stderr.
     while True:
         stdout_line = proc.stdout.read1().decode("utf-8")
 
         if not stdout_line:
             break
 
-        for line in stdout_line.split('\r'):
-            if line == "":
+        for rline in stdout_line.split('\r'):
+            if rline == "":
                 continue
 
             # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not line.endswith('\r') and not line.endswith('\n'):
-                line = line + '\r'
+            if not rline.endswith('\r') and not rline.endswith('\n'):
+                rline = rline + '\r'
 
-            # Add the newlines for optional old-style setting.
-            if end_in_newlines:
-                if not line.endswith('\n'):
+            for line in rline.split('\n'):
+                if line == "":
+                    continue
+
+                # Add back in newlines, ignoring lines terminated with a carriage return.
+                if not line.endswith('\n') and not line.endswith('\r'):
                     line = line + '\n'
 
-            proc_info.stdout.append(line)
-            log_msg = log_wrap('stdout', line.replace('\n', ''))
-            current_app.logger.debug(log_msg)
+                # Add the newlines for optional old-style setting.
+                if end_in_newlines:
+                    if not line.endswith('\n'):
+                        line = line + '\n'
+
+                proc_info.stdout.append(line)
+                log_msg = log_wrap('stdout', line.replace('\n', ''))
+                current_app.logger.debug(log_msg)
 
     while True:
         stderr_line = proc.stderr.read1().decode("utf-8")
@@ -195,21 +205,30 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
         if not stderr_line:
             break
 
-        for line in stderr_line.split('\r'):
-            if line == "":
+        for rline in stderr_line.split('\r'):
+            if rline == "":
                 continue
 
             # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not line.endswith('\r') and not line.endswith('\n'):
-                line = line + '\r'
+            if not rline.endswith('\r') and not rline.endswith('\n'):
+                rline = rline + '\r'
 
-            # Add the newlines for optional old-style setting.
-            if not line.endswith('\n'):
-                line = line + '\n'
+            for line in rline.split('\n'):
+                if line == "":
+                    continue
 
-            proc_info.stderr.append(line)
-            log_msg = log_wrap('stderr', line.replace('\n', ''))
-            current_app.logger.debug(log_msg)
+                # Add back in newlines, ignoring lines terminated with a carriage return.
+                if not line.endswith('\n') and not line.endswith('\r'):
+                    line = line + '\n'
+
+                # Add the newlines for optional old-style setting.
+                if end_in_newlines:
+                    if not line.endswith('\n'):
+                        line = line + '\n'
+
+                proc_info.stderr.append(line)
+                log_msg = log_wrap('stderr', line.replace('\n', ''))
+                current_app.logger.debug(log_msg)
 
     proc_info.exit_status = proc.wait()
 
@@ -1284,61 +1303,53 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         proc_info.process_lock = True
         # Open a new session and request a PTY.
         channel = client.get_transport().open_session()
-        channel.get_pty()
+#        channel.get_pty()  # This shut's off the stderr stream for some reason... Not sure if pty still needed.
+        channel.set_combine_stderr(False)
         channel.exec_command(safe_cmd)
 
         # Optionally set timeout (if provided).
         if timeout:
             channel.settimeout(timeout)
 
-        # RANT: Because of course, why would the most popular ssh module for
-        # Python make it easy to read output by newlines? Paramiko's opinion is
-        # "hey developer you can go fuck yourself and parse the raw byte chucks
-        # by hand!" Also there's like no sample code for this in the docs so
-        # I'm just making shit up. Wish I had Perl's Net::OpenSSH right about
-        # now...
         while True:
-            while channel.recv_ready():
-                # I tried to be smart and use a buffer and chunks. Didn't work
-                # so screw it. If you're over 8192 bytes long too bad.
+            # Read stdout if data is available.
+            if channel.recv_ready():
                 stdout_chunk = channel.recv(8192).decode('utf-8')
                 stdout_lines = stdout_chunk.splitlines(keepends=True)
-
                 for line in stdout_lines:
-                    # xterm.js print chokes if last line arr is \r\n and then
-                    # gets updated to something else.
                     if line == '\r\n':
                         continue
-
                     if line not in proc_info.stdout:
-                        if end_in_newlines:
-                            if not line.endswith('\n') and not line.endswith('\r'):
-                                line = line + '\n'
-
+                        if end_in_newlines and not (line.endswith('\n') or line.endswith('\r')):
+                            line += '\n'
                         proc_info.stdout.append(line)
                         log_msg = log_wrap('stdout', line.strip())
                         current_app.logger.debug(log_msg)
 
-            while channel.recv_stderr_ready():
+            if channel.recv_stderr_ready():
                 stderr_chunk = channel.recv_stderr(8192).decode('utf-8')
                 stderr_lines = stderr_chunk.splitlines(keepends=True)
-
                 for line in stderr_lines:
-                    # xterm.js print chokes if last line arr is \r\n and then
-                    # gets updated to something else.
                     if line == '\r\n':
                         continue
-
                     if line not in proc_info.stderr:
-                        if end_in_newlines:
-                            if not line.endswith('\n') and not line.endswith('\r'):
-                                line = line + '\n'
+                        if end_in_newlines and not (line.endswith('\n') or line.endswith('\r')):
+                            line += '\n'
                         proc_info.stderr.append(line)
                         log_msg = log_wrap('stderr', line.strip())
                         current_app.logger.debug(log_msg)
 
-            # Break if the command is done.
+            # Break the loop if the command has finished.
             if channel.exit_status_ready():
+                # Ensure any remaining stderr and stdout are captured.
+                while channel.recv_stderr_ready():
+                    stderr_chunk = channel.recv_stderr(8192).decode('utf-8')
+                    proc_info.stderr.append(stderr_chunk)
+
+                while channel.recv_ready():
+                    stdout_chunk = channel.recv(8192).decode('utf-8')
+                    proc_info.stdout.append(stdout_chunk)
+
                 break
 
             # Keep CPU from burning.

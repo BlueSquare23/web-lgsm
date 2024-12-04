@@ -3,18 +3,12 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Make main.conf option & settings page toggle for: 'convert carriage returns to newlines'**
-  - This is the old style and some people might like the ability to switch back.
-  - Now with xterm.js I can take advantage of proper carriage return chars \r
-    so I'm now using those, might as well. Makes things look a little more
-    anitmated.
-  - But some folks might still prefer the old style and I think it should be an
-    easy enough fix to add the \r -> \n conversion back in to the backend ssh
-    wrap function as an optional setting.
-  - Write a test for this new settings option.
-
-* [ ] **Add show_stderr main.conf option to suppress stderr_messages.**
+* [x] **Add show_stderr main.conf option to suppress stderr_messages.**
   - Not everything that comes out of stderr is fatal.
+  - [x] Refactor output producing `run_cmd_` functions to make sure output
+    splitting is actually happening correclty.
+    - Had some weirdness with ssh, stderr stream not coming correctly, think I
+      figured it out, silly pty blocks stderr stream in paramiko.
 
 * [ ] **Make config editor work for game servers owned by other system users.**
   - [ ] Think I'll have to re-write / add-to the write new config data logic.

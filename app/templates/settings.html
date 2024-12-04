@@ -94,22 +94,20 @@
 
             <br />
 
-<!--
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.show_stderr == true %}checked{% endif %}>
               <label class="form-check-label" for="show_stderr">
-                Merge stdout and stderr output streams
+                Show both stdout &amp; stderr output streams merged
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
-              <label class="form-check-label" for="show_stderr">
-                Only show stdout output stream
+              <input class="form-check-input" type="radio" name="show_stderr" id="hide_stderr" value="false" {% if config_options.show_stderr == false %}checked{% endif %}>
+              <label class="form-check-label" for="hide_stderr">
+                Show only stdout output stream, suppress stderr
               </label>
             </div>
 
             <br />
--->
 
             <!-- TODO: FIX THIS 👇 Pretty sure I broke it while reworking the console code. Pretty sure problem is stdout is being cleared and main.conf option is not being checked. -->
             <p><b style="color:yellow">NOTE TO SELF: BROKEN ATM 👇 </b></p>

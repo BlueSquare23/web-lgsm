@@ -119,6 +119,7 @@ def controls():
     cfg_editor = config["settings"].getboolean("cfg_editor")
     send_cmd = config["settings"].getboolean("send_cmd")
     clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
+    show_stderr = config["settings"].getboolean("show_stderr")
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -214,6 +215,7 @@ def controls():
                 terminal_height=terminal_height,
                 spinner_colors=SPINNER_COLORS,
                 cfg_paths=cfg_paths, 
+                show_stderr=show_stderr,
                 console=True
             )
 
@@ -286,6 +288,7 @@ def controls():
         text_color=text_color,
         terminal_height=terminal_height,
         spinner_colors=SPINNER_COLORS,
+        show_stderr=show_stderr,
         cfg_paths=cfg_paths,
     )
 
@@ -698,6 +701,7 @@ def settings():
     show_stats = config["aesthetic"].getboolean("show_stats")
     install_create_new_user = config["settings"].getboolean("install_create_new_user")
     end_in_newlines = config["settings"].getboolean("end_in_newlines")
+    show_stderr = config["settings"].getboolean("show_stderr")
 
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, "settings"):
@@ -714,6 +718,7 @@ def settings():
         "show_stats": show_stats,
         "install_create_new_user": install_create_new_user,
         "end_in_newlines": end_in_newlines,
+        "show_stderr": show_stderr,
     }
 
     current_app.logger.info(log_wrap("config_options", config_options))
@@ -738,6 +743,7 @@ def settings():
     purge_tmux_cache = request.form.get("purge_tmux_cache")
     install_new_user_pref = request.form.get("install_new_user")
     newline_ending_pref = request.form.get("newline_ending")
+    show_stderr_pref = request.form.get("show_stderr")
 
     if purge_tmux_cache != None:
         purge_tmux_socket_cache()
@@ -765,6 +771,11 @@ def settings():
     config["settings"]["end_in_newlines"] = "yes"
     if newline_ending_pref == "false":
         config["settings"]["end_in_newlines"] = "no"
+
+    # Show stderr setting.
+    config["settings"]["show_stderr"] = "yes"
+    if show_stderr_pref == "false":
+        config["settings"]["show_stderr"] = "no"
 
     # Text color settings.
     def valid_color(color):

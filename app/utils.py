@@ -144,11 +144,12 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    end_in_newlines = config["settings"].getboolean("end_in_newlines")
+    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
+    clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
 
-    # Clear any previous output.
-    proc_info.stdout.clear()
-    proc_info.stderr.clear()
+#    if clear_output_on_reload:
+#        proc_info.stdout.clear()
+#        proc_info.stderr.clear()
 
     # Set lock flag to true.
     proc_info.process_lock = True
@@ -1270,11 +1271,12 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    end_in_newlines = config["settings"].getboolean("end_in_newlines")
+    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
+    clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
 
-    # TODO: Make not clear if config/settings option for keep output is set.
-    proc_info.stdout.clear()
-    proc_info.stderr.clear()
+    if clear_output_on_reload:
+        proc_info.stdout.clear()
+        proc_info.stderr.clear()
 
     # App context needed for logging in threads.
     if app_context:
@@ -1450,7 +1452,71 @@ def write_file_over_ssh(server, file_path, content):
         return False
 
 
+def get_config_value(config, section, option, default, is_bool=False):
+    """
+    Wraps checking config object for option. If no config option found return
+    default value.
 
+    Args:
+        config (ConfigParser): Config object to read & get options from.
+        section (str): Section of config to fetch option from.
+        option (str): The option to fetch value of.
+        default (str): Default value if can't find option in config.
+        is_bool (bool): Option type is a boolean (different option fetch method).
+
+    Returns:
+        str|bool: Value of configured option in config or default value if
+                  can't one get from config.
+    """
+    try:
+        if config and config.has_section(section):
+            if is_bool:
+                return config[section].getboolean(option)
+
+            return config[section][option]
+
+        else: 
+            return default
+
+    except (ValueError, IndexError, KeyError) as e:
+        return default
+
+    except configparser.NoOptionError:
+        return default
+
+
+
+def read_config(route):
+    """
+    Reads in relevant main config parameters for a given route. Also protects
+    against empty config options.
+
+    Args:
+        route (str): Name of route to fetch config parameters for.
+    Returns:
+        config_options (dict): Configuration options for route.
+    """
+    # Import config data.
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+
+    config_options = dict() 
+
+    if route == 'home':
+        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+        config_options["graphs_primary"] = get_config_value(config, "aesthetic", "graphs_primary", "#e01b24")
+        config_options["graphs_secondary"] = get_config_value(config, "aesthetic", "graphs_secondary", "#0d6efd")
+        config_options["show_stats"] = get_config_value(config, "aesthetic", "show_stats", True, True)
+        config_options["show_barrel_roll"] = get_config_value(config, "aesthetic", "show_barrel_roll", True, True)
+        return config_options
+
+    if route == 'controls':
+        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
+        config_options["cfg_editor"] = get_config_value(config, "settings", "cfg_editor", False, True)
+        config_options["send_cmd"] = get_config_value(config, "settings", "send_cmd", False, True)
+        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
+        return config_options
 
 
 

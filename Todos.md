@@ -180,6 +180,11 @@
 
 ## Version 1.9.0 Todos
 
+* [ ] **Make config options display on page if debug true**
+  - Makes sense and I've seen other web apps do this sorta thing before. Just
+    pipe that info right to page if debug is true.
+    - Not a big priority for v1.8 release.
+
 * [ ] **Make game server name editable.**
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`

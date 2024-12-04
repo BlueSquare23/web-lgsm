@@ -64,18 +64,6 @@ function updateTerminal(sName){
       // Find new lines by comparing with previousStdOutput.
       const newOutLines = currentStdOutput.slice(previousStdOutput.length);
 
-      /* Debugging stuff
-      console.log("respJSON.stdout: ");
-      console.log(respJSON.stdout);
-      console.log("previousStdOutput: ");
-      console.log(previousStdOutput);
-      console.log("currentStdOutput: ");
-      console.log(currentStdOutput);
-      console.log("newOutLines: ");
-      console.log(newOutLines);
-      console.log('--------------------------------------------------------');
-      */
-
       if (newOutLines.length > 0) {
         newOutLines.forEach(line => {
           if (line.trim() !== '') {
@@ -93,18 +81,6 @@ function updateTerminal(sName){
 
         // Find new lines by comparing with previousStdErrput.
         const newErrLines = currentStdErrput.slice(previousStdErrput.length);
-
-        /* Debugging stuff
-        console.log("respJSON.stdout: ");
-        console.log(respJSON.stdout);
-        console.log("previousStdErrput: ");
-        console.log(previousStdErrput);
-        console.log("currentStdErrput: ");
-        console.log(currentStdErrput);
-        console.log("newErrLines: ");
-        console.log(newErrLines);
-        console.log('--------------------------------------------------------');
-        */
 
         if (newErrLines.length > 0) {
           newErrLines.forEach(line => {

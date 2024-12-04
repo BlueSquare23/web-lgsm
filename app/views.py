@@ -68,31 +68,12 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=["GET"])
 @login_required
 def home():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
-    graphs_primary = config["aesthetic"]["graphs_primary"]
-    graphs_secondary = config["aesthetic"]["graphs_secondary"]
-    show_stats = config["aesthetic"].getboolean("show_stats")
-    show_barrel_roll = config["aesthetic"].getboolean("show_barrel_roll")
+    config_options = read_config('home')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     current_app.logger.info(log_wrap("current_user.username", current_user.username))
     current_app.logger.info(log_wrap("current_user.role", current_user.role))
     current_app.logger.info(log_wrap("current_user.permissions", current_user.permissions))
-
-    config_options = {
-        "text_color": text_color,
-        "graphs_primary": graphs_primary,
-        "graphs_secondary": graphs_secondary,
-        "show_stats": show_stats,
-        "show_barrel_roll": show_barrel_roll,
-    }
-    current_app.logger.info(log_wrap("config_options", config_options))
-
-    # Kill any lingering background watch processes
-    # Used in case console page is clicked away from.
-    kill_watchers(last_request_for_output)
 
     installed_servers = GameServer.query.all()
 
@@ -111,15 +92,8 @@ def home():
 @views.route("/controls", methods=["GET"])
 @login_required
 def controls():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
-    terminal_height = config["aesthetic"]["terminal_height"]
-    cfg_editor = config["settings"].getboolean("cfg_editor")
-    send_cmd = config["settings"].getboolean("send_cmd")
-    clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
-    show_stderr = config["settings"].getboolean("show_stderr")
+    config_options = read_config('controls')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     # Collect args from GET request.
     server_name = request.args.get("server")
@@ -152,7 +126,7 @@ def controls():
         return redirect(url_for("views.home"))
 
     # If config editor is disabled in the main.conf.
-    if not cfg_editor:
+    if not config_options["cfg_editor"]:
         cfg_paths = []
     else:
         cfg_paths = find_cfg_paths(server)
@@ -161,7 +135,7 @@ def controls():
             cfg_paths = []
 
     # Pull in commands list from commands.json file.
-    cmds_list = get_commands(server.script_name, send_cmd, current_user)
+    cmds_list = get_commands(server.script_name, config_options["send_cmd"], current_user)
 
     # TODO: Remove / change this as a way to check if json file is okay. Right
     # now this is serving the purposes of telling if the json file has become
@@ -180,11 +154,7 @@ def controls():
     if not server_name in servers:
         servers[server_name] = proc_info
 
-    # Set the output object to the one stored in the global dictionary.
     proc_info = servers[server_name]
-    if clear_output_on_reload == True:
-        proc_info.stdout.clear()
-        proc_info.stderr.clear()
 
     script_path = os.path.join(server.install_path, server.script_name)
 
@@ -193,7 +163,7 @@ def controls():
     # control button.
     if short_cmd:
         # Validate short_cmd against contents of commands.json file.
-        if not valid_command(short_cmd, server.script_name, send_cmd, current_user):
+        if not valid_command(short_cmd, server.script_name, config_options["send_cmd"], current_user):
             flash("Invalid Command!", category="error")
             return redirect(url_for("views.controls", server=server_name))
 
@@ -211,17 +181,15 @@ def controls():
                 user=current_user,
                 server_name=server_name,
                 server_commands=cmds_list,
-                text_color=text_color,
-                terminal_height=terminal_height,
+                config_options=config_options,
                 spinner_colors=SPINNER_COLORS,
                 cfg_paths=cfg_paths, 
-                show_stderr=show_stderr,
                 console=True
             )
 
         elif short_cmd == "sd":
             # Check if send_cmd is enabled in main.conf.
-            if not send_cmd:
+            if not config_options["send_cmd"]:
                 flash("Send console command button disabled!", category="error")
                 return redirect(url_for("views.controls", server=server_name))
 
@@ -275,8 +243,6 @@ def controls():
 
     current_app.logger.info(log_wrap("server_name", server_name))
     current_app.logger.info(log_wrap("cmds_list", cmds_list))
-    current_app.logger.info(log_wrap("text_color", text_color))
-    current_app.logger.info(log_wrap("terminal_height", terminal_height))
     current_app.logger.info(log_wrap("SPINNER_COLORS", SPINNER_COLORS))
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
@@ -285,10 +251,8 @@ def controls():
         user=current_user,
         server_name=server_name,
         server_commands=cmds_list,
-        text_color=text_color,
-        terminal_height=terminal_height,
+        config_options=config_options,
         spinner_colors=SPINNER_COLORS,
-        show_stderr=show_stderr,
         cfg_paths=cfg_paths,
     )
 
@@ -303,7 +267,6 @@ def install():
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
     terminal_height = config["aesthetic"]["terminal_height"]
     create_new_user = config["settings"].getboolean("install_create_new_user")
 
@@ -319,9 +282,6 @@ def install():
 
     # Initialize blank install_name, used for update-text-area.js.
     install_name = ""
-
-    # Kill any lingering background watch processes if page is reloaded.
-    kill_watchers(last_request_for_output)
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
@@ -683,10 +643,6 @@ def no_output():
 @views.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    # Kill any lingering background watch processes in case console page is
-    # clicked away fromleft.
-    kill_watchers(last_request_for_output)
-
     # Import config data.
     # TODO: Make functions for loading in config options for functions.
     config = configparser.ConfigParser()
@@ -866,10 +822,6 @@ def settings():
 @views.route("/about", methods=["GET"])
 @login_required
 def about():
-    # Kill any lingering background watch processes.
-    # In case console page is clicked away from.
-    kill_watchers(last_request_for_output)
-
     # Import config data.
     config = configparser.ConfigParser()
     config.read("main.conf")
@@ -891,10 +843,6 @@ def add():
     # Check if user has permissions to add route.
     if not user_has_permissions(current_user, "add"):
         return redirect(url_for("views.home"))
-
-    # Kill any lingering background watch processes in case console page is
-    # clicked away fromleft.
-    kill_watchers(last_request_for_output)
 
     # Set default status_code.
     status_code = 200

@@ -89,9 +89,9 @@
       <!-- Set JS vars from Jinja vars. -->
       <script>
         let serverName = "{{ server_name }}";
-        let textColor = "{{ text_color }}";
+        let textColor = "{{ config_options.text_color }}";
       {# If show_stderr var True #}
-      {% if show_stderr is defined and show_stderr %}
+      {% if config_options.show_stderr is defined and config_options.show_stderr %}
         let showStderr = true;
       {% else %}
         let showStderr = false;
@@ -115,4 +115,11 @@
       <a id="del-button" title="Remove server entry from web-lgsm database" onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-outline-danger" href="/delete?server={{server_name}}" role="button">
         Delete Server
       </a>
+
+
+      <!-- TODO: Make config options display on page if debug.
+      {# if config_options.debug is defined and config_options.debug #}
+        <p>Config Options: {{config_options}}</p>
+      {# endif #}
+      -->
 {% endblock %}

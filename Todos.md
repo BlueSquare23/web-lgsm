@@ -3,13 +3,6 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Make config editor work for game servers owned by other system users.**
-  - [x] Think I'll have to re-write / add-to the write new config data logic.
-  - Right now it just writes to disk as the current user.
-  - [x] Instead I think I'll have it send the data over SSH (somehow) and chown
-    it to the new user.
-  - Will be a little more complicated but shouldn't be too crazy.
-
 * [ ] **Put more error handling & set default values for main.conf parameters in
   code.**
   - The idea here is if some user doesn't have some parameter set in their
@@ -20,24 +13,10 @@
   - Might need to just put a little sudo chown back to the user line for those
     before running git pull or backing up etc.
 
-* [ ] **Allow multiple auto installs of same game server as new user, just increment
-  the name.**
-  - So first mcserver install would just be mcserver but then a second one the
-    user would be mcserver2, mcserver3, etc.
-
 * [ ] **Standardize greens!**
   - I'm using too many different shades of green all over.
   - ![3 different greens](https://johnlradford.io/static/img/3differentgreens.png)
   - Make them all the same.
-
-* [ ] **Make game server name editable.**
-  - This DB Model line set's install name to be unique:
-    `install_name = db.Column(db.String(150), unique=True)`
-
-* [ ] **Make install_path an optional main.conf parameter.**
-  - By default I want to set this to just `/home/<user>/<server_name>`.
-  - But then allow people to put it where ever for their own purposes.
-  - Write tests for this.
 
 * [ ] **Make install.sh setup npm pkgs at the end.**
   - I'm using xterm.js and a plugin for them that can only be installed via
@@ -200,6 +179,20 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **Make game server name editable.**
+  - This DB Model line set's install name to be unique:
+    `install_name = db.Column(db.String(150), unique=True)`
+
+* [ ] **Make install_path an optional main.conf parameter.**
+  - By default I want to set this to just `/home/<user>/<server_name>`.
+  - But then allow people to put it where ever for their own purposes.
+  - Write tests for this.
+
+* [ ] **Allow multiple auto installs of same game server as new user, just increment
+  the name.**
+  - So first mcserver install would just be mcserver but then a second one the
+    user would be mcserver2, mcserver3, etc.
 
 * [ ] **Make PATHS options configurable in main.conf**
   - What I'm thinking is that the main.conf could have a section for [paths]

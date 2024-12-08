@@ -245,7 +245,8 @@ def run_install_new_game_server(server_id):
         server.install_finished = True
         session.commit()
 
-    print(f"\033[92m ✓  Game server successfully installed!\033[0m")
+    # Same neon green as default color scheme in ansi escape.
+    print("\033[38;2;9;255;0m ✓  Game server successfully installed!\033[0m")
     exit()
 
 

@@ -3,16 +3,13 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [x] **Put more error handling & set default values for main.conf parameters in code.**
-  - The idea here is if some user doesn't have some parameter set in their
-    main.conf, or if their main.conf is totally mangled or something, then the
-    app shouldn't fail catastrophically, which I think it kinda does rn.
-
 * [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
   - Might need to just put a little sudo chown back to the user line for those
     before running git pull or backing up etc.
+  - This might make more sense as a post release or next release thing to check
+    since it wont affect upgrading from 1.7->1.8, but it might affect 1.8->1.9.
 
-* [ ] **Standardize greens!**
+* [x] **Standardize greens!**
   - I'm using too many different shades of green all over.
   - ![3 different greens](https://johnlradford.io/static/img/3differentgreens.png)
   - Make them all the same.
@@ -27,9 +24,12 @@
     sudo.
     - Maybe can change that and sudo prepend and have docker add sudoers rules. 
 
-* [ ] **Add support for Ubuntu 24.04.**
+* [x] **Add support for Ubuntu 24.04.**
   - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
     too.
+  - Looks like `ubuntu-latest` will automatically be switched to 22.04 for me
+    so I don't actually have to do anything. Sweet!
+    - https://github.com/actions/runner-images/issues/6399
 
 ### v1.8.0 Pt 5. QA...
 ---

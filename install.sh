@@ -47,6 +47,32 @@ fi
 echo -e "${green}####### Pulling in apt updates...${reset}"
 sudo apt-get update
 
+# Docker install.
+if [[ $1 =~ '--docker' ]]; then
+    # Literally just stealing the install from the docker docs.
+    # https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+    echo -e "${green}####### Install Apt Docker Components...${reset}"
+
+    # Add Docker's official GPG key:
+    sudo apt-get install ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    
+    # Add the repository to Apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
+    
+    # Finally add user to docker group.
+    sudo usermod -aG docker ${USER}
+
+    echo -e "${green}####### Docker install completed successfully!${reset}"
+    exit
+fi
+
 for req in $(cat 'apt-reqs.txt'); do
     if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"
@@ -73,12 +99,14 @@ if [[ $sys_name =~ Ubuntu ]]; then
     python3 -m pip install --upgrade pip
 fi
 
-echo -e "${green}####### Install Requirements...${reset}"
+echo -e "${green}####### Installing Python Requirements...${reset}"
 python3 -m pip install -r requirements.txt
 
-random_key=$(echo $RANDOM | md5sum | head -c 20)
-echo "SECRET_KEY=\"$random_key\"" > .secret
-chmod 600 .secret
+echo -e "${green}####### Installing NPM Requirements...${reset}"
+cd $SCRIPTPATH/app/static/js
+npm install @xterm/xterm
+npm install --save @xterm/addon-fit
+cd $SCRIPTPATH
 
 # Setup sudoers rules to allow web-lgsm to run multi game server user
 # management components without needing to prompt for a sudo pass.
@@ -102,6 +130,10 @@ sudo chmod 755 $apb $ansible_connector
 sudo chown -R root:root $apb "$SCRIPTPATH/playbooks"
 sudo chattr +i $apb $ansible_connector
 
+# Finally setup random key.
+random_key=$(echo $RANDOM | md5sum | head -c 20)
+echo "SECRET_KEY=\"$random_key\"" > .secret
+chmod 600 .secret
+
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"
-

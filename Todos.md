@@ -3,33 +3,15 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
-  - Might need to just put a little sudo chown back to the user line for those
-    before running git pull or backing up etc.
-  - This might make more sense as a post release or next release thing to check
-    since it wont affect upgrading from 1.7->1.8, but it might affect 1.8->1.9.
-
-* [x] **Standardize greens!**
-  - I'm using too many different shades of green all over.
-  - ![3 different greens](https://johnlradford.io/static/img/3differentgreens.png)
-  - Make them all the same.
-
-* [ ] **Make install.sh setup npm pkgs at the end.**
+* [x] **Make install.sh setup npm pkgs at the end.**
   - I'm using xterm.js and a plugin for them that can only be installed via
     npm.
 
-* [ ] **Make install.sh support --docker flag to install container components**
+* [x] **Make install.sh support --docker flag to install container components**
   - Just to install docker & docker-compose if they're not already installed.
   - My app also wants it to be user in docker group, run docker cmds without
     sudo.
     - Maybe can change that and sudo prepend and have docker add sudoers rules. 
-
-* [x] **Add support for Ubuntu 24.04.**
-  - Ubuntu 24.04 is out now too. Can add that to `.github/workflows/test.yml`
-    too.
-  - Looks like `ubuntu-latest` will automatically be switched to 22.04 for me
-    so I don't actually have to do anything. Sweet!
-    - https://github.com/actions/runner-images/issues/6399
 
 ### v1.8.0 Pt 5. QA...
 ---
@@ -129,9 +111,22 @@
     pull request.
     - I have the community docs for this now.
 
-### v1.8.0 Pt 6. Post Release PR
+### v1.8.0 Pt 6. Post Release PR / Tutorials
+
+* [ ] **Setup a Community Discord Server**
+  - Some people might have simple sorta support questions or ideas in there.
+    I'll try to remember to check it every once in a while.
+  - [ ] Add link to discord to Readme!
+
+* [ ] **Create Patreon or Ko-fi donation platform**
+  - Actually had a user request this. Doesn't seem too hard to setup and even
+    if only a few people give, still could be nice to get a few extra bucks a
+    month.
+  - [ ] Add link to Readme.
 
 * [ ] **YouTube Video Tutorials**
+  - [ ] Mention Patreon or whatever & buy me a coffee link videos.
+  - [ ] Mention Discord link in videos.
   - [ ] Basic Web-LGSM Installation, Setup, Key Features Overview (aka Project Update).
     - This is basically a replacement of the existing YT video I have linked in
       the Readme.
@@ -178,6 +173,10 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
+  - Might need to just put a little sudo chown back to the user line for those
+    before running git pull or backing up etc.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just

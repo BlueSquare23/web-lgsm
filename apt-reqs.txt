@@ -4,3 +4,5 @@ procps
 tmux
 wget
 python3-venv
+nodejs
+npm

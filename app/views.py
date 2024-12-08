@@ -264,15 +264,12 @@ def controls():
 def install():
     global servers
 
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    terminal_height = config["aesthetic"]["terminal_height"]
-    create_new_user = config["settings"].getboolean("install_create_new_user")
-
     # Check if user has permissions to install route.
     if not user_has_permissions(current_user, "install"):
         return redirect(url_for("views.home"))
+
+    config_options = read_config('install')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
@@ -320,10 +317,9 @@ def install():
             "install.html",
             user=current_user,
             servers=install_list,
-            text_color=text_color,
             spinner_colors=SPINNER_COLORS,
             install_name=install_name,
-            terminal_height=terminal_height,
+            config_options=config_options,
             running_installs=running_installs,
         )
 
@@ -370,7 +366,7 @@ def install():
 
         # If running in a container always install as create new user.
         if "CONTAINER" in os.environ:
-            create_new_user = True
+            config_options["create_new_user"] = True
 
         server = GameServer()
         server.install_name = server_install_name
@@ -386,7 +382,7 @@ def install():
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
-        if create_new_user:
+        if config_options["create_new_user"]:
             server.username = server_script_name
             server.install_path = f"/home/{server_script_name}/GameServers/{server_install_name}"
 
@@ -457,10 +453,9 @@ def install():
             "install.html",
             user=current_user,
             servers=install_list,
-            text_color=text_color,
+            config_options=config_options,
             spinner_colors=SPINNER_COLORS,
             install_name=install_name,
-            terminal_height=terminal_height,
             running_installs=running_installs,
         )
 
@@ -643,40 +638,16 @@ def no_output():
 @views.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    # Import config data.
-    # TODO: Make functions for loading in config options for functions.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
-    terminal_height = config["aesthetic"]["terminal_height"]
-    delete_user = config["settings"].getboolean("delete_user")
-    remove_files = config["settings"].getboolean("remove_files")
-    clear_output_on_reload = config["settings"].getboolean("clear_output_on_reload")
-    graphs_primary = config["aesthetic"]["graphs_primary"]
-    graphs_secondary = config["aesthetic"]["graphs_secondary"]
-    show_stats = config["aesthetic"].getboolean("show_stats")
-    install_create_new_user = config["settings"].getboolean("install_create_new_user")
-    end_in_newlines = config["settings"].getboolean("end_in_newlines")
-    show_stderr = config["settings"].getboolean("show_stderr")
-
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, "settings"):
         return redirect(url_for("views.home"))
 
-    config_options = {
-        "text_color": text_color,
-        "terminal_height": terminal_height,
-        "delete_user": delete_user,
-        "remove_files": remove_files,
-        "clear_output_on_reload": clear_output_on_reload,
-        "graphs_primary": graphs_primary,
-        "graphs_secondary": graphs_secondary,
-        "show_stats": show_stats,
-        "install_create_new_user": install_create_new_user,
-        "end_in_newlines": end_in_newlines,
-        "show_stderr": show_stderr,
-    }
+    # Since settings also writes to config, open config parse here too.
+    config = configparser.ConfigParser()
+    config.read("main.conf")
 
+    # But still pull all settings from read_config() wrapper.
+    config_options = read_config('settings')
     current_app.logger.info(log_wrap("config_options", config_options))
 
     if request.method == "GET":
@@ -687,6 +658,9 @@ def settings():
             config_options=config_options,
         )
 
+    # TODO: Clean this up somehow. Just a big block of text. Maybe put all in a
+    # data structure or something. Idk will have to think abt it, not there
+    # yet.
     text_color_pref = request.form.get("text_color")
     user_del_pref = request.form.get("delete_user")
     file_pref = request.form.get("delete_files")
@@ -700,6 +674,21 @@ def settings():
     install_new_user_pref = request.form.get("install_new_user")
     newline_ending_pref = request.form.get("newline_ending")
     show_stderr_pref = request.form.get("show_stderr")
+
+    # Debug messages.
+    current_app.logger.info(log_wrap("text_color_pref", text_color_pref))
+    current_app.logger.info(log_wrap("delete_user_pref", user_del_pref))
+    current_app.logger.info(log_wrap("file_pref", file_pref))
+    current_app.logger.info(log_wrap("clear_output_pref", clear_output_pref))
+    current_app.logger.info(log_wrap("height_pref", height_pref))
+    current_app.logger.info(log_wrap("update_weblgsm", update_weblgsm))
+    current_app.logger.info(log_wrap("graphs_primary_pref", graphs_primary_pref))
+    current_app.logger.info(log_wrap("graphs_secondary_pref", graphs_secondary_pref))
+    current_app.logger.info(log_wrap("show_stats_pref", show_stats_pref))
+    current_app.logger.info(log_wrap("purge_tmux_cache", purge_tmux_cache))
+    current_app.logger.info(log_wrap("install_new_user_pref", install_new_user_pref))
+    current_app.logger.info(log_wrap("newline_ending_pref", newline_ending_pref))
+    current_app.logger.info(log_wrap("show_stderr_pref", show_stderr_pref))
 
     if purge_tmux_cache != None:
         purge_tmux_socket_cache()
@@ -765,7 +754,7 @@ def settings():
         config["aesthetic"]["show_stats"] = "yes"
 
     # Set default text area height setting.
-    config["aesthetic"]["terminal_height"] = terminal_height
+    config["aesthetic"]["terminal_height"] = config_options["terminal_height"]
     if height_pref:
         # Validate terminal height is int.
         try:
@@ -803,15 +792,6 @@ def settings():
         restart_daemon.start()
         return redirect(url_for("views.settings"))
 
-    # Debug messages.
-    current_app.logger.info(log_wrap("text_color_pref", text_color_pref))
-    current_app.logger.info(log_wrap("file_pref", file_pref))
-    current_app.logger.info(log_wrap("height_pref", height_pref))
-    current_app.logger.info(log_wrap("update_weblgsm", update_weblgsm))
-    current_app.logger.info(log_wrap("graphs_primary_pref", graphs_primary_pref))
-    current_app.logger.info(log_wrap("graphs_secondary_pref", graphs_secondary_pref))
-    current_app.logger.info(log_wrap("show_stats_pref", show_stats_pref))
-    current_app.logger.info(log_wrap("install_new_user_pref", install_new_user_pref))
 
     flash("Settings Updated!")
     return redirect(url_for("views.settings"))
@@ -822,12 +802,10 @@ def settings():
 @views.route("/about", methods=["GET"])
 @login_required
 def about():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
+    config_options = read_config('about')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
-    return render_template("about.html", user=current_user, text_color=text_color)
+    return render_template("about.html", user=current_user, config_options=config_options)
 
 
 ######### Add Page #########
@@ -835,11 +813,6 @@ def about():
 @views.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    remove_files = config["settings"].getboolean("remove_files")
-
     # Check if user has permissions to add route.
     if not user_has_permissions(current_user, "add"):
         return redirect(url_for("views.home"))
@@ -965,29 +938,29 @@ def add():
 
 ######### Delete Route #########
 
-
 @views.route("/delete", methods=["GET", "POST"])
 @login_required
 def delete():
     global servers
 
+    # TODO: I'm thinking of adding an additional perms check here just to see
+    # if user can access route. Will still also keep server specific check
+    # below. Idk still have to think abt it a bit.
+
     # TODO: Should eventually make this whole function work via IDs instead of
     # server names. Will get there eventually.
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    delete_user = config["settings"].getboolean("delete_user")
-    remove_files = config["settings"].getboolean("remove_files")
+    config_options = read_config('delete')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
     # NOTE: For everyone's safety, if config options are incongruous, default
     # to safer keep user, keep files option. (ie. If delete_user is True and
     # remove_files is False, default to keep user. Cannot delete the user and
     # keep their files. That is technically possible in Linux. However, to make
-    # things easier on me and hid some unnecessary complexity, my app does not
-    # allow it and will default to keeping users & files.)
-    if delete_user and not remove_files:
+    # things easier on me and hide some unnecessary complexity, my app does not
+    # allow it and will default to keeping users & files in that case.)
+    if config_options["delete_user"] and not config_option["remove_files"]:
         flash("Incongruous config options detected. Defaulting to safer keep user, keep files option", category="error")
-        delete_user = False
+        config_option["delete_user"] = False
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""
@@ -1008,7 +981,7 @@ def delete():
         # Log to ensure delete from global servers worked.
         current_app.logger.info(log_wrap("servers", servers))
 
-        if not delete_server(server, remove_files, delete_user):
+        if not delete_server(server, config_options["remove_files"], config_options["delete_user"]):
             flash(f"Something's gone wrong deleting server, {server_name}", category="error")
 
     # Delete via POST is for multiple deletions.
@@ -1035,13 +1008,10 @@ def edit():
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
-    # Import config data.
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    text_color = config["aesthetic"]["text_color"]
-    terminal_height = config["aesthetic"]["terminal_height"]
+    config_options = read_config('edit')
+    current_app.logger.info(log_wrap("config_options", config_options))
 
-    if config["settings"]["cfg_editor"] == "no":
+    if not config_options["cfg_editor"]:
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("views.home"))
 
@@ -1137,10 +1107,9 @@ def edit():
     return render_template(
         "edit.html",
         user=current_user,
-        text_color=text_color,
-        terminal_height=terminal_height,
         server_name=server_name,
         cfg_file=cfg_path,
         file_contents=file_contents,
         cfg_file_name=cfg_file,
     )
+

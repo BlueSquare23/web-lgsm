@@ -3,8 +3,7 @@
 ### v1.8.0 Pt 4. The Rest...
 ---
 
-* [ ] **Put more error handling & set default values for main.conf parameters in
-  code.**
+* [x] **Put more error handling & set default values for main.conf parameters in code.**
   - The idea here is if some user doesn't have some parameter set in their
     main.conf, or if their main.conf is totally mangled or something, then the
     app shouldn't fail catastrophically, which I think it kinda does rn.

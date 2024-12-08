@@ -147,9 +147,9 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
     clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
 
-#    if clear_output_on_reload:
-#        proc_info.stdout.clear()
-#        proc_info.stderr.clear()
+    if clear_output_on_reload:
+        proc_info.stdout.clear()
+        proc_info.stderr.clear()
 
     # Set lock flag to true.
     proc_info.process_lock = True
@@ -1502,6 +1502,9 @@ def read_config(route):
 
     config_options = dict() 
 
+    # NOTE: Probably a smarter way to do this than an if for each route, but
+    # ehh not a huge deal rn.
+
     if route == 'home':
         config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
         config_options["graphs_primary"] = get_config_value(config, "aesthetic", "graphs_primary", "#e01b24")
@@ -1518,9 +1521,40 @@ def read_config(route):
         config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
         return config_options
 
+    if route == 'install':
+        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
+        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+        config_options["create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True)
+        return config_options
 
+    if route == 'settings':
+        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+        config_options["graphs_primary"] = get_config_value(config, "aesthetic", "graphs_primary", "#e01b24")
+        config_options["graphs_secondary"] = get_config_value(config, "aesthetic", "graphs_secondary", "#0d6efd")
+        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
+        config_options["show_stats"] = get_config_value(config, "aesthetic", "show_stats", True, True)
+        config_options["send_cmd"] = get_config_value(config, "settings", "send_cmd", False, True)
+        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
+        config_options["create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True)
+        config_options["delete_user"] = get_config_value(config, "settings", "delete_user", False, True)
+        config_options["remove_files"] = get_config_value(config, "settings", "remove_files", False, True)
+        config_options["clear_output_on_reload"] = get_config_value(config, "settings", "clear_output_on_reload", True, True)
+        config_options["end_in_newlines"] = get_config_value(config, "settings", "end_in_newlines", False, True)
+        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", False, True)
+        return config_options
 
+    if route == 'about':
+        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+        return config_options
 
+    if route == 'delete':
+        config_options["delete_user"] = get_config_value(config, "settings", "delete_user", False, True)
+        config_options["remove_files"] = get_config_value(config, "settings", "remove_files", False, True)
+        return config_options
+
+    if route == 'edit':
+        config_options["cfg_editor"] = get_config_value(config, "settings", "cfg_editor", False, True)
+        return config_options
 
 
 

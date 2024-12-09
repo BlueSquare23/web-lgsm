@@ -3,24 +3,11 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Thorough code review process.**
-  - [x] Pt 1. Identify targets for refactoring. Just find and tag for later things
-    that need refactored.
-    - Review changes for new features:
-      - [x] Backend ansible sudoers passwordless changes
-      - [x] Multi web interface user changes
-      - [x] Running in a container
-      - [x] Managing game servers in containers
-   - Thought I could do this review more methodically, read and identify then
-     come back and address them. But I don't have the time or attention for
-     that right now. So fuck it. Instead going to just start tearing into shit.
-     Will undoubatbly discover more rot as I start pealing things back.
-
 * **List of Targets for refactoring:**
-  - [ ] All the overhead comments for functions n'@ can be turned into under
+  - [x] All the overhead comments for functions n'@ can be turned into under
     hanging docstring to make the more _pythonic_.
-  - [ ] Remove stupid line breaks with \.
-    - Let black handle formatting.
+  - [x] Remove stupid line breaks with \.
+    - [x] Let black handle formatting.
     - Again another one of these things that I don't really know why I did
       that. Guess I was trying to keep things at 80 columns like these lines. Even though that's arbitrary and we all have screens nowadays that are more than 80 columns wide.
       - 100% am going to accidentally justify the above line at some point bet.

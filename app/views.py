@@ -71,6 +71,7 @@ def home():
     config_options = read_config('home')
     current_app.logger.info(log_wrap("config_options", config_options))
 
+    current_app.logger.info(str(type(current_user)))
     current_app.logger.info(log_wrap("current_user.username", current_user.username))
     current_app.logger.info(log_wrap("current_user.role", current_user.role))
     current_app.logger.info(log_wrap("current_user.permissions", current_user.permissions))
@@ -100,13 +101,13 @@ def controls():
     short_cmd = request.args.get("command")
     console_cmd = request.args.get("cmd")
 
+    # Check if user has permissions to game server for controls route.
+    if not user_has_permissions(current_user, "controls", server_name):
+        return redirect(url_for("views.home"))
+
     # Can't load the controls page without a server specified.
     if server_name == None:
         flash("No server specified!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Check if user has permissions to game server for controls route.
-    if not user_has_permissions(current_user, "controls", server_name):
         return redirect(url_for("views.home"))
 
     # Check that the submitted server exists in db.
@@ -311,7 +312,12 @@ def install():
                 current_app.logger.info(log_wrap("proc_info", proc_info))
 
                 if proc_info.pid:
-                    cancel_install(proc_info)
+                    success = cancel_install(proc_info)
+                    if success:
+                        flash("Installation Canceled!")
+                    else: 
+                        flash("Problem canceling installation!", category="error")
+
 
         return render_template(
             "install.html",

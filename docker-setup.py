@@ -253,7 +253,7 @@ def main(argv):
         print(e)
         print_help()
 
-    # First push required opts to global dict.
+    # First push required opts to global dict for later use.
     for opt, arg in options:
         if opt in ("-h", "--help"):
             print_help()
@@ -268,7 +268,7 @@ def main(argv):
         if opt in ("-p", "--port"):
             opts["port"] = arg
 
-    # Then act based of options.
+    # Then act based off options.
     for opt, _ in options:
         if opt in ("-a", "--add"):
             gather_info()

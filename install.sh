@@ -119,9 +119,9 @@ accpt_usernames="$SCRIPTPATH/playbooks/vars/accepted_usernames.yml"
 
 # Hardcode web-lgsm system user into accepted_users validation list.
 echo "  - $USER" >> $accpt_usernames
-# Run sudo rule add playbook.
-# TODO: Do this in a different way. Ansible connector no longer supports create sudoers rule.
-#$apb -vvv $create_sudo_rule -e "gs_user='root'" -e "script_paths='$venv_python $ansible_connector'" -e "sudo_rule_name='$USER-$USER'" -e "web_lgsm_user='$USER'" -e "setup=true"
+
+# Add sudoers rule for passwordless install & delete.
+sudo echo "$USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *" >> /etc/sudoers.d/$USER-$USER
 
 # Lock playbook files down for security reasons.
 sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;

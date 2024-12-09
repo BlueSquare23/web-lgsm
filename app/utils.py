@@ -38,7 +38,8 @@ PATHS = {
     "cat": "/usr/bin/cat",
     "kill": "/usr/bin/kill",
     "find": "/usr/bin/find",
-    "ssh-keygen": "/usr/bin/ssh-keygen"
+    "ssh-keygen": "/usr/bin/ssh-keygen",
+    "rm": "/usr/bin/rm"
 }
 CONNECTOR_CMD = [
     PATHS['sudo'], '-n',
@@ -68,8 +69,18 @@ def log_wrap(item_name, item):
 
 
 def check_require_auth_setup_fields(username, password1, password2):
-    """Ensure supplied auth fields for creating a new user are supplied.
-    Returns True if they're all good, False if there's a problem with them."""
+    """
+    Ensure supplied auth fields for creating a new user are supplied.
+    Returns True if they're all good, False if there's a problem with them.
+
+    Args:
+        username (str): Supplied username
+        password1 (str): Password enter in field one
+        password2 (str): Password enter in field two
+
+    Returns:
+        bool: True if no problems with supplied auth fields, False otherwise.
+    """
     # Make sure required form items are supplied.
     for form_item in (username, password1, password2):
         if form_item == None or form_item == "":
@@ -93,8 +104,18 @@ def check_require_auth_setup_fields(username, password1, password2):
 
 
 def valid_password(password1, password2):
-    """Runs supplied auth route passwords against some basic checks. Returns
-    False if passwords bad, True if all good."""
+    """
+    Runs supplied auth route passwords against some basic checks. Returns
+    False if passwords bad, True if all good.
+
+    Args:
+        password1 (str): Password enter in field one
+        password2 (str): Password enter in field two
+
+    Returns:
+        bool: True if passwords match and are valid (aka are basically strong),
+              False otherwise
+    """
     # Setup rudimentary password strength counter.
     lower_alpha_count = 0
     upper_alpha_count = 0
@@ -136,11 +157,18 @@ def valid_password(password1, password2):
 
 def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
-    General purpose subprocess.Popen wrapper function.
+    General purpose subprocess.Popen wrapper function. Keeps track of processes
+    stdout, stderr, pid, and other info via ProcInfo object.
 
     Args:
         cmd (list): Command to be run via subprocess.Popen.
-        proc_info (obj): Optional object to store info about running process.
+        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
+                                    process information.
+        app_context (AppContext): Optional Current app context needed for
+                                  logging in a thread.
+
+    Returns:
+        None: Doesn't return anything, just updates ProcInfoVessel object.
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
@@ -160,7 +188,7 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
 
     current_app.logger.info(log_wrap('cmd', cmd))
     
-    # subproc call, Bytes mode, not buffered.
+    # Subprocess call, Bytes mode, not buffered.
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, bufsize=-1
     )
@@ -237,56 +265,41 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     proc_info.process_lock = False
 
 
-# Snips any lingering `watch` processes.
-def kill_watchers(last_request_for_output):
-    # TODO: Refactor this whole thing. We can keep track of watch pid's now so
-    # use that do do the snipping I think.
-    # Add three minutes to last_request_for_output time as a timeout. In other
-    # words, only kill lingering watch processes if output page hasn't been
-    # requested for past three minutes.
-    three_minutes = 180
-    ouput_page_timeout = last_request_for_output + three_minutes
-
-    # Greater than because of the natural flow of time. Epoch time now is a
-    # larger integer than epoch time three minutes ago. So if the page timeout
-    # is great than the now time the timeout has not been hit yet.
-    if ouput_page_timeout > int(time.time()):
-        return
-
-    # Get all processes named 'watch'
-    watch_processes = []
-    for proc in psutil.process_iter(["pid", "name", "username"]):
-        if proc.info["name"] == "watch":
-            watch_processes.append((proc.pid, proc.username()))
-
-    for pid, user in watch_processes:
-        cmd = []
-        if user != getpass.getuser():
-            cmd += [PATHS['sudo'], "-n", "-u", user]
-        cmd += [PATHS['kill'], "-9", str(pid)]
-
-        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        if proc.returncode != 0:
-            #            print("Cant kill proc")
-            pass
-
-
 def cancel_install(proc_info):
-    """Calls the ansible playbook connector to kill running installs"""
+    """
+    Calls the ansible playbook connector to kill running installs upon request.
+
+    Args:
+        proc_info (ProcInfoVessel): ProcInfoVessel object holding process
+                                    information.
+
+    Returns:
+        bool: True if install canceled successfully, False otherwise.
+    """
+    # NOTE: For the --cancel option on the ansible connector script we pass in
+    # the pid of the running install, instead of the game server's ID.
     pid = proc_info.pid
+    cmd = CONNECTOR_CMD + ['--cancel', pid]
+    cancel_proc_info = ProcInfoVessel()
 
-    # Set Ansible playbook vars.
-    ansible_vars = dict()
-    ansible_vars["action"] = "cancel"
-    ansible_vars["pid"] = pid
-    write_ansible_vars_json(ansible_vars)
+    run_cmd_popen(cmd, cancel_proc_info)
 
-    run_cmd_popen(CONNECTOR_CMD, proc_info)
+    if cancel_proc_info.exit_status > 0:
+        return False
+
+    return True
 
 
-# Translates a username to a uid using pwd module.
 def get_uid(username):
+    """
+    Translates a username to a uid using pwd module.
+
+    Args:
+        username(str): User to get uid for
+
+    Returns:
+        uid (str): Either returns the uid for user or None if can't get uid
+    """
     try:
         user_info = pwd.getpwnam(username)
         return user_info.pw_uid
@@ -574,6 +587,12 @@ def get_all_server_statuses(all_game_servers):
 
 
 def get_running_installs():
+    """
+    Gets list of running install thread names, if any are currently running.
+
+    Returns:
+        thread_names (list): List of currently running install threads.
+    """
     threads = threading.enumerate()
     # Get all active threads.
     thread_names = []
@@ -586,7 +605,9 @@ def get_running_installs():
 
 def find_cfg_paths(server):
     """
-    Finds a list of all valid cfg files for a given game server.
+    Finds a list of all valid cfg files for a given game server. Works for
+    local & remote install types. Doesn't support docker yet as of web-lgsm
+    v1.8.
 
     Args:
         server (GameServer): Game server to find cfg files for.
@@ -657,7 +678,12 @@ def find_cfg_paths(server):
 def normalize_path(path):
     """
     Little helper function used to normalize supplied path in order to check if
-    two path str's are equivalent.
+    two path str's are equivalent. Used by delete_server() in path comparison
+    to ensure NOT deleting home dir by any other name.
+
+    Args:
+        path (str): Path to clear up
+
     """
     # Remove extra slashes.
     path = re.sub(r'/{2,}', '/', path)
@@ -688,6 +714,14 @@ def delete_server(server, remove_files, delete_user):
 
     if server.install_type == 'local':
         if server.username == USER:
+            if normalize_path(f'/home/{USER}') == normalize_path(server.install_path):
+                flash("Will not delete users home directories!", category="error")
+                return False
+
+            if normalize_path(CWD) == normalize_path(server.install_path):
+                flash("Will not delete web-lgsm base installation directory!", category="error")
+                return False
+
             if os.path.isdir(server.install_path):
                 shutil.rmtree(server.install_path)
 
@@ -707,7 +741,7 @@ def delete_server(server, remove_files, delete_user):
 
         proc_info = ProcInfoVessel()
         keyfile = get_ssh_key_file(server.username, server.install_host)
-        cmd = ['rm', '-rf', server.install_path]
+        cmd = [PATHS['rm'], '-rf', server.install_path]
 
         success = run_cmd_ssh(
             cmd,
@@ -733,17 +767,26 @@ def delete_server(server, remove_files, delete_user):
     return True
 
 
-# Validates submitted cfg_file for edit route.
 def valid_cfg_name(cfg_file):
+    """
+    Validates submitted cfg_file for edit route by checking name against
+    accepted name list in json file. Used to ensure cfg editor can only be used
+    to edit files from accepted cfg name list.
+
+    Args:
+        cfg_file (str): Name of cfg file to validate.
+
+    Returns:
+        bool: True if valid cfg file name, False otherwise.
+    """
     gs_cfgs = open("json/accepted_cfgs.json", "r")
     json_data = json.load(gs_cfgs)
     gs_cfgs.close()
 
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
-    for cfg in valid_gs_cfgs:
-        if cfg_file == cfg:
-            return True
+    if cfg_file in valid_gs_cfgs:
+        return True
 
     return False
 
@@ -757,7 +800,10 @@ def get_commands(server, send_cmd, current_user):
     Args:
         server (string): Name of game server to get commands for.
         send_cmd (bool): Whether or not send cmd button is enabled.
-        current_user (object): Currently logged in flask user object.
+        current_user (LocalProxy): Currently logged in flask user object.
+
+    Returns:
+        commands (list): List of command objects for server.
     """
     commands = []
 
@@ -803,8 +849,19 @@ def get_commands(server, send_cmd, current_user):
     return commands
 
 
-# Turns data in games_servers.json into servers list for install route.
 def get_servers():
+    """
+    Turns data in games_servers.json into servers list for install route.
+
+    Returns:
+        dict: Dictionary mapping short server names to long server names.
+    """
+    # TODO: Eventually I need to change the structure of the underlying json
+    # file and just make it a frecking associated array in there. Then I can
+    # just read in the json and return it, instead of doing zip. Don't remember
+    # why I originally made the underlying json two arrays. Probably was just
+    # being silly. Oh well not too important rn, problem for next release...
+
     # Try except in case problem with json files.
     try:
         with open("json/game_servers.json", "r") as file:
@@ -816,8 +873,23 @@ def get_servers():
         return {}
 
 
-# Validates short commands.
 def valid_command(cmd, server, send_cmd, current_user):
+    """
+    Validates short commands from controls route form for game server. Some
+    game servers may have specific game server command exemptions. This
+    function basically just checks if supplied cmd is in list of accepted cmds
+    from get_commands().
+
+    Args:
+        cmd (str): Short cmd string to validate.
+        server (GameServer): Game server to check command against.
+        send_cmd (bool): Config option specifying if send_cmd button is
+                         enabled/allowed.
+        current_user (LocalProxy): Currently logged in flask user object.
+
+    Returns:
+        bool: True if cmd is valid for user & game server, False otherwise.
+    """
     commands = get_commands(server, send_cmd, current_user)
     for command in commands:
         # Aka is valid command.
@@ -827,11 +899,19 @@ def valid_command(cmd, server, send_cmd, current_user):
     return False
 
 
-## Install Page Utils.
-
-
-# Validates form submitted server_script_name and server_full_name options.
 def valid_install_options(script_name, full_name):
+    """
+    Validates form submitted server_script_name and server_full_name options
+    for install route. Basically just checks if supplied args are in list of
+    accepted servers from get_servers().
+
+    Args:
+        script_name (str): Short name of game server (aka script name).
+        full_name (str): Full name of game server.
+
+    Returns:
+        bool: True if short and long names are both valid, False otherwise.
+    """
     servers = get_servers()
     for server, server_name in servers.items():
         if server == script_name and server_name == full_name:
@@ -839,8 +919,17 @@ def valid_install_options(script_name, full_name):
     return False
 
 
-# Validates script_name.
 def valid_script_name(script_name):
+    """
+    Validates supplied script_name for install route. Basically just checks if
+    supplied script_name is in list of accepted servers from get_servers().
+
+    Args:
+        script_name (str): Short name of game server to check (aka script name).
+
+    Returns:
+        bool: True if short name is valid, False otherwise.
+    """
     servers = get_servers()
     for server, server_name in servers.items():
         if server == script_name:
@@ -848,8 +937,17 @@ def valid_script_name(script_name):
     return False
 
 
-# Validates server_name.
 def valid_server_name(server_name):
+    """
+    Validates supplied server_name for install route. Basically just checks if
+    supplied server_name is in list of accepted servers from get_servers().
+
+    Args:
+        server_name (str): Long name of game server to check.
+
+    Returns:
+        bool: True if long name is valid, False otherwise.
+    """
     servers = get_servers()
     for server, s_name in servers.items():
         # Convert s_name to a unix friendly directory name.
@@ -861,8 +959,41 @@ def valid_server_name(server_name):
     return False
 
 
-# Checks if linuxgsm.sh already exists and if not, gets it.
+def get_lgsmsh(lgsmsh):
+    """
+    Function for pulling down the latest linuxgsm.sh script from their URL when
+    needed. Fakes wget's user agent to get requests to work.
+
+    Args:
+        lgsmsh (str): Path to linuxgsm.sh script file (aka web-lgsm/scripts/).
+        
+    Returns:
+        None: Just fetches latest file if needed, returns nothing.
+    """
+    try:
+        headers = {"User-Agent": "Wget/1.20.3 (linux-gnu)"}
+        response = requests.get("https://linuxgsm.sh", headers=headers)
+        with open(lgsmsh, "wb") as f:
+            f.write(response.content)
+        os.chmod(lgsmsh, 0o755)
+    except Exception as e:
+        # For debug.
+        current_app.logger.debug(e)
+
+    current_app.logger.info("Latest linuxgsm.sh script fetched!")
+
+
 def check_and_get_lgsmsh(lgsmsh):
+    """
+    Checks if linuxgsm.sh already exists and if not, gets it. Also checks if
+    current version is older than 3 weeks old and if so get's a fresh copy.
+
+    Args:
+        lgsmsh (str): Path to linuxgsm.sh script file (aka web-lgsm/scripts/).
+
+    Returns:
+        None: Just fetches latest file if needed, returns nothing.
+    """
     if not os.path.isfile(lgsmsh):
         get_lgsmsh(lgsmsh)
         return
@@ -872,23 +1003,17 @@ def check_and_get_lgsmsh(lgsmsh):
         get_lgsmsh(lgsmsh)
 
 
-# Wget's newest lgsm script.
-def get_lgsmsh(lgsmsh):
-    # Pretend to be wget to fetch linuxgsm.sh.
-    try:
-        headers = {"User-Agent": "Wget/1.20.3 (linux-gnu)"}
-        response = requests.get("https://linuxgsm.sh", headers=headers)
-        with open(lgsmsh, "wb") as f:
-            f.write(response.content)
-        os.chmod(lgsmsh, 0o755)
-    except Exception as e:
-        # For debug.
-        print(e)
-    print("Got linuxgsm.sh!")
+def contains_bad_chars(input_item):
+    """
+    Checks for the presence of bad chars in supplied user input.
 
+    Args:
+        input_item (str): Supplied input item to check for bad chars.
 
-# Checks for the presense of bad chars in input.
-def contains_bad_chars(i):
+    Returns:
+        bool: True if item does contain one of the bad chars below, False
+              otherwise.
+    """
     bad_chars = {
         " ",
         "$",
@@ -914,19 +1039,29 @@ def contains_bad_chars(i):
         "~",
         "&",
     }
-    if i is None:
+
+    # Its okay to skip None cause should be caught by earlier checks. Also
+    # technically, None does not contain any bad chars...
+    if input_item is None:
         return False
 
     for char in bad_chars:
-        if char in i:
+        if char in input_item:
             return True
 
     return False
 
 
-# Run's self update script.
 # TODO: Rewrite this to use run_cmd_popen.
 def update_self():
+    """
+    Runs the web-lgsm self updates. Just wraps invocation of web-lgsm.py --auto
+    update to run the actual update or check for updates.
+
+    Returns:
+        Str: String containing update status, based on web-lgsm.py script
+             output.
+    """
     update_cmd = ["./web-lgsm.py", "--auto"]
     proc = subprocess.run(
         update_cmd,
@@ -946,7 +1081,7 @@ def update_self():
 
 
 # Sleep's 5 seconds then restarts the app.
-# TODO: Rewrite this to use run_cmd_popen.
+# TODO: Deprecate this & make route run cmd via run_cmd_popen() instead.
 def restart_self(restart_cmd):
     time.sleep(5)
     proc = subprocess.run(
@@ -957,8 +1092,14 @@ def restart_self(restart_cmd):
     )
 
 
-# Gets bytes in/out per second. Stores last value in global.
 def get_network_stats():
+    """
+    Gets bytes in/out per second. Stores last got values in globals. Used by
+    get_server_stats() to collect network status for /api/system-usage route.
+
+    Returns:
+        dict: Dictionary containing bytes_sent_rate & bytes_recv_rate.
+    """
     global prev_bytes_sent, prev_bytes_recv, prev_time
 
     # Get current counters and timestamp.
@@ -983,9 +1124,16 @@ def get_network_stats():
     return {"bytes_sent_rate": bytes_sent_rate, "bytes_recv_rate": bytes_recv_rate}
 
 
-# Returns disk, cpu, mem, and network stats. Later turned into json for home
-# page resource usage charts.
 def get_server_stats():
+    """
+    Returns disk, cpu, mem, and network stats which are later turned into json
+    for the /api/system-usage route which is used by home page resource usage
+    stats charts.
+
+    Returns:
+        dict: Dictionary containing disk, cpu, mem, and network usage
+              statistics.
+    """
     stats = dict()
 
     # Disk
@@ -1023,22 +1171,6 @@ def get_server_stats():
     stats["network"] = get_network_stats()
 
     return stats
-
-
-def get_verbosity(verbostiy):
-    """Tries to cast config verbosity to int. Also checks if below three."""
-    try:
-        v = int(verbostiy)
-    except ValueError as verr:
-        v = 1
-    except Exception as ex:
-        v = 1
-
-    # Only allow levels 1-3.
-    if v > 3:
-        v = 1
-
-    return v
 
 
 def user_has_permissions(current_user, route, server_name=None):
@@ -1154,6 +1286,7 @@ def is_ssh_accessible(hostname):
 
     Args:
         hostname (str): The hostname or IP address to check.
+
     Returns:
         bool: True if SSH is accessible, False otherwise.
     """
@@ -1185,6 +1318,7 @@ def generate_ecdsa_ssh_keypair(key_name):
 
     Args:
         key_name (str): Name of key files to be generated.
+
     Returns:
         bool: True if key files created successfully, False otherwise.
     """
@@ -1216,6 +1350,7 @@ def get_ssh_key_file(user, host):
     Args:
         user (str): Username of remote user.
         host (str): Hostname of remote server.
+
     Returns:
         str: Path to public ssh key file for user:host.
     """
@@ -1244,6 +1379,7 @@ def gen_ssh_rule(pub_key):
 
     Args:
         pub_key (str): Public key to use to generate rule.
+
     Returns:
         ssh_rule (str): Ssh rule string. 
     """
@@ -1262,10 +1398,11 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         username (str): The username to use for the SSH connection.
         key_filename (str): The path to the private key file.
         proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
-                                    process information in a thread.
+                                    process information.
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
         timeout (float): Timeout in seconds for ssh command. None = no timeout.
+
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
@@ -1493,6 +1630,7 @@ def read_config(route):
 
     Args:
         route (str): Name of route to fetch config parameters for.
+
     Returns:
         config_options (dict): Configuration options for route.
     """

@@ -19,7 +19,6 @@ auth = Blueprint("auth", __name__)
 
 ######### Login Route #########
 
-
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     # Set default return code.
@@ -72,7 +71,6 @@ def login():
 
 ######### Setup Route #########
 
-
 @auth.route("/setup", methods=["GET", "POST"])
 def setup():
     # Set default response code.
@@ -122,7 +120,6 @@ def setup():
 
 ######### Logout Route #########
 
-
 @auth.route("/logout")
 @login_required
 def logout():
@@ -132,7 +129,6 @@ def logout():
 
 
 ######### Create / Edit User(s) Route #########
-
 
 @auth.route("/edit_users", methods=["GET", "POST"])
 @login_required
@@ -318,3 +314,4 @@ def edit_users():
         db.session.commit()
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
+

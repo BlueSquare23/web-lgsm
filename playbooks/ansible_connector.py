@@ -22,6 +22,8 @@ SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
 os.chdir(os.path.join(SCRIPTPATH, ".."))
 CWD = os.getcwd()
 JSON_VARS_FILE = os.path.join(CWD, "json/ansible_vars.json")
+PS = '/usr/bin/ps'
+PKILL = '/usr/bin/pkill'
 
 # Use cwd to import db classes from app.
 sys.path.append(CWD)
@@ -254,7 +256,7 @@ def get_script_cmd_from_pid(pid):
     try:
         # Get script name from ps cmd output.
         proc = subprocess.run(
-            ["ps", "-o", "cmd=", str(pid)],
+            [PS, "-o", "cmd=", str(pid)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -298,11 +300,13 @@ def cancel_install(pid):
     pid_cmd = get_script_cmd_from_pid(pid)
     self_path = os.path.join(SCRIPTPATH, __file__)
     self_cmd = f"/usr/bin/sudo -n {self_path}"
+
+    # Validate to ensure only killing instances of own script pid.
     if pid_cmd != self_cmd:
         print(f"Error: Not allowed to kill pid: {pid}!")
         exit(4)
 
-    cmd = ["pkill", "-P", str(pid)]
+    cmd = [PKILL, "-P", str(pid)]
     run_cmd(cmd)
     exit()
 

@@ -1,39 +1,20 @@
 ## Version 1.8.0 Todos
 
-### v1.8.0 Pt 4. The Rest...
----
-
-* [x] **Make install.sh setup npm pkgs at the end.**
-  - I'm using xterm.js and a plugin for them that can only be installed via
-    npm.
-
-* [x] **Make install.sh support --docker flag to install container components**
-  - Just to install docker & docker-compose if they're not already installed.
-  - My app also wants it to be user in docker group, run docker cmds without
-    sudo.
-    - Maybe can change that and sudo prepend and have docker add sudoers rules. 
-
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [ ] **Thorough code review process.**
-  - [ ] Pt 1. Identify targets for refactoring. Just find and tag for later things
+* [x] **Thorough code review process.**
+  - [x] Pt 1. Identify targets for refactoring. Just find and tag for later things
     that need refactored.
     - Review changes for new features:
-      - [ ] Backend ansible sudoers passwordless changes
-      - [ ] Multi web interface user changes
-      - [ ] Running in a container
-      - [ ] Managing game servers in containers
-    - [ ] Do a high level overview of whole project, looking function by function
-      for things that stick out as stinky...
-      - If there are some really messy or iffy sections of the code where I
-        hacked something together that really needed more thought, now is the
-        time to try to identify those things.
-      - Not fixing or changing anything just yet. Just want to review what I
-        have and where its weak to better get an idea of how to fix it later.
-  - [ ] Pt 2. Address targets for refactoring.
-    - I suspect some of them will be easy fixes and some more involved.
-    - Really big refactors will probably get pushed off till next release.
+      - [x] Backend ansible sudoers passwordless changes
+      - [x] Multi web interface user changes
+      - [x] Running in a container
+      - [x] Managing game servers in containers
+   - Thought I could do this review more methodically, read and identify then
+     come back and address them. But I don't have the time or attention for
+     that right now. So fuck it. Instead going to just start tearing into shit.
+     Will undoubatbly discover more rot as I start pealing things back.
 
 * **List of Targets for refactoring:**
   - [ ] All the overhead comments for functions n'@ can be turned into under

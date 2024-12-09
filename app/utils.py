@@ -348,7 +348,8 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['cat'], gs_id_file_path]
+    # TODO: Make a docker_cmd_build() function to make these lines less ugly.
+    cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name, PATHS['cat'], gs_id_file_path]
 
     run_cmd_popen(cmd, proc_info)
 
@@ -550,7 +551,7 @@ def get_server_status(server):
             return None
 
     elif server.install_type == 'docker':
-        cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
+        cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
         run_cmd_popen(cmd, proc_info)
 
     # Else type local same user.
@@ -807,11 +808,16 @@ def get_commands(server, send_cmd, current_user):
     """
     commands = []
 
-    with open("json/commands.json", "r") as commands_json:
-        json_data = json.load(commands_json)
+    try:
+        with open("json/commands.json", "r") as commands_json:
+            json_data = json.load(commands_json)
 
-    with open("json/ctrl_exemptions.json", "r") as exemptions_json:
-        exemptions_data = json.load(exemptions_json)
+        with open("json/ctrl_exemptions.json", "r") as exemptions_json:
+            exemptions_data = json.load(exemptions_json)
+
+    except Exception as e:
+        flash("Problem reading command json files!", category="error")
+        return commands
 
     # Remove send cmd if option disabled in main.conf.
     if send_cmd == False:

@@ -65,9 +65,6 @@ if [[ $1 =~ '--docker' ]]; then
       $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update
-    
-    # Finally add user to docker group.
-    sudo usermod -aG docker ${USER}
 
     echo -e "${green}####### Docker install completed successfully!${reset}"
     exit
@@ -116,19 +113,29 @@ apb="$SCRIPTPATH/venv/bin/ansible-playbook"
 venv_python="$SCRIPTPATH/venv/bin/python"
 ansible_connector="$SCRIPTPATH/playbooks/ansible_connector.py"
 accpt_usernames="$SCRIPTPATH/playbooks/vars/accepted_usernames.yml"
+sudoers_file="/etc/sudoers.d/$USER-$USER"
 
 # Hardcode web-lgsm system user into accepted_users validation list.
 echo "  - $USER" >> $accpt_usernames
 
-# Add sudoers rule for passwordless install & delete.
-sudo echo "$USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *" >> /etc/sudoers.d/$USER-$USER
+# Write sudoers rule for passwordless install & delete.
+sudoers_rule="$USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
+temp_sudoers=$(mktemp)
+echo "$sudoers_rule" > "$temp_sudoers"
+sudo chmod 0440 "$temp_sudoers"
+sudo chown root:root "$temp_sudoers"
+sudo visudo -cf "$temp_sudoers"  # Validate new file.
+sudo mv "$temp_sudoers" "$sudoers_file"
 
 # Lock playbook files down for security reasons.
 sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
 sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;
 sudo chmod 755 $apb $ansible_connector
 sudo chown -R root:root $apb "$SCRIPTPATH/playbooks"
-sudo chattr +i $apb $ansible_connector
+# Can't make files immutable in containers.
+if [[ -z $CONTAINER ]]; then
+    sudo chattr +i $apb $ansible_connector
+fi
 
 # Finally setup random key.
 random_key=$(echo $RANDOM | md5sum | head -c 20)

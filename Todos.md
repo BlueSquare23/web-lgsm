@@ -4,16 +4,11 @@
 ---
 
 * **List of Targets for refactoring:**
-  - [x] All the overhead comments for functions n'@ can be turned into under
-    hanging docstring to make the more _pythonic_.
-  - [x] Remove stupid line breaks with \.
-    - [x] Let black handle formatting.
-    - Again another one of these things that I don't really know why I did
-      that. Guess I was trying to keep things at 80 columns like these lines. Even though that's arbitrary and we all have screens nowadays that are more than 80 columns wide.
-      - 100% am going to accidentally justify the above line at some point bet.
-    - At least in this case changes are not destructive at all.
-    - Might even help me identify some places where things can be reduced /
-      refactored more.
+  - [ ] Do other things marked TODO in inline comments.
+    - Not everything marked TODO is something that needs done before v1.8
+      release. But a lot of them are. Going to go through each and do the ones
+      that really need it!
+    - To get a list of remaining `grep -R TODO app/* |grep -v 'node_mod'`.
   - [ ] Make sections for GET and POST explicit ifs. Right now I'm relying on a lot
     of mixed code where like stuff for GET req's happens both above and below
     the POST if block.

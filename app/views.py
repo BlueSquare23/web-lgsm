@@ -41,19 +41,6 @@ PATHS = {
     "tmux":"/usr/bin/tmux",
 }
 
-# TODO: Move these into the jinja template for this. Not sure why I ever passed
-# them through the route code to begin with. Used to be much dumber.
-# Bootstrap spinner colors.
-SPINNER_COLORS = [
-    "primary",
-    "secondary",
-    "success",
-    "danger",
-    "warning",
-    "info",
-    "light",
-]
-
 # Globals.
 servers = {}  # Holds output objects.
 last_request_for_output = int(time.time())  # Holds last requested output time.
@@ -138,11 +125,6 @@ def controls():
     # Pull in commands list from commands.json file.
     cmds_list = get_commands(server.script_name, config_options["send_cmd"], current_user)
 
-    # TODO: Remove / change this as a way to check if json file is okay. Right
-    # now this is serving the purposes of telling if the json file has become
-    # mangled or not, in case users have edited it by hand and left off a comma
-    # or something. I should make a dedicated function to check if json data is
-    # all good and put that at the top of the route instead.
     if not cmds_list:
         flash("Error loading commands.json file!", category="error")
         return redirect(url_for("views.home"))
@@ -183,7 +165,6 @@ def controls():
                 server_name=server_name,
                 server_commands=cmds_list,
                 config_options=config_options,
-                spinner_colors=SPINNER_COLORS,
                 cfg_paths=cfg_paths, 
                 console=True
             )
@@ -214,7 +195,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
+                cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
@@ -234,7 +215,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
+                cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
@@ -244,7 +225,6 @@ def controls():
 
     current_app.logger.info(log_wrap("server_name", server_name))
     current_app.logger.info(log_wrap("cmds_list", cmds_list))
-    current_app.logger.info(log_wrap("SPINNER_COLORS", SPINNER_COLORS))
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     return render_template(
@@ -253,7 +233,6 @@ def controls():
         server_name=server_name,
         server_commands=cmds_list,
         config_options=config_options,
-        spinner_colors=SPINNER_COLORS,
         cfg_paths=cfg_paths,
     )
 
@@ -323,7 +302,6 @@ def install():
             "install.html",
             user=current_user,
             servers=install_list,
-            spinner_colors=SPINNER_COLORS,
             install_name=install_name,
             config_options=config_options,
             running_installs=running_installs,
@@ -356,7 +334,7 @@ def install():
         # Used to pass install_name to frontend js.
         install_name = server_install_name
 
-        # TODO: Make all this work via game server ID's, more reliable that
+        # TODO: Make all this work via game server ID's, more reliable than
         # names.
         # Clobber any previously held proc_info objects for server.
         servers[server_install_name] = ProcInfoVessel()
@@ -396,6 +374,8 @@ def install():
             keyfile = get_ssh_key_file(server.username, server.install_host)
             server.keyfile_path = keyfile
 
+        if "CONTAINER" in os.environ:
+            pass
 # TODO: Redo this. I know what I was trying to do but things have changed and I
 #       don't like this anymore.
 #
@@ -460,7 +440,6 @@ def install():
             user=current_user,
             servers=install_list,
             config_options=config_options,
-            spinner_colors=SPINNER_COLORS,
             install_name=install_name,
             running_installs=running_installs,
         )
@@ -515,7 +494,7 @@ def update_console():
     ]
 
     if server.install_type == 'docker':
-        cmd = [PATHS['docker'], 'exec', server.script_name, PATHS['sudo'], '-u', server.username] + cmd
+        cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
 
     if server.install_name in servers:
         proc_info = servers[server.install_name]
@@ -925,13 +904,17 @@ def add():
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
+        if install_type == 'docker':
+            flash(f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker")
+            flash(f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *")
+
         if should_use_ssh(server):
             keyfile = get_ssh_key_file(username, server.install_host)
             if keyfile == None:
                 flash(f"Problem generating new ssh keys!", category="error")
                 return redirect(url_for("views.add"))
 
-            flash(f"Add this public key: {keyfile}.pub to the ~{username}/.ssh/authorized_keys file!")
+            flash(f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!")
 
         db.session.add(server)
         db.session.commit()

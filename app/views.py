@@ -195,7 +195,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
+                cmd = docker_cmd_build(server) + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
@@ -215,7 +215,7 @@ def controls():
                 return redirect(url_for("views.controls", server=server_name))
 
             if server.install_type == 'docker':
-                cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
+                cmd = docker_cmd_build(server) + cmd
 
             daemon = Thread(
                 target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
@@ -334,7 +334,7 @@ def install():
         # Used to pass install_name to frontend js.
         install_name = server_install_name
 
-        # TODO: Make all this work via game server ID's, more reliable than
+        # TODO v1.9: Make all this work via game server ID's, more reliable than
         # names.
         # Clobber any previously held proc_info objects for server.
         servers[server_install_name] = ProcInfoVessel()
@@ -447,17 +447,17 @@ def install():
 
 ######### API Update Console #########
 
-# TODO: Remove GET method, just here for testing.
-@views.route("/api/update-console", methods=["GET", "POST"])
+@views.route("/api/update-console", methods=["POST"])
 @login_required
 def update_console():
-# TODO: Write permissions controls for these api routes.
-#    if not user_has_permissions(current_user, "server-statuses"):
-#        return redirect(url_for("views.home"))
     global servers
 
-# FOR TESTING VIA GET.
-#    server_name = request.args.get("server")
+    if not user_has_permissions(current_user, "update-console"):
+        resp_dict = {'Error': 'Permission denied!'}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
+        )
+        return response
 
     # Collect var from POST request.
     server_name = request.form.get("server")
@@ -494,7 +494,7 @@ def update_console():
     ]
 
     if server.install_type == 'docker':
-        cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
+        cmd = docker_cmd_build(server) + cmd
 
     if server.install_name in servers:
         proc_info = servers[server.install_name]
@@ -527,15 +527,11 @@ def update_console():
 @views.route("/api/server-status", methods=["GET"])
 @login_required
 def get_status():
-# TODO: Write permissions controls for these api routes.
-#    if not user_has_permissions(current_user, "server-statuses"):
-#        return redirect(url_for("views.home"))
-
     # Collect args from GET request.
     server_id = request.args.get("id")
 
     if server_id == None:
-        resp_dict = {"error": "No id supplied"}
+        resp_dict = {"Error": "No id supplied"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
         )
@@ -543,9 +539,16 @@ def get_status():
 
     server = GameServer.query.get(server_id)
     if server == None:
-        resp_dict = {"error": "Invalid id"}
+        resp_dict = {"Error": "Invalid id"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
+        )
+        return response
+
+    if not user_has_permissions(current_user, "server-statuses", server.install_name):
+        resp_dict = {"Error": "Permission Denied!"}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
         )
         return response
 
@@ -564,10 +567,6 @@ def get_status():
 @views.route("/api/system-usage", methods=["GET"])
 @login_required
 def get_stats():
-# TODO: Write permissions controls for these api routes.
-#    if not user_has_permissions(current_user, "system-usage"):
-#        return redirect(url_for("views.home"))
-
     server_stats = get_server_stats()
     response = Response(
         json.dumps(server_stats, indent=4), status=200, mimetype="application/json"
@@ -580,10 +579,6 @@ def get_stats():
 @views.route("/api/cmd-output", methods=["GET"])
 @login_required
 def no_output():
-# TODO: Write permissions controls for these api routes.
-#    if not user_has_permissions(current_user, "cmd-output"):
-#        return redirect(url_for("views.home"))
-
     global servers
 
     # Collect args from GET request.
@@ -602,6 +597,13 @@ def no_output():
         resp_dict = {"error": "eer never heard of em"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
+        )
+        return response
+
+    if not user_has_permissions(current_user, "cmd-output", server_name):
+        resp_dict = {"Error": "Permission Denied!"}
+        response = Response(
+            json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
         )
         return response
 
@@ -643,9 +645,8 @@ def settings():
             config_options=config_options,
         )
 
-    # TODO: Clean this up somehow. Just a big block of text. Maybe put all in a
-    # data structure or something. Idk will have to think abt it, not there
-    # yet.
+    # TODO v1.9: Retrieve form options via separate function like read_config()
+    # (maybe read_form()) to cleanup the mess that is the block of text below.
     text_color_pref = request.form.get("text_color")
     user_del_pref = request.form.get("delete_user")
     file_pref = request.form.get("delete_files")
@@ -769,10 +770,9 @@ def settings():
 
         flash(status)
 
-        # Restart daemon thread sleeps for 5 seconds then restarts app.
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=restart_self, args=(cmd, ProcInfoVessel(), current_app.app_context()), daemon=True, name="restart"
+            target=run_cmd_popen, args=(cmd, ProcInfoVessel(), current_app.app_context()), daemon=True, name="restart"
         )
         restart_daemon.start()
         return redirect(url_for("views.settings"))
@@ -932,11 +932,11 @@ def add():
 def delete():
     global servers
 
-    # TODO: I'm thinking of adding an additional perms check here just to see
-    # if user can access route. Will still also keep server specific check
-    # below. Idk still have to think abt it a bit.
+    # TODO v1.9: I'm thinking of adding an additional perms check here just to
+    # see if user can access route. Will still also keep server specific check
+    # below. Idk still have to think about it a bit.
 
-    # TODO: Should eventually make this whole function work via IDs instead of
+    # TODO v1.9: Should eventually make this whole function work via IDs instead of
     # server names. Will get there eventually.
     config_options = read_config('delete')
     current_app.logger.info(log_wrap("config_options", config_options))

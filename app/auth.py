@@ -13,7 +13,7 @@ from flask_login import (
     login_required,
     current_user,
 )
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, current_app
 
 auth = Blueprint("auth", __name__)
 
@@ -47,10 +47,8 @@ def login():
         # Check login info.
         user = User.query.filter_by(username=username).first()
         if user:
-            # TODO; Turn these into debug prints.
-            #            print(user.username)
-            #            print(user.role)
-            #            print(user.permissions)
+            current_app.logger.info(user)
+
             if check_password_hash(user.password, password):
                 if current_user.is_authenticated:
                     logout_user()

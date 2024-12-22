@@ -334,6 +334,19 @@ def purge_tmux_socket_cache():
         os.remove(socket_file_name_cache)
 
 
+def docker_cmd_build(server):
+    """
+    Builds docker cmd reused all over for given GameServer.
+
+    Args:
+        server (GameServer): Game Server to get tmux socket name for.
+
+    Returns:
+        list: Docker command for GameServer as list.
+    """
+    return [ PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name ]
+
+
 def get_tmux_socket_name_docker(server, gs_id_file_path):
     """
     Gets tmux socket name for docker type installs by running commands through
@@ -348,8 +361,7 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    # TODO: Make a docker_cmd_build() function to make these lines less ugly.
-    cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name, PATHS['cat'], gs_id_file_path]
+    cmd = docker_cmd_build(server) + [ PATHS['cat'], gs_id_file_path ]
 
     run_cmd_popen(cmd, proc_info)
 
@@ -862,11 +874,12 @@ def get_servers():
     Returns:
         dict: Dictionary mapping short server names to long server names.
     """
-    # TODO: Eventually I need to change the structure of the underlying json
-    # file and just make it a frecking associated array in there. Then I can
-    # just read in the json and return it, instead of doing zip. Don't remember
-    # why I originally made the underlying json two arrays. Probably was just
-    # being silly. Oh well not too important rn, problem for next release...
+    # TODO v1.9: Eventually I need to change the structure of the underlying
+    # json file and just make it a freaking associated array in there. Then I
+    # can just read in the json and return it, instead of doing zip. Don't
+    # remember why I originally made the underlying json two arrays. Probably
+    # was just being silly. Oh well not too important rn, problem for next
+    # release...
 
     # Try except in case problem with json files.
     try:
@@ -1058,7 +1071,6 @@ def contains_bad_chars(input_item):
     return False
 
 
-# TODO: Rewrite this to use run_cmd_popen.
 def update_self():
     """
     Runs the web-lgsm self updates. Just wraps invocation of web-lgsm.py --auto
@@ -1069,33 +1081,17 @@ def update_self():
              output.
     """
     update_cmd = ["./web-lgsm.py", "--auto"]
-    proc = subprocess.run(
-        update_cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
 
-    if proc.returncode != 0:
-        return f"Error: {proc.stderr}"
+    proc_info = ProcInfoVessel()
+    run_cmd_popen(update_cmd, proc_info)
+    if proc_info.exit_status > 0:
+        return f"Error: {proc_info.stderr}"
 
-    if "up to date" in proc.stdout:
+    if "up to date" in proc_info.stdout:
         return "Already up to date!"
 
-    if "Update Required" in proc.stdout:
+    if "Update Required" in proc_info.stdout:
         return "Web LGSM Upgraded! Restarting momentarily..."
-
-
-# Sleep's 5 seconds then restarts the app.
-# TODO: Deprecate this & make route run cmd via run_cmd_popen() instead.
-def restart_self(restart_cmd):
-    time.sleep(5)
-    proc = subprocess.run(
-        restart_cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
 
 
 def get_network_stats():
@@ -1246,6 +1242,15 @@ def user_has_permissions(current_user, route, server_name=None):
             )
             return False
 
+    # No flash for api routes. They return json.
+    if route == "update-console":
+        if console not in user_perms["controls"]:
+            return False
+
+    if route == "server-statuses" or route == "cmd-output":
+        if server_name not in user_perms["servers"]:
+            return False
+
     return True
 
 
@@ -1376,22 +1381,6 @@ def get_ssh_key_file(user, host):
     
     keyfile = os.path.join(ssh_dir, key_name)
     return keyfile
-
-
-# TODO: Finish this!
-def gen_ssh_rule(pub_key):
-    """
-    Creates an ssh rule for a specified key.
-
-    Args:
-        pub_key (str): Public key to use to generate rule.
-
-    Returns:
-        ssh_rule (str): Ssh rule string. 
-    """
-    return f'{pub_key} command="/path/to/ssh_connector.sh"'
-
-    # TODO: Finish this.
 
 
 def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(), app_context=False, timeout=5.0):
@@ -1679,7 +1668,7 @@ def read_config(route):
         config_options["show_stats"] = get_config_value(config, "aesthetic", "show_stats", True, True)
         config_options["send_cmd"] = get_config_value(config, "settings", "send_cmd", False, True)
         config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
-        config_options["create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True)
+        config_options["install_create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True, True)
         config_options["delete_user"] = get_config_value(config, "settings", "delete_user", False, True)
         config_options["remove_files"] = get_config_value(config, "settings", "remove_files", False, True)
         config_options["clear_output_on_reload"] = get_config_value(config, "settings", "clear_output_on_reload", True, True)

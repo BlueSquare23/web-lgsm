@@ -155,6 +155,64 @@ def valid_password(password1, password2):
     return True
 
 
+def process_popen_output(proc, proc_info, output_type):
+    """
+    Reads stdout & stderr from proc subprocess object to parse it and append it
+    to proc_info object.
+
+    Args:
+        proc (subprocess.Popen): Process object to squeeze stdout/stderr out of.
+        proc_info (ProcInfoVessel): Object for holding info about process.
+        output_type (str): Output stream we're parsing.
+
+    Returns:
+        None: Just fills out ProcInfoVessel objects text fields with parsed text.
+    """
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
+
+    while True:
+        if output_type == 'stdout':
+            out_line = proc.stdout.read1().decode("utf-8")
+        else:
+            out_line = proc.stderr.read1().decode("utf-8")
+
+        if not out_line:
+            break
+
+        for rline in out_line.split('\r'):
+            if rline == "":
+                continue
+
+            # Add back in carriage returns, ignoring lines terminated with a newline.
+            if not rline.endswith('\r') and not rline.endswith('\n'):
+                rline = rline + '\r'
+
+            for line in rline.split('\n'):
+                if line == "":
+                    continue
+
+                # Add back in newlines, ignoring lines terminated with a carriage return.
+                if not line.endswith('\n') and not line.endswith('\r'):
+                    line = line + '\n'
+
+                # Add the newlines for optional old-style setting.
+                if end_in_newlines:
+                    if not line.endswith('\n'):
+                        line = line + '\n'
+
+                if output_type == 'stdout':
+                    proc_info.stdout.append(line)
+                    log_msg = log_wrap('stdout', line.replace('\n', ''))
+                    current_app.logger.debug(log_msg)
+
+                else:
+                    proc_info.stderr.append(line)
+                    log_msg = log_wrap('stderr', line.replace('\n', ''))
+                    current_app.logger.debug(log_msg)
+
+
 def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     General purpose subprocess.Popen wrapper function. Keeps track of processes
@@ -172,7 +230,6 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
     clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
 
     if clear_output_on_reload:
@@ -195,69 +252,8 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     
     proc_info.pid = proc.pid
 
-    # TODO: Refactor duplicate code below into one `process_output` function.
-    # Just from after break on down. Can reuse code for stdout & stderr.
-    while True:
-        stdout_line = proc.stdout.read1().decode("utf-8")
-
-        if not stdout_line:
-            break
-
-        for rline in stdout_line.split('\r'):
-            if rline == "":
-                continue
-
-            # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not rline.endswith('\r') and not rline.endswith('\n'):
-                rline = rline + '\r'
-
-            for line in rline.split('\n'):
-                if line == "":
-                    continue
-
-                # Add back in newlines, ignoring lines terminated with a carriage return.
-                if not line.endswith('\n') and not line.endswith('\r'):
-                    line = line + '\n'
-
-                # Add the newlines for optional old-style setting.
-                if end_in_newlines:
-                    if not line.endswith('\n'):
-                        line = line + '\n'
-
-                proc_info.stdout.append(line)
-                log_msg = log_wrap('stdout', line.replace('\n', ''))
-                current_app.logger.debug(log_msg)
-
-    while True:
-        stderr_line = proc.stderr.read1().decode("utf-8")
-
-        if not stderr_line:
-            break
-
-        for rline in stderr_line.split('\r'):
-            if rline == "":
-                continue
-
-            # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not rline.endswith('\r') and not rline.endswith('\n'):
-                rline = rline + '\r'
-
-            for line in rline.split('\n'):
-                if line == "":
-                    continue
-
-                # Add back in newlines, ignoring lines terminated with a carriage return.
-                if not line.endswith('\n') and not line.endswith('\r'):
-                    line = line + '\n'
-
-                # Add the newlines for optional old-style setting.
-                if end_in_newlines:
-                    if not line.endswith('\n'):
-                        line = line + '\n'
-
-                proc_info.stderr.append(line)
-                log_msg = log_wrap('stderr', line.replace('\n', ''))
-                current_app.logger.debug(log_msg)
+    process_popen_output(proc, proc_info, 'stdout')
+    process_popen_output(proc, proc_info, 'stderr')
 
     proc_info.exit_status = proc.wait()
 

@@ -4,18 +4,10 @@
 ---
 
 * **List of Targets for refactoring:**
-  - [ ] Do other things marked TODO in inline comments.
-    - Not everything marked TODO is something that needs done before v1.8
-      release. But a lot of them are. Going to go through each and do the ones
-      that really need it!
-    - To get a list of remaining `grep -R TODO app/* |grep -v 'node_mod'`.
-  - [ ] Make sections for GET and POST explicit ifs. Right now I'm relying on a lot
-    of mixed code where like stuff for GET req's happens both above and below
-    the POST if block.
-    - So that's just like confusing to read and needs cleaned up.
-    - I think I understand what I was trying todo and be efficient and not put
-      lines twice if I didn't have to.
-      - But I've grown as a programmer since then and now no longer care.
+  - [ ] Decide what to do about web-lgsm in a container to warn user, they need
+    to rebuild the image if they're going to install a new game server.
+    - Problem: Basically, the mount point for `/home/<server>/GameServers`
+      needs to exist or the game server install wont be persistent.
 
 * [ ] **Apply autoformatting via `black`.**
 

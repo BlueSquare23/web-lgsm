@@ -2,6 +2,8 @@
 
 ## Overview
 
+<span style="color:orange;">_**Note:</span> DOCKER CURRENTLY EXPERIMENTAL!!!**_
+
 There are currently TWO ways in which the Web-LGSM project supports docker.
 
 1. The first option is to run the Web-LGSM Flask app itself within a docker

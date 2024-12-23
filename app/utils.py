@@ -1250,25 +1250,6 @@ def user_has_permissions(current_user, route, server_name=None):
     return True
 
 
-def local_install_path_exists(server):
-    """
-    Check's that the game server install_path exists for install_type local
-    same user, everything else return true.
-
-    Args:
-        server (GameServer): Game server to check.
-    Returns:
-        bool: True if path exists, False otherwise.
-    """
-    if server.install_type == 'local' and server.username == USER:
-        if os.path.isdir(server.install_path):
-            return True
-
-        return False
-
-    return True
-
-
 def valid_install_type(install_type):
     """
     Check's install type is one of the allowed three types.
@@ -1363,6 +1344,9 @@ def get_ssh_key_file(user, host):
     """
     home_dir = os.path.expanduser("~")
     ssh_dir = os.path.join(home_dir, ".ssh")
+    if not os.path.isdir(ssh_dir):
+        os.mkdir(ssh_dir, mode=0o700)
+
     all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith('.pub')]
 
     key_name = f"id_ecdsa_{user}_{host}"

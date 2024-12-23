@@ -374,26 +374,13 @@ def install():
             keyfile = get_ssh_key_file(server.username, server.install_host)
             server.keyfile_path = keyfile
 
+        # For game server file persistence, warn user if GameServers mount not
+        # detected for selected game server.
         if "CONTAINER" in os.environ:
-            pass
-# TODO: Redo this. I know what I was trying to do but things have changed and I
-#       don't like this anymore.
-#
-#        if "CONTAINER" in os.environ:
-#            # If we're in a container and the path doesn't exist we want to
-#            # alert the user and tell them the container needs re-built first.
-#            if not local_install_path_exists(new_game_server):
-#                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
-#                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
-#                return redirect(url_for("views.home"))
-#        else:
-#            if local_install_path_exists(new_game_server):
-#                flash("Install directory already exists.", category="error")
-#                flash(
-#                    "Did you perhaps have this server installed previously?",
-#                    category="error",
-#                )
-#                return redirect(url_for("views.install"))
+            if not os.path.isdir(f'/home/{server.username}/GameServers'):
+                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
+                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
+                return redirect(url_for("views.home"))
 
         current_app.logger.info(log_wrap("server", server))
 

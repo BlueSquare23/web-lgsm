@@ -3,8 +3,8 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* **List of Targets for refactoring:**
-  - [ ] Decide what to do about web-lgsm in a container to warn user, they need
+* [x] **List of Targets for refactoring:**
+  - [x] Decide what to do about web-lgsm in a container to warn user, they need
     to rebuild the image if they're going to install a new game server.
     - Problem: Basically, the mount point for `/home/<server>/GameServers`
       needs to exist or the game server install wont be persistent.

@@ -106,12 +106,16 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for("views.home"))
 
-    if server.install_type == "remote":
+    if should_use_ssh(server):
         if not is_ssh_accessible(server.install_host):
-            flash("Unable to access remote server over ssh!", category="error")
-            return redirect(url_for("views.home"))
+            if server.install_type == "remote":
+                flash("Unable to access remote server over ssh!", category="error")
+                return redirect(url_for("views.home"))
+            else:
+                flash("Unable to access local install over ssh!", category="error")
+                return redirect(url_for("views.home"))
 
-    if not local_install_path_exists(server):
+    elif server.install_type == "local" and not os.path.isdir(server.install_path):
         flash("No game server installation directory found!", category="error")
         return redirect(url_for("views.home"))
 
@@ -1001,12 +1005,12 @@ def delete():
     # keep their files. That is technically possible in Linux. However, to make
     # things easier on me and hide some unnecessary complexity, my app does not
     # allow it and will default to keeping users & files in that case.)
-    if config_options["delete_user"] and not config_option["remove_files"]:
+    if config_options["delete_user"] and not config_options["remove_files"]:
         flash(
             "Incongruous config options detected. Defaulting to safer keep user, keep files option",
             category="error",
         )
-        config_option["delete_user"] = False
+        config_options["delete_user"] = False
 
     def del_wrap(server_name):
         """Wraps up delete logic used below"""

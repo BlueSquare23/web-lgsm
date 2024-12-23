@@ -3,7 +3,9 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Apply autoformatting via `black`.**
+* **List of misc discovered problems:**
+  - [ ] Fix install page not showing, "Installing..."
+    - I think there's a JS bug cause some stderr var not getting set in jinja.
 
 * [ ] **Write new tests for SSH, docker changes, and the rest.**
   - After refactor go through and add new tests for new ssh and docker main

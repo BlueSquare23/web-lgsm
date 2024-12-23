@@ -214,6 +214,10 @@ def edit_users():
             user_permissions=user_permissions,
         )
 
+    # TODO v1.9: Fix change username! Make user lookup work via ID instead of
+    # username. That way we can accept a new username for a given ID and do
+    # lookup with ID instead of username, then update that users info with
+    # newly supplied instead.
     if request.method == "POST":
         selected_user = request.form.get("selected_user")
         change_user_pass = request.form.get("change_username_password")
@@ -235,6 +239,14 @@ def edit_users():
 
             if not valid_password(password1, password2):
                 return redirect(url_for("auth.edit_users"))
+
+        if selected_user == "newuser":
+            for user in all_users:
+                if user.username == username:
+                    flash("Cannot add new user with existing username!",
+                        category="error",
+                    )
+                    return redirect(url_for("auth.edit_users"))
 
         user_ident = None
         if selected_user != "newuser":

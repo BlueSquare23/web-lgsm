@@ -1,7 +1,7 @@
 // Function to update the status indicator based on server status.
 function updateStatusIndicator(serverId, status) {
   // Default to green, set to red if explicitly false.
-  let statusColor = 'green';
+  let statusColor = '#00FF11';
   if (status === false) {
      statusColor = 'red';
   } else if (status === null) { 

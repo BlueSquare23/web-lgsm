@@ -23,7 +23,7 @@ from flask import (
     send_file,
     send_from_directory,
     jsonify,
-    current_app
+    current_app,
 )
 
 from . import db
@@ -36,9 +36,9 @@ CWD = os.getcwd()
 USER = getpass.getuser()
 ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
 PATHS = {
-    "docker":"/usr/bin/docker",
-    "sudo":"/usr/bin/sudo",
-    "tmux":"/usr/bin/tmux",
+    "docker": "/usr/bin/docker",
+    "sudo": "/usr/bin/sudo",
+    "tmux": "/usr/bin/tmux",
 }
 
 # Globals.
@@ -55,13 +55,15 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=["GET"])
 @login_required
 def home():
-    config_options = read_config('home')
+    config_options = read_config("home")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     current_app.logger.info(str(type(current_user)))
     current_app.logger.info(log_wrap("current_user.username", current_user.username))
     current_app.logger.info(log_wrap("current_user.role", current_user.role))
-    current_app.logger.info(log_wrap("current_user.permissions", current_user.permissions))
+    current_app.logger.info(
+        log_wrap("current_user.permissions", current_user.permissions)
+    )
 
     installed_servers = GameServer.query.all()
 
@@ -80,7 +82,7 @@ def home():
 @views.route("/controls", methods=["GET"])
 @login_required
 def controls():
-    config_options = read_config('controls')
+    config_options = read_config("controls")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     # Collect args from GET request.
@@ -104,7 +106,7 @@ def controls():
         flash("Invalid game server name!", category="error")
         return redirect(url_for("views.home"))
 
-    if server.install_type == 'remote':
+    if server.install_type == "remote":
         if not is_ssh_accessible(server.install_host):
             flash("Unable to access remote server over ssh!", category="error")
             return redirect(url_for("views.home"))
@@ -123,7 +125,9 @@ def controls():
             cfg_paths = []
 
     # Pull in commands list from commands.json file.
-    cmds_list = get_commands(server.script_name, config_options["send_cmd"], current_user)
+    cmds_list = get_commands(
+        server.script_name, config_options["send_cmd"], current_user
+    )
 
     if not cmds_list:
         flash("Error loading commands.json file!", category="error")
@@ -146,7 +150,9 @@ def controls():
     # control button.
     if short_cmd:
         # Validate short_cmd against contents of commands.json file.
-        if not valid_command(short_cmd, server.script_name, config_options["send_cmd"], current_user):
+        if not valid_command(
+            short_cmd, server.script_name, config_options["send_cmd"], current_user
+        ):
             flash("Invalid Command!", category="error")
             return redirect(url_for("views.controls", server=server_name))
 
@@ -165,8 +171,8 @@ def controls():
                 server_name=server_name,
                 server_commands=cmds_list,
                 config_options=config_options,
-                cfg_paths=cfg_paths, 
-                console=True
+                cfg_paths=cfg_paths,
+                console=True,
             )
 
         elif short_cmd == "sd":
@@ -181,7 +187,9 @@ def controls():
 
             active = get_server_status(server)
             if not active:
-                flash("Server is Off! Cannot send commands to console!", category="error")
+                flash(
+                    "Server is Off! Cannot send commands to console!", category="error"
+                )
                 return redirect(url_for("views.controls", server=server_name))
 
             cmd = [script_path, short_cmd, console_cmd]
@@ -189,16 +197,30 @@ def controls():
             if should_use_ssh(server):
                 pub_key_file = get_ssh_key_file(server.username, server.install_host)
                 daemon = Thread(
-                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context(), None), daemon=True, name="send"
+                    target=run_cmd_ssh,
+                    args=(
+                        cmd,
+                        server.install_host,
+                        server.username,
+                        pub_key_file,
+                        proc_info,
+                        current_app.app_context(),
+                        None,
+                    ),
+                    daemon=True,
+                    name="send",
                 )
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
-            if server.install_type == 'docker':
+            if server.install_type == "docker":
                 cmd = docker_cmd_build(server) + cmd
 
             daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="ConsoleCMD"
+                target=run_cmd_popen,
+                args=(cmd, proc_info, current_app.app_context()),
+                daemon=True,
+                name="ConsoleCMD",
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -209,16 +231,29 @@ def controls():
             if should_use_ssh(server):
                 pub_key_file = get_ssh_key_file(server.username, server.install_host)
                 daemon = Thread(
-                    target=run_cmd_ssh, args=(cmd, server.install_host, server.username, pub_key_file, proc_info, current_app.app_context()), daemon=True, name="Command"
+                    target=run_cmd_ssh,
+                    args=(
+                        cmd,
+                        server.install_host,
+                        server.username,
+                        pub_key_file,
+                        proc_info,
+                        current_app.app_context(),
+                    ),
+                    daemon=True,
+                    name="Command",
                 )
                 daemon.start()
                 return redirect(url_for("views.controls", server=server_name))
 
-            if server.install_type == 'docker':
+            if server.install_type == "docker":
                 cmd = docker_cmd_build(server) + cmd
 
             daemon = Thread(
-                target=run_cmd_popen, args=(cmd, proc_info, current_app.app_context()), daemon=True, name="Command"
+                target=run_cmd_popen,
+                args=(cmd, proc_info, current_app.app_context()),
+                daemon=True,
+                name="Command",
             )
             daemon.start()
             return redirect(url_for("views.controls", server=server_name))
@@ -248,7 +283,7 @@ def install():
     if not user_has_permissions(current_user, "install"):
         return redirect(url_for("views.home"))
 
-    config_options = read_config('install')
+    config_options = read_config("install")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     # Pull in install server list from game_servers.json file.
@@ -294,9 +329,8 @@ def install():
                     success = cancel_install(proc_info)
                     if success:
                         flash("Installation Canceled!")
-                    else: 
+                    else:
                         flash("Problem canceling installation!", category="error")
-
 
         return render_template(
             "install.html",
@@ -354,21 +388,23 @@ def install():
 
         server = GameServer()
         server.install_name = server_install_name
-        server.install_path = os.path.join(CWD, f'GameServers/{server_install_name}')
+        server.install_path = os.path.join(CWD, f"GameServers/{server_install_name}")
         server.script_name = server_script_name
         server.username = USER
         server.is_container = False
-        server.install_type = 'local' 
-        server.install_host = '127.0.0.1'
+        server.install_type = "local"
+        server.install_host = "127.0.0.1"
         server.install_finished = False
-        server.keyfile_path = ''
+        server.keyfile_path = ""
 
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
         if config_options["create_new_user"]:
             server.username = server_script_name
-            server.install_path = f"/home/{server_script_name}/GameServers/{server_install_name}"
+            server.install_path = (
+                f"/home/{server_script_name}/GameServers/{server_install_name}"
+            )
 
             # Add keyfile path for server to DB.
             keyfile = get_ssh_key_file(server.username, server.install_host)
@@ -377,9 +413,15 @@ def install():
         # For game server file persistence, warn user if GameServers mount not
         # detected for selected game server.
         if "CONTAINER" in os.environ:
-            if not os.path.isdir(f'/home/{server.username}/GameServers'):
-                flash("Rebuild container first! See docs/docker_info.md for more information.", category="error")
-                flash("Run docker-setup.py --add to add an install to the container first, then rebuild!", category="error")
+            if not os.path.isdir(f"/home/{server.username}/GameServers"):
+                flash(
+                    "Rebuild container first! See docs/docker_info.md for more information.",
+                    category="error",
+                )
+                flash(
+                    "Run docker-setup.py --add to add an install to the container first, then rebuild!",
+                    category="error",
+                )
                 return redirect(url_for("views.home"))
 
         current_app.logger.info(log_wrap("server", server))
@@ -388,9 +430,9 @@ def install():
         db.session.add(server)
         db.session.commit()
 
-        server_id = GameServer.query.filter_by(
-            install_name=server_install_name
-        ).first().id
+        server_id = (
+            GameServer.query.filter_by(install_name=server_install_name).first().id
+        )
 
         current_app.logger.info(log_wrap("server_id", server_id))
 
@@ -403,12 +445,12 @@ def install():
             db.session.commit()
 
         cmd = [
-            PATHS['sudo'],
+            PATHS["sudo"],
             "-n",
             os.path.join(CWD, "venv/bin/python"),
             ANSIBLE_CONNECTOR,
-            '--install',
-            str(server_id)
+            "--install",
+            str(server_id),
         ]
 
         current_app.logger.info(log_wrap("cmd", cmd))
@@ -440,7 +482,7 @@ def update_console():
     global servers
 
     if not user_has_permissions(current_user, "update-console"):
-        resp_dict = {'Error': 'Permission denied!'}
+        resp_dict = {"Error": "Permission denied!"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
         )
@@ -451,7 +493,7 @@ def update_console():
 
     # Can't do needful without a server specified.
     if server_name == None:
-        resp_dict = {'Error': 'Required var: server'}
+        resp_dict = {"Error": "Required var: server"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
         )
@@ -460,7 +502,7 @@ def update_console():
     # Check that the submitted server exists in db.
     server = GameServer.query.filter_by(install_name=server_name).first()
     if server == None:
-        resp_dict = {'Error': 'Supplied server does not exist!'}
+        resp_dict = {"Error": "Supplied server does not exist!"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
         )
@@ -469,18 +511,20 @@ def update_console():
     tmux_socket = get_tmux_socket_name(server)
 
     cmd = [
-        PATHS['tmux'],
+        PATHS["tmux"],
         "-L",
         tmux_socket,
         "capture-pane",
         "-pt",
         server.script_name,
-        "-S", "-", 
-        "-E", "-", 
+        "-S",
+        "-",
+        "-E",
+        "-",
         "-J",
     ]
 
-    if server.install_type == 'docker':
+    if server.install_type == "docker":
         cmd = docker_cmd_build(server) + cmd
 
     if server.install_name in servers:
@@ -491,18 +535,26 @@ def update_console():
 
     if should_use_ssh(server):
         pub_key_file = get_ssh_key_file(server.username, server.install_host)
-        run_cmd_ssh(cmd, server.install_host, server.username, pub_key_file, proc_info, None, None)
+        run_cmd_ssh(
+            cmd,
+            server.install_host,
+            server.username,
+            pub_key_file,
+            proc_info,
+            None,
+            None,
+        )
     else:
         run_cmd_popen(cmd, proc_info)
 
     if proc_info.exit_status > 0:
-        resp_dict = {'Error': 'Refresh cmd failed!'}
+        resp_dict = {"Error": "Refresh cmd failed!"}
         response = Response(
             json.dumps(resp_dict, indent=4), status=503, mimetype="application/json"
         )
         return response
 
-    resp_dict = {'Success': 'Output updated!'}
+    resp_dict = {"Success": "Output updated!"}
     response = Response(
         json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
     )
@@ -621,7 +673,7 @@ def settings():
     config.read("main.conf")
 
     # But still pull all settings from read_config() wrapper.
-    config_options = read_config('settings')
+    config_options = read_config("settings")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     if request.method == "GET":
@@ -759,11 +811,13 @@ def settings():
 
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=run_cmd_popen, args=(cmd, ProcInfoVessel(), current_app.app_context()), daemon=True, name="restart"
+            target=run_cmd_popen,
+            args=(cmd, ProcInfoVessel(), current_app.app_context()),
+            daemon=True,
+            name="restart",
         )
         restart_daemon.start()
         return redirect(url_for("views.settings"))
-
 
     flash("Settings Updated!")
     return redirect(url_for("views.settings"))
@@ -774,10 +828,12 @@ def settings():
 @views.route("/about", methods=["GET"])
 @login_required
 def about():
-    config_options = read_config('about')
+    config_options = read_config("about")
     current_app.logger.info(log_wrap("config_options", config_options))
 
-    return render_template("about.html", user=current_user, config_options=config_options)
+    return render_template(
+        "about.html", user=current_user, config_options=config_options
+    )
 
 
 ######### Add Page #########
@@ -805,7 +861,12 @@ def add():
 
         ## Validation Logic.
         # Check all required args are submitted.
-        for required_form_item in (install_name, install_path, script_name, install_type):
+        for required_form_item in (
+            install_name,
+            install_path,
+            script_name,
+            install_type,
+        ):
             if required_form_item == None or required_form_item == "":
                 flash("Missing required form field(s)!", category="error")
                 return render_template("add.html", user=current_user), 400
@@ -862,7 +923,7 @@ def add():
         server.username = username
         server.install_type = install_type
 
-        if install_type == 'remote':
+        if install_type == "remote":
             if install_host == None or install_host == "":
                 flash("Missing required form field(s)!", category="error")
                 return render_template("add.html", user=current_user), 400
@@ -871,12 +932,12 @@ def add():
                 flash("Server does not appear to be SSH accessible!", category="error")
                 return render_template("add.html", user=current_user), 400
 
-            server.install_type = 'remote'
+            server.install_type = "remote"
             server.install_host = install_host
 
-        if install_type == 'local':
-            server.install_type = 'local'
-            server.install_host = '127.0.0.1'
+        if install_type == "local":
+            server.install_type = "local"
+            server.install_host = "127.0.0.1"
 
             # Returns None if not valid username.
             if get_uid(username) == None:
@@ -891,9 +952,13 @@ def add():
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
-        if install_type == 'docker':
-            flash(f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker")
-            flash(f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *")
+        if install_type == "docker":
+            flash(
+                f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
+            )
+            flash(
+                f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
+            )
 
         if should_use_ssh(server):
             keyfile = get_ssh_key_file(username, server.install_host)
@@ -901,7 +966,9 @@ def add():
                 flash(f"Problem generating new ssh keys!", category="error")
                 return redirect(url_for("views.add"))
 
-            flash(f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!")
+            flash(
+                f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
+            )
 
         db.session.add(server)
         db.session.commit()
@@ -925,7 +992,7 @@ def delete():
 
     # TODO v1.9: Should eventually make this whole function work via IDs instead of
     # server names. Will get there eventually.
-    config_options = read_config('delete')
+    config_options = read_config("delete")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     # NOTE: For everyone's safety, if config options are incongruous, default
@@ -935,7 +1002,10 @@ def delete():
     # things easier on me and hide some unnecessary complexity, my app does not
     # allow it and will default to keeping users & files in that case.)
     if config_options["delete_user"] and not config_option["remove_files"]:
-        flash("Incongruous config options detected. Defaulting to safer keep user, keep files option", category="error")
+        flash(
+            "Incongruous config options detected. Defaulting to safer keep user, keep files option",
+            category="error",
+        )
         config_option["delete_user"] = False
 
     def del_wrap(server_name):
@@ -957,8 +1027,13 @@ def delete():
         # Log to ensure delete from global servers worked.
         current_app.logger.info(log_wrap("servers", servers))
 
-        if not delete_server(server, config_options["remove_files"], config_options["delete_user"]):
-            flash(f"Something's gone wrong deleting server, {server_name}", category="error")
+        if not delete_server(
+            server, config_options["remove_files"], config_options["delete_user"]
+        ):
+            flash(
+                f"Something's gone wrong deleting server, {server_name}",
+                category="error",
+            )
 
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.
@@ -977,6 +1052,7 @@ def delete():
 
 
 ######### Edit Route #########
+
 @views.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit():
@@ -984,7 +1060,7 @@ def edit():
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
-    config_options = read_config('edit')
+    config_options = read_config("edit")
     current_app.logger.info(log_wrap("config_options", config_options))
 
     if not config_options["cfg_editor"]:
@@ -1029,7 +1105,9 @@ def edit():
     if should_use_ssh(server):
         # If new contents are supplied via POST, write them to file over ssh.
         if new_file_contents:
-            written = write_file_over_ssh(server, cfg_path, new_file_contents.replace("\r", ""))
+            written = write_file_over_ssh(
+                server, cfg_path, new_file_contents.replace("\r", "")
+            )
             if written:
                 flash("Cfg file updated!", category="success")
             else:
@@ -1041,11 +1119,16 @@ def edit():
         if file_contents == None:
             flash("Problem reading cfg file!", category="error")
             return redirect(url_for("views.home"))
-            
+
         # If is download request.
         if download == "yes":
-            file_like_thingy = io.BytesIO(file_contents.encode('utf-8'))
-            return send_file(file_like_thingy, as_attachment=True, download_name=cfg_file, mimetype="text/plain")
+            file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
+            return send_file(
+                file_like_thingy,
+                as_attachment=True,
+                download_name=cfg_file,
+                mimetype="text/plain",
+            )
     else:
         # Check that file exists before allowing writes to it. Aka don't allow
         # arbitrary file creation. Even though the above should block creating
@@ -1088,4 +1171,3 @@ def edit():
         file_contents=file_contents,
         cfg_file_name=cfg_file,
     )
-

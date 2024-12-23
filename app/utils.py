@@ -39,12 +39,13 @@ PATHS = {
     "kill": "/usr/bin/kill",
     "find": "/usr/bin/find",
     "ssh-keygen": "/usr/bin/ssh-keygen",
-    "rm": "/usr/bin/rm"
+    "rm": "/usr/bin/rm",
 }
 CONNECTOR_CMD = [
-    PATHS['sudo'], '-n',
-    os.path.join(CWD, 'venv/bin/python'),
-    ANSIBLE_CONNECTOR
+    PATHS["sudo"],
+    "-n",
+    os.path.join(CWD, "venv/bin/python"),
+    ANSIBLE_CONNECTOR,
 ]
 
 # Network stats globals.
@@ -170,10 +171,12 @@ def process_popen_output(proc, proc_info, output_type):
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
+    end_in_newlines = get_config_value(
+        config, "settings", "end_in_newlines", True, True
+    )
 
     while True:
-        if output_type == 'stdout':
+        if output_type == "stdout":
             out_line = proc.stdout.read1().decode("utf-8")
         else:
             out_line = proc.stderr.read1().decode("utf-8")
@@ -181,35 +184,35 @@ def process_popen_output(proc, proc_info, output_type):
         if not out_line:
             break
 
-        for rline in out_line.split('\r'):
+        for rline in out_line.split("\r"):
             if rline == "":
                 continue
 
             # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not rline.endswith('\r') and not rline.endswith('\n'):
-                rline = rline + '\r'
+            if not rline.endswith("\r") and not rline.endswith("\n"):
+                rline = rline + "\r"
 
-            for line in rline.split('\n'):
+            for line in rline.split("\n"):
                 if line == "":
                     continue
 
                 # Add back in newlines, ignoring lines terminated with a carriage return.
-                if not line.endswith('\n') and not line.endswith('\r'):
-                    line = line + '\n'
+                if not line.endswith("\n") and not line.endswith("\r"):
+                    line = line + "\n"
 
                 # Add the newlines for optional old-style setting.
                 if end_in_newlines:
-                    if not line.endswith('\n'):
-                        line = line + '\n'
+                    if not line.endswith("\n"):
+                        line = line + "\n"
 
-                if output_type == 'stdout':
+                if output_type == "stdout":
                     proc_info.stdout.append(line)
-                    log_msg = log_wrap('stdout', line.replace('\n', ''))
+                    log_msg = log_wrap("stdout", line.replace("\n", ""))
                     current_app.logger.debug(log_msg)
 
                 else:
                     proc_info.stderr.append(line)
-                    log_msg = log_wrap('stderr', line.replace('\n', ''))
+                    log_msg = log_wrap("stderr", line.replace("\n", ""))
                     current_app.logger.debug(log_msg)
 
 
@@ -230,7 +233,9 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
+    clear_output_on_reload = get_config_value(
+        config, "settings", "clear_output_on_reload", True, True
+    )
 
     if clear_output_on_reload:
         proc_info.stdout.clear()
@@ -243,17 +248,17 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     if app_context:
         app_context.push()
 
-    current_app.logger.info(log_wrap('cmd', cmd))
-    
+    current_app.logger.info(log_wrap("cmd", cmd))
+
     # Subprocess call, Bytes mode, not buffered.
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, bufsize=-1
     )
-    
+
     proc_info.pid = proc.pid
 
-    process_popen_output(proc, proc_info, 'stdout')
-    process_popen_output(proc, proc_info, 'stderr')
+    process_popen_output(proc, proc_info, "stdout")
+    process_popen_output(proc, proc_info, "stderr")
 
     proc_info.exit_status = proc.wait()
 
@@ -275,7 +280,7 @@ def cancel_install(proc_info):
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of the game server's ID.
     pid = proc_info.pid
-    cmd = CONNECTOR_CMD + ['--cancel', pid]
+    cmd = CONNECTOR_CMD + ["--cancel", pid]
     cancel_proc_info = ProcInfoVessel()
 
     run_cmd_popen(cmd, cancel_proc_info)
@@ -312,10 +317,11 @@ def should_use_ssh(server):
     Returns:
         bool: True if should connect via ssh, false otherwise.
     """
-    if server.install_type == 'remote' or \
-        (server.install_type == 'local' and server.username != USER):
+    if server.install_type == "remote" or (
+        server.install_type == "local" and server.username != USER
+    ):
         return True
-    
+
     return False
 
 
@@ -325,7 +331,7 @@ def purge_tmux_socket_cache():
     option. Useful for when game server has been re-installed to get status
     indicators working again.
     """
-    socket_file_name_cache = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+    socket_file_name_cache = os.path.join(CWD, "json/tmux_socket_name_cache.json")
     if os.path.exists(socket_file_name_cache):
         os.remove(socket_file_name_cache)
 
@@ -340,7 +346,15 @@ def docker_cmd_build(server):
     Returns:
         list: Docker command for GameServer as list.
     """
-    return [ PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name ]
+    return [
+        PATHS["sudo"],
+        "-n",
+        PATHS["docker"],
+        "exec",
+        "--user",
+        server.username,
+        server.script_name,
+    ]
 
 
 def get_tmux_socket_name_docker(server, gs_id_file_path):
@@ -357,7 +371,7 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = docker_cmd_build(server) + [ PATHS['cat'], gs_id_file_path ]
+    cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
     run_cmd_popen(cmd, proc_info)
 
@@ -386,16 +400,10 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
              socket name.
     """
     proc_info = ProcInfoVessel()
-    cmd = [PATHS['cat'], gs_id_file_path]
+    cmd = [PATHS["cat"], gs_id_file_path]
     keyfile = get_ssh_key_file(server.username, server.install_host)
 
-    success = run_cmd_ssh(
-        cmd,
-        server.install_host,
-        server.username,
-        keyfile, 
-        proc_info
-    )
+    success = run_cmd_ssh(cmd, server.install_host, server.username, keyfile, proc_info)
 
     # If the ssh connection itself fails return None.
     if not success:
@@ -418,16 +426,16 @@ def update_tmux_socket_name_cache(server_id, socket_name):
     """
     Writes to tmux socket name cache with fresh data.
     """
-    cache_file = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
     cache_data = dict()
 
     if os.path.exists(cache_file):
-        with open(cache_file, 'r') as file:
+        with open(cache_file, "r") as file:
             cache_data = json.load(file)
 
     cache_data[server_id] = socket_name
 
-    with open(cache_file, 'w') as file:
+    with open(cache_file, "w") as file:
         json.dump(cache_data, file)
 
 
@@ -446,10 +454,10 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
         str: Returns the socket name for game server. None if cant get
              one.
     """
-    cache_file = os.path.join(CWD, 'json/tmux_socket_name_cache.json')
+    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
 
     if not os.path.exists(cache_file):
-        if server.install_type == 'docker':
+        if server.install_type == "docker":
             socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
         else:
             socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
@@ -469,7 +477,7 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
     # more recent. Aka if the epoch time of one week ago is larger than the
     # epoch timestamp of cache file than the cache must be older than a week.
     if cache_time < one_week_ago:
-        if server.install_type == 'docker':
+        if server.install_type == "docker":
             socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
         else:
             socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
@@ -477,11 +485,11 @@ def get_tmux_socket_name_from_cache(server, gs_id_file_path):
         update_tmux_socket_name_cache(server.id, socket_name)
         return socket_name
 
-    with open(cache_file, 'r') as file:
+    with open(cache_file, "r") as file:
         cache_data = json.load(file)
 
     if str(server.id) not in cache_data:
-        if server.install_type == 'docker':
+        if server.install_type == "docker":
             socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
         else:
             socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
@@ -507,9 +515,11 @@ def get_tmux_socket_name(server):
         str: Returns the socket name for game server. None if can't get socket
              name.
     """
-    gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
+    gs_id_file_path = os.path.join(
+        server.install_path, f"lgsm/data/{server.script_name}.uid"
+    )
 
-    if should_use_ssh(server) or server.install_type == 'docker':
+    if should_use_ssh(server) or server.install_type == "docker":
         return get_tmux_socket_name_from_cache(server, gs_id_file_path)
 
     if not os.path.isfile(gs_id_file_path):
@@ -540,17 +550,15 @@ def get_server_status(server):
     if socket == None:
         return None
 
-    cmd = [PATHS['tmux'], "-L", socket, "list-session"]
+    cmd = [PATHS["tmux"], "-L", socket, "list-session"]
 
     if should_use_ssh(server):
-        gs_id_file_path = os.path.join(server.install_path, f"lgsm/data/{server.script_name}.uid")
+        gs_id_file_path = os.path.join(
+            server.install_path, f"lgsm/data/{server.script_name}.uid"
+        )
         keyfile = get_ssh_key_file(server.username, server.install_host)
         success = run_cmd_ssh(
-            cmd,
-            server.install_host,
-            server.username,
-            keyfile, 
-            proc_info
+            cmd, server.install_host, server.username, keyfile, proc_info
         )
 
         # If the ssh connection itself fails return None.
@@ -558,8 +566,16 @@ def get_server_status(server):
             current_app.logger.info(proc_info)
             return None
 
-    elif server.install_type == 'docker':
-        cmd = [PATHS['sudo'], '-n', PATHS['docker'], 'exec', '--user', server.username, server.script_name] + cmd
+    elif server.install_type == "docker":
+        cmd = [
+            PATHS["sudo"],
+            "-n",
+            PATHS["docker"],
+            "exec",
+            "--user",
+            server.username,
+            server.script_name,
+        ] + cmd
         run_cmd_popen(cmd, proc_info)
 
     # Else type local same user.
@@ -636,7 +652,7 @@ def find_cfg_paths(server):
 
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
-    if server.install_type == 'local':
+    if server.install_type == "local":
         # Find all cfgs under install_path using os.walk.
         for root, dirs, files in os.walk(server.install_path):
             # Ignore default cfgs.
@@ -646,20 +662,24 @@ def find_cfg_paths(server):
                 if file in valid_gs_cfgs:
                     cfg_paths.append(os.path.join(root, file))
 
-    if server.install_type == 'remote':
+    if server.install_type == "remote":
         proc_info = ProcInfoVessel()
         keyfile = get_ssh_key_file(server.username, server.install_host)
         wanted = []
         for cfg in valid_gs_cfgs:
-            wanted += ['-name', cfg, '-o']
-        cmd = [PATHS['find'], server.install_path, '-name', 'config-default', '-prune', '-type', 'f'] + wanted[:-1]
+            wanted += ["-name", cfg, "-o"]
+        cmd = [
+            PATHS["find"],
+            server.install_path,
+            "-name",
+            "config-default",
+            "-prune",
+            "-type",
+            "f",
+        ] + wanted[:-1]
 
         success = run_cmd_ssh(
-            cmd,
-            server.install_host,
-            server.username,
-            keyfile, 
-            proc_info
+            cmd, server.install_host, server.username, keyfile, proc_info
         )
 
         # If the ssh connection itself fails return False.
@@ -670,7 +690,10 @@ def find_cfg_paths(server):
 
         if proc_info.exit_status > 0:
             current_app.logger.info(proc_info)
-            flash("Problem running find cfg cmd. Check logs for more details.", category="error")
+            flash(
+                "Problem running find cfg cmd. Check logs for more details.",
+                category="error",
+            )
             return cfg_paths
 
         for item in proc_info.stdout:
@@ -695,10 +718,10 @@ def normalize_path(path):
 
     """
     # Remove extra slashes.
-    path = re.sub(r'/{2,}', '/', path)
+    path = re.sub(r"/{2,}", "/", path)
 
     # Remove trailing slash unless it's the root path "/".
-    if path != '/' and path.endswith('/'):
+    if path != "/" and path.endswith("/"):
         path = path[:-1]
 
     return path
@@ -721,43 +744,46 @@ def delete_server(server, remove_files, delete_user):
         flash(f"Game server, {server.install_name} deleted!")
         return True
 
-    if server.install_type == 'local':
+    if server.install_type == "local":
         if server.username == USER:
-            if normalize_path(f'/home/{USER}') == normalize_path(server.install_path):
+            if normalize_path(f"/home/{USER}") == normalize_path(server.install_path):
                 flash("Will not delete users home directories!", category="error")
                 return False
 
             if normalize_path(CWD) == normalize_path(server.install_path):
-                flash("Will not delete web-lgsm base installation directory!", category="error")
+                flash(
+                    "Will not delete web-lgsm base installation directory!",
+                    category="error",
+                )
                 return False
 
             if os.path.isdir(server.install_path):
                 shutil.rmtree(server.install_path)
 
         if delete_user and server.username != USER:
-            cmd = CONNECTOR_CMD + ['--delete', str(server.id)]
+            cmd = CONNECTOR_CMD + ["--delete", str(server.id)]
             run_cmd_popen(cmd)
 
-    if server.install_type == 'remote':
+    if server.install_type == "remote":
         if delete_user:
-            flash(f"Warning: Cannot delete game server users for remote installs. Only removing files!")
+            flash(
+                f"Warning: Cannot delete game server users for remote installs. Only removing files!"
+            )
 
         # Check to ensure is not a home directory before delete. Just some
         # idiot proofing, myself being the chief idiot.
-        if normalize_path(f'/home/{server.username}') == normalize_path(server.install_path):
+        if normalize_path(f"/home/{server.username}") == normalize_path(
+            server.install_path
+        ):
             flash("Will not delete remote users home directories!", category="error")
             return False
 
         proc_info = ProcInfoVessel()
         keyfile = get_ssh_key_file(server.username, server.install_host)
-        cmd = [PATHS['rm'], '-rf', server.install_path]
+        cmd = [PATHS["rm"], "-rf", server.install_path]
 
         success = run_cmd_ssh(
-            cmd,
-            server.install_host,
-            server.username,
-            keyfile, 
-            proc_info
+            cmd, server.install_host, server.username, keyfile, proc_info
         )
 
         # If the ssh connection itself fails return False.
@@ -981,7 +1007,7 @@ def get_lgsmsh(lgsmsh):
 
     Args:
         lgsmsh (str): Path to linuxgsm.sh script file (aka web-lgsm/scripts/).
-        
+
     Returns:
         None: Just fetches latest file if needed, returns nothing.
     """
@@ -1260,7 +1286,7 @@ def valid_install_type(install_type):
     Returns:
         bool: True if valid install_type, False otherwise.
     """
-    valid_install_types = ['local', 'remote', 'docker']
+    valid_install_types = ["local", "remote", "docker"]
 
     if install_type in valid_install_types:
         return True
@@ -1278,15 +1304,15 @@ def is_ssh_accessible(hostname):
     Returns:
         bool: True if SSH is accessible, False otherwise.
     """
-    port=22
-    timeout=5
+    port = 22
+    timeout = 5
 
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
-        
+
         result = sock.connect_ex((hostname, port))
-        
+
         # Check the result: 0 means the port is open.
         if result == 0:
             return True
@@ -1315,11 +1341,15 @@ def generate_ecdsa_ssh_keypair(key_name):
 
     # Build ssh-keygen command.
     cmd = [
-        PATHS['ssh-keygen'],
-        "-t", "ecdsa",
-        "-b", str(key_size),
-        "-f", key_path,
-        "-N", ""
+        PATHS["ssh-keygen"],
+        "-t",
+        "ecdsa",
+        "-b",
+        str(key_size),
+        "-f",
+        key_path,
+        "-N",
+        "",
     ]
 
     proc_info = ProcInfoVessel()
@@ -1347,23 +1377,31 @@ def get_ssh_key_file(user, host):
     if not os.path.isdir(ssh_dir):
         os.mkdir(ssh_dir, mode=0o700)
 
-    all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith('.pub')]
+    all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith(".pub")]
 
     key_name = f"id_ecdsa_{user}_{host}"
 
     # If no key files for user@server yet, create new one.
-    if key_name + '.pub' not in all_pub_keys:
+    if key_name + ".pub" not in all_pub_keys:
         # Log keygen failures.
         if not generate_ecdsa_ssh_keypair(key_name):
             log_msg = f"Failed to generate new key pair for {user}:{server}!"
             current_app.logger.info(log_msg)
             return
-    
+
     keyfile = os.path.join(ssh_dir, key_name)
     return keyfile
 
 
-def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(), app_context=False, timeout=5.0):
+def run_cmd_ssh(
+    cmd,
+    hostname,
+    username,
+    key_filename,
+    proc_info=ProcInfoVessel(),
+    app_context=False,
+    timeout=5.0,
+):
     """
     Runs remote commands over ssh to admin game servers.
 
@@ -1383,8 +1421,12 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     """
     config = configparser.ConfigParser()
     config.read("main.conf")
-    end_in_newlines = get_config_value(config, "settings", "end_in_newlines", True, True)
-    clear_output_on_reload = get_config_value(config, "settings", "clear_output_on_reload", True, True)
+    end_in_newlines = get_config_value(
+        config, "settings", "end_in_newlines", True, True
+    )
+    clear_output_on_reload = get_config_value(
+        config, "settings", "clear_output_on_reload", True, True
+    )
 
     if clear_output_on_reload:
         proc_info.stdout.clear()
@@ -1402,22 +1444,24 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
     current_app.logger.info(hostname)
     current_app.logger.info(username)
     current_app.logger.info(key_filename)
-    current_app.logger.info('pre stdout: ' + str(proc_info.stdout))
-    current_app.logger.info('pre stderr: ' + str(proc_info.stderr))
-    
+    current_app.logger.info("pre stdout: " + str(proc_info.stdout))
+    current_app.logger.info("pre stderr: " + str(proc_info.stderr))
+
     # Initialize SSH client.
     client = paramiko.SSHClient()
     # Automatically add the host key.
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    
+
     try:
-        client.connect(hostname, username=username, key_filename=key_filename, timeout=3)
+        client.connect(
+            hostname, username=username, key_filename=key_filename, timeout=3
+        )
         current_app.logger.debug(cmd)
 
         proc_info.process_lock = True
         # Open a new session and request a PTY.
         channel = client.get_transport().open_session()
-#        channel.get_pty()  # This shut's off the stderr stream for some reason... Not sure if pty still needed.
+        #        channel.get_pty()  # This shut's off the stderr stream for some reason... Not sure if pty still needed.
         channel.set_combine_stderr(False)
         channel.exec_command(safe_cmd)
 
@@ -1428,40 +1472,44 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         while True:
             # Read stdout if data is available.
             if channel.recv_ready():
-                stdout_chunk = channel.recv(8192).decode('utf-8')
+                stdout_chunk = channel.recv(8192).decode("utf-8")
                 stdout_lines = stdout_chunk.splitlines(keepends=True)
                 for line in stdout_lines:
-                    if line == '\r\n':
+                    if line == "\r\n":
                         continue
                     if line not in proc_info.stdout:
-                        if end_in_newlines and not (line.endswith('\n') or line.endswith('\r')):
-                            line += '\n'
+                        if end_in_newlines and not (
+                            line.endswith("\n") or line.endswith("\r")
+                        ):
+                            line += "\n"
                         proc_info.stdout.append(line)
-                        log_msg = log_wrap('stdout', line.strip())
+                        log_msg = log_wrap("stdout", line.strip())
                         current_app.logger.debug(log_msg)
 
             if channel.recv_stderr_ready():
-                stderr_chunk = channel.recv_stderr(8192).decode('utf-8')
+                stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
                 stderr_lines = stderr_chunk.splitlines(keepends=True)
                 for line in stderr_lines:
-                    if line == '\r\n':
+                    if line == "\r\n":
                         continue
                     if line not in proc_info.stderr:
-                        if end_in_newlines and not (line.endswith('\n') or line.endswith('\r')):
-                            line += '\n'
+                        if end_in_newlines and not (
+                            line.endswith("\n") or line.endswith("\r")
+                        ):
+                            line += "\n"
                         proc_info.stderr.append(line)
-                        log_msg = log_wrap('stderr', line.strip())
+                        log_msg = log_wrap("stderr", line.strip())
                         current_app.logger.debug(log_msg)
 
             # Break the loop if the command has finished.
             if channel.exit_status_ready():
                 # Ensure any remaining stderr and stdout are captured.
                 while channel.recv_stderr_ready():
-                    stderr_chunk = channel.recv_stderr(8192).decode('utf-8')
+                    stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
                     proc_info.stderr.append(stderr_chunk)
 
                 while channel.recv_ready():
-                    stdout_chunk = channel.recv(8192).decode('utf-8')
+                    stdout_chunk = channel.recv(8192).decode("utf-8")
                     proc_info.stdout.append(stdout_chunk)
 
                 break
@@ -1472,7 +1520,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         # Wait for the command to finish and get the exit status.
         proc_info.exit_status = channel.recv_exit_status()
         proc_info.process_lock = False
-        ret_status = True 
+        ret_status = True
 
     except paramiko.SSHException as e:
         current_app.logger.debug(str(e))
@@ -1492,7 +1540,7 @@ def run_cmd_ssh(cmd, hostname, username, key_filename, proc_info=ProcInfoVessel(
         client.close()
         return ret_status
 
-    
+
 def read_file_over_ssh(server, file_path):
     """
     Reads a file from a remote server over SSH and returns its content. Used
@@ -1506,7 +1554,7 @@ def read_file_over_ssh(server, file_path):
     Returns:
         str: Returns the contents of the file as a string.
     """
-    current_app.logger.info(log_wrap('file_path', file_path))
+    current_app.logger.info(log_wrap("file_path", file_path))
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
 
     try:
@@ -1514,7 +1562,12 @@ def read_file_over_ssh(server, file_path):
         with paramiko.SSHClient() as ssh:
             # Automatically add the host key.
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(server.install_host, username=server.username, key_filename=pub_key_file, timeout=3)
+            ssh.connect(
+                server.install_host,
+                username=server.username,
+                key_filename=pub_key_file,
+                timeout=3,
+            )
 
             # Open sftp session.
             with ssh.open_sftp() as sftp:
@@ -1525,7 +1578,7 @@ def read_file_over_ssh(server, file_path):
             return content.decode()
 
     except Exception as e:
-        current_app.logger.debug(e) 
+        current_app.logger.debug(e)
         return None
 
 
@@ -1544,23 +1597,28 @@ def write_file_over_ssh(server, file_path, content):
     Returns:
         Bool: True if the write was successful, False otherwise.
     """
-    current_app.logger.info(log_wrap('file_path', file_path))
+    current_app.logger.info(log_wrap("file_path", file_path))
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
 
     try:
         with paramiko.SSHClient() as ssh:
             # Automatically add the host key.
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(server.install_host, username=server.username, key_filename=pub_key_file, timeout=3)
+            ssh.connect(
+                server.install_host,
+                username=server.username,
+                key_filename=pub_key_file,
+                timeout=3,
+            )
 
             with ssh.open_sftp() as sftp:
                 with sftp.open(file_path, "w") as file:
                     file.write(content)
-        
+
         return True
 
     except Exception as e:
-        current_app.logger.debug(e) 
+        current_app.logger.debug(e)
         return False
 
 
@@ -1587,7 +1645,7 @@ def get_config_value(config, section, option, default, is_bool=False):
 
             return config[section][option]
 
-        else: 
+        else:
             return default
 
     except (ValueError, IndexError, KeyError) as e:
@@ -1595,7 +1653,6 @@ def get_config_value(config, section, option, default, is_bool=False):
 
     except configparser.NoOptionError:
         return default
-
 
 
 def read_config(route):
@@ -1613,65 +1670,118 @@ def read_config(route):
     config = configparser.ConfigParser()
     config.read("main.conf")
 
-    config_options = dict() 
+    config_options = dict()
 
     # NOTE: Probably a smarter way to do this than an if for each route, but
     # ehh not a huge deal rn.
 
-    if route == 'home':
-        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
-        config_options["graphs_primary"] = get_config_value(config, "aesthetic", "graphs_primary", "#e01b24")
-        config_options["graphs_secondary"] = get_config_value(config, "aesthetic", "graphs_secondary", "#0d6efd")
-        config_options["show_stats"] = get_config_value(config, "aesthetic", "show_stats", True, True)
-        config_options["show_barrel_roll"] = get_config_value(config, "aesthetic", "show_barrel_roll", True, True)
+    if route == "home":
+        config_options["text_color"] = get_config_value(
+            config, "aesthetic", "text_color", "#09ff00"
+        )
+        config_options["graphs_primary"] = get_config_value(
+            config, "aesthetic", "graphs_primary", "#e01b24"
+        )
+        config_options["graphs_secondary"] = get_config_value(
+            config, "aesthetic", "graphs_secondary", "#0d6efd"
+        )
+        config_options["show_stats"] = get_config_value(
+            config, "aesthetic", "show_stats", True, True
+        )
+        config_options["show_barrel_roll"] = get_config_value(
+            config, "aesthetic", "show_barrel_roll", True, True
+        )
         return config_options
 
-    if route == 'controls':
-        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
-        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
-        config_options["cfg_editor"] = get_config_value(config, "settings", "cfg_editor", False, True)
-        config_options["send_cmd"] = get_config_value(config, "settings", "send_cmd", False, True)
-        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
+    if route == "controls":
+        config_options["text_color"] = get_config_value(
+            config, "aesthetic", "text_color", "#09ff00"
+        )
+        config_options["terminal_height"] = get_config_value(
+            config, "aesthetic", "terminal_height", 10
+        )
+        config_options["cfg_editor"] = get_config_value(
+            config, "settings", "cfg_editor", False, True
+        )
+        config_options["send_cmd"] = get_config_value(
+            config, "settings", "send_cmd", False, True
+        )
+        config_options["show_stderr"] = get_config_value(
+            config, "settings", "show_stderr", True, True
+        )
         return config_options
 
-    if route == 'install':
-        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
-        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
-        config_options["create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True)
+    if route == "install":
+        config_options["terminal_height"] = get_config_value(
+            config, "aesthetic", "terminal_height", 10
+        )
+        config_options["text_color"] = get_config_value(
+            config, "aesthetic", "text_color", "#09ff00"
+        )
+        config_options["create_new_user"] = get_config_value(
+            config, "settings", "install_create_new_user", True
+        )
         return config_options
 
-    if route == 'settings':
-        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
-        config_options["graphs_primary"] = get_config_value(config, "aesthetic", "graphs_primary", "#e01b24")
-        config_options["graphs_secondary"] = get_config_value(config, "aesthetic", "graphs_secondary", "#0d6efd")
-        config_options["terminal_height"] = get_config_value(config, "aesthetic", "terminal_height", 10)
-        config_options["show_stats"] = get_config_value(config, "aesthetic", "show_stats", True, True)
-        config_options["send_cmd"] = get_config_value(config, "settings", "send_cmd", False, True)
-        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", True, True)
-        config_options["install_create_new_user"] = get_config_value(config, "settings", "install_create_new_user", True, True)
-        config_options["delete_user"] = get_config_value(config, "settings", "delete_user", False, True)
-        config_options["remove_files"] = get_config_value(config, "settings", "remove_files", False, True)
-        config_options["clear_output_on_reload"] = get_config_value(config, "settings", "clear_output_on_reload", True, True)
-        config_options["end_in_newlines"] = get_config_value(config, "settings", "end_in_newlines", False, True)
-        config_options["show_stderr"] = get_config_value(config, "settings", "show_stderr", False, True)
+    if route == "settings":
+        config_options["text_color"] = get_config_value(
+            config, "aesthetic", "text_color", "#09ff00"
+        )
+        config_options["graphs_primary"] = get_config_value(
+            config, "aesthetic", "graphs_primary", "#e01b24"
+        )
+        config_options["graphs_secondary"] = get_config_value(
+            config, "aesthetic", "graphs_secondary", "#0d6efd"
+        )
+        config_options["terminal_height"] = get_config_value(
+            config, "aesthetic", "terminal_height", 10
+        )
+        config_options["show_stats"] = get_config_value(
+            config, "aesthetic", "show_stats", True, True
+        )
+        config_options["send_cmd"] = get_config_value(
+            config, "settings", "send_cmd", False, True
+        )
+        config_options["show_stderr"] = get_config_value(
+            config, "settings", "show_stderr", True, True
+        )
+        config_options["install_create_new_user"] = get_config_value(
+            config, "settings", "install_create_new_user", True, True
+        )
+        config_options["delete_user"] = get_config_value(
+            config, "settings", "delete_user", False, True
+        )
+        config_options["remove_files"] = get_config_value(
+            config, "settings", "remove_files", False, True
+        )
+        config_options["clear_output_on_reload"] = get_config_value(
+            config, "settings", "clear_output_on_reload", True, True
+        )
+        config_options["end_in_newlines"] = get_config_value(
+            config, "settings", "end_in_newlines", False, True
+        )
+        config_options["show_stderr"] = get_config_value(
+            config, "settings", "show_stderr", False, True
+        )
         return config_options
 
-    if route == 'about':
-        config_options["text_color"] = get_config_value(config, "aesthetic", "text_color", "#09ff00")
+    if route == "about":
+        config_options["text_color"] = get_config_value(
+            config, "aesthetic", "text_color", "#09ff00"
+        )
         return config_options
 
-    if route == 'delete':
-        config_options["delete_user"] = get_config_value(config, "settings", "delete_user", False, True)
-        config_options["remove_files"] = get_config_value(config, "settings", "remove_files", False, True)
+    if route == "delete":
+        config_options["delete_user"] = get_config_value(
+            config, "settings", "delete_user", False, True
+        )
+        config_options["remove_files"] = get_config_value(
+            config, "settings", "remove_files", False, True
+        )
         return config_options
 
-    if route == 'edit':
-        config_options["cfg_editor"] = get_config_value(config, "settings", "cfg_editor", False, True)
+    if route == "edit":
+        config_options["cfg_editor"] = get_config_value(
+            config, "settings", "cfg_editor", False, True
+        )
         return config_options
-
-
-
-
-
-
-

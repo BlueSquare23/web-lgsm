@@ -3,13 +3,7 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **List of Targets for refactoring:**
-  - [x] Decide what to do about web-lgsm in a container to warn user, they need
-    to rebuild the image if they're going to install a new game server.
-    - Problem: Basically, the mount point for `/home/<server>/GameServers`
-      needs to exist or the game server install wont be persistent.
-
-* [ ] **Apply autoformatting via `black`.**
+* [x] **Apply autoformatting via `black`.**
 
 * [ ] **Write new tests for SSH, docker changes, and the rest.**
   - After refactor go through and add new tests for new ssh and docker main

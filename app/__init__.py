@@ -24,32 +24,36 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 def main():
     # Setup logging.
     log_level_map = {
-        'debug': logging.DEBUG,        # Most verbose (Level 1).
-        'info': logging.INFO,          # General operational info (Level 2).
-        'warning': logging.WARNING     # Warnings and above (Level 3).
+        "info": logging.INFO,        # General operational info.
+        "warning": logging.WARNING,  # Warnings and above.
+        "debug": logging.DEBUG,      # Most verbose, debug info.
     }
 
     if "DEBUG" in os.environ:
         # Get log_level from env var, default to info if none set.
         log_level_str = os.getenv("LOG_LEVEL", "info").lower()
         log_level = log_level_map.get(log_level_str, logging.INFO)
-        dictConfig({
-            'version': 1,
-            'formatters': {'default': {
-                'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-            }},
-            'handlers': {'wsgi': {
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://flask.logging.wsgi_errors_stream',
-                'formatter': 'default'
-            }},
-            'root': {
-                'level': log_level,
-                'handlers': ['wsgi']
+        dictConfig(
+            {
+                "version": 1,
+                "formatters": {
+                    "default": {
+                        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+                    }
+                },
+                "handlers": {
+                    "wsgi": {
+                        "class": "logging.StreamHandler",
+                        "stream": "ext://flask.logging.wsgi_errors_stream",
+                        "formatter": "default",
+                    }
+                },
+                "root": {"level": log_level, "handlers": ["wsgi"]},
             }
-        })
+        )
+
     current_log_level = logging.getLogger().getEffectiveLevel()
-    
+
     # Print the human-readable log level name
     print(f"Root logger level: {logging.getLevelName(current_log_level)}")
 
@@ -80,6 +84,7 @@ def main():
 
     # Setup LoginManager.
     login_manager = LoginManager()
+
     # Redirect to auth.login if not already logged in.
     login_manager.login_view = "auth.login"
     login_manager.login_message = None

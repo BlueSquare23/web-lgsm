@@ -40,15 +40,18 @@ class GameServer(db.Model):
     keyfile_path = db.Column(db.String(150))
 
     def __repr__(self):
-        return (f"<GameServer(id={self.id}, install_name='{self.install_name}', script_name='{self.script_name}', " + \
-                f"install_type='{self.install_type}', install_finished={self.install_finished} keyfile_path={self.keyfile_path})>")
+        return (
+            f"<GameServer(id={self.id}, install_name='{self.install_name}', script_name='{self.script_name}', "
+            + f"install_type='{self.install_type}', install_finished={self.install_finished} keyfile_path={self.keyfile_path})>"
+        )
 
     def __str__(self):
-        return (f"GameServer '{self.install_name}' (ID: {self.id}, Script: {self.script_name}, " + \
-                f"Type: {self.install_type}, Finished: {self.install_finished}, Keyfile Path: {self.keyfile_path})")
+        return (
+            f"GameServer '{self.install_name}' (ID: {self.id}, Script: {self.script_name}, "
+            + f"Type: {self.install_type}, Finished: {self.install_finished}, Keyfile Path: {self.keyfile_path})"
+        )
 
     def delete(self):
         """Removes the GameServer entry from the database."""
         db.session.delete(self)
         db.session.commit()
-

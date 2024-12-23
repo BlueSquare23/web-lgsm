@@ -8,6 +8,7 @@ class CmdDescriptor:
         short_cmd (str): Short form of a command (for example "st")
         description (str): A description of what the command does.
     """
+
     def __init__(self):
         self.long_cmd = ""
         self.short_cmd = ""
@@ -18,4 +19,3 @@ class CmdDescriptor:
 
     def __repr__(self):
         return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
-

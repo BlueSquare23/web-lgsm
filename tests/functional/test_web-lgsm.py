@@ -21,18 +21,19 @@ def test_start_server(setup_venv):
     result = subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
     assert "Launched Gunicorn server with PID" in result.stdout
 
-    result2 = subprocess.run(['cat', 'logs/access.log'], capture_output=True, text=True)
-    print("-" * 45)
-    print(result2)
-
-    result3 = subprocess.run(['cat', 'logs/error.log'], capture_output=True, text=True)
-    print("-" * 45)
-    print(result3)
-
 
 def test_stop_server(setup_venv):
     result = subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
     print(result.stdout)
+
+    result2 = subprocess.run(['cat', 'logs/access.log'], capture_output=True, text=True)
+    print("-" * 45)
+    print(result2.stdout)
+
+    result3 = subprocess.run(['cat', 'logs/error.log'], capture_output=True, text=True)
+    print("-" * 45)
+    print(result3.stout)
+
     # Sleep to ensure the server has started.
     time.sleep(4)
     result = subprocess.run([SCRIPT, "--stop"], capture_output=True, text=True)

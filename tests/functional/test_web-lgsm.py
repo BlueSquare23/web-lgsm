@@ -32,7 +32,7 @@ def test_stop_server(setup_venv):
 
     result3 = subprocess.run(['cat', 'logs/error.log'], capture_output=True, text=True)
     print("-" * 45)
-    print(result3.stout)
+    print(result3.stdout)
 
     # Sleep to ensure the server has started.
     time.sleep(4)

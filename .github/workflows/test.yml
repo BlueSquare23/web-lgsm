@@ -30,19 +30,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Apt & Pip Dependencies
         run: |
+          ./install.sh -d
+      - name: Install & Setup Java for Mockcraft Server Tests
+        run: |
           sudo apt update
           sudo apt install openjdk-21-jdk
-          for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --user virtualenv
-          python3 -m virtualenv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          USER=$(whoami)
-          echo "  - $USER" >> playbooks/vars/accepted_gs_users.yml
-      - name: Install & Setup Java (For Minecraft Server Tests)
-        run: |
           set -x
           sudo update-alternatives --list java
           sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java

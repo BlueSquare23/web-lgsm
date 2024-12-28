@@ -440,7 +440,7 @@ def install():
 
         current_app.logger.info(log_wrap("server_id", server_id))
 
-        # Update web user's permissions.
+        # Update web user's permissions to give access to new game server post install.
         if current_user.role != "admin":
             user_ident = User.query.filter_by(username=current_user.username).first()
             user_perms = json.loads(user_ident.permissions)

@@ -279,8 +279,7 @@ def cancel_install(proc_info):
     """
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of the game server's ID.
-    pid = proc_info.pid
-    cmd = CONNECTOR_CMD + ["--cancel", pid]
+    cmd = CONNECTOR_CMD + ["--cancel", str(proc_info.pid)]
     cancel_proc_info = ProcInfoVessel()
 
     run_cmd_popen(cmd, cancel_proc_info)

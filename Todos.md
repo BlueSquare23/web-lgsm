@@ -4,8 +4,10 @@
 ---
 
 * **List of misc discovered problems:**
-  - [ ] Fix install page not showing, "Installing..."
+  - [x] Fix install page not showing, "Installing..."
     - I think there's a JS bug cause some stderr var not getting set in jinja.
+  - [x] Fix Install Cancel button.
+    - I'm not even sure what broke that. Was working previously.
 
 * [ ] **Write new tests for SSH, docker changes, and the rest.**
   - After refactor go through and add new tests for new ssh and docker main
@@ -124,6 +126,17 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **On first time loading server post install clear the install text.**
+    - Aka when server install is marked finish, clear its entry from global
+      servers dict. Then when someone enters the game server controls page for
+      the first time they don't still see all the install blah output.
+    - This is going to be difficult, because currently the ansible connector
+      script is the thing that updates the `install_finished` field in the game
+      server. However, the app state is what stores the ProcInfoVessel objects
+      for installed game servers. So can't get the external script to update
+      the apps state directly. Have to somehow trigger on that DB field being
+      updated from within the app.
 
 * [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
   - Might need to just put a little sudo chown back to the user line for those

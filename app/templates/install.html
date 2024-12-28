@@ -66,8 +66,24 @@
       </div>
       <br />
 
-      <!-- Set global serverName for update-xterm.js -->
-      <script>var serverName = "{{ install_name }}"; var textColor = "{{ config_options.text_color }}"</script>
+      <!-- Set global vars for update-xterm.js -->
+      {# TODO v1.9 Put this in its own template file, used here and on controls #}
+      <script>
+        var serverName = "{{ install_name }}";
+        var textColor = "{{ config_options.text_color }}";
+      {# If show_stderr var True #}
+      {% if config_options.show_stderr is defined and config_options.show_stderr %}
+        let showStderr = true;
+      {% else %}
+        let showStderr = false;
+      {% endif %}
+      {# If console var True #}
+      {% if console is defined and console %}
+        let sConsole = true;
+      {% else %}
+        let sConsole = false;
+      {% endif %}
+      </script>
       <script src="/static/js/update-xterm.js"></script>
       <script src="static/js/update-install-search.js"></script>
 

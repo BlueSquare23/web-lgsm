@@ -26,22 +26,6 @@ def test_stop_server(setup_venv):
     result = subprocess.run([SCRIPT, "--start"], capture_output=True, text=True)
     print(result.stdout)
 
-    r1 = subprocess.run('ps auxwww|grep gunicorn', shell=True, capture_output=True, text=True)
-    print(r1.stdout)
-    print("-" * 45)
-
-    r2 = subprocess.run('ls -lah logs', shell=True, capture_output=True, text=True)
-    print(r2.stdout)
-    print("-" * 45)
-
-    r7 = subprocess.run(['cat', 'logs/access.log'], capture_output=True, text=True)
-    print(r7.stdout)
-    print("-" * 45)
-
-    r8 = subprocess.run(['cat', 'logs/error.log'], capture_output=True, text=True)
-    print(r8.stdout)
-    print("-" * 45)
-
     # Sleep to ensure the server has started.
     time.sleep(4)
     result = subprocess.run([SCRIPT, "--stop"], capture_output=True, text=True)

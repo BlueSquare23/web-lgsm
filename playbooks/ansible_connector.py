@@ -299,10 +299,11 @@ def cancel_install(pid):
     """
     pid_cmd = get_script_cmd_from_pid(pid)
     self_path = os.path.join(SCRIPTPATH, __file__)
-    self_cmd = f"/usr/bin/sudo -n {self_path}"
+    self_venv = os.path.join(CWD, 'venv/bin/python')
+    self_cmd = f"/usr/bin/sudo -n {self_venv} {self_path}"
 
     # Validate to ensure only killing instances of own script pid.
-    if pid_cmd != self_cmd:
+    if self_cmd not in pid_cmd:
         print(f"Error: Not allowed to kill pid: {pid}!")
         exit(4)
 

@@ -1390,7 +1390,6 @@ def console_output(client):
 
     time.sleep(5)
 
-    # Check watch process is running and output is flowing.
     for i in range(0, 5):
         print(f"###### Iteration: {i}")
         time.sleep(2)

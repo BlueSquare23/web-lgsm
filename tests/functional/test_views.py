@@ -1222,7 +1222,7 @@ def full_game_server_install(client):
     observed_running = False
     # While process is running check output route is producing output.
     while (
-        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+        b'"exit_status": null' in client.get("/api/cmd-output?server=Minecraft").data
     ):
         observed_running = True
 
@@ -1244,7 +1244,6 @@ def full_game_server_install(client):
 
     # Test that install was observed to be running.
     assert observed_running
-
     assert b'Game server successfully installed' in response.data
 
 

@@ -113,10 +113,13 @@ apb="$SCRIPTPATH/venv/bin/ansible-playbook"
 venv_python="$SCRIPTPATH/venv/bin/python"
 ansible_connector="$SCRIPTPATH/playbooks/ansible_connector.py"
 accpt_usernames="$SCRIPTPATH/playbooks/vars/accepted_usernames.yml"
+web_lgsm_user_vars="$SCRIPTPATH/playbooks/vars/web_lgsm_user.yml"
 sudoers_file="/etc/sudoers.d/$USER-$USER"
 
-# Hardcode web-lgsm system user into accepted_users validation list.
+# Hardcode web-lgsm system user into accepted_users validation list and
+# web_user ansible vars files.
 echo "  - $USER" >> $accpt_usernames
+echo "web_lgsm_user: $USER" > $web_lgsm_user_vars
 
 # Write sudoers rule for passwordless install & delete.
 sudoers_rule="$USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *"

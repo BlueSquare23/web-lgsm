@@ -3,23 +3,17 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* **List of misc discovered problems:**
-  - [x] Fix install page not showing, "Installing..."
-    - I think there's a JS bug cause some stderr var not getting set in jinja.
-  - [x] Fix Install Cancel button.
-    - I'm not even sure what broke that. Was working previously.
+* [x] **Get --test_full working for existing tests**
+  - Things have changed, live console tests need re-written.
 
-* [ ] **Write new tests for SSH, docker changes, and the rest.**
-  - After refactor go through and add new tests for new ssh and docker main
-    features. Test code itself all needs refactored and re-written. But that's
-    a job for another day, for now it works.
+* [ ] **Write New tests for SSH, docker changes, and the rest.**
   - Includes:
     - [ ] Test add game server `install_type` remote.
-      - Will use some dummy hostname or IP that's open on ssh I got plenty of
-        hosts I can pick from.
-      - Also can't really run commands on a dummy remote but should basically
-        be no different from running commands as a different system user over
-        ssh. So probably going to say that's good enough for this release.
+      - Just test server add tests, obviously can't do full tests for remote or
+        container.
+    - [ ] Test add game server `install_type` docker.
+      - Just test server add tests, obviously can't do full tests for remote or
+        container.
 
 * [ ] **Manually run tests against new changes in container.**
   - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
@@ -126,6 +120,20 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **Improve test code!**
+  - [ ] Make auto backup and git restore main.conf file.
+  - [ ] Make each test idempotent, and make sure no tests are dependant on
+    other tests. 
+      - This is going to be quite the task because currently a lotta tests are
+        dependant on the ones run before them. I'm bad at programming.
+      - There's no real design being these tests, just lots of code piled up on
+        itself & really needs cleaned up.
+
+* [ ] **Make a main.conf.local override**
+  - Aka if a main.conf.local file is present, use that file instead of the
+    main.conf file. This file will be persistant across updates and wont be
+    tracked in git.
 
 * [ ] **On first time loading server post install clear the install text.**
     - Aka when server install is marked finish, clear its entry from global

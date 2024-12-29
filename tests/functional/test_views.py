@@ -266,8 +266,8 @@ def test_add_responses(app, client):
             assert response.status_code == 400
 
             # DEBUG!
-            print(response.data.decode('utf-8'))
-            print('----------------------------------------')
+#            print(response.data.decode('utf-8'))
+#            print('----------------------------------------')
 
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for("views.add")
@@ -835,7 +835,7 @@ def test_edit_content(app, client):
         response = client.post(
             "/edit", data=payload
         )
-        print(response.data.decode('utf-8'))
+#        print(response.data.decode('utf-8'))
         assert response.status_code == 302
 
         # Edit main.conf to enable edit page for basic test.
@@ -1031,7 +1031,7 @@ def test_new_user_has_no_permissions(app, client):
         # Test game server controls page.
         response = client.get(f"/controls?server={TEST_SERVER}", follow_redirects=True)
         error_msg = b"Your user does NOT have permission access this game server"
-        print(response.data.decode("utf-8"))
+#        print(response.data.decode("utf-8"))
         check_response(response, error_msg, resp_code, "views.home")
 
 
@@ -1078,7 +1078,7 @@ def test_enable_new_user_perms(app, client):
             "/edit_users", data=json.loads(create_user_json), follow_redirects=True
         )
         assert response.request.path == url_for("auth.edit_users")
-        print(response.data.decode("utf-8"))
+#        print(response.data.decode("utf-8"))
         assert b"User test2 Updated" in response.data
 
 
@@ -1137,7 +1137,7 @@ def test_new_user_has_ALL_permissions(app, client):
             },
             follow_redirects=True,
         )
-        print(response.data.decode('utf-8'))
+#        print(response.data.decode('utf-8'))
 
         # Is 200 bc follow_redirects=True.
         assert response.status_code == 200
@@ -1209,12 +1209,12 @@ def full_game_server_install(client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    print(response.data.decode('utf-8'))
+#    print(response.data.decode('utf-8'))
     assert b"Installing" in response.data
 
     # Some buffer time.
     time.sleep(5)
-    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf-8"))
+#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf-8"))
 
     observed_running = False
     # While process is running check output route is producing output.
@@ -1250,24 +1250,24 @@ def game_server_start_stop(client):
         "/controls?server=Minecraft&command=st", follow_redirects=True
     )
     assert response.status_code == 200
-    print(
-        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
-    )
+#    print(
+#        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
+#    )
 
     time.sleep(2)
     response = client.get("/controls?server=Minecraft", follow_redirects=True)
-    print(
-        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
-        + response.data.decode("utf8")
-    )
+#    print(
+#        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
+#        + response.data.decode("utf8")
+#    )
 
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
     assert b"stdout" in response.data
-    print(
-        "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
-    )
+#    print(
+#        "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
+#    )
 
     # Check that the output lines are not empty.
     empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
@@ -1278,82 +1278,73 @@ def game_server_start_stop(client):
     while (
         b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
     ):
-        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+#        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(5)
 
-    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
 
     #    print("######################## Minecraft Start Log\n")
     #    os.system("cat Minecraft/logs/script/mcserver-script.log")
     #    os.system("cat Minecraft/log/server/latest.log")
     #    os.system("cat Minecraft/log/console/mcserver-console.log")
 
-# TODO: Rewrite this check, status indicators no longer work this way. Perhaps
-# best to just check status api for indicator status.
-#    # Check status indicator color on home page.
-#    # Green hex color means on.
-#    expected_color = b"00FF11"
-#    response = client.get("/home")
-#    print(
-#        "######################## HOME PAGE RESPONSE\n" + response.data.decode("utf8")
-#    )
-#    assert response.status_code == 200
-#    assert expected_color in response.data
+    # Check status indicator api json.
+    resp = client.get("/api/server-status?id=1").data.decode("utf8")
+    resp_dict = json.loads(resp)
+    assert resp_dict['status'] == True
 
-# TODO: Fix this! For some reason the send command test is broken. Already
-# spent too much time trying to figure out why and I don't know. Moving on for
-# now. 
-#    # Enable the send_cmd setting.
-#    os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
-#    time.sleep(1)
-#
-#    # Test sending command to game server console
-#    response = client.get(
-#        "/controls?server=Minecraft&command=sd&cmd=test", follow_redirects=True
-#    )
-#    assert response.status_code == 200
-#
-#    # Sleep until process is finished.
-#    while (
-#        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
-#    ):
-#        print("######################## SEND COMMAND OUTPUT\n")
-#        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
-#        time.sleep(3)
-#
-#    time.sleep(1)
-#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
-#    assert (
-#        b"Sending command to console"
-#        in client.get("/api/cmd-output?server=Minecraft").data
-#    )
-#
-#    # Set send_cmd back to default state for sake of idempotency.
-#    os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+    # Enable the send_cmd setting.
+    os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
     time.sleep(1)
 
-## TODO: Gotta come up with a more robust way to test these status indicators
-# all of this has changed.
-#
-#    # Test stopping the server
-#    response = client.get(
-#        "/controls?server=Minecraft&command=sp", follow_redirects=True
-#    )
-#    assert response.status_code == 200
-#
-#    # Run until "process_lock": false (aka proc stopped).
-#    while (
-#        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
-#    ):
-#        time.sleep(3)
-#
-#    # For good measure.
-#    os.system("sudo -n killall -9 java")
-#
-#    # Check if status indicator is red.
-#    response = client.get("/home")
-#    assert response.status_code == 200
-#    assert b"red" in response.data
+    # Test sending command to game server console
+    response = client.get(
+        "/controls?server=Minecraft&command=sd&cmd=test", follow_redirects=True
+    )
+    assert response.status_code == 200
+    time.sleep(1)
+
+    print("######################## SEND COMMAND OUTPUT")
+    # Sleep until process is finished.
+    while (
+        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+    ):
+        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+        time.sleep(3)
+
+    time.sleep(1)
+    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+
+    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+    assert (
+        b"Sending command to console"
+        in client.get("/api/cmd-output?server=Minecraft").data
+    )
+
+    # Set send_cmd back to default state for sake of idempotency.
+    os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+    time.sleep(1)
+
+    # Test stopping the server
+    response = client.get(
+        "/controls?server=Minecraft&command=sp", follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # Run until "process_lock": false (aka proc stopped).
+    while (
+        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+    ):
+        time.sleep(3)
+
+    # For good measure.
+    os.system("sudo -n killall -9 java")
+
+    # Check status indicator api, is off.
+    resp = client.get("/api/server-status?id=1").data.decode("utf8")
+    resp_dict = json.loads(resp)
+    assert resp_dict['status'] == False
 
 
 def console_output(client):
@@ -1371,6 +1362,9 @@ def console_output(client):
     assert b"stdout" in response.data
 
     # Check that the output lines are not empty.
+    # TODO: Use proper dict instead of string for tests like this. Pretty sure
+    # rn, this test is broken cause there's no stderr, which should be there
+    # too. If it was a dict and then comparing the two dicts would be easier.
     empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
     json_data = json.loads(response.data.decode("utf8"))
     assert empty_resp != json.dumps(json_data)
@@ -1381,26 +1375,31 @@ def console_output(client):
     ):
         time.sleep(3)
 
-    # Check that console button is working and console is outputting.
-    response = client.get("/controls?server=Minecraft&command=c", follow_redirects=True)
-    assert response.status_code == 200
-    print(
-        "######################## CONSOLE ROUTE OUTPUT\n" + response.data.decode("utf8")
+    time.sleep(1)
+    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+
+    # Simulate front end js console mode.
+    # 1. First POST to /api/update-console
+    # 2. Next GET /api/cmd-output to check for data
+
+    # Sleep for long enough that some output comes through.
+    time.sleep(10)
+
+    response = client.post(
+        "/api/update-console", data={"server": "Minecraft"}
     )
+    assert response.status_code == 200
 
-    time.sleep(5)
+    print("######################## START CONSOLE OUTPUT")
+    resp_json = client.get("/api/cmd-output?server=Minecraft").data.decode("utf8")
+    resp_data = json.loads(resp_json)
+    print(resp_json)
 
-    for i in range(0, 5):
-        print(f"###### Iteration: {i}")
-        time.sleep(2)
-        assert (
-            b'"process_lock": true'
-            in client.get("/api/cmd-output?server=Minecraft").data
-        )
-        assert check_watch_process() == True
+    # Just check that some stdout is coming through.
+    assert len(resp_data['stdout']) > 0
 
     # Cleanup
-    os.system("sudo -n killall -9 java watch")
+    os.system("sudo -n killall -9 java")
 
 
 def user_exists(username):

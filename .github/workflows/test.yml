@@ -44,4 +44,4 @@ jobs:
           javac -version
       - name: Run Pytest Tests
         run: |
-          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
+          $HOME/web-lgsm.py --test_full

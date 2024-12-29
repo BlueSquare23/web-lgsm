@@ -1039,6 +1039,9 @@ def delete():
                 category="error",
             )
 
+        # We don't want to keep deleted servers in the cache.
+        purge_tmux_socket_cache()
+
     # Delete via POST is for multiple deletions.
     # Post submissions come from delete toggles on home page.
     if request.method == "POST":

@@ -483,7 +483,6 @@ def run_tests():
     # Source env vars.
     env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
     load_dotenv(dotenv_path=env_path)
-    os.environ["HOME"] = SCRIPTPATH
     os.environ["APP_PATH"] = SCRIPTPATH
 
     if O["verbose"]:

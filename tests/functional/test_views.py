@@ -1237,7 +1237,7 @@ def full_game_server_install(client):
         time.sleep(5)
 
     print("######################## GAME SERVER INSTALL OUTPUT")
-    print(response.decode("utf8"))
+    print(json_data)
 
     # Test that install was observed to be running.
     assert observed_running
@@ -1265,6 +1265,12 @@ def game_server_start_stop(client):
 #    )
 
     # More debug info.
+    print("######################## ls -lah logs/")
+    os.system(f"ls -lah logs/")
+
+    print("######################## cat logs/error.log")
+    os.system(f"cat logs/error.log")
+
     print("######################## sudo -n ls -lah /home/")
     os.system(f"sudo -n ls -lah /home/")
 

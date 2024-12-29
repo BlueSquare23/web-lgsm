@@ -1216,35 +1216,50 @@ def full_game_server_install(client):
     time.sleep(5)
 #    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf-8"))
 
-    # TODO: Rewrite this, should be a while loop until successfully installed
-    # message observed with a timeout.
+    timeout = 0
+    installed_successfully = False
+    while True:
+        if timeout >= 300:  # Aka five minutes.
+            assert True == False
 
-    observed_running = False
-    # While process is running check output route is producing output.
-    while (
-        b'"exit_status": null' in client.get("/api/cmd-output?server=Minecraft").data
-    ):
-        observed_running = True
-
-        # Test to make sure output route is returning stuff for gs while
-        # game server install is running.
         response = client.get("/api/cmd-output?server=Minecraft")
         assert response.status_code == 200
-        assert b"stdout" in response.data
 
-        # Check that the output lines are not empty.
-        empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
-        json_data = json.loads(response.data.decode("utf8"))
-        assert empty_resp != json.dumps(json_data)
+        if b'Game server successfully installed' in response.data:
+            installed_successfully = True
+            break
 
-        time.sleep(10)
+        timeout += 60
+        time.sleep(60)
 
     print("######################## GAME SERVER INSTALL OUTPUT")
-    print(json.dumps(json_data, indent=4))
+    print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
 
-    # Test that install was observed to be running.
-    assert observed_running
-    assert b'Game server successfully installed' in response.data
+    assert installed_successfully
+
+#    observed_running = False
+#    # While process is running check output route is producing output.
+#    while (
+#        b'"exit_status": null' in client.get("/api/cmd-output?server=Minecraft").data
+#    ):
+#        observed_running = True
+#
+#        # Test to make sure output route is returning stuff for gs while
+#        # game server install is running.
+#        response = client.get("/api/cmd-output?server=Minecraft")
+#        assert response.status_code == 200
+#        assert b"stdout" in response.data
+#
+#        # Check that the output lines are not empty.
+#        empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
+#        json_data = json.loads(response.data.decode("utf8"))
+#        assert empty_resp != json.dumps(json_data)
+#
+#        time.sleep(10)
+
+#    # Test that install was observed to be running.
+#    assert observed_running
+#    assert b'Game server successfully installed' in response.data
 
 
 def game_server_start_stop(client):

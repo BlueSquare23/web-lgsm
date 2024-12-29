@@ -1216,6 +1216,9 @@ def full_game_server_install(client):
     time.sleep(5)
 #    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf-8"))
 
+    # TODO: Rewrite this, should be a while loop until successfully installed
+    # message observed with a timeout.
+
     observed_running = False
     # While process is running check output route is producing output.
     while (
@@ -1234,13 +1237,15 @@ def full_game_server_install(client):
         json_data = json.loads(response.data.decode("utf8"))
         assert empty_resp != json.dumps(json_data)
 
-        time.sleep(5)
+        time.sleep(10)
 
     print("######################## GAME SERVER INSTALL OUTPUT")
-    print(json_data)
+    print(json.dumps(json_data, indent=4))
 
     # Test that install was observed to be running.
     assert observed_running
+
+    assert b'Game server successfully installed' in response.data
 
 
 def game_server_start_stop(client):
@@ -1268,8 +1273,8 @@ def game_server_start_stop(client):
     print("######################## ls -lah logs/")
     os.system(f"ls -lah logs/")
 
-    print("######################## cat logs/error.log")
-    os.system(f"cat logs/error.log")
+    print("######################## sudo -l")
+    os.system(f"sudo -l")
 
     print("######################## sudo -n ls -lah /home/")
     os.system(f"sudo -n ls -lah /home/")

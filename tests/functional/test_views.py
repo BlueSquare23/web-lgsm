@@ -1265,9 +1265,9 @@ def game_server_start_stop(client):
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
     assert b"stdout" in response.data
-#    print(
-#        "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
-#    )
+    print(
+        "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
+    )
 
     # Check that the output lines are not empty.
     empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
@@ -1278,11 +1278,11 @@ def game_server_start_stop(client):
     while (
         b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
     ):
-#        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(5)
 
     assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
-#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
 
     #    print("######################## Minecraft Start Log\n")
     #    os.system("cat Minecraft/logs/script/mcserver-script.log")
@@ -1291,6 +1291,7 @@ def game_server_start_stop(client):
 
     # Check status indicator api json.
     resp = client.get("/api/server-status?id=1").data.decode("utf8")
+    print(resp)
     resp_dict = json.loads(resp)
     assert resp_dict['status'] == True
 

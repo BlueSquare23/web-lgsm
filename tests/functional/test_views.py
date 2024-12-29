@@ -1220,6 +1220,8 @@ def full_game_server_install(client):
     installed_successfully = False
     while True:
         if timeout >= 300:  # Aka five minutes.
+            print("######################## GAME SERVER INSTALL OUTPUT")
+            print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
             assert True == False
 
         response = client.get("/api/cmd-output?server=Minecraft")

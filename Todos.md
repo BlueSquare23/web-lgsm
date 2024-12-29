@@ -3,14 +3,21 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [ ] **Write New tests for SSH, docker changes, and the rest.**
+* [x] **Write New tests for SSH, docker changes, and the rest.**
   - Includes:
-    - [ ] Test add game server `install_type` remote.
+    - [x] Test add game server `install_type` remote.
       - Just test server add tests, obviously can't do full tests for remote or
         container.
-    - [ ] Test add game server `install_type` docker.
+    - [x] Test add game server `install_type` docker.
       - Just test server add tests, obviously can't do full tests for remote or
         container.
+    - There's almost certainly more tests that can be done here, I'm just kinda
+      burned out with testing right now. All tests are passing rn. But its a
+      house of cards. I gotta rework somethings and spend sometime better
+      learning how to structure my pytests. But I'm not going to hold up this
+      release on testing.
+    - Also I think some manual qa might give me a better sense of things to
+      test anyways.
 
 * [ ] **Manually run tests against new changes in container.**
   - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py

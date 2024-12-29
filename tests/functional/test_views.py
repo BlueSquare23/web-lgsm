@@ -14,6 +14,7 @@ PASSWORD = os.environ["PASSWORD"]
 TEST_SERVER = os.environ["TEST_SERVER"]
 TEST_SERVER_PATH = os.environ["TEST_SERVER_PATH"]
 TEST_SERVER_NAME = os.environ["TEST_SERVER_NAME"]
+TEST_REMOTE_HOST = os.environ["TEST_REMOTE_HOST"]
 CFG_PATH = os.environ["CFG_PATH"]
 CFG_PATH = os.path.abspath(CFG_PATH)
 VERSION = os.environ["VERSION"]
@@ -360,6 +361,37 @@ def test_add_responses(app, client):
 
         assert response4.status_code == 400
         assert b"An installation by that name already exits." in response4.data
+
+        ## Test legit remote server add with mock server details.
+        response = client.post(
+            "/add",
+            data={
+                "install_type": "remote",
+                "install_name": TEST_SERVER + '2',
+                "install_path": TEST_SERVER_PATH,
+                "script_name": TEST_SERVER_NAME,
+                "install_host": TEST_REMOTE_HOST,
+            },
+            follow_redirects=True,
+        )
+        # Is 200 bc follow_redirects=True.
+        assert response.status_code == 200
+        assert b'Game server added' in response.data
+
+        ## Test legit docker server add with mock server details.
+        response = client.post(
+            "/add",
+            data={
+                "install_type": "docker",
+                "install_name": TEST_SERVER + '3',
+                "install_path": TEST_SERVER_PATH,
+                "script_name": TEST_SERVER_NAME,
+            },
+            follow_redirects=True,
+        )
+        # Is 200 bc follow_redirects=True.
+        assert response.status_code == 200
+        assert b'Game server added' in response.data
 
 
 ### Controls page tests.
@@ -1093,6 +1125,14 @@ def test_delete_game_server(app, client):
 
         response = client.get("/delete?server=" + TEST_SERVER, follow_redirects=True)
         msg = b"Game server, Mockcraft deleted"
+        check_response(response, msg, 200, "views.home")
+
+        response = client.get("/delete?server=" + TEST_SERVER + '2', follow_redirects=True)
+        msg = b"Game server, Mockcraft2 deleted"
+        check_response(response, msg, 200, "views.home")
+
+        response = client.get("/delete?server=" + TEST_SERVER + '3', follow_redirects=True)
+        msg = b"Game server, Mockcraft3 deleted"
         check_response(response, msg, 200, "views.home")
 
 

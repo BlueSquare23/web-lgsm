@@ -28,9 +28,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Apt & Pip Dependencies
+      - name: Install Web-LGSM
         run: |
           ./install.sh -d
+      - name: Check sudo access
+        run: |
+          sudo -l
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update

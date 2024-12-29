@@ -1236,6 +1236,9 @@ def full_game_server_install(client):
 
         time.sleep(5)
 
+    print("######################## GAME SERVER INSTALL OUTPUT")
+    print(response.decode("utf8"))
+
     # Test that install was observed to be running.
     assert observed_running
 
@@ -1262,8 +1265,13 @@ def game_server_start_stop(client):
 #    )
 
     # More debug info.
+    print("######################## sudo -n ls -lah /home/")
     os.system(f"sudo -n ls -lah /home/")
+
+    print("######################## sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
     os.system(f"sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
+
+    print("######################## sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
     os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
 
     # Check output lines are there.

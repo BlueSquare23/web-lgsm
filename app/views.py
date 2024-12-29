@@ -42,8 +42,7 @@ PATHS = {
 }
 
 # Globals.
-servers = {}  # Holds output objects.
-last_request_for_output = int(time.time())  # Holds last requested output time.
+servers = {}  # Holds ProcInfoVessel objects.
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -649,9 +648,6 @@ def no_output():
             json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
         )
         return response
-
-    # Reset the last requested output time.
-    last_request_for_output = int(time.time())
 
     # If its a server in the servers dict set the output object to the
     # one from that dictionary.

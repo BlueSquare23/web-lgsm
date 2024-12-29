@@ -1250,23 +1250,28 @@ def game_server_start_stop(client):
         "/controls?server=Minecraft&command=st", follow_redirects=True
     )
     assert response.status_code == 200
-    print(
-        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
-    )
+#    print(
+#        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
+#    )
 
     time.sleep(2)
-    response = client.get("/controls?server=Minecraft", follow_redirects=True)
-    print(
-        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
-        + response.data.decode("utf8")
-    )
+#    response = client.get("/controls?server=Minecraft", follow_redirects=True)
+#    print(
+#        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
+#        + response.data.decode("utf8")
+#    )
+
+    # More debug info.
+    os.system(f"sudo -n ls -lah /home/")
+    os.system(f"sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
+    os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
 
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
     assert b"stdout" in response.data
     print(
-        "######################## OUTPUT ROUTE STDOUT\n" + response.data.decode("utf8")
+        "######################## OUTPUT ROUTE JSON\n" + response.data.decode("utf8")
     )
 
     # Check that the output lines are not empty.

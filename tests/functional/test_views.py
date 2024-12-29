@@ -1250,16 +1250,16 @@ def game_server_start_stop(client):
         "/controls?server=Minecraft&command=st", follow_redirects=True
     )
     assert response.status_code == 200
-#    print(
-#        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
-#    )
+    print(
+        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
+    )
 
     time.sleep(2)
     response = client.get("/controls?server=Minecraft", follow_redirects=True)
-#    print(
-#        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
-#        + response.data.decode("utf8")
-#    )
+    print(
+        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
+        + response.data.decode("utf8")
+    )
 
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")

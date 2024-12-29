@@ -3,9 +3,6 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Get --test_full working for existing tests**
-  - Things have changed, live console tests need re-written.
-
 * [ ] **Write New tests for SSH, docker changes, and the rest.**
   - Includes:
     - [ ] Test add game server `install_type` remote.
@@ -24,6 +21,13 @@
   - I mean its kinda silly cause the actions themself are in a container so
     afaic same thing.
 
+* [ ] **Do trial run of Youtube video tutorials (not recorded)**
+  - Want to make sure everything really works before release obviously.
+  - It'd be really embarrassing if when I go to record videos some part of the
+    app doesn't fucking work. So besides manual and automated qa testing, going
+    to consider YT videos as sorta checklist to make sure its all doing the
+    needful before relase.
+
 * [ ] **MANUAL QA TESTING.**
   - [ ] Going to try to bribe my friends with pizza and or fine lettuces to go
     through and make sure its doing the needful.
@@ -32,13 +36,6 @@
     - Big bugs if found, can be hackily dealt with, then properly fixed in next
       release.
     - Feature suggestions can go into the next release.
-
-* [ ] **Do trial run of Youtube video tutorials (not recorded)**
-  - Want to make sure everything really works before release obviously.
-  - It'd be really embarrassing if when I go to record videos some part of the
-    app doesn't fucking work. So besides manual and automated qa testing, going
-    to consider YT videos as sorta checklist to make sure its all doing the
-    needful before relase.
 
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but

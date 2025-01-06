@@ -60,4 +60,13 @@
 >   Where there are multiple matches, the last match is used (which is not
 >   necessarily the most specific match).
 
-
+9. Question: I'm getting this error why trying to install game servers "Failed
+   to change ownership of the temporary files Ansible (via chmod nor setfacl)
+   needs to create despite connecting as a privileged user. Unprivileged become
+   user would be unable to read the file." How do I fix this?
+   - Answer: If you're seeing this error, its likely your install.sh never
+     completed fully, and the `playbooks/vars/web_lgsm_user.yml` var is either
+     still set to the `<PLACEHOLDER>` value or the incorrect web-lgsm system
+     user.
+   - To fix this, simply change the username in `playbooks/vars/web_lgsm_user.yml` 
+     file to the username the web-lgsm app is running as.

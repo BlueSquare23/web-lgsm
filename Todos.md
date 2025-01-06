@@ -19,7 +19,7 @@
     - Also I think some manual qa might give me a better sense of things to
       test anyways.
 
-* [ ] **Manually run tests against new changes in container.**
+* [x] **Manually run tests against new changes in container.**
   - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
     --test_full` then it should build and run all project tests inside of the
     container.

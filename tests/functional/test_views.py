@@ -7,6 +7,7 @@ import psutil
 from flask import url_for, request
 from game_servers import game_servers
 import subprocess
+import configparser
 
 # Global testing env vars.
 USERNAME = os.environ["USERNAME"]
@@ -464,17 +465,37 @@ def test_controls_content(app, client):
         assert b"Send command to game server console" not in response.data
 
         # Enable the send_cmd setting.
-        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+#        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+
+        # Enable send_cmd setting in config file.
+        config = configparser.ConfigParser()
+        config.read("main.conf")
+        config['settings']['send_cmd'] = 'yes'
+        with open("main.conf", "w") as configfile:
+            config.write(configfile)
+
+        os.system("cat main.conf")
 
         # Check send cmd is there after main.conf setting is enabled.
         response = client.get(f"/controls?server={TEST_SERVER}")
+
+        # DEBUG
+        print(response.data.decode('utf8'))
         assert response.status_code == 200  # Return's 200 to GET requests.
+        # TODO: These first two tests are bad. Should use html element as a
+        # whole for all str matching tests.
         assert b"sd" in response.data
         assert b"send" in response.data
         assert b"Send command to game server console" in response.data
 
+
         # Set it back to default state for sake of idempotency.
-        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+        config['settings']['send_cmd'] = 'no'
+        with open("main.conf", "w") as configfile:
+            config.write(configfile)
+
+        # Set it back to default state for sake of idempotency.
+#        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
 
 
 # Test add responses.
@@ -789,7 +810,13 @@ def test_settings_responses(app, client):
         check_main_conf("terminal_height = 10")
 
     # Re-disable remove_files for the sake of idempotency.
-    os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    config['settings']['remove_files'] = 'no'
+    with open("main.conf", "w") as configfile:
+        config.write(configfile)
+
+#    os.system("sed -i 's/remove_files = yes/remove_files = no/g' main.conf")
     check_main_conf("remove_files = no")
 
 
@@ -871,7 +898,12 @@ def test_edit_content(app, client):
         assert response.status_code == 302
 
         # Edit main.conf to enable edit page for basic test.
-        os.system("sed -i 's/cfg_editor = no/cfg_editor = yes/g' main.conf")
+#        os.system("sed -i 's/cfg_editor = no/cfg_editor = yes/g' main.conf")
+        config = configparser.ConfigParser()
+        config.read("main.conf")
+        config['settings']['cfg_editor'] = 'yes'
+        with open("main.conf", "w") as configfile:
+            config.write(configfile)
 
         # Basic page load test.
         response = client.get(
@@ -1016,7 +1048,13 @@ def test_edit_responses(app, client):
         check_response(response, error_msg, resp_code, "views.home")
 
     # Re-disable the cfg_editor for the sake of idempotency.
-    os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    config['settings']['cfg_editor'] = 'yes'
+    with open("main.conf", "w") as configfile:
+        config.write(configfile)
+
+#    os.system("sed -i 's/cfg_editor = yes/cfg_editor = no/g' main.conf")
 
 
 def test_new_user_has_no_permissions(app, client):
@@ -1240,7 +1278,7 @@ def test_delete_new_user(app, client):
 
 def full_game_server_install(client):
     # For good measure.
-    os.system("sudo -n killall -9 java")
+#    os.system("sudo -n killall -9 java")
 
     # Do an install.
     response = client.post(
@@ -1274,34 +1312,10 @@ def full_game_server_install(client):
         timeout += 60
         time.sleep(60)
 
-    print("######################## GAME SERVER INSTALL OUTPUT")
-    print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
+#    print("######################## GAME SERVER INSTALL OUTPUT")
+#    print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
 
     assert installed_successfully
-
-#    observed_running = False
-#    # While process is running check output route is producing output.
-#    while (
-#        b'"exit_status": null' in client.get("/api/cmd-output?server=Minecraft").data
-#    ):
-#        observed_running = True
-#
-#        # Test to make sure output route is returning stuff for gs while
-#        # game server install is running.
-#        response = client.get("/api/cmd-output?server=Minecraft")
-#        assert response.status_code == 200
-#        assert b"stdout" in response.data
-#
-#        # Check that the output lines are not empty.
-#        empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
-#        json_data = json.loads(response.data.decode("utf8"))
-#        assert empty_resp != json.dumps(json_data)
-#
-#        time.sleep(10)
-
-#    # Test that install was observed to be running.
-#    assert observed_running
-#    assert b'Game server successfully installed' in response.data
 
 
 def game_server_start_stop(client):
@@ -1314,40 +1328,32 @@ def game_server_start_stop(client):
         "/controls?server=Minecraft&command=st", follow_redirects=True
     )
     assert response.status_code == 200
-#    print(
-#        "######################## START CMD RESPONSE\n" + response.data.decode("utf8")
-#    )
 
     time.sleep(2)
-#    response = client.get("/controls?server=Minecraft", follow_redirects=True)
-#    print(
-#        "######################## CONTROLS PAGE RESPONSE 2 SEC LATER\n"
-#        + response.data.decode("utf8")
-#    )
 
     # More debug info.
-    print("######################## ls -lah logs/")
-    os.system(f"ls -lah logs/")
+#    print("######################## ls -lah logs/")
+#    os.system(f"ls -lah logs/")
 
-    print("######################## sudo -l")
-    os.system(f"sudo -l")
+#    print("######################## sudo -l")
+#    os.system(f"sudo -l")
 
-    print("######################## sudo -n ls -lah /home/")
-    os.system(f"sudo -n ls -lah /home/")
-
-    print("######################## sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
-    os.system(f"sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
-
-    print("######################## sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
-    os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
+#    print("######################## sudo -n ls -lah /home/")
+#    os.system(f"sudo -n ls -lah /home/")
+#
+#    print("######################## sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
+#    os.system(f"sudo -n ls -lah /home/mcserver/GameServers/Minecraft")
+#
+#    print("######################## sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
+#    os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
 
     # Check output lines are there.
     response = client.get("/api/cmd-output?server=Minecraft")
     assert response.status_code == 200
     assert b"stdout" in response.data
-    print(
-        "######################## OUTPUT ROUTE JSON\n" + response.data.decode("utf8")
-    )
+#    print(
+#        "######################## OUTPUT ROUTE JSON\n" + response.data.decode("utf8")
+#    )
 
     # Check that the output lines are not empty.
     empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
@@ -1358,11 +1364,11 @@ def game_server_start_stop(client):
     while (
         b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
     ):
-        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+#        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(5)
 
     assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
-    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
 
     #    print("######################## Minecraft Start Log\n")
     #    os.system("cat Minecraft/logs/script/mcserver-script.log")
@@ -1371,12 +1377,18 @@ def game_server_start_stop(client):
 
     # Check status indicator api json.
     resp = client.get("/api/server-status?id=1").data.decode("utf8")
-    print(resp)
+#    print(resp)
     resp_dict = json.loads(resp)
     assert resp_dict['status'] == True
 
     # Enable the send_cmd setting.
-    os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    config['settings']['send_cmd'] = 'yes'
+    with open("main.conf", "w") as configfile:
+        config.write(configfile)
+
+#    os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf")
     time.sleep(1)
 
     # Test sending command to game server console
@@ -1386,25 +1398,31 @@ def game_server_start_stop(client):
     assert response.status_code == 200
     time.sleep(1)
 
-    print("######################## SEND COMMAND OUTPUT")
+#    print("######################## SEND COMMAND OUTPUT")
     # Sleep until process is finished.
     while (
         b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
     ):
-        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+#        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(3)
 
     time.sleep(1)
     assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
 
-    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
+#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
     assert (
         b"Sending command to console"
         in client.get("/api/cmd-output?server=Minecraft").data
     )
 
     # Set send_cmd back to default state for sake of idempotency.
-    os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
+    config = configparser.ConfigParser()
+    config.read("main.conf")
+    config['settings']['send_cmd'] = 'no'
+    with open("main.conf", "w") as configfile:
+        config.write(configfile)
+
+#    os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf")
     time.sleep(1)
 
     # Test stopping the server
@@ -1413,16 +1431,31 @@ def game_server_start_stop(client):
     )
     assert response.status_code == 200
 
-    # Run until "process_lock": false (aka proc stopped).
-    while (
-        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
-    ):
-        time.sleep(3)
+    x = 0
+    timeout = 60  # If shutdown takes more than 1 min, something's probably wrong.
 
-    # For good measure.
-    os.system("sudo -n killall -9 java")
+    while True:
+        # Fail test on timeout.
+        if x > timeout:
+            assert True == False
 
-    # Check status indicator api, is off.
+        resp = client.get("/api/cmd-output?server=Minecraft").data
+        resp_dict = json.loads(resp)
+        assert 'stdout' in resp_dict
+        print(f'######################## STOP CMD OUTPUT, ATTEMPT #{int(x/5)+1}')
+        print(json.dumps(resp_dict, indent=4))
+
+        # Break on status indicator api, is off.
+        resp = client.get("/api/server-status?id=1").data.decode("utf8")
+        resp_dict = json.loads(resp)
+
+        if resp_dict['status'] == False:
+            break
+
+        time.sleep(5)
+        x += 5
+
+    # Final check status indicator api, is off.
     resp = client.get("/api/server-status?id=1").data.decode("utf8")
     resp_dict = json.loads(resp)
     assert resp_dict['status'] == False
@@ -1480,7 +1513,7 @@ def console_output(client):
     assert len(resp_data['stdout']) > 0
 
     # Cleanup
-    os.system("sudo -n killall -9 java")
+#    os.system("sudo -n killall -9 java")
 
 
 def user_exists(username):
@@ -1565,6 +1598,12 @@ def test_install_newuser(app, client):
 
 def test_install_sameuser(app, client):
     """Then test install as existing user."""
+
+    # Skip same user install tests for docker. Containers force install new
+    # user.
+    if "CONTAINER" in os.environ:
+        return
+
     print(USERNAME)
     print(PASSWORD)
     print(TEST_SERVER)

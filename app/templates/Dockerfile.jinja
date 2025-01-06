@@ -2,15 +2,20 @@ FROM ubuntu:latest
 ENV CONTAINER=YES
 
 # Install apt deps.
-RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2
+RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2 openssh-server
 
-# Create user and add to GID group.
-ARG GID={{gid}}
-RUN useradd -m web-lgsm
-{% for server in servers %}RUN useradd -m {{server.short_name}}{% endfor %}
+# Rename default ubuntu user & group to web-lgsm.
+RUN usermod -l web-lgsm ubuntu
+RUN groupmod -n web-lgsm ubuntu
+RUN usermod -d /home/web-lgsm web-lgsm
+{% for server in servers %}RUN useradd -m {{server.short_name}} && usermod -a -G {{server.short_name}} web-lgsm{% endfor %}
+
+# Change SSH settings.
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
 RUN mkdir -p /etc/sudoers.d
-
-RUN GROUP=$(getent group $GID | cut -d: -f1) && usermod -a -G $GROUP web-lgsm 
 
 # Temp allow 'web-lgsm' to use sudo without a password.
 RUN echo "web-lgsm ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -38,6 +43,5 @@ RUN sed -i '$ d' /etc/sudoers
 # Expose app's port.
 EXPOSE 12357
 
-# Entrypoint script to start the app.
-USER web-lgsm
-ENTRYPOINT ["/home/web-lgsm/web-lgsm.py"]
+# Entrypoint wrapper script, starts sshd & drop privs to launch web-lgsm.
+ENTRYPOINT ["/home/web-lgsm/scripts/entrypoint.sh"]

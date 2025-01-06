@@ -489,9 +489,11 @@ def run_tests():
         for key, value in os.environ.items():
             print(f"{key}={value}")
 
-    # Backup Database.
-    db_file = os.path.join(SCRIPTPATH, "app/database.db")
-    db_backup = backup_file(db_file)
+    # If in container don't backup db.
+    if "CONTAINER" not in os.environ:
+        # Backup Database.
+        db_file = os.path.join(SCRIPTPATH, "app/database.db")
+        db_backup = backup_file(db_file)
 
     # Setup Mockcraft testdir.
     mockcraft_dir = os.path.join(SCRIPTPATH, "tests/test_data/Mockcraft")
@@ -516,7 +518,7 @@ def run_tests():
 
     if O["test_full"]:
         # Need to get a sudo tty ticket for full game server install.
-        check_sudo()
+#        check_sudo()
         # Backup Existing MC install, if one exists.
         mcdir = os.path.join(SCRIPTPATH, "Minecraft")
         if os.path.isdir(mcdir):

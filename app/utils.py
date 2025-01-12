@@ -651,17 +651,7 @@ def find_cfg_paths(server):
 
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
-    if server.install_type == "local":
-        # Find all cfgs under install_path using os.walk.
-        for root, dirs, files in os.walk(server.install_path):
-            # Ignore default cfgs.
-            if "config-default" in root:
-                continue
-            for file in files:
-                if file in valid_gs_cfgs:
-                    cfg_paths.append(os.path.join(root, file))
-
-    if server.install_type == "remote":
+    if should_use_ssh(server):
         proc_info = ProcInfoVessel()
         keyfile = get_ssh_key_file(server.username, server.install_host)
         wanted = []
@@ -702,6 +692,16 @@ def find_cfg_paths(server):
             # Check str coming back is valid cfg name str.
             if os.path.basename(item) in valid_gs_cfgs:
                 cfg_paths.append(item)
+
+    else:
+        # Find all cfgs under install_path using os.walk.
+        for root, dirs, files in os.walk(server.install_path):
+            # Ignore default cfgs.
+            if "config-default" in root:
+                continue
+            for file in files:
+                if file in valid_gs_cfgs:
+                    cfg_paths.append(os.path.join(root, file))
 
     return cfg_paths
 

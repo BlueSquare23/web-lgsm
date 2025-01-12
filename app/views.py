@@ -229,6 +229,11 @@ def controls():
             return redirect(url_for("views.controls", server=server_name))
 
         else:
+            # Purge socket file name cache on game server start. Fixes post
+            # install, null socket name cache bug.
+            if short_cmd == "st":
+                purge_tmux_socket_cache()
+
             cmd = [script_path, short_cmd]
 
             if should_use_ssh(server):

@@ -3,30 +3,36 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Write New tests for SSH, docker changes, and the rest.**
-  - Includes:
-    - [x] Test add game server `install_type` remote.
-      - Just test server add tests, obviously can't do full tests for remote or
-        container.
-    - [x] Test add game server `install_type` docker.
-      - Just test server add tests, obviously can't do full tests for remote or
-        container.
-    - There's almost certainly more tests that can be done here, I'm just kinda
-      burned out with testing right now. All tests are passing rn. But its a
-      house of cards. I gotta rework somethings and spend sometime better
-      learning how to structure my pytests. But I'm not going to hold up this
-      release on testing.
-    - Also I think some manual qa might give me a better sense of things to
-      test anyways.
+* [x] **Make sure cfg editor works over ssh**
+  - [x] Fixed bug in `find_cfg_paths()`, made it check if should use ssh. Cause
+    local, non-same user installs still need to use ssh.
 
-* [x] **Manually run tests against new changes in container.**
-  - If I edit the Dockerfile manually and make the ENTRYPOINT `web-lgsm.py
-    --test_full` then it should build and run all project tests inside of the
-    container.
-  - I don't have a way to automatically hook this into github actions ci yet so
-    making a note here to just run them by hand.
-  - I mean its kinda silly cause the actions themself are in a container so
-    afaic same thing.
+* [x] **Delete tmux file name cache on server startup**
+  - If we delete the socket name cache on game server startup, that should
+    ensure status indicators work after initial install, when is tmux file
+    still cached as null.
+    - Well after a start that socket file should be created, but our cache
+      still says null, so status indicators will be grey.
+    - But if we purge that cache on game server start, should fix post install
+      null socket cache bug.
+  - This is a less than optimum solution because it does mean every time
+    someone starts any game server then visits the home page, its going to have
+    to rebuild that cache for all.
+    - But I want to get this release out, and I'm not going to hold it up just
+      to write a few cache functions for precisely purging just one game
+      servers cache.
+      - Will do that in a future release.
+
+* [x] **Make password reqs explicit on user add page**
+
+* [x] **MANUAL QA TESTING.**
+  - [x] Going to try to bribe my friends with pizza and or fine lettuces to go
+    through and make sure its doing the needful.
+  - [x] Look for bugs, try to break it, suggest improvements.
+    - Small bugs if found, can be fixed.
+    - Big bugs if found, can be hackily dealt with, then properly fixed in next
+      release.
+    - Feature suggestions can go into the next release.
 
 * [ ] **Do trial run of Youtube video tutorials (not recorded)**
   - Want to make sure everything really works before release obviously.
@@ -35,14 +41,29 @@
     to consider YT videos as sorta checklist to make sure its all doing the
     needful before relase.
 
-* [ ] **MANUAL QA TESTING.**
-  - [ ] Going to try to bribe my friends with pizza and or fine lettuces to go
-    through and make sure its doing the needful.
-  - [ ] Look for bugs, try to break it, suggest improvements.
-    - Small bugs if found, can be fixed.
-    - Big bugs if found, can be hackily dealt with, then properly fixed in next
-      release.
-    - Feature suggestions can go into the next release.
+* [ ] **!!Fix upgrade procedure!!**
+  - I think I sorta painted myself into a corner here. Right now (v1.7) if a
+    user runs `web-lgsm.py --update` all it really does is backup the current
+    install dir and then runs git pull and installs new pip requirements in
+    env.
+    - I'm going to need to do way more than that to get from v1.7 -> v1.8
+      seamlessly.
+  - Basically what the update process should do is run `install.sh` again.
+  - Really being even more forward thinking, here's how the update process
+    should work ideally:
+    - Backup dir, backup main.conf same as current.
+    - Git clean & git pull same as current.
+    - Run's newest version's `scripts/update.sh`
+      - In this case (v1.7->1.8) requires running the install.sh again.
+      - And then also adding the additional DB fields and populating some of
+        them.
+  - But still none of that fixes the issue. If someone runs --update on v1.7
+    once 1.8 is out, best case it runs fully but doesn't fully update. Worse
+    case (likely case, it crashes out cause my code is bad).
+  - So I'm going to do some pre release testing, to get the new update.sh
+    ready, and some post release testing just to see what happens.
+    - But I think ultimately might just have to say to v1.7 users "sorry v1.7
+      upgrade is kinda broken, run scripts/update.sh to finish it off."
 
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
@@ -124,6 +145,13 @@
 
 
 ## Version 1.9.0 Todos
+
+* [ ] **Make game server start just purge socket file name cache for that game server**
+  - Right now its just a global cache purge which means all servers tmux socket
+    name cache needs rebuilt after any one game server start.
+    - This is slow.
+  - If I write a function to just purge the socket name cache for that game
+    server should speed things up a bit for other game servers.
 
 * [ ] **Improve test code!**
   - [ ] Make auto backup and git restore main.conf file.
@@ -286,6 +314,11 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - This would just be for me to run manually every so often to check
       everything over remote ssh is all good.
 
+
+* [ ] **For install list do sort by alpha two columns header**
+  - At the top of the install page, add some buttons to sort by alphabetical
+    order for both columns.
+  - Right now order is ascending by server short name.
 
 ## Disclaimer
 

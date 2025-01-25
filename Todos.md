@@ -79,7 +79,12 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Version 1.9.0 Todos
+## Version 1.8.1 Todos
+
+* [ ] **Make work for python 3.13**
+  - I was silly and tried to put 3.13 in the tests at the end of this release
+    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
+    make it work soon.
 
 * [ ] **Make game server start just purge socket file name cache for that game server**
   - Right now its just a global cache purge which means all servers tmux socket

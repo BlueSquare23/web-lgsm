@@ -1265,7 +1265,7 @@ def user_has_permissions(current_user, route, server_name=None):
 
     # No flash for api routes. They return json.
     if route == "update-console":
-        if console not in user_perms["controls"]:
+        if 'console' not in user_perms["controls"]:
             return False
 
     if route == "server-statuses" or route == "cmd-output":

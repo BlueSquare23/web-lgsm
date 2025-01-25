@@ -3,36 +3,11 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Make sure cfg editor works over ssh**
-  - [x] Fixed bug in `find_cfg_paths()`, made it check if should use ssh. Cause
-    local, non-same user installs still need to use ssh.
-
-* [x] **Delete tmux file name cache on server startup**
-  - If we delete the socket name cache on game server startup, that should
-    ensure status indicators work after initial install, when is tmux file
-    still cached as null.
-    - Well after a start that socket file should be created, but our cache
-      still says null, so status indicators will be grey.
-    - But if we purge that cache on game server start, should fix post install
-      null socket cache bug.
-  - This is a less than optimum solution because it does mean every time
-    someone starts any game server then visits the home page, its going to have
-    to rebuild that cache for all.
-    - But I want to get this release out, and I'm not going to hold it up just
-      to write a few cache functions for precisely purging just one game
-      servers cache.
-      - Will do that in a future release.
-
-* [x] **Make password reqs explicit on user add page**
-
-* [x] **MANUAL QA TESTING.**
-  - [x] Going to try to bribe my friends with pizza and or fine lettuces to go
-    through and make sure its doing the needful.
-  - [x] Look for bugs, try to break it, suggest improvements.
-    - Small bugs if found, can be fixed.
-    - Big bugs if found, can be hackily dealt with, then properly fixed in next
-      release.
-    - Feature suggestions can go into the next release.
+* [x] **Fix problem with non-admin users not able to read console even with perms**
+  - Even if they have permissions to access the console, something in my perms
+    check function is messing up and they're getting an error trying to access
+    the console.
+    - See stacktrace in `err.txt`
 
 * [ ] **Do trial run of Youtube video tutorials (not recorded)**
   - Want to make sure everything really works before release obviously.

@@ -435,22 +435,25 @@ def update_weblgsm():
 
         # Backup whole web-lgsm folder.
         backup_dir(SCRIPTPATH, True)
-
         backup_file("main.conf")
 
-        run_command("git clean -f")
-
         print(" [*] Pulling update from github...")
+        run_command("git clean -f")
         run_command("git pull")
 
         epoc = int(time.time())
-        print(f" [*] Backing up venv to venv.{epoc}.bak and creating a new one.")
+        print(f" [*] Backing up venv to venv.{epoc}.bak...")
         backup_dir("venv")
-        run_command("python3 -m venv venv")
-        run_command("source venv/bin/activate")
-        print(" [*] Installing new pip reqs...")
-        run_command("python3 -m pip install -r requirements.txt")
-        print(" [*] Update completed!")
+
+        print(" [*] Reinstalling newest web-lgsm...")
+        install_script = os.path.join(SCRIPTPATH, 'install.sh')
+        run_command(f"{install_script} -d")
+
+        print(" [*] Checking/Updating database fields...")
+        update_db = os.path.join(SCRIPTPATH, 'scripts/update-db.sh')
+        run_command(f"{update_db} -d")
+
+        print(" [*] Update Complete!")
         return
 
     elif remote == base:

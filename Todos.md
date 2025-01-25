@@ -3,12 +3,6 @@
 ### v1.8.0 Pt 5. QA...
 ---
 
-* [x] **Fix problem with non-admin users not able to read console even with perms**
-  - Even if they have permissions to access the console, something in my perms
-    check function is messing up and they're getting an error trying to access
-    the console.
-    - See stacktrace in `err.txt`
-
 * [ ] **Do trial run of Youtube video tutorials (not recorded)**
   - Want to make sure everything really works before release obviously.
   - It'd be really embarrassing if when I go to record videos some part of the
@@ -16,7 +10,7 @@
     to consider YT videos as sorta checklist to make sure its all doing the
     needful before relase.
 
-* [ ] **!!Fix upgrade procedure!!**
+* [x] **!!Fix upgrade procedure!!**
   - I think I sorta painted myself into a corner here. Right now (v1.7) if a
     user runs `web-lgsm.py --update` all it really does is backup the current
     install dir and then runs git pull and installs new pip requirements in
@@ -40,6 +34,8 @@
     - But I think ultimately might just have to say to v1.7 users "sorry v1.7
       upgrade is kinda broken, run scripts/update.sh to finish it off."
 
+### v1.8.0 Pt 6. Post Release PR / Tutorials
+
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
@@ -57,8 +53,6 @@
   - [ ] Add contribute section pointing users to submitting an issue or submitting a
     pull request.
     - I have the community docs for this now.
-
-### v1.8.0 Pt 6. Post Release PR / Tutorials
 
 * [ ] **Setup a Community Discord Server**
   - Some people might have simple sorta support questions or ideas in there.

@@ -7,3 +7,4 @@ python3-venv
 nodejs
 npm
 jq
+sqlite3

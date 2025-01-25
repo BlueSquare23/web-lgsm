@@ -78,6 +78,9 @@ cd web-lgsm
 Check out the YouTube video tutorial linked below for information about
 installation, setup, and usage!
 
+> :round_pushpin: _<span style="color: orange;">Note:</span> This video is old
+> (for v1.3). I'll be making a new one for v1.8 soon!_
+
 [![Web LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)

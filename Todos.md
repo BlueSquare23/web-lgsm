@@ -1,39 +1,5 @@
 ## Version 1.8.0 Todos
 
-### v1.8.0 Pt 5. QA...
----
-
-* [ ] **Do trial run of Youtube video tutorials (not recorded)**
-  - Want to make sure everything really works before release obviously.
-  - It'd be really embarrassing if when I go to record videos some part of the
-    app doesn't fucking work. So besides manual and automated qa testing, going
-    to consider YT videos as sorta checklist to make sure its all doing the
-    needful before relase.
-
-* [x] **!!Fix upgrade procedure!!**
-  - I think I sorta painted myself into a corner here. Right now (v1.7) if a
-    user runs `web-lgsm.py --update` all it really does is backup the current
-    install dir and then runs git pull and installs new pip requirements in
-    env.
-    - I'm going to need to do way more than that to get from v1.7 -> v1.8
-      seamlessly.
-  - Basically what the update process should do is run `install.sh` again.
-  - Really being even more forward thinking, here's how the update process
-    should work ideally:
-    - Backup dir, backup main.conf same as current.
-    - Git clean & git pull same as current.
-    - Run's newest version's `scripts/update.sh`
-      - In this case (v1.7->1.8) requires running the install.sh again.
-      - And then also adding the additional DB fields and populating some of
-        them.
-  - But still none of that fixes the issue. If someone runs --update on v1.7
-    once 1.8 is out, best case it runs fully but doesn't fully update. Worse
-    case (likely case, it crashes out cause my code is bad).
-  - So I'm going to do some pre release testing, to get the new update.sh
-    ready, and some post release testing just to see what happens.
-    - But I think ultimately might just have to say to v1.7 users "sorry v1.7
-      upgrade is kinda broken, run scripts/update.sh to finish it off."
-
 ### v1.8.0 Pt 6. Post Release PR / Tutorials
 
 * [ ] **Add new docs & Fix existing docs.**

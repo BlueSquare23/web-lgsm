@@ -29,15 +29,13 @@
       server specific console commands to the running tmux session for your
       game server.
 
-<!-- TODO: UPDATE THIS ONE!!! -->
-5. Question: I just updated to version 1.6.0 (or greater) from v1.5.0 (or below)
+5. Question: I just updated to version 1.8.0 (or greater) from v1.7.0 (or below)
    and now my web-lgsm instance wont start. How do I fix this?
-  - Answer: The database changed slightly with the release of v1.6.0. If you've
-    just updated to v1.6.0 (or greater) from v1.5.0 (or below) you can run the
-    `update-db.sh` script to update your database to be compatible with v1.6.0.
-    You may also need to run the `change_pass.py` script as the hash format for
-    the password in the database changed slightly. You can change it to the
-    same password as what it already was, the hash just needs regenerated.
+  - Answer: The v1.7 `web-lgsm.py --upgrade` function was unfortunately,
+    broken/incomplete. To fully upgrade from 1.7->1.8 you need to run --upgrade
+    and then rerun the install.sh script and the `scripts/update-db.sh` script.
+    That should fully upgrade you to v1.8. Or just re-install from scratch, and
+    re-add your game servers to the web interface manually.
 
 6. Question: Why are some of my home page "Installed Servers" status indicators grey?
   - Answer: If a server's status (on/off) cannot be determined, its status

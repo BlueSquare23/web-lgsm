@@ -10,7 +10,7 @@ If you're having trouble running the install script you can try the following.
 #### Option 1) Run the install script in debug mode and inspect the results
 
 The `install.sh` script supports a `-d` debug mode flag that will enable some
-extra output prining to help debug common issues. Simply run `./install.sh -d`
+extra output printing to help debug common issues. Simply run `./install.sh -d`
 to print the debug output and then look through it for common errors.
 
 You can also either open a github issue and put in your debug output in it or
@@ -37,35 +37,63 @@ pip3 install -r requirements.txt
 
 Please note, the command above will install the python packages as your system
 user (aka in ~/.local/bin/). Whereas, by default the web-lgsm will try to
-install the python packages within a virtual environment (venv).
+install the python packages within a virtual environment (venv). For non-debug
+purposes its recommend to install the required pip reqs in a venv under the
+web-lgsm dir.
 
-## Trouble Starting the Web LGSM
+## Troubleshooting / Debugging
 
-If you're having trouble starting the app with the `web-lgsm.py` script or having
-trouble with some feature of the app, then you can investigate further by
-starting the app in debug mode in your terminal. To do so simply ssh to the
-server, cd to the web-lgsm installation directory, and then run: 
-`./web-lgsm.py --debug`.
+### Debug Config Options
+
+In the `main.conf` file there's a section for `[debug]` that holds some
+debugging options. If you encounter a problem with the app, set `debug` to
+"true" and `log_level` to "debug" to make the Web-LGSM log everything.
+
+See `config_options.md` (Debug Settings) section, for more info about debug
+settings.
+
+### Starting the Web-LGSM in Debug Mode
+
+You can start the web-lgsm in debug mode in your terminal by running:
 
 ```
-» ./web-lgsm.py --debug
- [*] Press Ctrl + C to exit!
- * Created Database!
+web-lgsm.py --debug
+```
+
+For example:
+
+```
+» ./web-lgsm.py -d
+ [*] Sourcing venv!
+ * Root logger level: DEBUG
+ * Database Loaded!
  * Serving Flask app 'app'
  * Debug mode: on
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on http://127.0.0.1:12357
-Press CTRL+C to quit
- * Restarting with stat
- [*] Press Ctrl + C to exit!
- * Created Database!
- * Debugger is active!
- * Debugger PIN: ***-***-***
+[2024-11-29 19:05:44,194] INFO in _internal: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://45.33.77.9:5000
+[2024-11-29 19:05:44,195] INFO in _internal: Press CTRL+C to quit
+[2024-11-29 19:05:44,196] INFO in _internal:  * Restarting with stat
+ * Root logger level: DEBUG
+ * Database Loaded!
+[2024-11-29 19:05:45,270] WARNING in _internal:  * Debugger is active!
+[2024-11-29 19:05:45,272] INFO in _internal:  * Debugger PIN: ***-***-***
+...
 ```
 
 That will bypass Gunicorn and use Flask's builtin debug web server. Please note,
 running the app this way is only recommended for debugging / troubleshooting
 purposes. For "production" deployments always use `web-lgsm.py --start`.
+
+### Debug Logging
+
+If you have the `debug` option set to "true" in your main.conf then the app
+will log messages at your desired log level to the `logs/error.log` file.
+
+```
+logs/error.log
+```
 
 ## Feel Free to Reach Out!
 

@@ -11,6 +11,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/node_modules/@xterm/xterm/css/xterm.css') }}" />
+    <script src="{{ url_for('static', filename='js/node_modules/@xterm/xterm/lib/xterm.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/node_modules/@xterm/addon-fit/lib/addon-fit.js') }}"></script>
 
     <title>{% block title %}{% endblock %}</title>
   </head>
@@ -28,15 +31,38 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbar">
-          <div class="navbar-nav">
-            <a class="nav-item nav-link" href="/home">Home</a>
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/home">Home</a>
+            </li>
             {% if user.is_authenticated %}
-            <a class="nav-item nav-link" href="/settings">Settings</a>
-            <a class="nav-item nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
+              {% set parsed_json = user.permissions|from_json %}
+              {% if user.role == 'admin' or parsed_json.mod_settings %}
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+              {% endif %}
+              {% if user.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="/edit_users">Edit Users</a>
+            </li>
+              {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
+            </li>
             {% else %}
-            <a class="nav-item nav-link" href="/login">Login</a>
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Login</a>
+            </li>
             {% endif %}
-          </div>
+          </ul>
+          {% if user.is_authenticated %}
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <span class="navbar-text p-3">Logged in as {{ user.username }}</span>
+            </li>
+          </ul>
+          {% endif %}
         </div>
       </div>
     </nav>
@@ -68,7 +94,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
 
     <div id="footer-container" class="container-fluid fixed-bottom bg-dark pt-2">
-      <a style="text-decoration: none;" href="/about"><p class="text-center text-muted">Web LGSM - Version: 1.7.2</p></a>
+      <a style="text-decoration: none;" href="/about"><p class="text-center text-muted">Web LGSM - Version: 1.8.0</p></a>
     </div>
   </body>
 </html>

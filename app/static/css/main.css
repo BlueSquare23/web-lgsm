@@ -18,14 +18,6 @@ p, li, b {
   animation: barrel-roll 1s linear;
 }
 
-/* Style for textarea to mimic pre tag appearance */
-textarea {
-  font-family: monospace;  /* Use a monospaced font for uniform character width */
-  white-space: pre;        /* Preserve white spaces and line breaks */
-  border: 1px solid #ccc;  /* Border for visual separation */
-  padding: 10px;           /* Padding for better readability */
-}
-
 .list-group-item {
   background-color: #181a1b;
   color: white;
@@ -49,25 +41,19 @@ textarea {
   bottom: 70px;
 }
 
-#auto-scroll-button {
-  position: relative;
-  right: 40px;
-  top: 70px;
-}
-
-/* Adjust text-area to account for autoscroll repositioning */
-#text-area {
-  margin-top: -35px;
-  margin-bottom: 35px;
-}
-
 #del-button {
   position: fixed;
   right: 40px;
   bottom: 70px;
 }
 
-/* The popup sudopass form - hidden by default */
+#cancel-button {
+  position: fixed;
+  right: 40px;
+  bottom: 70px;
+}
+
+/* The popup send cmd form - hidden by default */
 .form-popup {
   max-width: 350px;
   display: none;

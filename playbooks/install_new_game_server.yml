@@ -1,0 +1,84 @@
+---
+## Playbook required vars.
+# username 
+# server_install_path
+# server_script_name
+
+- name: Runs Pre-Install Steps for New Auto Installations
+  hosts: localhost
+  become: true
+  connection: local
+  vars:
+    # Same user defaults to false, meaning default create new user.
+    same_user: false
+    setup: false
+  vars_files:
+    - vars/accepted_usernames.yml
+    - vars/web_lgsm_user.yml
+
+  tasks:
+    - name: Check if username is equal to web_lgsm_user
+      set_fact:
+        same_user: "{{ username == web_lgsm_user }}"
+
+    - name: Include sub tasks
+      include_tasks: "{{ item }}"
+      loop:
+        - tasks/validate_username.yml
+        - tasks/create_new_user_group.yml
+        - tasks/create_new_user.yml
+        - tasks/set_default_new_user_group.yml
+        - tasks/add_temp_nopass_rule.yml
+        - tasks/fix_temp_nopass_rule.yml
+
+    - name: Create new game server directory
+      file:
+        path: "{{ server_install_path }}"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0755'
+
+    - name: Use linuxgsm.sh to fetch {{ server_script_name }}
+      command:
+        chdir: "{{ playbook_dir }}/../scripts"
+        argv:
+          - ./linuxgsm.sh 
+          - "{{ server_script_name }}"
+      register: lgsmsh_result
+      become: yes
+      become_user: "{{ web_lgsm_user }}"
+
+    - name: Print linuxgsm.sh output
+      debug:
+        msg: "Output: {{ lgsmsh_result.stdout }}"
+
+    - name: Copy {{ server_script_name }} into new server dir
+      copy:
+        src: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
+        dest: "{{ server_install_path }}"
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0750'
+
+    - name: Delete {{ server_script_name }} file
+      file:
+        path: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
+        state: absent
+
+    - name: Create ~/.ssh directory exists and set perms
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Create ~/.ssh/authorized_keys file and set perms 
+      file:
+        path: "/home/{{ username }}/.ssh/authorized_keys"
+        state: touch
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0600'
+...

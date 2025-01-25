@@ -6,21 +6,49 @@
       <div class="container bg-dark border border-secondary rounded-3 p-2">
         <form method="POST">
           <h3 align="enter" style="color: white;">
-            Add Existing LGSM Installation
+            Add an Existing LGSM Installation
           </h3>
           <div class="form-group" style="color: white;">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_type" id="local_install_checkbox" value="local" onchange="toggleShowRemoteHostField()" checked>
+              <label class="form-check-label" for="local_install_checkbox">
+                Game server is installed locally
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_type" id="remote_install_checkbox" value="remote" onchange="toggleShowRemoteHostField()">
+              <label class="form-check-label" for="remote_install_checkbox">
+                Game server is installed on a remote machine
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" id="is_container" name="install_type" type="radio" value="docker" onchange="toggleShowRemoteHostField()">
+              <label class="form-check-label" for="is_container">
+                Game server is in a docker container
+              </label>
+            </div>
+
             <label class="pt-2" for="install_name">Installation Title</label>
-            <input type="text" id="install_name" name="install_name" class="form-control" placeholder="Enter a unique name for this install" />
+            <input type="text" id="install_name" name="install_name" class="form-control" placeholder="Enter a unique name for this install" required/>
 
-            <label class="pt-2" for="install_path" style="color: white;">Installation Directory Path</label>
-            <input type="text" id="install_path" name="install_path" class="form-control" placeholder="Enter the full path to the game server directory" />
+            <label class="pt-2" for="install_path" style="color: white;">Installation directory path</label>
+            <input type="text" id="install_path" name="install_path" class="form-control" placeholder="Enter the full path to the game server directory" required/>
 
-            <label class="pt-2" for="script_name" style="color: white;">LGSM Script Name</label>
-            <input type="text" id="script_name" name="script_name" class="form-control" placeholder="Enter the name of the game server script. For example, 'gmodserver'" />
+            <label class="pt-2" for="script_name" style="color: white;">LGSM script name</label>
+            <input type="text" id="script_name" name="script_name" class="form-control" placeholder="Enter the name of the game server script. For example, 'gmodserver'" required/>
 
-            <label class="pt-2" for="username" style="color: white;">Game Server Username</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="Enter the username for the game server. For example, 'coolguy123'" />
+            <label class="pt-2" for="username" style="color: white;">Game server system username</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="Enter system user game server is installed under. For example, 'coolguy123'" />
             <i>If left empty will default to the user the web-lgsm process is running as.</i>
+
+            <br/>
+
+            <div id="remote_host" style="display: none;">
+              <label class="pt-2" for="install_host" style="color: white;">Remote server's IP address or hostname</label>
+              <input type="text" id="install_host" name="install_host" class="form-control" placeholder="Enter remote server's IP address or hostname. For example, 'gmod.domain.tld'" />
+            </div>
 
             <br />
             <center>
@@ -29,4 +57,16 @@
           </div>
         </form>
       </div>
+      <script>
+        function toggleShowRemoteHostField() {
+          const remoteHost = document.getElementById('remote_host');
+          if (document.getElementById('remote_install_checkbox').checked) {
+            remoteHost.style.display = 'block';
+            remoteHost.children[1].required = true;
+          } else {
+            remoteHost.style.display = 'none';
+            remoteHost.children[1].required = false;
+          }
+        }
+      </script>
 {% endblock %}

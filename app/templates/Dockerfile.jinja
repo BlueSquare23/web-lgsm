@@ -1,0 +1,47 @@
+FROM ubuntu:latest
+ENV CONTAINER=YES
+
+# Install apt deps.
+RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2 openssh-server
+
+# Rename default ubuntu user & group to web-lgsm.
+RUN usermod -l web-lgsm ubuntu
+RUN groupmod -n web-lgsm ubuntu
+RUN usermod -d /home/web-lgsm web-lgsm
+{% for server in servers %}RUN useradd -m {{server.short_name}} && usermod -a -G {{server.short_name}} web-lgsm{% endfor %}
+
+# Change SSH settings.
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+RUN sed -i 's/#AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/' /etc/ssh/sshd_config
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+RUN mkdir -p /etc/sudoers.d
+
+# Temp allow 'web-lgsm' to use sudo without a password.
+RUN echo "web-lgsm ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Set the working directory.
+WORKDIR /home/web-lgsm
+
+# Copy the app source code.
+COPY . /home/web-lgsm
+
+# Set ownership of the app directory to the web-lgsm user.
+RUN chown -R web-lgsm:web-lgsm /home/web-lgsm
+
+# Set the default user to 'web-lgsm'.
+USER web-lgsm
+ENV USER=web-lgsm
+
+# Install web-lgsm.
+RUN /home/web-lgsm/install.sh -d
+
+# Delete temp sudoers rule.
+USER root
+RUN sed -i '$ d' /etc/sudoers
+
+# Expose app's port.
+EXPOSE 12357
+
+# Entrypoint wrapper script, starts sshd & drop privs to launch web-lgsm.
+ENTRYPOINT ["/home/web-lgsm/scripts/entrypoint.sh"]

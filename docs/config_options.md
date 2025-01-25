@@ -78,6 +78,21 @@ These settings control basic app behaviors.
   - Warning: Unless you have good reason to, don't change this from the
     default. See `docs/suggested_deployment.md` for more info.
 
+
+### Debug Settings
+
+* `debug` (bool): Controls whether or not server debug logging should be
+  enabled. Useful for gather additional debugging information.
+  - Default: No
+
+* `log_level`: Controls the type of messages / events that will be logged in
+  debug mode.
+  - Options:
+    - warning: Least verbose. Just log warnings & misc info.
+    - info: Mid verbose. Logs general info on app state, variables values, etc.
+    - debug: Most verbose. Logs everything all command output everything.
+  - Default: info
+
 ## A Subtle Distinction in Nomenclature
 
 For the purposes of keeping things straight I've tried to stick to calling game

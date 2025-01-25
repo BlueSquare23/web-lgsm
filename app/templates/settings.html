@@ -27,25 +27,102 @@
 
             <br />
 
+            <div class="form-floating mb-3">
+              <input value="{{config_options.terminal_height}}" min="5" max="100" class="form-control" type="number" id="terminal-height" name="terminal_height" class="form-control">
+              <label for="text-area-height" style="color:black;">Default Terminal Height</label>
+            </div>
+
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="delete-files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
-              <label class="form-check-label" for="delete-files">
-                Remove Game Server Files on Delete
+              <input class="form-check-input" type="radio" name="delete_user" id="delete_user" value="true" onchange="checkDelFiles()" {% if config_options.delete_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Delete game server's system user on delete (for game servers not owned by web-lgsm system user)
               </label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="radio" name="delete_files" id="leave-files" value="false" {% if config_options.remove_files == false %}checked{% endif %}>
+              <input class="form-check-input" type="radio" name="delete_user" id="keep_user" value="false" {% if config_options.delete_user== false %}checked{% endif %}>
+              <label class="form-check-label" for="delete_user">
+                Keep user on game server delete
+              </label>
+            </div>
+
+            📍 <i><u>Note: When the system users are deleted, game server files owned by them are automatically deleted as well.</u></i>
+            <br />
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_files" id="delete_files" value="true" {% if config_options.remove_files == true %}checked{% endif %}>
+              <label class="form-check-label" for="delete-files">
+                Remove game server files on delete
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="delete_files" id="leave_files" value="false" onchange="checkKeepUser()" {% if config_options.remove_files == false %}checked{% endif %}>
               <label class="form-check-label" for="leave-files">
-                Leave Game Server Files on Delete
+                Leave game server files on delete
               </label>
             </div>
 
             <br />
 
-            <div class="form-floating mb-3">
-              <input value="{{config_options.text_area_height}}" min="5" max="100" class="form-control" type="number" id="text-area-height" name="text_area_height" class="form-control">
-              <label for="text-area-height" style="color:black;">Default TextArea Height</label>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_new_user" id="install-different-user" value="true" {% if config_options.install_create_new_user == true %}checked{% endif %}>
+              <label class="form-check-label" for="install-different-user">
+                Setup new system user when installing new game servers
+              </label>
             </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="install_new_user" id="install-same-user" value="false" {% if config_options.install_create_new_user == false %}checked{% endif %}>
+              <label class="form-check-label" for="install-same-user">
+                Install new game servers under the <i>{{ system_user }}</i> system user
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newline_ending" id="newlines" value="true" {% if config_options.end_in_newlines == true %}checked{% endif %}>
+              <label class="form-check-label" for="newlines">
+                Terminate lines with a newline (Classic web-lgsm term display)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="newline_ending" id="nonewlines" value="false" {% if config_options.end_in_newlines == false %}checked{% endif %}>
+              <label class="form-check-label" for="show_stderr">
+                Do not enforce newline termination (New web-lgsm term display)
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="show_stderr" id="show_stderr" value="true" {% if config_options.show_stderr == true %}checked{% endif %}>
+              <label class="form-check-label" for="show_stderr">
+                Show both stdout &amp; stderr output streams merged
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="show_stderr" id="hide_stderr" value="false" {% if config_options.show_stderr == false %}checked{% endif %}>
+              <label class="form-check-label" for="hide_stderr">
+                Show only stdout output stream, suppress stderr
+              </label>
+            </div>
+
+            <br />
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="clear_output_on_reload" id="clear_output_on_reload" value="true" {% if config_options.clear_output_on_reload == true %}checked{% endif %}>
+              <label class="form-check-label" for="clear_output_on_reload">
+                Clear web terminal when running new command
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="clear_output_on_reload" id="clear_output_on_reload" value="false" {% if config_options.clear_output_on_reload == false %}checked{% endif %}>
+              <label class="form-check-label" for="clear_output_on_reload">
+                Do not clear web terminal after running command (output is appended to existing output)
+              </label>
+            </div>
+
+            <hr />
 
             <div class="form-check">
               <input class="form-check-input" type="checkbox" value="true" id="show_stats" name="show_stats" {% if config_options.show_stats == true %}checked{% endif %}>
@@ -57,10 +134,10 @@
             <br />
 
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" value="purge" id="purge_socks" name="purge_socks">
-              <label class="form-check-label" for="purge_socks">
-                Purge user tmux socket files - Helps fix broken status indicators / console output<br>
-                ⚠️  <span style="color:red">!!! Make sure your game servers are turned off first or you might confuse tmux !!!</span> ⚠️
+              <input class="form-check-input" type="checkbox" value="true" id="purge_tmux_cache" name="purge_tmux_cache">
+              <label class="form-check-label" for="purge_tmux_cache">
+                Delete local tmux socket file name cache<br>
+                <i>Helps fix broken status indicators after game server reinstallation / upgrades.</i>
               </label>
             </div>
 
@@ -82,4 +159,5 @@
           </div>
         </form>
       </div>
+      <script src="/static/js/settings.js"></script>
 {% endblock %}

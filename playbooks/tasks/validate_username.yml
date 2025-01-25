@@ -1,0 +1,4 @@
+- name: Validate {{ username }} against accepted_usernames list
+  fail:
+    msg: "The user {{ username }} is not an accepted user."
+  when: username not in accepted_usernames

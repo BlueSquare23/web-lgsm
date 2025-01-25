@@ -1,0 +1,6 @@
+- name: Create new {{ username }} group 
+  group:
+    name: "{{ username }}"
+    state: present
+  when: same_user is not defined or same_user == false
+

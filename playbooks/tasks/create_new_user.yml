@@ -1,0 +1,8 @@
+- name: Creating new {{ username}} user
+  user:
+    name: "{{ username }}"
+    groups: "{{ username }}"
+    state: present
+    shell: /bin/bash
+    create_home: yes
+  when: same_user is not defined or same_user == false

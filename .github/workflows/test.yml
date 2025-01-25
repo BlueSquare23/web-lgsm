@@ -9,6 +9,7 @@ on:
     - '**.css'
     - '**.js'
     - '**.json'
+    - '**.yml'
 
 env:
   HOME: ${{ github.workspace }}
@@ -19,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v3
@@ -27,18 +28,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Apt & Pip Dependencies
+      - name: Install Web-LGSM
+        run: |
+          ./install.sh -d
+      - name: Check sudo access
+        run: |
+          sudo -l
+      - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update
           sudo apt install openjdk-21-jdk
-          for req in $(cat 'apt-reqs.txt'); do sudo apt install -y $req ; done
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --user virtualenv
-          python3 -m virtualenv venv
-          source venv/bin/activate
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Install & Setup Java (For Minecraft Server Tests)
-        run: |
           set -x
           sudo update-alternatives --list java
           sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
@@ -48,4 +47,4 @@ jobs:
           javac -version
       - name: Run Pytest Tests
         run: |
-          $HOME/web-lgsm.py --test_full
+          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full

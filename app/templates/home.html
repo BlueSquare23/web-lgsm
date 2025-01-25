@@ -2,36 +2,64 @@
 {% block title %}Web LGSM Home{% endblock %}
 
 {% block content %}
+      {% set parsed_json = user.permissions|from_json %}
 
       <br />
       <h2 style="color: white;">Installed Servers</h2>
 
-      {% if server_status_dict is not none %}
-        {% if server_status_dict|length > 0 %}
-          <form method="POST" action="/delete">
-            <div class="list-group form-check form-switch border border-secondary">
-              {% for server_name, status in server_status_dict.items() %}
-                {% if status == "active" %}
-                  {% set status_color = '#00FF11' %}
-                {% else %}
-                  {% set status_color = 'red' %}
-                {% endif %}
-                <div class="list-group-item list-group-item-action">
-                  <div class="d-flex align-items-center">
-                    <a href="/controls?server={{server_name}}" class="game_server_link text-decoration-none flex-grow-1">
-                      <!-- Glow via text-shadow -->
-                      <span id="status-circle" style="font-size:125%;color:{{status_color}};text-shadow: 0 0 5px {{status_color}}, 0 0 10px {{status_color}}, 0 0 20px {{status_color}}, 0 0 30px {{status_color}}">● </span>&nbsp;&nbsp;{{server_name}} - {{servers_to_users[server_name]}}
-                    </a>
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="server_num_{{ loop.index }}" value="{{server_name}}" />
+      {% if all_game_servers is not none %}
+        {% if all_game_servers|length > 0 %}
+          {% if user.role == 'admin' or parsed_json.servers|length > 0 %}
+            <form method="POST" action="/delete">
+              <div class="list-group form-check form-switch border border-secondary">
+                {# Hacky ass solution to printing no servers when user has none #}
+                {% set has_server = {'has': False} %}
+                {% for server in all_game_servers %}
+                  {% if not server.install_finished %}
+                    <div class="list-group-item list-group-item-action">
+                      <div class="d-flex align-items-center">
+                        <a href="/install?server={{server.install_name}}" class="game_server_link text-decoration-none flex-grow-1">
+                          <!-- Glow via text-shadow -->
+                          <span class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}&nbsp&nbsp;&nbsp <b>Installation Not Finished!</b>
+                        </a>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="server_num_{{loop.index}}" value="{{server.install_name}}" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-            <br />
-            <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
-          </form>
+                  {% else %}
+                    {% if user.role == 'admin' or server.install_name in parsed_json.servers %}
+                      {% if has_server.update({'has': True}) %} {% endif %}
+                    <div class="list-group-item list-group-item-action">
+                      <div class="d-flex align-items-center">
+                        <a href="/controls?server={{server.install_name}}" class="game_server_link text-decoration-none flex-grow-1">
+                          <!-- Glow via text-shadow -->
+                          <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}
+                        </a>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" name="server_num_{{loop.index}}" value="{{server.install_name}}" />
+                        </div>
+                      </div>
+                    </div>
+                    {% else %}
+                      {% if loop.last and not has_server.has %}
+                    <ul class="list-group border border-secondary">
+                      <li class="list-group-item">Your user does not have access to any game servers yet...</li>
+                    </ul>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <br />
+              <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
+            </form>
+            <script src="/static/js/update-status-indicators.js"></script>
+          {% else %}
+          <ul class="list-group border border-secondary">
+            <li class="list-group-item">Your user does not have access to any game servers yet...</li>
+          </ul>
+          {% endif %}
         {% else %}
           <ul class="list-group border border-secondary">
             <li class="list-group-item">No Servers Currently Installed</li>
@@ -45,11 +73,21 @@
 
       <br />
 
+      {% if user.role != 'admin' and not parsed_json.install_servers and not parsed_json.add_servers %}
+      {% else %}
       <h2 style="color: white;">Other Options</h2>
       <div class="list-group border border-secondary">
-        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server </a>
-        <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation </a>
+        {% if user.role == 'admin' or parsed_json.install_servers %}
+        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
+        {% endif %}
+        {% if user.role == 'admin' or parsed_json.add_servers %}
+        <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
+        {% endif %}
+        {% if user.is_authenticated and user.role == 'admin' %}
+          <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
+        {% endif %}
       </div>
+      {% endif %}
 
       {% if config_options.show_stats %}
         <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
@@ -91,7 +129,6 @@
         <script src="/static/js/graph-charts.js"></script>
         <script src="/static/js/toggle-stats.js"></script>
 
-
         {% if config_options.show_barrel_roll %}
           <!-- Mission Critical Barrel-Roll Code -->
           <script src="/static/js/do-a-barrel-roll.js"></script>
@@ -99,4 +136,5 @@
         {% endif %}
 
       {% endif %}
+
 {% endblock %}

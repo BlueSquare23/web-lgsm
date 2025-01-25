@@ -63,7 +63,7 @@ cd web-lgsm
 
 > :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
 > `install.sh` script only supports Debian & Ubuntu Linux. However, technically
-> all the project needs to run is python3.8 or greater and some common shell
+> all the project needs to run is python3.9 or greater and some common shell
 > utilites._
 > 
 > _If you're able to install the required dependacnies through your
@@ -77,6 +77,9 @@ cd web-lgsm
 
 Check out the YouTube video tutorial linked below for information about
 installation, setup, and usage!
+
+> :round_pushpin: _<span style="color: orange;">Note:</span> This video is old
+> (for v1.3). I'll be making a new one for v1.8 soon!_
 
 [![Web LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
@@ -183,7 +186,10 @@ For more information see: `docs/suggested_deployment.md`.
 * ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
 * CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
 * JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
+* Web Terminal: [Xterm.js](https://xtermjs.org/)
+* SSH Client [Paramiko](https://www.paramiko.org/)
 * Testing: [Pytest](https://docs.pytest.org/)
+* Automation: [Ansible](https://www.ansible.com/)
 * Web Server: [Gunicorn](https://gunicorn.org/)
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
@@ -199,10 +205,10 @@ contributing to the project feel free to submit a pull request!
 
 ## :closed_lock_with_key: Security & Liability
 
-I claim no liability for any injury or damages that may result from the use or
-abuse of this piece of software. Use at your own risk! I have tried to take
-security precautions when building this app in order to prevent it from being
-horribly abused.
+This project is MIT licensed meaning I claim no liability for any damages that
+may result from the use or abuse of this piece of software. Use at your own
+risk! I have tried to take security precautions when building this app in order
+to prevent it from being horribly abused.
 
 However, please note I am an amateur programmer and this app is fundamentally
 sorta suss. It is a web portal for wrapping shell commands. Everything should

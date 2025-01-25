@@ -25,7 +25,7 @@ you started.
    - Make your changes or additions in your branch.
 
 5. **Test Your Changes**
-   - Run `./scripts/pytest-wrap.sh` to ennsure your changes do not break
+   - Run `--test_full` to ennsure your changes do not break
      anything and work as expected.
 
 6. **Commit Your Changes**

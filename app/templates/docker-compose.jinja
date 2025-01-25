@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  web-lgsm:
+    build: 
+      context: .
+    container_name: web-lgsm
+    ports:
+      - "5000:5000"
+{% for server in servers %}      - "{{server.port}}:{{server.port}}"{% endfor %}
+    volumes:
+      - ./main.conf:/home/web-lgsm/main.conf:rw
+      - ./app/database.db:/home/web-lgsm/app/database.db:rw
+      - ./GameServers:/home/web-lgsm/GameServers:rw
+{% for server in servers %}      - ./GameServers:/home/{{server.short_name}}/GameServers:rw{% endfor %}
+    networks:
+      - web-lgsm-net
+
+networks:
+  web-lgsm-net:
+    driver: bridge

@@ -10,3 +10,11 @@ lgsm
 venv
 __pycache__
 Mockcraft
+node_modules
+package-lock.json
+package.json
+tmux_socket_name_cache.json
+gs_allowed_paths.txt
+.docker-data.json
+Dockerfile
+docker-compose.yml

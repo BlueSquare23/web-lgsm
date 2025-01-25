@@ -3,7 +3,8 @@
             <h2 style='color:#00ff11'>Installing {{install_name|capitalize}}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
           {% endif %}
 
-          {% for bs_color in bs_colors %}
+          {% set spinner_colors = ["primary", "secondary", "success", "danger", "warning", "info", "light"] %}
+          {% for bs_color in spinner_colors %}
             <div class="spinner-border text-{{bs_color}}" role="status">
               <span class="visually-hidden">Loading...</span>
             </div>

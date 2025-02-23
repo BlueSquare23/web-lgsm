@@ -527,7 +527,7 @@ def get_tmux_socket_name(server):
     with open(gs_id_file_path, "r") as file:
         gs_id = file.read()
 
-    return server.script_name + "-" + gs_id
+    return server.script_name + "-" + gs_id.rstrip()
 
 
 def get_server_status(server):

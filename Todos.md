@@ -2,6 +2,7 @@
 
 ### v1.8.0 Pt 6. Post Release PR / Tutorials
 
+
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
@@ -80,6 +81,26 @@
 
 
 ## Version 1.8.1 Todos
+
+* [ ] **Add auto include for changelog in about page.**
+  - Now that I've made a changelog.md file, I should like automatically include
+    it in the about page I think, so users can see recent changes if they want
+    to.
+
+* [ ] **Add option in main.conf for cert and key files for gunicorn server**
+  - The base web-lgsm should support cert files if someone has them. Gunicorn
+    can do ssl so, if it can might as well pass that ability on to the users
+    too, instead of forcing them to hack their web-lgsm.py script to do it.
+
+* [ ] **Fix update mechanism... again**
+  - I need to just mv existing to .bak and install fresh,
+    - If fresh install goes awry move og back into place.
+  - Install steps
+    - Change to binary needs update or no needs update check.
+    - Backup existing
+    - Export DB to flat csv or json or something 
+    - Install fresh
+    - Import db and add any new fields
 
 * [ ] **Make work for python 3.13**
   - I was silly and tried to put 3.13 in the tests at the end of this release

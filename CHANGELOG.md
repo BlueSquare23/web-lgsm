@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [v1.8.1]
 ### Added
 - New `docs/DESIGN.md` design document file to help others understand how the
   app is built.

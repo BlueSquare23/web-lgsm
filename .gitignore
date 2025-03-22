@@ -18,3 +18,4 @@ gs_allowed_paths.txt
 .docker-data.json
 Dockerfile
 docker-compose.yml
+main.conf.local

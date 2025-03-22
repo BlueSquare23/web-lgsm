@@ -7,6 +7,11 @@ app its value is stored in the main.conf file. However, not all values in the
 `main.conf` are configurable through the settings page (for security reasons,
 see `cfg_editor`).
 
+Users can also copy the `main.conf` file to `main.conf.local` to create a
+version of the file that will not be touched by updates. If a `main.conf.local`
+file exists in the main web-lgsm directory, its configuration parameters will
+override anything set in the `main.conf` file.
+
 These config parameters are stored in an INI style format and parsed using the
 Python `configparser` library.
 

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `main.conf.local` override file. For if users would like to keep a local
+  copy of the `main.conf` file that will be ignored by updates.
 - Add `main.conf` options for `cert` and `key` to enable SSL for Gunicorn server.
 - Add new changelog html page / route that reads from local copy of this file.
 - Add iframe include for changelog on about page.

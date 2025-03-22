@@ -676,7 +676,12 @@ def settings():
 
     # Since settings also writes to config, open config parse here too.
     config = configparser.ConfigParser()
-    config.read("main.conf")
+    config_file = "main.conf"
+    config_local = "main.conf.local"  # Local config override.
+    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
+        config_file = config_local
+    current_app.logger.info(log_wrap("config_file", config_file))
+    config.read(config_file)
 
     # But still pull all settings from read_config() wrapper.
     config_options = read_config("settings")
@@ -802,7 +807,7 @@ def settings():
         # Have to cast back to string to save in config.
         config["aesthetic"]["terminal_height"] = str(height_pref)
 
-    with open("main.conf", "w") as configfile:
+    with open(config_file, "w") as configfile:
         config.write(configfile)
 
     # Update's the weblgsm.

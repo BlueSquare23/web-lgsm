@@ -95,7 +95,7 @@
     can do ssl so, if it can might as well pass that ability on to the users
     too, instead of forcing them to hack their web-lgsm.py script to do it.
 
-* [ ] **Make a main.conf.local override**
+* [x] **Make a main.conf.local override**
   - Aka if a main.conf.local file is present, use that file instead of the
     main.conf file. This file will be persistant across updates and wont be
     tracked in git.

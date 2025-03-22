@@ -1686,7 +1686,11 @@ def read_config(route):
     """
     # Import config data.
     config = configparser.ConfigParser()
-    config.read("main.conf")
+    config_file = "main.conf"
+    config_local = "main.conf.local"  # Local config override.
+    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
+        config_file = config_local
+    config.read(config_file)
 
     config_options = dict()
 

@@ -97,8 +97,12 @@ from app.models import User
 from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
+CONFIG_FILE = "main.conf"
+CONFIG_LOCAL = "main.conf.local"  # Local config override.
+if os.path.isfile(CONFIG_LOCAL) and os.access(CONFIG_LOCAL, os.R_OK): 
+    CONFIG_FILE = CONFIG_LOCAL
 CONFIG = configparser.ConfigParser()
-CONFIG.read(os.path.join(SCRIPTPATH, "main.conf"))
+CONFIG.read(os.path.join(SCRIPTPATH, CONFIG_FILE))
 try:
     HOST = CONFIG["server"]["host"]
     PORT = CONFIG["server"]["port"]

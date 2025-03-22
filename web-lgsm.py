@@ -417,6 +417,11 @@ def backup_dir(dirname, tar=None):
 
 
 def update_weblgsm():
+    # Updates broken right now cause I suck a programming. Already have a todo
+    # to fix it. Marking this broken for the meantime.
+    print("Sorry, update is broken right now :( Will fix soon. In the meantime just git pull or clone the newest version and reinstall.")
+    return
+
     local, remote, base = get_git_info()
 
     if local == remote:

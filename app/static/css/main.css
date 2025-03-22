@@ -10,6 +10,13 @@ p, li, b {
   color: white;
 }
 
+iframe {
+    width: 100%;
+    height: 250px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
 @keyframes barrel-roll {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }

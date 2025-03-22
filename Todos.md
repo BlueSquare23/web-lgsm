@@ -82,6 +82,14 @@
 
 ## Version 1.8.2 Todos
 
+* [x] **Mark --update as broken**
+  - Just temporarily till I can actually get around to fixing it.
+
+* [x] **Add auto include for changelog in about page.**
+  - Now that I've made a changelog.md file, I should like automatically include
+    it in the about page I think, so users can see recent changes if they want
+    to.
+
 * [ ] **Re-configure Docker deployment to be all in single user mode**
   - Ya know I introduced so much at once with the last release that I ended up
     overcomplicating / really over thinking the docker deployment.
@@ -92,11 +100,6 @@
     without really offering much security benifit.
   - [ ] Make it so inside of a container game servers are installed as the same
     user as the web-lgsm gunicorn process to simplify docker deploy.
-
-* [ ] **Add auto include for changelog in about page.**
-  - Now that I've made a changelog.md file, I should like automatically include
-    it in the about page I think, so users can see recent changes if they want
-    to.
 
 * [ ] **Add option in main.conf for cert and key files for gunicorn server**
   - The base web-lgsm should support cert files if someone has them. Gunicorn

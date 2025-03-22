@@ -1654,6 +1654,25 @@ def get_config_value(config, section, option, default, is_bool=False):
         return default
 
 
+def read_changelog():
+    """
+    Reads in the local CHANGELOG.md file and returns its contents.
+
+    Args:
+        None
+
+    Returns:
+        str: Contents of CHANGELOG.md file or err str.
+    """
+    try:
+        with open('CHANGELOG.md', "r") as file:
+            contents = file.read()
+        return contents
+
+    except Exception as e:
+        return f"Problem reading CHANGELOG.md: {e}"
+
+
 def read_config(route):
     """
     Reads in relevant main config parameters for a given route. Also protects

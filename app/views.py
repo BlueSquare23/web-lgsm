@@ -8,6 +8,7 @@ import signal
 import shutil
 import getpass
 import configparser
+import markdown
 
 from threading import Thread
 from werkzeug.security import generate_password_hash
@@ -838,6 +839,19 @@ def about():
 
     return render_template(
         "about.html", user=current_user, config_options=config_options
+    )
+
+
+######### Changelog Page #########
+
+@views.route("/changelog", methods=["GET"])
+@login_required
+def changelog():
+    changelog_md = read_changelog()
+    changelog_html =  markdown.markdown(changelog_md)
+
+    return render_template(
+        "changelog.html", user=current_user, changelog_html=changelog_html
     )
 
 

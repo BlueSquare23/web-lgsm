@@ -1,4 +1,4 @@
-# Changelog
+# Web-LGSM Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -7,15 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v1.8.1]
+## [Unreleased]
+
 ### Added
+
+- Add new changelog html page / route that reads from local copy of this file.
+- Add iframe include for changelog on about page.
+
+### Changed
+
+- Marked `web-lgsm.py --update` flag as broken atm. Will fix soon.
+
+
+---
+
+## [v1.8.1] - 2025-03-22
+
+### Added
+
 - New `docs/DESIGN.md` design document file to help others understand how the
   app is built.
 
 ### Added
+
 - New `CHANGELOG.md` file for keeping track of changes.
 
 ### Fixed
+
 - Fix bug for local install same user status indicators.
 
 ---

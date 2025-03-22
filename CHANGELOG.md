@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `main.conf` options for `cert` and `key` to enable SSL for Gunicorn server.
 - Add new changelog html page / route that reads from local copy of this file.
 - Add iframe include for changelog on about page.
 
 ### Changed
 
 - Marked `web-lgsm.py --update` flag as broken atm. Will fix soon.
-
 
 ---
 

@@ -78,6 +78,11 @@ These settings control basic app behaviors.
   - Warning: Unless you have good reason to, don't change this from the
     default. See `docs/suggested_deployment.md` for more info.
 
+* `cert` (optional): Path to SSL certificate `cert.pem` file for Gunicorn server.
+  - Default: None
+
+* `key` (optional): Path to SSL certificate `key.pem` file for Gunicorn server.
+  - Default: None
 
 ### Debug Settings
 

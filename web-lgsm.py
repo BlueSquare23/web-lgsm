@@ -193,6 +193,30 @@ def start_server():
             "--daemon",
             "app:main()",
         ]
+
+        cert = None
+        key = None
+
+        for key in CONFIG["server"]:
+            if key == "cert":
+                cert = CONFIG["server"]["cert"]
+
+            if key == "key":
+                key = CONFIG["server"]["key"]
+
+        if cert and key:
+            if os.path.isfile(cert) and os.access(cert, os.R_OK): 
+                cmd.append(f"--certfile={cert}")
+            else:
+                print(f" [!] Error: Cant read cert file: {cert}", file=sys.stderr)
+                exit(15)
+
+            if os.path.isfile(key) and os.access(key, os.R_OK): 
+                cmd.append(f"--keyfile={key}")
+            else:
+                print(f" [!] Error: Cant read key file: {key}", file=sys.stderr)
+                exit(16)
+        
         print(cmd)
         process = subprocess.Popen(
             cmd,

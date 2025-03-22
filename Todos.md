@@ -90,6 +90,16 @@
     it in the about page I think, so users can see recent changes if they want
     to.
 
+* [x] **Add option in main.conf for cert and key files for gunicorn server**
+  - The base web-lgsm should support cert files if someone has them. Gunicorn
+    can do ssl so, if it can might as well pass that ability on to the users
+    too, instead of forcing them to hack their web-lgsm.py script to do it.
+
+* [ ] **Make a main.conf.local override**
+  - Aka if a main.conf.local file is present, use that file instead of the
+    main.conf file. This file will be persistant across updates and wont be
+    tracked in git.
+
 * [ ] **Re-configure Docker deployment to be all in single user mode**
   - Ya know I introduced so much at once with the last release that I ended up
     overcomplicating / really over thinking the docker deployment.
@@ -100,11 +110,6 @@
     without really offering much security benifit.
   - [ ] Make it so inside of a container game servers are installed as the same
     user as the web-lgsm gunicorn process to simplify docker deploy.
-
-* [ ] **Add option in main.conf for cert and key files for gunicorn server**
-  - The base web-lgsm should support cert files if someone has them. Gunicorn
-    can do ssl so, if it can might as well pass that ability on to the users
-    too, instead of forcing them to hack their web-lgsm.py script to do it.
 
 ## Version 1.8.x Todos
 
@@ -138,11 +143,6 @@
         dependant on the ones run before them. I'm bad at programming.
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
-
-* [ ] **Make a main.conf.local override**
-  - Aka if a main.conf.local file is present, use that file instead of the
-    main.conf file. This file will be persistant across updates and wont be
-    tracked in git.
 
 * [ ] **On first time loading server post install clear the install text.**
     - Aka when server install is marked finish, clear its entry from global

@@ -80,7 +80,18 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Version 1.8.1 Todos
+## Version 1.8.2 Todos
+
+* [ ] **Re-configure Docker deployment to be all in single user mode**
+  - Ya know I introduced so much at once with the last release that I ended up
+    overcomplicating / really over thinking the docker deployment.
+  - In a non-container context, I think multi user mode really does make the
+    most sense.
+  - However, inside of a container I really don't see much reason for that user
+    separation. It just sorta unecessarily overly complicates the deploy
+    without really offering much security benifit.
+  - [ ] Make it so inside of a container game servers are installed as the same
+    user as the web-lgsm gunicorn process to simplify docker deploy.
 
 * [ ] **Add auto include for changelog in about page.**
   - Now that I've made a changelog.md file, I should like automatically include
@@ -91,6 +102,8 @@
   - The base web-lgsm should support cert files if someone has them. Gunicorn
     can do ssl so, if it can might as well pass that ability on to the users
     too, instead of forcing them to hack their web-lgsm.py script to do it.
+
+## Version 1.8.x Todos
 
 * [ ] **Fix update mechanism... again**
   - I need to just mv existing to .bak and install fresh,

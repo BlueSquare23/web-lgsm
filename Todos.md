@@ -100,7 +100,7 @@
     main.conf file. This file will be persistant across updates and wont be
     tracked in git.
 
-* [ ] **Re-configure Docker deployment to be all in single user mode**
+* [x] **Re-configure Docker deployment to be all in single user mode**
   - Ya know I introduced so much at once with the last release that I ended up
     overcomplicating / really over thinking the docker deployment.
   - In a non-container context, I think multi user mode really does make the
@@ -108,7 +108,7 @@
   - However, inside of a container I really don't see much reason for that user
     separation. It just sorta unecessarily overly complicates the deploy
     without really offering much security benifit.
-  - [ ] Make it so inside of a container game servers are installed as the same
+  - [x] Make it so inside of a container game servers are installed as the same
     user as the web-lgsm gunicorn process to simplify docker deploy.
 
 ## Version 1.8.x Todos

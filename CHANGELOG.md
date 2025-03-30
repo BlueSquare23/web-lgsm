@@ -19,7 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Marked `web-lgsm.py --update` flag as broken atm. Will fix soon.
+- Change docker deployment to work via single user mode.
+- Change supported versions in `SECURITY.md`, deprecate v1.7.x.
+- Mark `web-lgsm.py --update` flag as broken atm. Will fix soon.
+
+### Fixed
+
+- Fix install same/single user mode to install required apt requirements.
 
 ---
 

@@ -231,6 +231,27 @@ def start_server():
         print(f" [*] Launched Gunicorn server with PID: {process.pid}")
     except Exception as e:
         print(f" [!] Failed to launch Gunicorn server: {e}")
+        exit(99)
+    finally:
+        if "CONTAINER" in os.environ:
+            command = ["/usr/bin/tail", "-f", "logs/access.log"]
+            
+            try:
+                # Tail follow access log in the foreground.
+                process = subprocess.Popen(command)
+                process.wait()  # Wait for the process to complete
+            except KeyboardInterrupt:
+                # Handle Ctrl+C to gracefully exit.
+                print("\nTail follow terminated, but web-lgsm server still running!")
+                exit(33)
+            except Exception as e:
+                # Handle any other exceptions.
+                print(f"An error occurred: {e}")
+                exit(55)
+            finally:
+                # Ensure the process is terminated.
+                if process.poll() is None:
+                    process.terminate()
 
 
 def start_debug():

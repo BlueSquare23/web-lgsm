@@ -391,9 +391,11 @@ def install():
             flash("An installation by that name already exits.", category="error")
             return redirect(url_for("views.install"))
 
-        # If running in a container always install as create new user.
+        # If running in a container do not allow install new user! For design
+        # reasons, to keep things simple. Inside of a container installs are
+        # going to be same user only.
         if "CONTAINER" in os.environ:
-            config_options["create_new_user"] = True
+            config_options["create_new_user"] = False
 
         server = GameServer()
         server.install_name = server_install_name
@@ -418,20 +420,6 @@ def install():
             # Add keyfile path for server to DB.
             keyfile = get_ssh_key_file(server.username, server.install_host)
             server.keyfile_path = keyfile
-
-        # For game server file persistence, warn user if GameServers mount not
-        # detected for selected game server.
-        if "CONTAINER" in os.environ:
-            if not os.path.isdir(f"/home/{server.username}/GameServers"):
-                flash(
-                    "Rebuild container first! See docs/docker_info.md for more information.",
-                    category="error",
-                )
-                flash(
-                    "Run docker-setup.py --add to add an install to the container first, then rebuild!",
-                    category="error",
-                )
-                return redirect(url_for("views.home"))
 
         current_app.logger.info(log_wrap("server", server))
 

@@ -7,15 +7,14 @@ security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.8.2   | :white_check_mark: |
+| 1.8.1   | :white_check_mark: |
 | 1.8.0   | :white_check_mark: |
-| 1.7.2   | :white_check_mark: |
-| 1.7.1   | :white_check_mark: |
-| 1.7.0   | :x:                |
-| < 1.6   | :x:                |
+| < 1.7   | :x:                |
 
 ## Reporting a Vulnerability
 
-You can report a vulnerablity to me via [my site's contact
+You can report a security vulnerability to me via [my site's contact
 form](https://johnlradford.io/contact.php).
 
 If you don't hear back from me for a few days feel free to open up a [github

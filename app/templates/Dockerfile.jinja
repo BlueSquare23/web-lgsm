@@ -1,19 +1,16 @@
-FROM ubuntu:latest
+FROM ubuntu:jammy
 ENV CONTAINER=YES
+ENV UID=1000
+ENV GID=1000
 
 # Install apt deps.
-RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2 openssh-server
+RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2
 
-# Rename default ubuntu user & group to web-lgsm.
-RUN usermod -l web-lgsm ubuntu
-RUN groupmod -n web-lgsm ubuntu
-RUN usermod -d /home/web-lgsm web-lgsm
-{% for server in servers %}RUN useradd -m {{server.short_name}} && usermod -a -G {{server.short_name}} web-lgsm{% endfor %}
+# First add the web-lgsm group.
+RUN groupadd -g $GID web-lgsm
 
-# Change SSH settings.
-RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-RUN sed -i 's/#AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/AuthorizedKeysFile     .ssh\/authorized_keys .ssh\/authorized_keys2/' /etc/ssh/sshd_config
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Then create the user and add them to the group.
+RUN useradd -u $UID -g $GID -r -d /home/web-lgsm -s /bin/bash web-lgsm
 
 RUN mkdir -p /etc/sudoers.d
 
@@ -43,5 +40,7 @@ RUN sed -i '$ d' /etc/sudoers
 # Expose app's port.
 EXPOSE 12357
 
-# Entrypoint wrapper script, starts sshd & drop privs to launch web-lgsm.
-ENTRYPOINT ["/home/web-lgsm/scripts/entrypoint.sh"]
+USER web-lgsm
+ENV USER=web-lgsm
+
+ENTRYPOINT ["/home/web-lgsm/web-lgsm.py", "--start"]

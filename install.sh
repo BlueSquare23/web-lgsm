@@ -70,6 +70,79 @@ if [[ $1 =~ '--docker' ]]; then
     exit
 fi
 
+# Needs curl to get lgsm apt reqs.
+if ! which curl &>/dev/null; then
+    echo -e "${green}####### Installing \`curl\`...${reset}"
+    sudo apt-get install -y curl
+fi
+
+# Function to detect the Ubuntu or Debian version
+detect_distro_version() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [ "$ID" == "ubuntu" ] || [ "$ID" == "debian" ]; then
+            echo "$ID-$VERSION_ID"
+        else
+            echo "Unsupported distribution: $ID"
+            exit 1
+        fi
+    else
+        echo "Cannot detect the distribution."
+        exit 1
+    fi
+}
+
+# List of supported versions
+supported_versions=(
+    "ubuntu-18.04"
+    "ubuntu-20.04"
+    "ubuntu-22.04"
+    "ubuntu-23.04"
+    "ubuntu-23.10"
+    "ubuntu-24.04"
+    "debian-10"
+    "debian-11"
+    "debian-12"
+    "debian-13"
+)
+
+# Detect the current distribution and version
+distro_version=$(detect_distro_version)
+
+# Check if the detected version is supported
+if [[ " ${supported_versions[*]} " == *" $distro_version "* ]]; then
+    echo "Detected supported version: $distro_version"
+else
+    echo "Unsupported version: $distro_version"
+    exit 1
+fi
+
+# GitHub base URL for the CSV files.
+github_base_url="https://raw.githubusercontent.com/GameServerManagers/LinuxGSM/refs/heads/master/lgsm/data"
+
+# Construct the full URL for the CSV file.
+csv_url="$github_base_url/$distro_version.csv"
+
+# Download the CSV file.
+echo "Downloading $csv_url..."
+apt_csv=$(curl -s "$csv_url")
+
+# Check if the download was successful.
+if [ $? -eq 0 ]; then
+    echo "Downloaded $distro_version.csv successfully."
+else
+    echo "Failed to download $distro_version.csv."
+    rm -f "$temp_csv"
+    exit 1
+fi
+
+all_reqs_csv=$(grep 'all,' <<< "$apt_csv")
+all_reqs=$(tr ',' "\n" <<< "$all_reqs_csv")
+
+# Append lgsm requirements to web-lgsm apt reqs.
+echo "$all_reqs" >> 'apt-reqs.txt'
+
+# Install apt requirements!
 for req in $(cat 'apt-reqs.txt'); do
     if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"

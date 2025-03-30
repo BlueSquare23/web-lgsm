@@ -8,6 +8,7 @@ import signal
 import shutil
 import getpass
 import configparser
+import markdown
 
 from threading import Thread
 from werkzeug.security import generate_password_hash
@@ -390,9 +391,11 @@ def install():
             flash("An installation by that name already exits.", category="error")
             return redirect(url_for("views.install"))
 
-        # If running in a container always install as create new user.
+        # If running in a container do not allow install new user! For design
+        # reasons, to keep things simple. Inside of a container installs are
+        # going to be same user only.
         if "CONTAINER" in os.environ:
-            config_options["create_new_user"] = True
+            config_options["create_new_user"] = False
 
         server = GameServer()
         server.install_name = server_install_name
@@ -417,20 +420,6 @@ def install():
             # Add keyfile path for server to DB.
             keyfile = get_ssh_key_file(server.username, server.install_host)
             server.keyfile_path = keyfile
-
-        # For game server file persistence, warn user if GameServers mount not
-        # detected for selected game server.
-        if "CONTAINER" in os.environ:
-            if not os.path.isdir(f"/home/{server.username}/GameServers"):
-                flash(
-                    "Rebuild container first! See docs/docker_info.md for more information.",
-                    category="error",
-                )
-                flash(
-                    "Run docker-setup.py --add to add an install to the container first, then rebuild!",
-                    category="error",
-                )
-                return redirect(url_for("views.home"))
 
         current_app.logger.info(log_wrap("server", server))
 
@@ -675,7 +664,12 @@ def settings():
 
     # Since settings also writes to config, open config parse here too.
     config = configparser.ConfigParser()
-    config.read("main.conf")
+    config_file = "main.conf"
+    config_local = "main.conf.local"  # Local config override.
+    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
+        config_file = config_local
+    current_app.logger.info(log_wrap("config_file", config_file))
+    config.read(config_file)
 
     # But still pull all settings from read_config() wrapper.
     config_options = read_config("settings")
@@ -801,7 +795,7 @@ def settings():
         # Have to cast back to string to save in config.
         config["aesthetic"]["terminal_height"] = str(height_pref)
 
-    with open("main.conf", "w") as configfile:
+    with open(config_file, "w") as configfile:
         config.write(configfile)
 
     # Update's the weblgsm.
@@ -838,6 +832,19 @@ def about():
 
     return render_template(
         "about.html", user=current_user, config_options=config_options
+    )
+
+
+######### Changelog Page #########
+
+@views.route("/changelog", methods=["GET"])
+@login_required
+def changelog():
+    changelog_md = read_changelog()
+    changelog_html =  markdown.markdown(changelog_md)
+
+    return render_template(
+        "changelog.html", user=current_user, changelog_html=changelog_html
     )
 
 

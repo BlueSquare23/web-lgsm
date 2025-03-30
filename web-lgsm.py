@@ -97,8 +97,12 @@ from app.models import User
 from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
+CONFIG_FILE = "main.conf"
+CONFIG_LOCAL = "main.conf.local"  # Local config override.
+if os.path.isfile(CONFIG_LOCAL) and os.access(CONFIG_LOCAL, os.R_OK): 
+    CONFIG_FILE = CONFIG_LOCAL
 CONFIG = configparser.ConfigParser()
-CONFIG.read(os.path.join(SCRIPTPATH, "main.conf"))
+CONFIG.read(os.path.join(SCRIPTPATH, CONFIG_FILE))
 try:
     HOST = CONFIG["server"]["host"]
     PORT = CONFIG["server"]["port"]
@@ -193,6 +197,30 @@ def start_server():
             "--daemon",
             "app:main()",
         ]
+
+        cert = None
+        key = None
+
+        for key in CONFIG["server"]:
+            if key == "cert":
+                cert = CONFIG["server"]["cert"]
+
+            if key == "key":
+                key = CONFIG["server"]["key"]
+
+        if cert and key:
+            if os.path.isfile(cert) and os.access(cert, os.R_OK): 
+                cmd.append(f"--certfile={cert}")
+            else:
+                print(f" [!] Error: Cant read cert file: {cert}", file=sys.stderr)
+                exit(15)
+
+            if os.path.isfile(key) and os.access(key, os.R_OK): 
+                cmd.append(f"--keyfile={key}")
+            else:
+                print(f" [!] Error: Cant read key file: {key}", file=sys.stderr)
+                exit(16)
+        
         print(cmd)
         process = subprocess.Popen(
             cmd,
@@ -203,6 +231,27 @@ def start_server():
         print(f" [*] Launched Gunicorn server with PID: {process.pid}")
     except Exception as e:
         print(f" [!] Failed to launch Gunicorn server: {e}")
+        exit(99)
+    finally:
+        if "CONTAINER" in os.environ:
+            command = ["/usr/bin/tail", "-f", "logs/access.log"]
+            
+            try:
+                # Tail follow access log in the foreground.
+                process = subprocess.Popen(command)
+                process.wait()  # Wait for the process to complete
+            except KeyboardInterrupt:
+                # Handle Ctrl+C to gracefully exit.
+                print("\nTail follow terminated, but web-lgsm server still running!")
+                exit(33)
+            except Exception as e:
+                # Handle any other exceptions.
+                print(f"An error occurred: {e}")
+                exit(55)
+            finally:
+                # Ensure the process is terminated.
+                if process.poll() is None:
+                    process.terminate()
 
 
 def start_debug():
@@ -417,6 +466,11 @@ def backup_dir(dirname, tar=None):
 
 
 def update_weblgsm():
+    # Updates broken right now cause I suck a programming. Already have a todo
+    # to fix it. Marking this broken for the meantime.
+    print("Sorry, update is broken right now :( Will fix soon. In the meantime just git pull or clone the newest version and reinstall.")
+    return
+
     local, remote, base = get_git_info()
 
     if local == remote:

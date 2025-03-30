@@ -80,30 +80,7 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Version 1.8.2 Todos
-
-* [ ] **Re-configure Docker deployment to be all in single user mode**
-  - Ya know I introduced so much at once with the last release that I ended up
-    overcomplicating / really over thinking the docker deployment.
-  - In a non-container context, I think multi user mode really does make the
-    most sense.
-  - However, inside of a container I really don't see much reason for that user
-    separation. It just sorta unecessarily overly complicates the deploy
-    without really offering much security benifit.
-  - [ ] Make it so inside of a container game servers are installed as the same
-    user as the web-lgsm gunicorn process to simplify docker deploy.
-
-* [ ] **Add auto include for changelog in about page.**
-  - Now that I've made a changelog.md file, I should like automatically include
-    it in the about page I think, so users can see recent changes if they want
-    to.
-
-* [ ] **Add option in main.conf for cert and key files for gunicorn server**
-  - The base web-lgsm should support cert files if someone has them. Gunicorn
-    can do ssl so, if it can might as well pass that ability on to the users
-    too, instead of forcing them to hack their web-lgsm.py script to do it.
-
-## Version 1.8.x Todos
+## Version 1.8.3 Todos
 
 * [ ] **Fix update mechanism... again**
   - I need to just mv existing to .bak and install fresh,
@@ -136,11 +113,6 @@
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
 
-* [ ] **Make a main.conf.local override**
-  - Aka if a main.conf.local file is present, use that file instead of the
-    main.conf file. This file will be persistant across updates and wont be
-    tracked in git.
-
 * [ ] **On first time loading server post install clear the install text.**
     - Aka when server install is marked finish, clear its entry from global
       servers dict. Then when someone enters the game server controls page for
@@ -151,6 +123,8 @@
       for installed game servers. So can't get the external script to update
       the apps state directly. Have to somehow trigger on that DB field being
       updated from within the app.
+
+## Version 1.8.x Todos
 
 * [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
   - Might need to just put a little sudo chown back to the user line for those

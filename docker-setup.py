@@ -203,8 +203,13 @@ def build_files():
     dockerfile_template = env.get_template('Dockerfile.jinja')
     gid = os.getgid()
 
+    config_file = "main.conf"
+    config_local = "main.conf.local"  # Local config override.
+    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
+        config_file = config_local
+
     # Build from templates.
-    context = {"servers": docker_data, "gid":gid}
+    context = {"servers": docker_data, "gid": gid, "config_file": config_file}
     docker_compose_output = docker_compose_template.render(context)
     dockerfile_output = dockerfile_template.render(context)
 

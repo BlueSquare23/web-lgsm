@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [v1.8.2] - 2025-03-30
 
 ### Added
 
@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Remove now deprecated temp sudoers rule add for non-same user game server
+  install playbook.
 - Change docker deployment to work via single user mode.
 - Change supported versions in `SECURITY.md`, deprecate v1.7.x.
 - Mark `web-lgsm.py --update` flag as broken atm. Will fix soon.

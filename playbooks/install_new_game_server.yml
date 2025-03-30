@@ -28,8 +28,6 @@
         - tasks/create_new_user_group.yml
         - tasks/create_new_user.yml
         - tasks/set_default_new_user_group.yml
-        - tasks/add_temp_nopass_rule.yml
-        - tasks/fix_temp_nopass_rule.yml
 
     - name: Create new game server directory
       file:

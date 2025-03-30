@@ -239,11 +239,6 @@ def run_install_new_game_server(server_id):
         # After game server install, install required apt reqs as root.
         run_cmd(install_reqs, server.install_path)
 
-    # Cleanup temp sudoers rule.
-    tmp_sudoers = f"/etc/sudoers.d/{server.username}-temp-auto-install"
-    if os.path.isfile(tmp_sudoers): 
-        os.remove(tmp_sudoers)
-
     # Post install ssh setup for different users.
     append_new_authorized_key(server)
 

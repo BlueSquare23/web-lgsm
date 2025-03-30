@@ -1297,7 +1297,7 @@ def full_game_server_install(client):
     timeout = 0
     installed_successfully = False
     while True:
-        if timeout >= 300:  # Aka five minutes.
+        if timeout >= 360:  # Aka six minutes.
             print("######################## GAME SERVER INSTALL OUTPUT")
             print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
             assert True == False

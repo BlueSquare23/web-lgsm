@@ -113,24 +113,6 @@
 
 ## Version 1.8.3 Todos
 
-* [x] **Security fix, install playbooks and ansible_connector.py as root**
-  - There's too many security concerns to be had with keeping these files down
-    in the users `web-lgsm` directory.
-    - Can't be made immutable in containers + other problems.
-    - But shouldn't even really need to make these immutable in the first place.
-    - They just need to be root owned in a root directory.
-    - Along with this will come the `uninstall.sh` script, see below todo.
-
-* [x] **Create uninstall.sh script for removing web-lgsm installs**
-  - I think users are more comfortable in general installing something if they
-    know they can very easily uninstall it again.
-  - Previously, for this project that was just as simple as removing the
-    web-lgsm dir and uninstalling apt reqs. 
-  - But now it'll need to remove some files it installs in other system
-    locations as root.
-  - So yeah just need to make an uninstall.sh script to cleanup the project for
-    users who want to do that.
-
 * [ ] **Move API Routes into own file**
   - Unfortunately, this is not as trivial as copying and pasting the api route
     code into its own file because api routes use a shared global with view
@@ -210,6 +192,13 @@
 * [ ] **Add new page & API route(s) for export database information**
   - I want to allow users to export their database to csv or json or something
     for backup / manual update / migration purposes.
+
+* [ ] **Add user action audit log feature + route for viewing**
+  - Now that I have multiple users, when some user takes an action, I want to
+    record who did what when to an audit log for later viewing by
+    administrators in the web interface.
+  - [ ] Need new database model to store audit log info.
+  - [ ] Need new api routes to add info and remove info from audit log.
 
 ## Version 1.8.x Todos
 

@@ -35,7 +35,8 @@ from .proc_info_vessel import ProcInfoVessel
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+VENV = "/opt/web-lgsm/"
+ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
 PATHS = {
     "docker": "/usr/bin/docker",
     "sudo": "/usr/bin/sudo",
@@ -444,7 +445,7 @@ def install():
         cmd = [
             PATHS["sudo"],
             "-n",
-            os.path.join(CWD, "venv/bin/python"),
+            os.path.join(VENV, "bin/python"),
             ANSIBLE_CONNECTOR,
             "--install",
             str(server_id),

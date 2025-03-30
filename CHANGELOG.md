@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Add `uninstall.sh` script for removing system level components of web app.
+
+### Changed
+
+- Make `install.sh` install playbooks, venv, and `ansible_connector.py` as root
+  in system level directories for security reasons.
+
+### Fixed
+
 ---
 
 ## [v1.8.2] - 2025-03-30

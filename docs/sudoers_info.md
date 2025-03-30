@@ -4,23 +4,23 @@ In order for the Web-LGSM's automatic game server install feature to work
 properly, the install.sh script will setup the following sudoers rule.
 
 ```
-(root) NOPASSWD: /path/to/web-lgsm/venv/bin/python /path/to/web-lgsm/playbooks/ansible_connector.py *
+(root) NOPASSWD: /opt/web-lgsm/bin/python /usr/local/bin/ansible_connector.py *
 ```
 
 The actual sudoers file will live in /etc/sudoers.d and look something like this:
 
 ```
 sudo cat /etc/sudoers.d/$USER-$USER
-blue ALL=(root) NOPASSWD: /home/blue/web-lgsm/venv/bin/python /home/blue/web-lgsm/playbooks/ansible_connector.py *
+blue ALL=(root) NOPASSWD: /opt/web-lgsm/bin/python /usr/local/bin/ansible_connector.py *
 ```
 
 This rule allows the Web-LGSM to run its `ansible_connector.py` script, which
 wraps the game server installation and delete playbooks, as root without
 needing to prompt for a sudo password every time.
 
-The `install.sh` script also makes the `venv/bin/python` and
-`ansible_connector.py` scripts immutable, and chown's them to root, as a
-security precaution.
+The `install.sh` script create the `/opt/web-lgsm` venv and copies the
+`ansible_connector.py` scripts and playbook files into system level directories
+for security reasons.
 
 Note: If this sudoers rule is disabled the app will no longer be able to
 install new game servers or delete users and files for existing installs owned

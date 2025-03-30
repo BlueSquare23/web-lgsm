@@ -113,7 +113,7 @@
 
 ## Version 1.8.3 Todos
 
-* [ ] **Security fix, install playbooks and ansible_connector.py as root**
+* [x] **Security fix, install playbooks and ansible_connector.py as root**
   - There's too many security concerns to be had with keeping these files down
     in the users `web-lgsm` directory.
     - Can't be made immutable in containers + other problems.
@@ -121,7 +121,7 @@
     - They just need to be root owned in a root directory.
     - Along with this will come the `uninstall.sh` script, see below todo.
 
-* [ ] **Create uninstall.sh script for removing web-lgsm installs**
+* [x] **Create uninstall.sh script for removing web-lgsm installs**
   - I think users are more comfortable in general installing something if they
     know they can very easily uninstall it again.
   - Previously, for this project that was just as simple as removing the

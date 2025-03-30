@@ -30,7 +30,7 @@ from .cmd_descriptor import CmdDescriptor
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
 PATHS = {
     "docker": "/usr/bin/docker",
     "sudo": "/usr/bin/sudo",
@@ -44,7 +44,7 @@ PATHS = {
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
-    os.path.join(CWD, "venv/bin/python"),
+    "/opt/web-lgsm/bin/python",
     ANSIBLE_CONNECTOR,
 ]
 

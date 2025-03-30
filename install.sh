@@ -6,12 +6,18 @@
 # Strict mode, close on any non-zero exit status.
 set -eo pipefail
 
-# In case script is invokes from outside of web-lgsm dir.
-SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-cd $SCRIPTPATH
-
 # Debug mode.
 [[ $1 =~ '-d' ]] && set -x && echo $EUID && ls -lah && printenv
+
+## Globals
+# In case script is invokes from outside of web-lgsm dir.
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+VENV_PATH="/opt/web-lgsm"
+CONNECTOR_PATH="/usr/local/bin"
+PLAYBOOKS_PATH="/usr/local/share/web-lgsm/playbooks"
+
+cd $SCRIPTPATH
+sudo mkdir -p $PLAYBOOKS_PATH
 
 # Colors!!!
 red="\001\e[31m\002"
@@ -146,31 +152,33 @@ echo "$all_reqs" >> 'apt-reqs.txt'
 for req in $(cat 'apt-reqs.txt'); do
     if ! sudo dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${green}####### Installing \`$req\`...${reset}"
+        echo $req >> installed.log
         sudo apt-get install -y $req
     fi
 done
 
 if ! which python3  &>/dev/null; then
     echo -e "${green}####### Installing \`python3\`...${reset}"
+    echo "python3" >> installed.log
     sudo apt-get install -y python3
 fi
 
 if ! which pip3 &>/dev/null; then
     echo -e "${green}####### Installing \`pip3\`...${reset}"
+    echo "python3-pip" >> installed.log
     sudo apt-get install -y python3-pip
 fi
 
 echo -e "${green}####### Setting up Virtual Env...${reset}"
-python3 -m venv venv
-source venv/bin/activate
+sudo python3 -m venv $VENV_PATH
 
 if [[ $sys_name =~ Ubuntu ]]; then
     echo -e "${green}####### Upgrading \`pip3\`...${reset}"
-    python3 -m pip install --upgrade pip
+    sudo $VENV_PATH/bin/python3 -m pip install --upgrade pip
 fi
 
 echo -e "${green}####### Installing Python Requirements...${reset}"
-python3 -m pip install -r requirements.txt
+sudo $VENV_PATH/bin/python3 -m pip install -r requirements.txt
 
 echo -e "${green}####### Installing NPM Requirements...${reset}"
 cd $SCRIPTPATH/app/static/js
@@ -178,21 +186,29 @@ npm install @xterm/xterm
 npm install --save @xterm/addon-fit
 cd $SCRIPTPATH
 
-# Setup sudoers rules to allow web-lgsm to run multi game server user
-# management components without needing to prompt for a sudo pass.
+## Install Ansible Connector & Playbook files.
+echo -e "${green}####### Installing Web-LGSM Ansible Connector...${reset}"
+
+# First hardcode web-lgsm system user into accepted_users validation list and
+# web_user ansible vars files.
+echo "  - $USER" >> $SCRIPTPATH/playbooks/vars/accepted_usernames.yml
+echo "web_lgsm_user: $USER" > $SCRIPTPATH/playbooks/vars/web_lgsm_user.yml
+
+# Hardcode APP_PATH in connector script.
+sed -i "s#APP_PATH = ''#APP_PATH = '$SCRIPTPATH'#g" $SCRIPTPATH/playbooks/ansible_connector.py
+
+# Then copy those files into system dirs.
+sudo cp -r playbooks/* $PLAYBOOKS_PATH
+sudo mv $PLAYBOOKS_PATH/ansible_connector.py $CONNECTOR_PATH
+
 echo -e "${green}####### Setting up Sudoers Rules...${reset}"
 
-apb="$SCRIPTPATH/venv/bin/ansible-playbook"
-venv_python="$SCRIPTPATH/venv/bin/python"
-ansible_connector="$SCRIPTPATH/playbooks/ansible_connector.py"
-accpt_usernames="$SCRIPTPATH/playbooks/vars/accepted_usernames.yml"
-web_lgsm_user_vars="$SCRIPTPATH/playbooks/vars/web_lgsm_user.yml"
+apb="$VENV_PATH/bin/ansible-playbook"
+venv_python="$VENV_PATH/bin/python"
+ansible_connector="$CONNECTOR_PATH/ansible_connector.py"
+accpt_usernames="$PLAYBOOKS_PATH/vars/accepted_usernames.yml"
+web_lgsm_user_vars="$PLAYBOOKS_PATH/vars/web_lgsm_user.yml"
 sudoers_file="/etc/sudoers.d/$USER-$USER"
-
-# Hardcode web-lgsm system user into accepted_users validation list and
-# web_user ansible vars files.
-echo "  - $USER" >> $accpt_usernames
-echo "web_lgsm_user: $USER" > $web_lgsm_user_vars
 
 # Write sudoers rule for passwordless install & delete.
 sudoers_rule="$USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
@@ -204,14 +220,9 @@ sudo visudo -cf "$temp_sudoers"  # Validate new file.
 sudo mv "$temp_sudoers" "$sudoers_file"
 
 # Lock playbook files down for security reasons.
-sudo find $SCRIPTPATH/playbooks -type f -exec chmod 644 {} \;
-sudo find $SCRIPTPATH/playbooks -type d -exec chmod 755 {} \;
+sudo find $PLAYBOOKS_PATH -type f -exec chmod 644 {} \;
+sudo find $PLAYBOOKS_PATH -type d -exec chmod 755 {} \;
 sudo chmod 755 $apb $ansible_connector
-sudo chown -R root:root $apb "$SCRIPTPATH/playbooks"
-# Can't make files immutable in containers.
-if [[ -z $CONTAINER ]]; then
-    sudo chattr +i $apb $ansible_connector
-fi
 
 # Finally setup random key.
 random_key=$(echo $RANDOM | md5sum | head -c 20)

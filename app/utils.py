@@ -421,18 +421,31 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
     return server.script_name + "-" + gs_id
 
 
-def update_tmux_socket_name_cache(server_id, socket_name):
+def update_tmux_socket_name_cache(server_id, socket_name, delete=False):
     """
     Writes to tmux socket name cache with fresh data.
+
+    Args:
+        server_id (int): ID of Game Server to get tmux socket name for.
+        delete (bool): If delete specified, given entry will be removed.
+
+    Returns:
+        None
     """
     cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
     cache_data = dict()
+    current_app.logger.debug(log_wrap("Updating cache for server_id:", server_id))
 
     if os.path.exists(cache_file):
         with open(cache_file, "r") as file:
             cache_data = json.load(file)
 
-    cache_data[server_id] = socket_name
+    if delete:
+        # Json.dump casts int to str. So need to re-cast to str on delete.
+        server_id = str(server_id)
+        del cache_data[server_id]
+    else:
+        cache_data[server_id] = socket_name
 
     with open(cache_file, "w") as file:
         json.dump(cache_data, file)

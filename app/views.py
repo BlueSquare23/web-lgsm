@@ -231,10 +231,14 @@ def controls():
             return redirect(url_for("views.controls", server=server_name))
 
         else:
-            # Purge socket file name cache on game server start. Fixes post
-            # install, null socket name cache bug.
             if short_cmd == "st":
-                purge_tmux_socket_cache()
+                # On start, check if socket_name is null. If so delete the
+                # socket file cache for game server before startup. This
+                # ensures the status indicators work properly after initial
+                # install.
+                socket_name = get_tmux_socket_name(server)
+                if socket_name == None:
+                    update_tmux_socket_name_cache(server.id, None, True)
 
             cmd = [script_path, short_cmd]
 

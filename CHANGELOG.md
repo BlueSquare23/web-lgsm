@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix cached null socket file name after fresh install bug. 
+  - Now on game server start, will purge cache entry if socket file name is null.
+
 ---
 
 ## [v1.8.2] - 2025-03-30

@@ -113,6 +113,11 @@
 
 ## Version 1.8.3 Todos
 
+* [ ] **Fix whatever test(s) I just broke**
+  - This commit e4f649805d99bdc6a76e001e46974ed348221e46 broke some tests.
+  - Apparently, moving a bunch of install stuff to system level dirs is
+    disruptive, whoda guessed it?
+
 * [ ] **Move API Routes into own file**
   - Unfortunately, this is not as trivial as copying and pasting the api route
     code into its own file because api routes use a shared global with view
@@ -120,7 +125,7 @@
   - I know bad design. Time to repay some technical debt. Will position app to
     be way more betterer moving forward.
 
-* [ ] **Make game server start just purge socket file name cache for that game server**
+* [x] **Make game server start just purge socket file name cache for that game server**
   - Right now its just a global cache purge which means all servers tmux socket
     name cache needs rebuilt after any one game server start.
     - This is slow.

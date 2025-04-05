@@ -28,7 +28,7 @@ function getServerStatus() {
     const serverId = $(this).attr('id');
 
     // Make an API request to get the server status.
-    $.getJSON(`/api/server-status?id=${serverId}`, function(data) {
+    $.getJSON(`/api/server-status/${serverId}`, function(data) {
       // Update the indicator based on the status.
       updateStatusIndicator(serverId, data.status);
     });

@@ -176,7 +176,7 @@ def controls():
                 "controls.html",
                 user=current_user,
                 server_id=server_id,
-                server_name=server_name,
+                server_name=server.install_name,
                 server_commands=cmds_list,
                 config_options=config_options,
                 cfg_paths=cfg_paths,
@@ -816,6 +816,8 @@ def add():
     return render_template("add.html", user=current_user), status_code
 
 
+# TODO: Make this an API route instead. It basically already is, just formally
+# needs turned into such.
 ######### Delete Route #########
 
 @views.route("/delete", methods=["GET", "POST"])

@@ -135,6 +135,17 @@
   - I know bad design. Time to repay some technical debt. Will position app to
     be way more betterer moving forward.
 
+* [x] **Use real flask_restful module for spinning up api endpoints**
+  - Allows me to use class based approach to define API endpoints.
+  - Just gives me more tools to work with for properly handling data via api
+    endpoints.
+  - [x] Will require tweaking existing api endpoints to get them into classes,
+    but shouldn't be too hard.
+
+* [ ] **Turn Delete into its own API route**
+  - Yeah this "page" doesn't render a template. Is basically already an api
+    endpoint. Just needs formally converted into one.
+
 * [x] **Make game server start just purge socket file name cache for that game server**
   - Right now its just a global cache purge which means all servers tmux socket
     name cache needs rebuilt after any one game server start.

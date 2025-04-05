@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Make API endpoints utilize real `flask_restful` module for building out API.
 - Transition codebase to use game server ID instead of name as main identifier.
 - Make GameServers use UUIDs now for primary key.
 - Make `install.sh` install playbooks, venv, and `ansible_connector.py` as root

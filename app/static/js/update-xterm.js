@@ -33,9 +33,8 @@ window.addEventListener('resize', function() {
 
 function refreshOutput(sId) {
   return $.ajax({
-    url: '/api/update-console',
+    url: '/api/update-console/' + sId,
     type: 'POST',
-    data: { 'server_id': sId },
     error: function(reqObj, textStatus, errorThrown) {
       // Send errors to the console.
       term.write(textStatus + '\n' + errorThrown);
@@ -47,11 +46,9 @@ function refreshOutput(sId) {
 function updateTerminal(sId){
   return $.ajax({
     dataType: 'json',
-    url: '/api/cmd-output',
+    url: '/api/cmd-output/' + sId,
     type: 'GET',
-    data: {
-      'server_id': sId
-    },
+
     error: function(reqObj, textStatus, errorThrown) {
       // Send errors to the console.
       term.write(textStatus + '\n' + errorThrown);

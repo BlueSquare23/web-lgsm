@@ -74,8 +74,8 @@ def main():
     app.register_blueprint(auth, url_prefix="/")
 
     # Pull in our api route(s).
-    from .api import api 
-    app.register_blueprint(api , url_prefix="/")
+    from .api import api_bp
+    app.register_blueprint(api_bp, url_prefix="/api")
 
     # Initialize DB.
     from .models import User, GameServer

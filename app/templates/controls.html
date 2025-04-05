@@ -37,7 +37,7 @@
               {% for cfg_path in cfg_paths %}
                 <div class="col">
                   <form method="POST" id="edit-form" action="/edit">
-                    <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+                    <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
                     <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_path}}" class="form-control" />
                     {% set cfg_file = cfg_path.split('/')[-1] %}
                     <input class="btn btn-outline-primary" type="submit" title="{{cfg_path}}" value="Edit: {{cfg_file}}" />
@@ -58,13 +58,13 @@
           {% if command.short_cmd == 'sd' %}
           <div class="row">
             <div class="col">
-              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_name}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
+              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_id}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
             </div>
           {% else %}
           <div class="row">
             <div class="col">
               <form method="GET" id="ctrls-form" action="/controls">
-                <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+                <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
                 <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
 
                 <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
@@ -88,7 +88,7 @@
       </script>
       <!-- Set JS vars from Jinja vars. -->
       <script>
-        let serverName = "{{ server_name }}";
+        let serverId = "{{ server_id }}";
         let textColor = "{{ config_options.text_color }}";
       {# If show_stderr var True #}
       {% if config_options.show_stderr is defined and config_options.show_stderr %}
@@ -112,7 +112,7 @@
         /\ Top /\
       </button>
 
-      <a id="del-button" title="Remove server entry from web-lgsm database" onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-outline-danger" href="/delete?server={{server_name}}" role="button">
+      <a id="del-button" title="Remove server entry from web-lgsm database" onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-outline-danger" href="/delete?server_id={{server_id}}" role="button">
         Delete Server
       </a>
 

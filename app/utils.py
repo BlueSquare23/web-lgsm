@@ -443,7 +443,8 @@ def update_tmux_socket_name_cache(server_id, socket_name, delete=False):
     if delete:
         # Json.dump casts int to str. So need to re-cast to str on delete.
         server_id = str(server_id)
-        del cache_data[server_id]
+        if server_id in cache_data:
+            del cache_data[server_id]
     else:
         cache_data[server_id] = socket_name
 
@@ -628,16 +629,23 @@ def get_running_installs():
     Gets list of running install thread names, if any are currently running.
 
     Returns:
-        thread_names (list): List of currently running install threads.
+        dict: Mapping of observed running threads for game server IDs to game
+              server names.
     """
     threads = threading.enumerate()
     # Get all active threads.
-    thread_names = []
-    for thread in threads:
-        if thread.is_alive() and thread.name.startswith("Install_"):
-            thread_names.append(thread.name)
+    running_install_threads = dict()
 
-    return thread_names
+    for thread in threads:
+        if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
+            server_id = thread.name.replace("web_lgsm_install_", "")
+            server = GameServer.query.filter_by(id=server_id).first()
+
+            # Check game server exists.
+            if server:
+                running_install_threads[server_id] =  server.install_name
+
+    return running_install_threads
 
 
 def find_cfg_paths(server):

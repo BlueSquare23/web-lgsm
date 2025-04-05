@@ -363,11 +363,7 @@ def main(argv):
         if opt in ("-h", "--help", "-d", "--dry"):
             continue
 
-        try:
-            server_id = int(arg)
-        except ValueError:
-            print_help("Error: Arg <id> must be int!")
-
+        server_id = arg
         if opt in ("-i", "--install"):
             run_install_new_game_server(server_id)
 

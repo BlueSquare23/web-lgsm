@@ -118,6 +118,17 @@
   - Apparently, moving a bunch of install stuff to system level dirs is
     disruptive, whoda guessed it?
 
+* [ ] **Make App work via server_id's instead of server_name's**
+  - Decided to make this a pre-req before getting into API routes, cause why
+    keep writing new code that uses names instead of IDs.
+  - But wow yeah this really turned into the metaphorical thread that unravels
+    the whole sweater.
+  - Several things in the install route need re-designed and I'm wonder if it
+    might be better to dig even deeper and pull out even more of the rot at the
+    core.
+  - Still processing...
+
+
 * [ ] **Move API Routes into own file**
   - Unfortunately, this is not as trivial as copying and pasting the api route
     code into its own file because api routes use a shared global with view

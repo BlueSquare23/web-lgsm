@@ -67,13 +67,15 @@ def main():
 
     # Pull in our views route(s).
     from .views import views
-
     app.register_blueprint(views, url_prefix="/")
 
     # Pull in our auth route(s).
     from .auth import auth
-
     app.register_blueprint(auth, url_prefix="/")
+
+    # Pull in our api route(s).
+    from .api import api 
+    app.register_blueprint(api , url_prefix="/")
 
     # Initialize DB.
     from .models import User, GameServer

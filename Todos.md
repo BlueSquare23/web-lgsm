@@ -118,7 +118,7 @@
   - Apparently, moving a bunch of install stuff to system level dirs is
     disruptive, whoda guessed it?
 
-* [ ] **Make App work via server_id's instead of server_name's**
+* [x] **Make App work via server_id's instead of server_name's**
   - Decided to make this a pre-req before getting into API routes, cause why
     keep writing new code that uses names instead of IDs.
   - But wow yeah this really turned into the metaphorical thread that unravels
@@ -128,8 +128,7 @@
     core.
   - Still processing...
 
-
-* [ ] **Move API Routes into own file**
+* [x] **Move API Routes into own file**
   - Unfortunately, this is not as trivial as copying and pasting the api route
     code into its own file because api routes use a shared global with view
     routes.
@@ -142,6 +141,14 @@
     - This is slow.
   - If I write a function to just purge the socket name cache for that game
     server should speed things up a bit for other game servers.
+
+* [ ] **Add controls redirect for game server name to new uuid for backward compat**
+  - Basically, controls page used to work via names. I think there's a chance
+    people still have links in their browsers and might still want to be able
+    to go to `/controls?server=Minecraft` for example.
+    - So going to just make that try to do a lookup & redirect to controls by
+      UUID page for server.
+    - Or something like that. Still thinking about it...
 
 * [ ] **On first time loading server post install clear the install text.**
     - Aka when server install is marked finish, clear its entry from global

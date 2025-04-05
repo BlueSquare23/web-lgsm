@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Create `api.py` file for holding API routes.
+- Add `processes_global.py` as module level singleton for holding process objects.
+  - List of `proc_info` objects. Global singleton shared between Views, Utils, & API.
 - Add `uninstall.sh` script for removing system level components of web app.
 
 ### Changed
 
+- Transition codebase to use game server ID instead of name as main identifier.
+- Make GameServers use UUIDs now for primary key.
 - Make `install.sh` install playbooks, venv, and `ansible_connector.py` as root
   in system level directories for security reasons.
 

@@ -322,6 +322,9 @@
 
 ## Backlog
 
+* [ ] **Setup github pages to host Swagger docs for project w/ github actions**
+  - https://github.com/peter-evans/swagger-github-pages
+
 * [ ] **Write some database tests that use the sqlite3 cli to test that data is
   actually making it into the db file.**
   - So just anywhere the app add stuff to the db, just verify with sqlite3

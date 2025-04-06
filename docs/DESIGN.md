@@ -8,7 +8,7 @@
 ---
 
 ## 2. Overview
-- **Project Goals**: The goal of this project is to provide an easy to install, maintain, and user web interface for managing game servers on a single machine or across multiple servers.
+- **Project Goals**: The goal of this project is to provide an easy to install, maintain, and use web interface for managing LGSM game servers (optionally within containers) on a single machine or across multiple servers.
 - **Technology Stack/Dependencies**:
   * Language: [Python 3](https://www.python.org/)
   * Web Framework: [Flask](https://palletsprojects.com/p/flask/)
@@ -75,7 +75,8 @@
 ---
 
 ## 6. API Documentation
-- If your project has an API, document the endpoints, request/response formats, and examples.
+- Builtin Swagger documentation under `https://your_web_lgsm_url/docs`.
+![Swagger Docs](images/swagger_docs.gif)
 
 ---
 

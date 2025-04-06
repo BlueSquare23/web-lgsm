@@ -1217,14 +1217,14 @@ def get_server_stats():
     return stats
 
 
-def user_has_permissions(current_user, route, server_name=None):
+def user_has_permissions(current_user, route, server_id=None):
     """
     Check's if current user has permissions to various routes.
 
     Args:
         current_user (object): The currently logged in user object.
         route (string): The route to apply permissions controls to.
-        server_name (string): Game server name to check user has access to.
+        server_id (string): Game server id to check user has access to.
                               Only matters for controls & delete routes.
 
     Returns:
@@ -1261,7 +1261,7 @@ def user_has_permissions(current_user, route, server_name=None):
             )
             return False
 
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             flash(
                 "Your user does NOT have permission to delete this game server!",
                 category="error",
@@ -1277,7 +1277,7 @@ def user_has_permissions(current_user, route, server_name=None):
             return False
 
     if route == "controls":
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             flash(
                 "Your user does NOT have permission access this game server!",
                 category="error",
@@ -1290,7 +1290,7 @@ def user_has_permissions(current_user, route, server_name=None):
             return False
 
     if route == "server-statuses" or route == "cmd-output":
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             return False
 
     return True

@@ -22,6 +22,20 @@ def check_for_error(response, error_msg, url):
     assert error_msg in response.data
 
 
+def get_server_id_by_name(client, server_name=TEST_SERVER):
+    """  
+    Just pulls it from the redirect header. Lazy but works. Must already have
+    authed client.
+    """
+    response = client.get(f"/controls?server={server_name}")
+
+    assert response.status_code == 302
+
+    loc_header = response.headers.get('Location')
+    server_id = loc_header.split('server_id=')[1]
+    return server_id
+
+
 ### Setup Page tests.
 # Test setup page contents.
 def test_setup_contents(app, client):
@@ -379,7 +393,7 @@ def test_edit_user_responses(app, client):
         response = client.post(
             "/edit_users", data=json.loads(invalid_user_json), follow_redirects=True
         )
-        print(response.data)
+#        print(response.data)
         assert response.request.path == url_for("auth.edit_users")
         assert b"Invalid user selected" in response.data
 
@@ -427,7 +441,7 @@ def test_edit_user_responses(app, client):
             "password1": "**Testing12345",
             "password2": "**Testing12345",
             "is_admin": "false",
-            "servers": [
+            "server_ids": [
                 "fart",
                 "blah",
                 "notaservervalue"
@@ -480,6 +494,8 @@ def test_login_as_new_user(app, client):
     with client:
         # Log test user in.
         response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
+            "/login", data={"username": 'test2', "password": "**Testing12345"},
+            follow_redirects=True
         )
-        assert response.status_code == 302
+        assert response.status_code == 200  # 200 bc follow_redirects=True
+        assert response.request.path == url_for("views.home")

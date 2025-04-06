@@ -113,7 +113,7 @@
 
 ## Version 1.8.3 Todos
 
-* [ ] **Fix whatever test(s) I just broke**
+* [x] **Fix whatever test(s) I just broke**
   - This commit e4f649805d99bdc6a76e001e46974ed348221e46 broke some tests.
   - Apparently, moving a bunch of install stuff to system level dirs is
     disruptive, whoda guessed it?
@@ -161,7 +161,7 @@
   - If I write a function to just purge the socket name cache for that game
     server should speed things up a bit for other game servers.
 
-* [ ] **Add controls redirect for game server name to new uuid for backward compat**
+* [x] **Add controls redirect for game server name to new uuid for backward compat**
   - Basically, controls page used to work via names. I think there's a chance
     people still have links in their browsers and might still want to be able
     to go to `/controls?server=Minecraft` for example.

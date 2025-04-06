@@ -208,7 +208,7 @@ class GameServerDelete(Resource):
         if not user_has_permissions(current_user, "delete", server_id):
             resp_dict = {"Error": f"Insufficient permission to delete {server.install_name}"}
             response = Response(
-                json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
+                json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
             )
             return response
 

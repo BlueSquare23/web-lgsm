@@ -88,9 +88,21 @@ def controls():
     current_app.logger.info(log_wrap("config_options", config_options))
 
     # Collect args from GET request.
+    server_name = request.args.get("server")
     server_id = request.args.get("server_id")
     short_cmd = request.args.get("command")
     console_cmd = request.args.get("cmd")
+
+    # Serve a redirect to id for server_name for legacy compat reasons.
+    if server_name:
+        server = GameServer.query.filter_by(install_name=server_name).first()
+        current_app.logger.info(log_wrap("server", server))
+        if server == None:
+            flash("Invalid game server name!", category="error")
+            return redirect(url_for("views.home"))
+
+        return redirect(url_for("views.controls", server_id=server.id))
+        
 
     # Check if user has permissions to game server for controls route.
     if not user_has_permissions(current_user, "controls", server_id):
@@ -105,7 +117,7 @@ def controls():
     server = GameServer.query.filter_by(id=server_id).first()
     # If game server doesn't exist in db, can't load page for it.
     if server == None:
-        flash("Invalid game server name!", category="error")
+        flash("Invalid game server id!", category="error")
         return redirect(url_for("views.home"))
 
     if should_use_ssh(server):
@@ -442,7 +454,7 @@ def install():
         if current_user.role != "admin":
             user_ident = User.query.filter_by(username=current_user.username).first()
             user_perms = json.loads(user_ident.permissions)
-            user_perms["servers"].append(server_id)
+            user_perms["server_ids"].append(server_id)
             user_ident.permissions = json.dumps(user_perms)
             db.session.commit()
 
@@ -809,6 +821,17 @@ def add():
         db.session.add(server)
         db.session.commit()
 
+        server = GameServer.query.filter_by(install_name=install_name).first()
+
+        # Update web user's permissions to give access to new game server after adding it.
+        if current_user.role != "admin":
+            user_ident = User.query.filter_by(username=current_user.username).first()
+            user_perms = json.loads(user_ident.permissions)
+            user_perms["server_ids"].append(server.id)
+            user_ident.permissions = json.dumps(user_perms)
+            current_app.logger.info(log_wrap("Updated User Permissions:", user_ident.permissions))
+            db.session.commit()
+
         flash("Game server added!")
         return redirect(url_for("views.home"))
 
@@ -838,7 +861,7 @@ def edit():
     download = request.form.get("download")
 
     # Can't load the edit page without a server specified.
-    if server_name == None or server_name == "":
+    if server_id == None or server_id == "":
         flash("No server specified!", category="error")
         return redirect(url_for("views.home"))
 
@@ -848,7 +871,7 @@ def edit():
         return redirect(url_for("views.home"))
 
     # Check that the submitted server exists in db.
-    server = GameServer.query.filter_by(install_name=server_name).first()
+    server = GameServer.query.filter_by(id=server_id).first()
     # If game server doesn't exist in db, can't load page for it.
     if server == None:
         flash("Invalid game server name!", category="error")
@@ -930,7 +953,7 @@ def edit():
     return render_template(
         "edit.html",
         user=current_user,
-        server_name=server_name,
+        server_name=server.install_name,
         cfg_file=cfg_path,
         file_contents=file_contents,
         cfg_file_name=cfg_file,

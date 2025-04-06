@@ -1398,6 +1398,8 @@ def full_game_server_install(client):
     time.sleep(5)
 #    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf-8"))
 
+    server_id = get_server_id_by_name(client, "Minecraft")
+
     timeout = 0
     installed_successfully = False
     while True:
@@ -1406,7 +1408,7 @@ def full_game_server_install(client):
             print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))
             assert True == False
 
-        response = client.get("/api/cmd-output?server=Minecraft")
+        response = client.get(f"/api/cmd-output/{server_id}")
         assert response.status_code == 200
 
         if b'Game server successfully installed' in response.data:
@@ -1427,9 +1429,11 @@ def game_server_start_stop(client):
     response = client.post("/login", data={"username": USERNAME, "password": PASSWORD})
     assert response.status_code == 302
 
+    server_id = get_server_id_by_name(client, "Minecraft")
+
     # Test starting the server.
     response = client.get(
-        "/controls?server=Minecraft&command=st", follow_redirects=True
+        f"/controls?server_id={server_id}&command=st", follow_redirects=True
     )
     assert response.status_code == 200
 
@@ -1452,7 +1456,7 @@ def game_server_start_stop(client):
 #    os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
 
     # Check output lines are there.
-    response = client.get("/api/cmd-output?server=Minecraft")
+    response = client.get(f"/api/cmd-output?server_id={server_id}")
     assert response.status_code == 200
     assert b"stdout" in response.data
 #    print(
@@ -1466,12 +1470,12 @@ def game_server_start_stop(client):
 
     # Sleep until process is finished.
     while (
-        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+        b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data
     ):
 #        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(5)
 
-    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+    assert b'"process_lock": false' in client.get(f"/api/cmd-output/{server_id}").data
 #    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
 
     #    print("######################## Minecraft Start Log\n")
@@ -1480,7 +1484,7 @@ def game_server_start_stop(client):
     #    os.system("cat Minecraft/log/console/mcserver-console.log")
 
     # Check status indicator api json.
-    resp = client.get("/api/server-status?id=1").data.decode("utf8")
+    resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
 #    print(resp)
     resp_dict = json.loads(resp)
     assert resp_dict['status'] == True
@@ -1497,7 +1501,7 @@ def game_server_start_stop(client):
 
     # Test sending command to game server console
     response = client.get(
-        "/controls?server=Minecraft&command=sd&cmd=test", follow_redirects=True
+        f"/controls?server_id={server_id}&command=sd&cmd=test", follow_redirects=True
     )
     assert response.status_code == 200
     time.sleep(1)
@@ -1505,18 +1509,18 @@ def game_server_start_stop(client):
 #    print("######################## SEND COMMAND OUTPUT")
     # Sleep until process is finished.
     while (
-        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+        b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data
     ):
 #        print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
         time.sleep(3)
 
     time.sleep(1)
-    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+    assert b'"process_lock": false' in client.get(f"/api/cmd-output/{server_id}").data
 
 #    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
     assert (
         b"Sending command to console"
-        in client.get("/api/cmd-output?server=Minecraft").data
+        in client.get(f"/api/cmd-output/{server_id}").data
     )
 
     # Set send_cmd back to default state for sake of idempotency.
@@ -1531,7 +1535,7 @@ def game_server_start_stop(client):
 
     # Test stopping the server
     response = client.get(
-        "/controls?server=Minecraft&command=sp", follow_redirects=True
+        f"/controls?server_id={server_id}&command=sp", follow_redirects=True
     )
     assert response.status_code == 200
 
@@ -1543,14 +1547,14 @@ def game_server_start_stop(client):
         if x > timeout:
             assert True == False
 
-        resp = client.get("/api/cmd-output?server=Minecraft").data
+        resp = client.get(f"/api/cmd-output/{server_id}").data
         resp_dict = json.loads(resp)
         assert 'stdout' in resp_dict
         print(f'######################## STOP CMD OUTPUT, ATTEMPT #{int(x/5)+1}')
         print(json.dumps(resp_dict, indent=4))
 
         # Break on status indicator api, is off.
-        resp = client.get("/api/server-status?id=1").data.decode("utf8")
+        resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
         resp_dict = json.loads(resp)
 
         if resp_dict['status'] == False:
@@ -1560,22 +1564,24 @@ def game_server_start_stop(client):
         x += 5
 
     # Final check status indicator api, is off.
-    resp = client.get("/api/server-status?id=1").data.decode("utf8")
+    resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
     resp_dict = json.loads(resp)
     assert resp_dict['status'] == False
 
 
 def console_output(client):
+    server_id = get_server_id_by_name(client, "Minecraft")
+
     # Test starting the server.
     response = client.get(
-        "/controls?server=Minecraft&command=st", follow_redirects=True
+        f"/controls?server_id={server_id}&command=st", follow_redirects=True
     )
     assert response.status_code == 200
 
     time.sleep(5)
 
     # Check output lines are there.
-    response = client.get("/api/cmd-output?server=Minecraft")
+    response = client.get(f"/api/cmd-output/{server_id}")
     assert response.status_code == 200
     assert b"stdout" in response.data
 
@@ -1589,12 +1595,12 @@ def console_output(client):
 
     # Run until "process_lock": false (aka proc stopped).
     while (
-        b'"process_lock": true' in client.get("/api/cmd-output?server=Minecraft").data
+        b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data
     ):
         time.sleep(3)
 
     time.sleep(1)
-    assert b'"process_lock": false' in client.get("/api/cmd-output?server=Minecraft").data
+    assert b'"process_lock": false' in client.get(f"/api/cmd-output/{server_id}").data
 
     # Simulate front end js console mode.
     # 1. First POST to /api/update-console
@@ -1604,12 +1610,12 @@ def console_output(client):
     time.sleep(10)
 
     response = client.post(
-        "/api/update-console", data={"server": "Minecraft"}
+        f"/api/update-console/{server_id}"
     )
     assert response.status_code == 200
 
     print("######################## START CONSOLE OUTPUT")
-    resp_json = client.get("/api/cmd-output?server=Minecraft").data.decode("utf8")
+    resp_json = client.get(f"/api/cmd-output/{server_id}").data.decode("utf8")
     resp_data = json.loads(resp_json)
     print(resp_json)
 
@@ -1663,6 +1669,7 @@ def test_install_newuser(app, client):
         game_server_start_stop(client)
         console_output(client)
 
+        server_id = get_server_id_by_name(client, "Minecraft")
         response = client.post(
             "/settings", data={"delete_files": "true"}, follow_redirects=True
         )
@@ -1670,20 +1677,19 @@ def test_install_newuser(app, client):
 
         # Stop the server.
         response = client.get(
-            "/controls?server=Minecraft&command=sp", follow_redirects=True
+            f"/controls?server_id={server_id}&command=sp", follow_redirects=True
         )
         assert response.status_code == 200
 
         # Run until "process_lock": false (aka proc stopped).
         while (
             b'"process_lock": true'
-            in client.get("/api/cmd-output?server=Minecraft").data
+            in client.get(f"/api/cmd-output/{server_id}").data
         ):
             time.sleep(3)
 
-        response = client.get("/delete?server=Minecraft", follow_redirects=True)
-        msg = b"Game server, Minecraft deleted"
-        check_response(response, msg, 200, "views.home")
+        response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
+        assert response.status_code == 204
 
         dir_path = "/home/mcserver"
         i = 0
@@ -1741,12 +1747,14 @@ def test_install_sameuser(app, client):
         game_server_start_stop(client)
         console_output(client)
 
+        server_id = get_server_id_by_name(client, "Minecraft")
         response = client.post(
             "/settings", data={"delete_files": "true"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.settings")
 
-        response = client.get("/delete?server=Minecraft", follow_redirects=True)
-        msg = b"Game server, Minecraft deleted"
-        check_response(response, msg, 200, "views.home")
+        response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
+        msg = ""
+        check_response(response, msg, 204, "views.home")
         assert not os.path.exists("/home/mcserver")
+

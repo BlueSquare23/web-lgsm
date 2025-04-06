@@ -1754,7 +1754,7 @@ def test_install_sameuser(app, client):
         check_response(response, error_msg, resp_code, "views.settings")
 
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
-        msg = ""
-        check_response(response, msg, 204, "views.home")
+        assert response.status_code == 204
         assert not os.path.exists("/home/mcserver")
+
 

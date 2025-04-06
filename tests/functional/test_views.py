@@ -1456,7 +1456,7 @@ def game_server_start_stop(client):
 #    os.system(f"sudo -n -u mcserver /home/mcserver/GameServers/Minecraft/mcserver")
 
     # Check output lines are there.
-    response = client.get(f"/api/cmd-output?server_id={server_id}")
+    response = client.get(f"/api/cmd-output/{server_id}")
     assert response.status_code == 200
     assert b"stdout" in response.data
 #    print(

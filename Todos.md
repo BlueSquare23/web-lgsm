@@ -142,6 +142,12 @@
   - [x] Will require tweaking existing api endpoints to get them into classes,
     but shouldn't be too hard.
 
+* [x] **Add builtin swagger docs for API**
+  - API not incredibly useful yet on its own, but laying the groundwork.
+  - As this projects more and more will be moved into the API and so this
+    documentation will become more and more important so good to get a jump on
+    it now.
+
 * [x] **Turn Delete into its own API route**
   - Yeah this "page" doesn't render a template. Is basically already an api
     endpoint. Just needs formally converted into one.

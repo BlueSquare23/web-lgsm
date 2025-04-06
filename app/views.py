@@ -3,6 +3,7 @@ import io
 import re
 import sys
 import json
+import yaml
 import time
 import signal
 import shutil
@@ -45,8 +46,6 @@ PATHS = {
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
-
-api = Blueprint('api', __name__)
 
 ######### Home Page #########
 
@@ -936,3 +935,27 @@ def edit():
         file_contents=file_contents,
         cfg_file_name=cfg_file,
     )
+
+
+######### Swagger API Docs #########
+
+def load_spec():
+    spec_path = os.path.join(os.path.dirname(__file__), 'specs', 'api_spec.yaml')
+    with open(spec_path, 'r') as f:
+        spec = yaml.safe_load(f)
+
+    base_url = request.host_url.rstrip('/')
+    api_url = f"{base_url}/api"
+
+    spec['servers'] = [{
+        'url': api_url,
+        'description': 'Current host'
+    }]
+
+    return spec
+
+@views.route('/api/spec')
+@login_required
+def get_spec():
+    return load_spec()
+

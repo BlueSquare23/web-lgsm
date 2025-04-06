@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add builtin swagger documentation for project's API.
 - Make new /api/delete API route for removing game servers.
 - Create `api.py` file for holding API routes.
 - Add `processes_global.py` as module level singleton for holding process objects.

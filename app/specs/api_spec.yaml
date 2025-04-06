@@ -1,0 +1,240 @@
+openapi: 3.0.0
+info:
+  title: Web-LGSM API
+  description: |-
+    API for the web-lgsm game server manager project
+
+    Some useful links:
+    - [Project's Github - Web-LGSM](https://github.com/bluesquare23/web-lgsm)
+    - [Design Documentation](https://github.com/BlueSquare23/web-lgsm/blob/master/docs/DESIGN.md)
+  version: 1.0.0
+  contact:
+    email: johnlradford23@gmail.com
+  license:
+    name: MIT License
+    url: https://raw.githubusercontent.com/BlueSquare23/web-lgsm/refs/heads/master/license.txt
+externalDocs:
+  description: Find out more about Swagger
+  url: https://swagger.io
+servers:
+  - url: https://your-web-lgsm-domain/api/
+tags:
+  - name: update-console
+    description: Send request to refresh console data
+  - name: server-status
+    description: Get GameServer statuses (on/off)
+  - name: system-usage
+    description: Get CPU, Mem, Disk, & Network Stats
+  - name: cmd-output
+    description: Get recent command output for GameServer
+  - name: delete
+    description: Delete GameServer entries from app
+paths:
+  /update-console/{server_id}:
+    post:
+      tags: ['update-console']
+      summary: Update console output for a specific server
+      description: Captures and updates the console output for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Console output updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Success:
+                    type: string
+                    example: "Output updated!"
+        '400':
+          description: Bad request (missing or invalid server ID)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Supplied server does not exist!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission denied!"
+        '503':
+          description: Service unavailable (refresh command failed)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Refresh cmd failed!"
+
+  /server-status/{server_id}:
+    get:
+      tags: ['server-status']
+      summary: Get status of a specific server
+      description: Retrieves the current status of the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Server status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Server ID
+                  status:
+                    type: string
+                    description: Current server status
+        '400':
+          description: Bad request (missing or invalid server ID)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Invalid id"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission Denied!"
+
+  /system-usage:
+    get:
+      tags: ['system-usage']
+      summary: Get system usage statistics
+      description: Retrieves system resource usage statistics
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: System stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: System resource usage statistics
+
+  /cmd-output/{server_id}:
+    get:
+      tags: ['cmd-output']
+      summary: Get command output for a server
+      description: Retrieves the command output for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Command output retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Command output data
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission Denied!"
+
+  /delete/{server_id}:
+    delete:
+      tags: ['delete']
+      summary: Delete a game server
+      description: Deletes the specified game server with optional file and user cleanup
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server to delete
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Server deleted successfully (no content)
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Server not found!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Insufficient permission to delete server"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Problem deleting server, see error logs for more details."
+
+securitySchemes:
+  cookieAuth:
+    type: apiKey
+    in: cookie
+    name: session
+    description: Session cookie for authentication

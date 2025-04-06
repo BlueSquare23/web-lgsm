@@ -3,6 +3,7 @@
 
 {% block content %}
       {% set parsed_json = user.permissions|from_json %}
+      {% include 'spinners.html' %}
 
       <br />
       <h2 style="color: white;">Installed Servers</h2>
@@ -10,7 +11,7 @@
       {% if all_game_servers is not none %}
         {% if all_game_servers|length > 0 %}
           {% if user.role == 'admin' or parsed_json.servers|length > 0 %}
-            <form method="POST" action="/delete">
+            <form id="delete-selected-form">
               <div class="list-group form-check form-switch border border-secondary">
                 {# Hacky ass solution to printing no servers when user has none #}
                 {% set has_server = {'has': False} %}
@@ -52,7 +53,7 @@
                 {% endfor %}
               </div>
               <br />
-              <button onclick="return confirm('Are you sure you want to delete these servers?');" class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
+              <button class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
             </form>
             <script src="/static/js/update-status-indicators.js"></script>
           {% else %}
@@ -136,5 +137,10 @@
         {% endif %}
 
       {% endif %}
+
+      <!-- Import JavaScript -->
+      <script src="/static/js/show-spinners.js"></script>
+      <script src="/static/js/show-alert.js"></script>
+      <script src="/static/js/delete-selected-form.js"></script>
 
 {% endblock %}

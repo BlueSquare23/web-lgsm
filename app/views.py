@@ -122,7 +122,7 @@ def controls():
         flash("No game server installation directory found!", category="error")
         return redirect(url_for("views.home"))
 
-    # If config editor is disabled in the main.conf.
+    # If cfg editor is disabled in the main.conf.
     if not config_options["cfg_editor"]:
         cfg_paths = []
     else:
@@ -814,82 +814,6 @@ def add():
         return redirect(url_for("views.home"))
 
     return render_template("add.html", user=current_user), status_code
-
-
-# TODO: Make this an API route instead. It basically already is, just formally
-# needs turned into such.
-######### Delete Route #########
-
-@views.route("/delete", methods=["GET", "POST"])
-@login_required
-def delete():
-
-    # TODO v1.9: I'm thinking of adding an additional perms check here just to
-    # see if user can access route. Will still also keep server specific check
-    # below. Idk still have to think about it a bit.
-
-    config_options = read_config("delete")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
-    # NOTE: For everyone's safety, if config options are incongruous, default
-    # to safer keep user, keep files option. (ie. If delete_user is True and
-    # remove_files is False, default to keep user. Cannot delete the user and
-    # keep their files. That is technically possible in Linux. However, to make
-    # things easier on me and hide some unnecessary complexity, my app does not
-    # allow it and will default to keeping users & files in that case.)
-    if config_options["delete_user"] and not config_options["remove_files"]:
-        flash(
-            "Incongruous config options detected. Defaulting to safer keep user, keep files option",
-            category="error",
-        )
-        config_options["delete_user"] = False
-
-    def del_wrap(server_id):
-        """Wraps up delete logic used below"""
-        # Check if user has permissions to delete route & server.
-        if not user_has_permissions(current_user, "delete", server_id):
-            return redirect(url_for("views.home"))
-
-        current_app.logger.info(log_wrap(f"{current_user} deleting ID: ", server_id))
-
-        server = GameServer.query.filter_by(id=server_id).first()
-        if server == None:
-            flash("No such server found!", category="error")
-            return redirect(url_for("views.home"))
-
-        current_app.logger.info(server)
-
-        # Drop any saved proc_info objects.
-        remove_process(server_id)
-
-        # Log to ensure process was dropped.
-        current_app.logger.info(log_wrap("All processes", get_all_processes()))
-
-        if not delete_server(
-            server, config_options["remove_files"], config_options["delete_user"]
-        ):
-            flash(
-                f"Something's gone wrong deleting server, {server_name}",
-                category="error",
-            )
-
-        # We don't want to keep deleted servers in the cache.
-        update_tmux_socket_name_cache(server_id, None, True)
-
-    # Delete via POST is for multiple deletions.
-    # Post submissions come from delete toggles on home page.
-    if request.method == "POST":
-        for tag, server_id in request.form.items():
-            del_wrap(server_id)
-    else:
-        server_name = request.args.get("server")
-        if server_name == None:
-            flash("Missing Required Args!", category="error")
-            return redirect(url_for("views.home"))
-
-        del_wrap(server_name)
-
-    return redirect(url_for("views.home"))
 
 
 ######### Edit Route #########

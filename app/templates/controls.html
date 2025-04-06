@@ -80,12 +80,6 @@
       </div>
       <br />
 
-      <script>
-        function showSpinners() {
-          const spinners = document.getElementById('spinners');
-          spinners.style.display = 'block';
-        }
-      </script>
       <!-- Set JS vars from Jinja vars. -->
       <script>
         let serverId = "{{ server_id }}";
@@ -104,18 +98,17 @@
         let sConsole = false;
       {% endif %}
       </script>
-      <script src="/static/js/update-xterm.js"></script>
-      <script>
-      </script>
 
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
         /\ Top /\
       </button>
+      <button id="delete-btn" class="btn btn-outline-danger">Delete Server</button>
 
-      <a id="del-button" title="Remove server entry from web-lgsm database" onclick="return confirm('Are you sure you want to delete {{server_name}}?');" class="btn btn-outline-danger" href="/delete?server_id={{server_id}}" role="button">
-        Delete Server
-      </a>
-
+      <!-- Import JavaScript -->
+      <script src="/static/js/update-xterm.js"></script>
+      <script src="/static/js/show-spinners.js"></script>
+      <script src="/static/js/show-alert.js"></script>
+      <script src="/static/js/delete-btn.js"></script>
 
       <!-- TODO v1.9: Make config options display on page if debug.
       {# if config_options.debug is defined and config_options.debug #}

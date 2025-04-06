@@ -142,9 +142,11 @@
   - [x] Will require tweaking existing api endpoints to get them into classes,
     but shouldn't be too hard.
 
-* [ ] **Turn Delete into its own API route**
+* [x] **Turn Delete into its own API route**
   - Yeah this "page" doesn't render a template. Is basically already an api
     endpoint. Just needs formally converted into one.
+
+* [x] **Fix multi game server delete to work via new api route**
 
 * [x] **Make game server start just purge socket file name cache for that game server**
   - Right now its just a global cache purge which means all servers tmux socket

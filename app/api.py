@@ -149,7 +149,7 @@ class SystemUsage(Resource):
 api.add_resource(SystemUsage, "/system-usage")
 
 
-######### API CMD Output Page #########
+######### API CMD Output #########
 
 class CmdOutput(Resource):
     @login_required
@@ -179,4 +179,60 @@ class CmdOutput(Resource):
 
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 
+
+######### API GameServer Delete #########
+
+class GameServerDelete(Resource):
+    @login_required
+    def delete(self, server_id):
+        abort_if_id_none(server_id)
+
+        server = GameServer.query.filter_by(id=server_id).first()
+        if server == None:
+            resp_dict = {"Error": "Server not found!"}
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=404, mimetype="application/json"
+            )
+            return response
+
+        config = read_config("delete")
+        current_app.logger.info(log_wrap("config", config))
+
+        # NOTE: For everyone's safety, if config options are incongruous, default
+        # to safer keep user, keep files option. (ie. If delete_user is True and
+        # remove_files is False, default to keep user.
+        if config["delete_user"] and not config["remove_files"]:
+            config["delete_user"] = False
+
+        # Check if user has permissions to delete route & server.
+        if not user_has_permissions(current_user, "delete", server_id):
+            resp_dict = {"Error": f"Insufficient permission to delete {server.install_name}"}
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
+            )
+            return response
+
+        current_app.logger.info(log_wrap(f"{current_user} deleting ID: ", server_id))
+
+        current_app.logger.info(server)
+
+        # Drop any saved proc_info objects.
+        remove_process(server_id)
+
+        # Log to ensure process was dropped.
+        current_app.logger.info(log_wrap("All processes", get_all_processes()))
+
+        if not delete_server(server, config["remove_files"], config["delete_user"]):
+            resp_dict = {"Error": "Problem deleting server, see error logs for more details."}
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
+            )
+            return response
+            
+        # We don't want to keep deleted servers in the cache.
+        update_tmux_socket_name_cache(server_id, None, True)
+
+        return "", 204
+
+api.add_resource(GameServerDelete, "/delete/<string:server_id>")
 

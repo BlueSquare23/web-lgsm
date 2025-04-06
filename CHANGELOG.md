@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Make new /api/delete API route for removing game servers.
 - Create `api.py` file for holding API routes.
 - Add `processes_global.py` as module level singleton for holding process objects.
   - List of `proc_info` objects. Global singleton shared between Views, Utils, & API.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Make individual & multi GameServer delete buttons work via new API route.
 - Make API endpoints utilize real `flask_restful` module for building out API.
 - Transition codebase to use game server ID instead of name as main identifier.
 - Make GameServers use UUIDs now for primary key.

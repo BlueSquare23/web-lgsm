@@ -38,8 +38,11 @@ def get_process(server_id):
 
     Returns:
         proc_info (ProcInfoVessel): Returns proc_info object in dictionary,
-                                    else returns None.
+        else returns None.
     """
+    if server_id not in list(processes.keys()):
+        return None
+
     return processes[server_id]
 
 

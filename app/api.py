@@ -172,6 +172,8 @@ class CmdOutput(Resource):
             return response
 
         output = get_process(server_id)
+        if output == None:
+            output = add_process(server_id)
 
         # Returns json for used by ajax code on /controls route.
         response = Response(output.toJSON(), status=200, mimetype="application/json")

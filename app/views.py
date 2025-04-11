@@ -69,7 +69,7 @@ def home():
 
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
     
-#    current_app.logger.info(log_wrap("######### SINGLETON TESTING SHARED ITEMS", processes))
+    current_app.logger.info(log_wrap("All Processes", get_all_processes()))
 
     return render_template(
         "home.html",
@@ -102,7 +102,6 @@ def controls():
             return redirect(url_for("views.home"))
 
         return redirect(url_for("views.controls", server_id=server.id))
-        
 
     # Check if user has permissions to game server for controls route.
     if not user_has_permissions(current_user, "controls", server_id):
@@ -152,14 +151,11 @@ def controls():
         return redirect(url_for("views.home"))
 
     # Object to hold process info from cmd in daemon thread.
-    proc_info = ProcInfoVessel()
-
-    # If this is the first time we're ever seeing the server_id then put it
-    # and its associated proc_info in the global servers dictionary.
-    if server_id not in get_all_processes():
-        add_process(server_id, proc_info)
-
     proc_info = get_process(server_id)
+    if proc_info == None: 
+        proc_info = add_process(server_id, proc_info=ProcInfoVessel())
+
+    current_app.logger.info(log_wrap("proc_info", proc_info))
 
     script_path = os.path.join(server.install_path, server.script_name)
 

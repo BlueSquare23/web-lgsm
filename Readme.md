@@ -64,9 +64,9 @@ cd web-lgsm
 > :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
 > `install.sh` script only supports Debian & Ubuntu Linux. However, technically
 > all the project needs to run is python3.9 or greater and some common shell
-> utilites._
+> utilities._
 > 
-> _If you're able to install the required dependacnies through your
+> _If you're able to install the required dependencies through your
 > distributions package manager and install the required python modules then
 > you should be able to run this on basically any flavor of Linux that is
 > supported by the base LGSM project._

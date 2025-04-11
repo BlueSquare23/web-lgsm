@@ -50,16 +50,15 @@
     - `/home`: Application home page index, contains links to game servers and live web-lgsm system cpu, mem, disk, net stats view.
     - `/controls`: Controls page for individual game servers. Holds start,stop,restart,etc. buttons, live console, and links to config editor.
     - `/install`: Install new game servers page. Contains a list of available LGSM game server titles that can be installed with the click of a button!
-    - `/api/update-console`: Handles running the underlying cmd for dumping tmux session live console output and returning it as a json object. (this is a hack and is bad!)
-    - `/api/server-status`: Handles returning live server status json used by home page cpu, mem, disk, net charts.
-    - `/api/cmd-output`: Handles running cmds and returning json output for all non-live console output cmds. (live console is weird, needs it own route)
     - `/settings`: Main settings page for application settings. Settings are stored in and map to values in the `main.conf` file. See `docs/config_options.md` for full list of config options.
     - `/about`: Basic about and credits page, nothing fancy.
     - `/add`: Page for adding additional already installed LGSM instances to the web interface. Can add locally installed game servers, game servers installed on remote servers, and game servers installed within docker containers.
-    - `/delete`: Backend route for handling game server delete requests. This should really be converted to an api route. That's basically what it is already. (No html content loaded from this page)
     - `/edit`: Game server config file editor page. If enabled, allows users to edit specific game server files through the web interface.
   * API:
-    - Nothing yet... But redesigns are coming!
+    - `/api/delete`: API route for handling game server delete requests. 
+    - `/api/update-console`: Handles running the underlying cmd for dumping tmux session live console output and returning it as a json object. (this is a hack and is bad!)
+    - `/api/server-status`: Handles returning live server status json used by home page cpu, mem, disk, net charts.
+    - `/api/cmd-output`: Handles running cmds and returning json output for all non-live console output cmds. (live console is weird, needs it own route)
 - **Models**: Describe the database models (if using SQLAlchemy or another ORM).
 - **Services**: Explain any backend services or business logic.
 - **Templates/Views**: If using Flask templates, describe how they are structured.

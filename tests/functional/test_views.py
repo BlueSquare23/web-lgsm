@@ -1415,8 +1415,8 @@ def full_game_server_install(client):
             installed_successfully = True
             break
 
-        timeout += 60
-        time.sleep(60)
+        timeout += 1
+        time.sleep(1)
 
 #    print("######################## GAME SERVER INSTALL OUTPUT")
 #    print(json.dumps(json.loads(response.data.decode("utf8")), indent=4))

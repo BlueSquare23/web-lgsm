@@ -69,7 +69,7 @@ def home():
 
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
     
-    current_app.logger.info(log_wrap("######### SINGLETON TESTING SHARED ITEMS", processes))
+#    current_app.logger.info(log_wrap("######### SINGLETON TESTING SHARED ITEMS", processes))
 
     return render_template(
         "home.html",
@@ -477,6 +477,14 @@ def install():
             name=f"web_lgsm_install_{server_id}",
         )
         install_daemon.start()
+
+        clear_daemon = Thread(
+            target=clear_proc_info_post_install,
+            args=(server_id, current_app.app_context()),
+            daemon=True,
+            name=f"clear_install_{server_id}",
+        )
+        clear_daemon.start()
 
         return render_template(
             "install.html",
@@ -953,7 +961,7 @@ def edit():
     return render_template(
         "edit.html",
         user=current_user,
-        server_name=server.install_name,
+        server_id=server.id,
         cfg_file=cfg_path,
         file_contents=file_contents,
         cfg_file_name=cfg_file,

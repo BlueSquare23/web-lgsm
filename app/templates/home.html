@@ -10,7 +10,7 @@
 
       {% if all_game_servers is not none %}
         {% if all_game_servers|length > 0 %}
-          {% if user.role == 'admin' or parsed_json.servers|length > 0 %}
+          {% if user.role == 'admin' or parsed_json.server_ids|length > 0 %}
             <form id="delete-selected-form">
               <div class="list-group form-check form-switch border border-secondary">
                 {# Hacky ass solution to printing no servers when user has none #}
@@ -29,7 +29,7 @@
                       </div>
                     </div>
                   {% else %}
-                    {% if user.role == 'admin' or server.id in parsed_json.servers %}
+                    {% if user.role == 'admin' or server.id in parsed_json.server_ids %}
                       {% if has_server.update({'has': True}) %} {% endif %}
                     <div class="list-group-item list-group-item-action">
                       <div class="d-flex align-items-center">

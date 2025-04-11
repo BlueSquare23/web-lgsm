@@ -169,7 +169,7 @@
       UUID page for server.
     - Or something like that. Still thinking about it...
 
-* [ ] **On first time loading server post install clear the install text.**
+* [x] **On first time loading server post install clear the install text.**
     - Aka when server install is marked finish, clear its entry from global
       servers dict. Then when someone enters the game server controls page for
       the first time they don't still see all the install blah output.
@@ -180,12 +180,12 @@
       the apps state directly. Have to somehow trigger on that DB field being
       updated from within the app.
 
+## Version 1.8.4 Todos
+
 * [ ] **Make work for python 3.13**
   - I was silly and tried to put 3.13 in the tests at the end of this release
     and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
     make it work soon.
-
-## Version 1.8.4 Todos
 
 * [ ] **Fix update mechanism... again**
   - I need to just mv existing to .bak and install fresh,

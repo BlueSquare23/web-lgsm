@@ -24,7 +24,7 @@
         <div class="row">
           <div class="col">
             <form method="POST" id="save-edit" action="/edit">
-              <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+              <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
               <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
 
               <input class="btn btn-outline-primary" type="submit" value="Save File 💾 " />
@@ -33,7 +33,7 @@
 
           <div class="col">
             <form method="POST" id="download-cfg" action="/edit">
-              <input type="hidden" id="server" name="server" value="{{server_name}}" class="form-control" />
+              <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
               <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
               <input type="hidden" id="download" name="download" value="yes" class="form-control" />
 
@@ -43,7 +43,7 @@
           </div>
 
           <div class="col">
-            <a href="/controls?server={{server_name}}" class="btn btn-outline-primary" tabindex="-1" role="button" aria-disabled="true">Back to Controls ↩️ </a>
+            <a href="/controls?server_id={{server_id}}" class="btn btn-outline-primary" tabindex="-1" role="button" aria-disabled="true">Back to Controls ↩️ </a>
           </div>
 
         </div>

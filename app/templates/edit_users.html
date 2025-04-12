@@ -128,8 +128,8 @@
                   <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllGameServers()">All Game Servers</button>
                   <div class="form-check">
                     {% for server in installed_servers %}
-                      <input class="form-check-input gameserver-checkbox" type="checkbox" id="server_{{ server.install_name }}" name="servers" value="{{ server.install_name }}">
-                      <label class="form-check-label" for="server_{{ server.install_name }}">{{ server.install_name }}</label><br />
+                      <input class="form-check-input gameserver-checkbox" type="checkbox" id="server_{{ server.id }}" name="server_ids" value="{{ server.id }}">
+                      <label class="form-check-label" for="server_{{ server.id }}">{{ server.install_name }}</label><br />
                     {% endfor %}
                   </div>
                   {% else %}

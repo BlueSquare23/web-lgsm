@@ -55,16 +55,14 @@ def run_command_popen(command):
 
 def relaunch_in_venv():
     """Activate the virtual environment and relaunch the script."""
-    venv_path = os.path.join(SCRIPTPATH, "venv/bin/activate")
+    venv_path = "/opt/web-lgsm/bin/activate"
     if not os.path.isfile(venv_path):
         err_msg = f"""\
  [!] Virtual environment not found at {venv_path}
  [*] Create a virtual environment using the following commands:
-         cd {SCRIPTPATH}
-         python3 -m venv venv
+         sudo python3 -m venv /opt/web-lgsm
  [*] Then install the required pip packages with this command:
-        source venv/bin/activate
-        pip3 install -r requirements.txt\
+        sudo /opt/web-lgsm/bin/pip3 install -r requirements.txt\
         """
         exit(err_msg)
 

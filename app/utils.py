@@ -26,11 +26,12 @@ from . import db
 from .models import GameServer
 from .proc_info_vessel import ProcInfoVessel
 from .cmd_descriptor import CmdDescriptor
+from .processes_global import *
 
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = os.path.join(CWD, "playbooks/ansible_connector.py")
+ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
 PATHS = {
     "docker": "/usr/bin/docker",
     "sudo": "/usr/bin/sudo",
@@ -44,7 +45,7 @@ PATHS = {
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
-    os.path.join(CWD, "venv/bin/python"),
+    "/opt/web-lgsm/bin/python",
     ANSIBLE_CONNECTOR,
 ]
 
@@ -421,18 +422,32 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
     return server.script_name + "-" + gs_id
 
 
-def update_tmux_socket_name_cache(server_id, socket_name):
+def update_tmux_socket_name_cache(server_id, socket_name, delete=False):
     """
     Writes to tmux socket name cache with fresh data.
+
+    Args:
+        server_id (int): ID of Game Server to get tmux socket name for.
+        delete (bool): If delete specified, given entry will be removed.
+
+    Returns:
+        None
     """
     cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
     cache_data = dict()
+    current_app.logger.debug(log_wrap("Updating cache for server_id:", server_id))
 
     if os.path.exists(cache_file):
         with open(cache_file, "r") as file:
             cache_data = json.load(file)
 
-    cache_data[server_id] = socket_name
+    if delete:
+        # Json.dump casts int to str. So need to re-cast to str on delete.
+        server_id = str(server_id)
+        if server_id in cache_data:
+            del cache_data[server_id]
+    else:
+        cache_data[server_id] = socket_name
 
     with open(cache_file, "w") as file:
         json.dump(cache_data, file)
@@ -615,16 +630,23 @@ def get_running_installs():
     Gets list of running install thread names, if any are currently running.
 
     Returns:
-        thread_names (list): List of currently running install threads.
+        dict: Mapping of observed running threads for game server IDs to game
+              server names.
     """
     threads = threading.enumerate()
     # Get all active threads.
-    thread_names = []
-    for thread in threads:
-        if thread.is_alive() and thread.name.startswith("Install_"):
-            thread_names.append(thread.name)
+    running_install_threads = dict()
 
-    return thread_names
+    for thread in threads:
+        if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
+            server_id = thread.name.replace("web_lgsm_install_", "")
+            server = GameServer.query.filter_by(id=server_id).first()
+
+            # Check game server exists.
+            if server:
+                running_install_threads[server_id] =  server.install_name
+
+    return running_install_threads
 
 
 def find_cfg_paths(server):
@@ -1196,14 +1218,14 @@ def get_server_stats():
     return stats
 
 
-def user_has_permissions(current_user, route, server_name=None):
+def user_has_permissions(current_user, route, server_id=None):
     """
     Check's if current user has permissions to various routes.
 
     Args:
         current_user (object): The currently logged in user object.
         route (string): The route to apply permissions controls to.
-        server_name (string): Game server name to check user has access to.
+        server_id (string): Game server id to check user has access to.
                               Only matters for controls & delete routes.
 
     Returns:
@@ -1240,7 +1262,7 @@ def user_has_permissions(current_user, route, server_name=None):
             )
             return False
 
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             flash(
                 "Your user does NOT have permission to delete this game server!",
                 category="error",
@@ -1256,7 +1278,7 @@ def user_has_permissions(current_user, route, server_name=None):
             return False
 
     if route == "controls":
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             flash(
                 "Your user does NOT have permission access this game server!",
                 category="error",
@@ -1269,7 +1291,7 @@ def user_has_permissions(current_user, route, server_name=None):
             return False
 
     if route == "server-statuses" or route == "cmd-output":
-        if server_name not in user_perms["servers"]:
+        if server_id not in user_perms["server_ids"]:
             return False
 
     return True
@@ -1807,3 +1829,47 @@ def read_config(route):
             config, "settings", "cfg_editor", False, True
         )
         return config_options
+
+
+def clear_proc_info_post_install(server_id, app_context):
+    """
+    Clears the stdout & stderr buffers for proc_info after install finishes.
+    Does so by checking running install threads, if thread for ID is gone from
+    running list and game server install marked finished, clear buffers.
+
+    Args:
+        server_id (str): UUID for game server.
+        app_context (AppContext): Optional Current app context needed for
+                                  logging in a thread.
+    """
+    # App context needed for logging in threads.
+    if app_context:
+        app_context.push()
+
+    max_lifetime = 3600  # 1 Hour TTL
+    runtime = 0
+
+    # Little buffer to make sure install daemon thread starts first.
+    time.sleep(5)
+    current_app.logger.info("<CLEAR DAEMON> - Starting clear thread")
+
+    while runtime < max_lifetime:
+        all_installs = get_running_installs()
+
+        # Aka install finished or died.
+        if server_id not in all_installs:
+            server = GameServer.query.filter_by(id=server_id).first()
+
+            # Rare edge case if server deleted before thread dies.
+            if server == None:
+                return
+
+            # If install thread not running anymore and install marked
+            # finished, clear out the old proc_info object.
+            if server.install_finished:
+                current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
+                remove_process(server_id)
+                return
+
+        time.sleep(5)
+        runtime += 5

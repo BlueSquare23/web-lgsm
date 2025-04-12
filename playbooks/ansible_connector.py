@@ -17,16 +17,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 ## Globals.
-# Plabook dir path.
-SCRIPTPATH = os.path.dirname(os.path.abspath(__file__))
-os.chdir(os.path.join(SCRIPTPATH, ".."))
-CWD = os.getcwd()
-JSON_VARS_FILE = os.path.join(CWD, "json/ansible_vars.json")
 PS = '/usr/bin/ps'
 PKILL = '/usr/bin/pkill'
+PLAYBOOKS = '/usr/local/share/web-lgsm'  # Playbook dir path.
+VENV = '/opt/web-lgsm'  # System venv path.
+APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT GET'S UPDATED!
 
-# Use cwd to import db classes from app.
-sys.path.append(CWD)
+# Import db classes from app.
+sys.path.append(APP_PATH)
 from app import db
 from app.models import User, GameServer
 
@@ -75,7 +73,7 @@ def db_get(server_id):
 
 def validate_username(username):
     """Checks supplied username is in accepted usernames."""
-    yaml_file_path = os.path.join(CWD, "playbooks/vars/accepted_usernames.yml")
+    yaml_file_path = os.path.join(PLAYBOOKS, "playbooks/vars/accepted_usernames.yml")
 
     with open(yaml_file_path, "r") as file:
         data = yaml.safe_load(file)
@@ -193,9 +191,9 @@ def run_install_new_game_server(server_id):
         print("Installation for server already completed!")
         exit(123)
 
-    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
+    ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     install_gs_playbook_path = os.path.join(
-        CWD, "playbooks/install_new_game_server.yml"
+        PLAYBOOKS, "playbooks/install_new_game_server.yml"
     )
 
     sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
@@ -302,7 +300,7 @@ def cancel_install(pid):
     """
     pid_cmd = get_script_cmd_from_pid(pid)
     self_path = os.path.join(SCRIPTPATH, __file__)
-    self_venv = os.path.join(CWD, 'venv/bin/python')
+    self_venv = os.path.join(VENV, 'bin/python')
     self_cmd = f"/usr/bin/sudo -n {self_venv} {self_path}"
 
     # Validate to ensure only killing instances of own script pid.
@@ -326,8 +324,8 @@ def run_delete_user(server_id):
 
     validate_username(server.username)
 
-    ansible_cmd_path = os.path.join(CWD, "venv/bin/ansible-playbook")
-    del_user_path = os.path.join(CWD, "playbooks/delete_user.yml")
+    ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
+    del_user_path = os.path.join(PLAYBOOKS, "playbooks/delete_user.yml")
     cmd = [
         "/usr/bin/sudo",
         "-n",
@@ -365,11 +363,7 @@ def main(argv):
         if opt in ("-h", "--help", "-d", "--dry"):
             continue
 
-        try:
-            server_id = int(arg)
-        except ValueError:
-            print_help("Error: Arg <id> must be int!")
-
+        server_id = arg
         if opt in ("-i", "--install"):
             run_install_new_game_server(server_id)
 

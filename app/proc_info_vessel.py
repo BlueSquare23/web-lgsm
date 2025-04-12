@@ -1,6 +1,5 @@
 import json
 
-
 class ProcInfoVessel:
     """
     Class used to create objects that hold information about processes launched
@@ -19,6 +18,7 @@ class ProcInfoVessel:
         """
         self.stdout = []
         self.stderr = []
+        self.server_id = None  # If applies for process
         self.process_lock = None
         self.pid = None
         self.exit_status = None
@@ -27,7 +27,7 @@ class ProcInfoVessel:
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __str__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
 
     def __repr__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"

@@ -9,6 +9,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from logging.config import dictConfig
 from flask.logging import default_handler
+from flask_swagger_ui import get_swaggerui_blueprint
 
 # Prevent creation of __pycache__. Cache messes up auth.
 sys.dont_write_bytecode = True
@@ -19,7 +20,8 @@ DB_NAME = "database.db"
 env_path = Path(".") / ".secret"
 load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ["SECRET_KEY"]
-
+SWAGGER_URL = '/docs'
+API_URL = '/api/spec'
 
 def main():
     # Setup logging.
@@ -67,13 +69,40 @@ def main():
 
     # Pull in our views route(s).
     from .views import views
-
     app.register_blueprint(views, url_prefix="/")
 
     # Pull in our auth route(s).
     from .auth import auth
-
     app.register_blueprint(auth, url_prefix="/")
+
+    # Pull in our api route(s).
+    from .api import api_bp
+    app.register_blueprint(api_bp, url_prefix="/api")
+
+    # Create Swagger UI blueprint.
+    swagger_ui = get_swaggerui_blueprint(
+        SWAGGER_URL,
+        API_URL,
+        config={
+            'app_name': "Web-LGSM API",
+            'validatorUrl': None,
+            'displayRequestDuration': True,
+            'docExpansion': 'none',
+            'persistAuthorization': True,
+            'supportedSubmitMethods': ['get', 'post', 'put', 'delete', 'patch'],
+            'securityDefinitions': {
+                'cookieAuth': {
+                    'type': 'apiKey',
+                    'name': 'session',
+                    'in': 'cookie',
+                    'description': 'Session cookie for authentication'
+                }
+            }
+        }
+    )
+
+    # Register Swagger UI blueprint
+    app.register_blueprint(swagger_ui)
 
     # Initialize DB.
     from .models import User, GameServer

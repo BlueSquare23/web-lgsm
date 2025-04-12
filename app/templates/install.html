@@ -10,11 +10,10 @@
         {% if running_installs|length > 0 %}
           <h2>Currently Running Installs</h2>
           <ul>
-          {% for install in running_installs %}
-            {% set server_name = install | replace('Install_', '') %}
+          {% for server_id, server_name in running_installs.items() %}
             <div class="list-group-item list-group-item-action">
               <div class="d-flex align-items-center">
-                <a href="/install?server={{server_name}}" class="game_server_link text-decoration-none flex-grow-1">{{server_name}}</a>
+                <a href="/install?server_id={{server_id}}" class="game_server_link text-decoration-none flex-grow-1">{{server_name}}</a>
               </div>
             </div>
           {% endfor %}
@@ -53,7 +52,9 @@
                 <input type="hidden" id="server_name" name="server_name" value="{{script_name}}" class="form-control" />
                 <input type="hidden" id="full_name" name="full_name" value="{{full_name}}" class="form-control" />
 
-                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
+                                                                                                              <!-- NOTE! updateTerminal() Currently Broken!!! Needs to Use ID instead somehow... -->
+<!--                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button> -->
+                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
               </form>
             </div>
             <div class="col text-primary">
@@ -69,7 +70,7 @@
       <!-- Set global vars for update-xterm.js -->
       {# TODO v1.9 Put this in its own template file, used here and on controls #}
       <script>
-        var serverName = "{{ install_name }}";
+        var serverId = "{{ server_id }}";
         var textColor = "{{ config_options.text_color }}";
       {# If show_stderr var True #}
       {% if config_options.show_stderr is defined and config_options.show_stderr %}
@@ -83,12 +84,15 @@
       {% else %}
         let sConsole = false;
       {% endif %}
+        if (serverId) {
+          updateTerminal(serverId);
+        }
       </script>
       <script src="/static/js/update-xterm.js"></script>
-      <script src="static/js/update-install-search.js"></script>
+      <script src="/static/js/update-install-search.js"></script>
 
-      {% if install_name %}
-        <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server={{install_name}}&cancel=true" role="button">Cancel Install</a>
+      {% if server_id %}
+        <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server_id={{server_id}}&cancel=true" role="button">Cancel Install</a>
       {% endif %}
       <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
         /\ Top /\

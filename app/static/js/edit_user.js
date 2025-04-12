@@ -23,7 +23,7 @@ function applyUserPermissions() {
   // Check the servers checkboxes.
   const serverCheckboxes = document.querySelectorAll('.gameserver-checkbox');
   serverCheckboxes.forEach(checkbox => {
-    if (userPerms.servers.includes(checkbox.value)) {
+    if (userPerms.server_ids.includes(checkbox.value)) {
       checkbox.checked = true;
     }
   });

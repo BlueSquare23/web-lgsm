@@ -31,11 +31,10 @@ window.addEventListener('resize', function() {
     fitAddon.fit();
 });
 
-function refreshOutput(sName) {
+function refreshOutput(sId) {
   return $.ajax({
-    url: '/api/update-console',
+    url: '/api/update-console/' + sId,
     type: 'POST',
-    data: { 'server': serverName },
     error: function(reqObj, textStatus, errorThrown) {
       // Send errors to the console.
       term.write(textStatus + '\n' + errorThrown);
@@ -44,14 +43,12 @@ function refreshOutput(sName) {
   });
 }
 
-function updateTerminal(sName){
+function updateTerminal(sId){
   return $.ajax({
     dataType: 'json',
-    url: '/api/cmd-output',
+    url: '/api/cmd-output/' + sId,
     type: 'GET',
-    data: {
-      'server': sName
-    },
+
     error: function(reqObj, textStatus, errorThrown) {
       // Send errors to the console.
       term.write(textStatus + '\n' + errorThrown);
@@ -109,18 +106,18 @@ function updateTerminal(sName){
 }
 
 // If the variable is undefined, empty, or null, report no output.
-if (typeof serverName === 'undefined' || serverName === null || !serverName) {
+if (typeof serverId === 'undefined' || serverId === null || !serverId) {
   term.write('No Output Yet!\n\r');
 } else if (typeof sConsole !== 'undefined' && sConsole) {
   // If live console output mode is enabled, start the loop.
   spinners.style.display = "block";
   var interval = setInterval(function() {
-    refreshOutput(serverName).then(function() {
-      return updateTerminal(serverName);
+    refreshOutput(serverId).then(function() {
+      return updateTerminal(serverId);
     });
   }, 5000);
 } else {
   var interval = setInterval(function() {
-    updateTerminal(serverName);
+    updateTerminal(serverId);
   }, 500);
 }

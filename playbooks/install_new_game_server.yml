@@ -29,6 +29,14 @@
         - tasks/create_new_user.yml
         - tasks/set_default_new_user_group.yml
 
+    - name: Download linuxgsm.sh to /tmp/
+      get_url:
+        url: https://raw.githubusercontent.com/GameServerManagers/LinuxGSM/master/linuxgsm.sh
+        dest: /tmp/linuxgsm.sh
+        mode: '0755'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
     - name: Create new game server directory
       file:
         path: "{{ server_install_path }}"
@@ -39,30 +47,37 @@
 
     - name: Use linuxgsm.sh to fetch {{ server_script_name }}
       command:
-        chdir: "{{ playbook_dir }}/../scripts"
+        chdir: /tmp
         argv:
           - ./linuxgsm.sh 
           - "{{ server_script_name }}"
       register: lgsmsh_result
-      become: yes
+      become: yes 
       become_user: "{{ web_lgsm_user }}"
 
     - name: Print linuxgsm.sh output
       debug:
         msg: "Output: {{ lgsmsh_result.stdout }}"
 
-    - name: Copy {{ server_script_name }} into new server dir
+    - name: Copy {{ server_script_name }} into new server dir 
       copy:
-        src: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
+        src: "/tmp/{{ server_script_name }}"
         dest: "{{ server_install_path }}"
         owner: "{{ username }}"
         group: "{{ username }}"
         mode: '0750'
 
-    - name: Delete {{ server_script_name }} file
-      file:
-        path: "{{ playbook_dir }}/../scripts/{{ server_script_name }}"
-        state: absent
+    - name: Clean up temporary files
+      block:
+        - name: Remove downloaded linuxgsm.sh
+          file:
+            path: /tmp/linuxgsm.sh
+            state: absent
+
+        - name: Remove generated {{ server_script_name }}
+          file:
+            path: "/tmp/{{ server_script_name }}"
+            state: absent
 
     - name: Create ~/.ssh directory exists and set perms
       file:

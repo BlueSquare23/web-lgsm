@@ -149,7 +149,7 @@ def edit_users():
         return redirect(url_for("views.home"))
 
     installed_servers = GameServer.query.all()
-    all_server_names = [server.install_name for server in installed_servers]
+    all_server_ids = [server.id for server in installed_servers]
     all_controls = [
         "start",
         "stop",
@@ -231,7 +231,7 @@ def edit_users():
         edit_cfgs = request.form.get("edit_cfgs")
         delete_server = request.form.get("delete_server")
         controls = request.form.getlist("controls")
-        servers = request.form.getlist("servers")
+        server_ids = request.form.getlist("server_ids")
 
         if selected_user == "newuser" or change_user_pass == "true":
             if not check_require_auth_setup_fields(username, password1, password2):
@@ -294,14 +294,14 @@ def edit_users():
                     return redirect(url_for("auth.edit_users"))
             permissions["controls"] = controls
 
-        permissions["servers"] = []
-        if servers:
-            # Validate supplied server(s) are in installed list.
-            for server in servers:
-                if server not in all_server_names:
+        permissions["server_ids"] = []
+        if server_ids:
+            # Validate supplied server_id(s) are in installed list.
+            for server_id in server_ids:
+                if server_id not in all_server_ids:
                     flash("Invalid Server Supplied!", category="error")
                     return redirect(url_for("auth.edit_users"))
-            permissions["servers"] = servers
+            permissions["server_ids"] = server_ids
 
         # Only explicitly set admin if supplied.
         if is_admin != None:

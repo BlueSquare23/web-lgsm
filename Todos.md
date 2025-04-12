@@ -80,7 +80,112 @@
         - Add Nginx Proxy Manager to it.
 
 
+## Main Goals for v1.8 -> v1.9
+
+* [ ] **Restructure application and build out proper API**
+  - Ideally, the pages should just be an interface that communicate via rest-ish
+    JSON to apps API endpoints.
+  - Right now views routes / functions are handling waaayy tooo much logic. Whole
+    apps functionality happens via views functions. All this should be
+    happening via the app's API routes and just strung together by views logic.
+  
+* [ ] **Use Web Sockets for realtime communication**
+  - The console for this thing is just some inefficient jquery contently making
+    requests back to api endpoints. It works, but its a hacky mess. 
+  - I want to transition the app to use web sockets for this communication
+    instead.
+
+* [ ] **Overhaul & Redesign test code**
+  - [ ] Every single test should be idempotent (they're not rn).
+  - [ ] No test should depend on any other test (they all depend on each other rn).
+  - [ ] I need to learn more about how to actually fucking properly use pytest (rtfm).
+  - [ ] Bonus points: If I can get some Selenium tests in here.
+
+* [ ] **Improve overall design & documentation for project**
+  - I want to actually properly try to design, document, and build out parts of
+    this app. Full honest, I've never really done real software design before
+    and this app up until this point (2025) was build with nothing but loose design 
+    ideas and hopes and dreams.
+  - This lack of design has fucked me and hampered the future development of
+    this app. Oh well live and learn.
+  - Major goal moving forward is to properly think, read, test, mockup, design,
+    document, then build.
+
 ## Version 1.8.3 Todos
+
+* [x] **Fix whatever test(s) I just broke**
+  - This commit e4f649805d99bdc6a76e001e46974ed348221e46 broke some tests.
+  - Apparently, moving a bunch of install stuff to system level dirs is
+    disruptive, whoda guessed it?
+
+* [x] **Make App work via server_id's instead of server_name's**
+  - Decided to make this a pre-req before getting into API routes, cause why
+    keep writing new code that uses names instead of IDs.
+  - But wow yeah this really turned into the metaphorical thread that unravels
+    the whole sweater.
+  - Several things in the install route need re-designed and I'm wonder if it
+    might be better to dig even deeper and pull out even more of the rot at the
+    core.
+  - Still processing...
+
+* [x] **Move API Routes into own file**
+  - Unfortunately, this is not as trivial as copying and pasting the api route
+    code into its own file because api routes use a shared global with view
+    routes.
+  - I know bad design. Time to repay some technical debt. Will position app to
+    be way more betterer moving forward.
+
+* [x] **Use real flask_restful module for spinning up api endpoints**
+  - Allows me to use class based approach to define API endpoints.
+  - Just gives me more tools to work with for properly handling data via api
+    endpoints.
+  - [x] Will require tweaking existing api endpoints to get them into classes,
+    but shouldn't be too hard.
+
+* [x] **Add builtin swagger docs for API**
+  - API not incredibly useful yet on its own, but laying the groundwork.
+  - As this projects more and more will be moved into the API and so this
+    documentation will become more and more important so good to get a jump on
+    it now.
+
+* [x] **Turn Delete into its own API route**
+  - Yeah this "page" doesn't render a template. Is basically already an api
+    endpoint. Just needs formally converted into one.
+
+* [x] **Fix multi game server delete to work via new api route**
+
+* [x] **Make game server start just purge socket file name cache for that game server**
+  - Right now its just a global cache purge which means all servers tmux socket
+    name cache needs rebuilt after any one game server start.
+    - This is slow.
+  - If I write a function to just purge the socket name cache for that game
+    server should speed things up a bit for other game servers.
+
+* [x] **Add controls redirect for game server name to new uuid for backward compat**
+  - Basically, controls page used to work via names. I think there's a chance
+    people still have links in their browsers and might still want to be able
+    to go to `/controls?server=Minecraft` for example.
+    - So going to just make that try to do a lookup & redirect to controls by
+      UUID page for server.
+    - Or something like that. Still thinking about it...
+
+* [x] **On first time loading server post install clear the install text.**
+    - Aka when server install is marked finish, clear its entry from global
+      servers dict. Then when someone enters the game server controls page for
+      the first time they don't still see all the install blah output.
+    - This is going to be difficult, because currently the ansible connector
+      script is the thing that updates the `install_finished` field in the game
+      server. However, the app state is what stores the ProcInfoVessel objects
+      for installed game servers. So can't get the external script to update
+      the apps state directly. Have to somehow trigger on that DB field being
+      updated from within the app.
+
+## Version 1.8.4 Todos
+
+* [ ] **Make work for python 3.13**
+  - I was silly and tried to put 3.13 in the tests at the end of this release
+    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
+    make it work soon.
 
 * [ ] **Fix update mechanism... again**
   - I need to just mv existing to .bak and install fresh,
@@ -92,19 +197,11 @@
     - Install fresh
     - Import db and add any new fields
 
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
+* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
+  - Might need to just put a little sudo chown back to the user line for those
+    before running git pull or backing up etc.
 
-* [ ] **Make game server start just purge socket file name cache for that game server**
-  - Right now its just a global cache purge which means all servers tmux socket
-    name cache needs rebuilt after any one game server start.
-    - This is slow.
-  - If I write a function to just purge the socket name cache for that game
-    server should speed things up a bit for other game servers.
-
-* [ ] **Improve test code!**
+* [ ] **Redesign test code!**
   - [ ] Make auto backup and git restore main.conf file.
   - [ ] Make each test idempotent, and make sure no tests are dependant on
     other tests. 
@@ -113,31 +210,46 @@
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
 
-* [ ] **On first time loading server post install clear the install text.**
-    - Aka when server install is marked finish, clear its entry from global
-      servers dict. Then when someone enters the game server controls page for
-      the first time they don't still see all the install blah output.
-    - This is going to be difficult, because currently the ansible connector
-      script is the thing that updates the `install_finished` field in the game
-      server. However, the app state is what stores the ProcInfoVessel objects
-      for installed game servers. So can't get the external script to update
-      the apps state directly. Have to somehow trigger on that DB field being
-      updated from within the app.
+## Version 1.8.5 Todos
+
+* [ ] **Add new page & API route(s) for Edit Game Server Info**
+  - So far the only option for users to change game server information has been
+    to delete the install and manually re-add it. Not a great solution.
+  - I need to allow users to change their game server name, path, username,
+    ssh-key, etc.
+  - So there's need to be a new page and backend logic to enable this new
+    feature.
+  - This DB Model line set's install name to be unique:
+    `install_name = db.Column(db.String(150), unique=True)`
+
+* [ ] **Add new page & API route(s) for Restart/backup Scheduler.**
+  - User suggested this feature and I think its a good one.
+    - https://github.com/BlueSquare23/web-lgsm/issues/20
+  - The idea here would be to create a simple web interface to wrap up adding
+    crontab entries. Then the actual restarts or backups will just be handled
+    by the lgsm game server cli script itself.
+  - I've got all of the above to work through first but I do like this idea and
+    want to add it in.
+
+* [ ] **Add new page & API route(s) for export database information**
+  - I want to allow users to export their database to csv or json or something
+    for backup / manual update / migration purposes.
+
+* [ ] **Add user action audit log feature + route for viewing**
+  - Now that I have multiple users, when some user takes an action, I want to
+    record who did what when to an audit log for later viewing by
+    administrators in the web interface.
+  - [ ] Need new database model to store audit log info.
+  - [ ] Need new api routes to add info and remove info from audit log.
 
 ## Version 1.8.x Todos
 
-* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
-  - Might need to just put a little sudo chown back to the user line for those
-    before running git pull or backing up etc.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just
     pipe that info right to page if debug is true.
     - Not a big priority for v1.8 release.
 
-* [ ] **Make game server name editable.**
-  - This DB Model line set's install name to be unique:
-    `install_name = db.Column(db.String(150), unique=True)`
 
 * [ ] **Make install_path an optional main.conf parameter.**
   - By default I want to set this to just `/home/<user>/<server_name>`.
@@ -195,15 +307,6 @@
       really make sense and are doing too much.
     - Everything should just do one thing.
 
-* [ ] **Add Restart/backup Scheduler.**
-  - User suggested this feature and I think its a good one.
-    - https://github.com/BlueSquare23/web-lgsm/issues/20
-  - The idea here would be to create a simple web interface to wrap up adding
-    crontab entries. Then the actual restarts or backups will just be handled
-    by the lgsm game server cli script itself.
-  - I've got all of the above to work through first but I do like this idea and
-    want to add it in.
-  - Just a matter of time until I can get to it.
 
 * [ ] **Build out support for Fedora, Rocky Linux, & AlmaLinux.**
   - These are all of the linuxes supported by the base lgsm project.
@@ -218,6 +321,9 @@
       with the others before release.
 
 ## Backlog
+
+* [ ] **Setup github pages to host Swagger docs for project w/ github actions**
+  - https://github.com/peter-evans/swagger-github-pages
 
 * [ ] **Write some database tests that use the sqlite3 cli to test that data is
   actually making it into the db file.**

@@ -174,6 +174,7 @@ def touch(fname, times=None):
 
 def whitelist_install_paths():
     """
+    DEPRECATED: NEEDS FIXED.
     Adds install paths to allow list for sudo connector script.
     """
     global docker_data

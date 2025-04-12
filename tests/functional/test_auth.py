@@ -4,16 +4,13 @@ import pytest
 from flask import url_for, request
 from game_servers import game_servers
 
-USERNAME = os.environ["USERNAME"]
-PASSWORD = os.environ["PASSWORD"]
-TEST_SERVER = os.environ["TEST_SERVER"]
-TEST_SERVER_PATH = os.environ["TEST_SERVER_PATH"]
-TEST_SERVER_NAME = os.environ["TEST_SERVER_NAME"]
-VERSION = os.environ["VERSION"]
+from app.models import User, GameServer
 
 
-# Checks response contains correct error msg and redirects to the right page.
 def check_for_error(response, error_msg, url):
+    """
+    Checks response contains correct error msg and redirects to the right page.
+    """
     # Is 200 bc follow_redirects=True.
     assert response.status_code == 200
 
@@ -22,23 +19,18 @@ def check_for_error(response, error_msg, url):
     assert error_msg in response.data
 
 
-def get_server_id_by_name(client, server_name=TEST_SERVER):
-    """  
-    Just pulls it from the redirect header. Lazy but works. Must already have
-    authed client.
-    """
-    response = client.get(f"/controls?server={server_name}")
-
-    assert response.status_code == 302
-
-    loc_header = response.headers.get('Location')
-    server_id = loc_header.split('server_id=')[1]
-    return server_id
+def get_server_id(server_name, db):
+    server = db.query.filter_by(install_name=server_name).first()
+    return server.id
 
 
 ### Setup Page tests.
-# Test setup page contents.
-def test_setup_contents(app, client):
+
+def test_setup_contents(db_session, client, test_vars):
+    """
+    Test setup page contents.
+    """
+    version = test_vars["version"]
     with client:
         response = client.get("/setup")
         assert response.status_code == 200  # Return's 200 to GET requests.
@@ -54,11 +46,16 @@ def test_setup_contents(app, client):
         assert b"Confirm Password" in response.data
         assert b"Retype Password" in response.data
         assert b"Submit" in response.data
-        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
-# Test setup page responses.
-def test_setup_responses(app, client):
+def test_setup_responses(db_session, client, test_vars):
+    """
+    Test setup page responses.
+    """
+    username = test_vars["username"]
+    password = test_vars["password"]
+
     with client:
         response = client.get("/setup")
         assert response.status_code == 200  # Return's 200 to GET requests.
@@ -105,21 +102,21 @@ def test_setup_responses(app, client):
         error_msg = b"Form field too long!"
         response = client.post(
             "/setup",
-            data={"username": too_long, "password1": PASSWORD, "password2": PASSWORD},
+            data={"username": too_long, "password1": password, "password2": password},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
 
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": too_long, "password2": PASSWORD},
+            data={"username": username, "password1": too_long, "password2": password},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
 
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": PASSWORD, "password2": too_long},
+            data={"username": username, "password1": password, "password2": too_long},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
@@ -128,7 +125,7 @@ def test_setup_responses(app, client):
         # Test needs uppercase, lowercase, and special char.
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": "blah", "password2": "blah"},
+            data={"username": username, "password1": "blah", "password2": "blah"},
             follow_redirects=True,
         )
         assert b"Passwords doesn&#39;t meet criteria!" in response.data
@@ -168,7 +165,7 @@ def test_setup_responses(app, client):
         for char in bad_chars:
             response = client.post(
                 "/setup",
-                data={"username": char, "password1": PASSWORD, "password2": PASSWORD},
+                data={"username": char, "password1": password, "password2": password},
                 follow_redirects=True,
             )
             test_username_bad_chars(response)
@@ -176,7 +173,7 @@ def test_setup_responses(app, client):
         # Test passwords don't match.
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": PASSWORD, "password2": "blah"},
+            data={"username": username, "password1": password, "password2": "blah"},
             follow_redirects=True,
         )
         # No redirect on setup.
@@ -185,7 +182,7 @@ def test_setup_responses(app, client):
         # Test password too short.
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": "Ab3$", "password2": "Ab3$"},
+            data={"username": username, "password1": "Ab3$", "password2": "Ab3$"},
             follow_redirects=True,
         )
         # No redirect on setup.
@@ -200,7 +197,7 @@ def test_setup_responses(app, client):
         # Finally, create real test user.
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": PASSWORD, "password2": PASSWORD},
+            data={"username": username, "password1": password, "password2": password},
         )
         assert response.status_code == 302
 
@@ -208,7 +205,7 @@ def test_setup_responses(app, client):
         error_msg = b"User already added. Please sign in!"
         response = client.post(
             "/setup",
-            data={"username": USERNAME, "password1": PASSWORD, "password2": PASSWORD},
+            data={"username": username, "password1": password, "password2": password},
             follow_redirects=True,
         )
         # Is 200 bc follow_redirects=True.
@@ -220,11 +217,16 @@ def test_setup_responses(app, client):
 
 
 ### Login Page tests.
-# Test login page contents.
-def test_login_contents(app, client):
+
+def test_login_contents(db_session, client, setup_client, test_vars):
+    """
+    Test login page contents.
+    """
+    version = test_vars["version"]
+
     with client:
         response = client.get("/login")
-        assert response.status_code == 200  # Return's 200 to GET requests.
+        assert response.status_code == 200
 
         # Check content matches.
         assert b"Home" in response.data
@@ -234,14 +236,17 @@ def test_login_contents(app, client):
         assert b"Password" in response.data
         assert b"Enter Password" in response.data
         assert b"Login" in response.data
-        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
-# Test login page responses.
-def test_login_responses(app, client):
+def test_login_responses(db_session, client, setup_client, test_vars):
+    """
+    Test login page responses.
+    """
+    username = test_vars["username"]
+    password = test_vars["password"]
+
     with client:
-        response = client.get("/login")
-        assert response.status_code == 200  # Return's 200 to GET requests.
 
         # Test empty args.
         error_msg = b"Missing required form field(s)!"
@@ -251,12 +256,12 @@ def test_login_responses(app, client):
         check_for_error(response, error_msg, "auth.login")
 
         response = client.post(
-            "/login", data={"username": USERNAME, "password": ""}, follow_redirects=True
+            "/login", data={"username": username, "password": ""}, follow_redirects=True
         )
         check_for_error(response, error_msg, "auth.login")
 
         response = client.post(
-            "/login", data={"username": "", "password": PASSWORD}, follow_redirects=True
+            "/login", data={"username": "", "password": password}, follow_redirects=True
         )
         check_for_error(response, error_msg, "auth.login")
 
@@ -271,33 +276,35 @@ def test_login_responses(app, client):
         error_msg = b"Form field too long!"
         response = client.post(
             "/login",
-            data={"username": too_long, "password": PASSWORD},
+            data={"username": too_long, "password": password},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.login")
 
         response = client.post(
             "/login",
-            data={"username": USERNAME, "password": too_long},
+            data={"username": username, "password": too_long},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.login")
 
         # Finally, log test user in.
         response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
+            "/login", data={"username": username, "password": password}
         )
         assert response.status_code == 302
 
 
 ### Logout page tests.
-def test_logout(app, client):
+
+def test_logout(db_session, client, authed_client, test_vars):
+    """
+    Ensure logout works.
+    """
+    version = test_vars["version"]
+    username = test_vars["username"]
+
     with client:
-        # Log test user in.
-        response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
-        )
-        assert response.status_code == 302
 
         # GET Request tests.
         response = client.get("/logout", follow_redirects=True)
@@ -316,17 +323,14 @@ def test_logout(app, client):
         assert b"Password" in response.data
         assert b"Enter Password" in response.data
         assert b"Login" in response.data
-        assert f"Web LGSM - Version: {VERSION}".encode() in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
-def test_edit_user_contents(app, client):
-    # Login.
+def test_edit_user_contents(db_session, client, authed_client, test_vars):
+    username = test_vars["username"]
+    password = test_vars["password"]
+
     with client:
-        # Log test user in.
-        response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
-        )
-        assert response.status_code == 302
 
         response = client.get("/edit_users?username=newuser")
         assert response.status_code == 200
@@ -368,15 +372,11 @@ def test_edit_user_contents(app, client):
         )
 
 
-def test_edit_user_responses(app, client):
-    # Login.
+def test_edit_user_responses(db_session, client, authed_client, test_vars):
+    """
+    Check responses back from edit_user.
+    """
     with client:
-        # Log test user in.
-        response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
-        )
-        assert response.status_code == 302
-
         # Test page redirects to username=newuser by default.
         response = client.get("/edit_users", follow_redirects=True)
         assert response.status_code == 200
@@ -456,15 +456,14 @@ def test_edit_user_responses(app, client):
         assert b"Invalid Server Supplied" in response.data
 
 
-def test_create_new_user(app, client):
-    # Login.
-    with client:
-        # Log test user in.
-        response = client.post(
-            "/login", data={"username": USERNAME, "password": PASSWORD}
-        )
-        assert response.status_code == 302
+def test_create_new_user(client, authed_client, test_vars):
+    """
+    Tests adding new web interface user.
+    """
+    username = test_vars["username"]
+    password = test_vars["password"]
 
+    with client:
         response = client.get("/edit_users?username=newuser")
         assert response.status_code == 200
 
@@ -489,8 +488,13 @@ def test_create_new_user(app, client):
         assert b"New User Added" in response.data
 
 
-def test_login_as_new_user(app, client):
-    # Login.
+def test_login_as_new_user(client):
+    """
+    Tests logging in as user created in last test.
+
+    This test is dependant on the test above it. However, in this case I think
+    that's okay since they're really two sides of the same coin.
+    """
     with client:
         # Log test user in.
         response = client.post(

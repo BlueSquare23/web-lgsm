@@ -536,9 +536,9 @@ def check_sudo():
 
 def run_tests():
     # Source env vars.
-    env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
-    load_dotenv(dotenv_path=env_path)
-    os.environ["APP_PATH"] = SCRIPTPATH
+#    env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
+#    load_dotenv(dotenv_path=env_path)
+#    os.environ["APP_PATH"] = SCRIPTPATH
 
     if O["verbose"]:
         for key, value in os.environ.items():
@@ -589,6 +589,7 @@ def run_tests():
             "python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1"
         )
 
+    # TODO: Put whole above run tests in a try and make this final.
     # Restore Database.
     if db_backup:
         shutil.move(db_backup, db_file)

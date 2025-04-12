@@ -2,7 +2,6 @@
 
 ### v1.8.0 Pt 6. Post Release PR / Tutorials
 
-
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
@@ -111,74 +110,6 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-## Version 1.8.3 Todos
-
-* [x] **Fix whatever test(s) I just broke**
-  - This commit e4f649805d99bdc6a76e001e46974ed348221e46 broke some tests.
-  - Apparently, moving a bunch of install stuff to system level dirs is
-    disruptive, whoda guessed it?
-
-* [x] **Make App work via server_id's instead of server_name's**
-  - Decided to make this a pre-req before getting into API routes, cause why
-    keep writing new code that uses names instead of IDs.
-  - But wow yeah this really turned into the metaphorical thread that unravels
-    the whole sweater.
-  - Several things in the install route need re-designed and I'm wonder if it
-    might be better to dig even deeper and pull out even more of the rot at the
-    core.
-  - Still processing...
-
-* [x] **Move API Routes into own file**
-  - Unfortunately, this is not as trivial as copying and pasting the api route
-    code into its own file because api routes use a shared global with view
-    routes.
-  - I know bad design. Time to repay some technical debt. Will position app to
-    be way more betterer moving forward.
-
-* [x] **Use real flask_restful module for spinning up api endpoints**
-  - Allows me to use class based approach to define API endpoints.
-  - Just gives me more tools to work with for properly handling data via api
-    endpoints.
-  - [x] Will require tweaking existing api endpoints to get them into classes,
-    but shouldn't be too hard.
-
-* [x] **Add builtin swagger docs for API**
-  - API not incredibly useful yet on its own, but laying the groundwork.
-  - As this projects more and more will be moved into the API and so this
-    documentation will become more and more important so good to get a jump on
-    it now.
-
-* [x] **Turn Delete into its own API route**
-  - Yeah this "page" doesn't render a template. Is basically already an api
-    endpoint. Just needs formally converted into one.
-
-* [x] **Fix multi game server delete to work via new api route**
-
-* [x] **Make game server start just purge socket file name cache for that game server**
-  - Right now its just a global cache purge which means all servers tmux socket
-    name cache needs rebuilt after any one game server start.
-    - This is slow.
-  - If I write a function to just purge the socket name cache for that game
-    server should speed things up a bit for other game servers.
-
-* [x] **Add controls redirect for game server name to new uuid for backward compat**
-  - Basically, controls page used to work via names. I think there's a chance
-    people still have links in their browsers and might still want to be able
-    to go to `/controls?server=Minecraft` for example.
-    - So going to just make that try to do a lookup & redirect to controls by
-      UUID page for server.
-    - Or something like that. Still thinking about it...
-
-* [x] **On first time loading server post install clear the install text.**
-    - Aka when server install is marked finish, clear its entry from global
-      servers dict. Then when someone enters the game server controls page for
-      the first time they don't still see all the install blah output.
-    - This is going to be difficult, because currently the ansible connector
-      script is the thing that updates the `install_finished` field in the game
-      server. However, the app state is what stores the ProcInfoVessel objects
-      for installed game servers. So can't get the external script to update
-      the apps state directly. Have to somehow trigger on that DB field being
-      updated from within the app.
 
 ## Version 1.8.4 Todos
 

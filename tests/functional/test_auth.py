@@ -467,11 +467,11 @@ def test_create_new_user(client, authed_client, test_vars):
         response = client.get("/edit_users?username=newuser")
         assert response.status_code == 200
 
-        create_user_json = """{
+        create_user_json = f"""{{
             "selected_user": "newuser",
             "username": "test2",
-            "password1": "**Testing12345",
-            "password2": "**Testing12345",
+            "password1": "{password}",
+            "password2": "{password}",
             "is_admin": "false",
             "install_servers": "false",
             "add_servers": "false",
@@ -479,7 +479,7 @@ def test_create_new_user(client, authed_client, test_vars):
             "edit_cfgs": "false",
             "delete_server": "false",
             "controls": []
-        }"""
+        }}"""
 
         response = client.post(
             "/edit_users", data=json.loads(create_user_json), follow_redirects=True

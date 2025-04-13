@@ -878,7 +878,7 @@ def edit():
     server = GameServer.query.filter_by(id=server_id).first()
     # If game server doesn't exist in db, can't load page for it.
     if server == None:
-        flash("Invalid game server name!", category="error")
+        flash("Invalid game server id!", category="error")
         return redirect(url_for("views.home"))
 
     # Try to pull script's basename from supplied cfg_path.
@@ -952,6 +952,8 @@ def edit():
         # If is download request.
         if download == "yes":
             basedir, basename = os.path.split(cfg_path)
+            current_app.logger.info(log_wrap("basedir", basedir))
+            current_app.logger.info(log_wrap("basename", basename))
             return send_from_directory(basedir, basename, as_attachment=True)
 
     return render_template(

@@ -535,15 +535,6 @@ def check_sudo():
 
 
 def run_tests():
-    # Source env vars.
-#    env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
-#    load_dotenv(dotenv_path=env_path)
-#    os.environ["APP_PATH"] = SCRIPTPATH
-
-    if O["verbose"]:
-        for key, value in os.environ.items():
-            print(f"{key}={value}")
-
     # If in container don't backup db.
     if "CONTAINER" not in os.environ:
         # Backup Database.
@@ -566,6 +557,13 @@ def run_tests():
     # Reset test server cfg.
     common_cfg = os.path.join(SCRIPTPATH, "tests/test_data/common.cfg")
     shutil.copy(common_cfg, cfg_dir)
+
+    if os.path.exists("main.conf.local"):
+        local_conf_bak = backup_file(db_file)
+    print(f"Backing Config to: {local_conf_bak}")
+
+    # Overwrite local config (used for tests) with default conf.
+    shutil.copyfile("main.conf", "main.conf.local")
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:

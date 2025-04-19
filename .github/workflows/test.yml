@@ -62,5 +62,15 @@ jobs:
       - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.python-version }}
           path: htmlcov
+
+      - name: Generate coverage badge
+        run: |
+          /opt/web-lgsm/bin/genbadge coverage -i coverage.xml
+
+      - name: Upload badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge-${{ matrix.python-version }}
+          path: coverage-badge.svg

@@ -132,8 +132,8 @@
   - Might need to just put a little sudo chown back to the user line for those
     before running git pull or backing up etc.
 
-* [ ] **Redesign test code!**
-  - [ ] Refactor big test and conftest.py functions.
+* [x] **Redesign test code!**
+  - [x] Refactor big test and conftest.py functions.
   - [x] Make auto backup and git restore main.conf file.
   - [x] Make each test idempotent, and make sure no tests are dependant on
     other tests. 

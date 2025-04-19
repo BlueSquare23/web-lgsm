@@ -9,6 +9,7 @@
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
   </a>
   <img src="https://github.com/BlueSquare23/web-lgsm/actions/workflows/test.yml/badge.svg">
+  <img src="https://github.com/BlueSquare23/web-lgsm/blob/master/docs/images/coverage-badge.svg">
   <a href="https://github.com/BlueSquare23/web-lgsm/stargazers">
     <img src="https://img.shields.io/github/stars/BlueSquare23/web-lgsm">
   </a>

@@ -133,8 +133,9 @@
     before running git pull or backing up etc.
 
 * [ ] **Redesign test code!**
-  - [ ] Make auto backup and git restore main.conf file.
-  - [ ] Make each test idempotent, and make sure no tests are dependant on
+  - [ ] Refactor big test and conftest.py functions.
+  - [x] Make auto backup and git restore main.conf file.
+  - [x] Make each test idempotent, and make sure no tests are dependant on
     other tests. 
       - This is going to be quite the task because currently a lotta tests are
         dependant on the ones run before them. I'm bad at programming.

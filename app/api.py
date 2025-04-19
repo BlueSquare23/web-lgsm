@@ -108,7 +108,7 @@ class ServerStatus(Resource):
     def get(self, server_id):
         abort_if_id_none(server_id)
         
-        server = GameServer.query.get(server_id)
+        server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Invalid id"}
             response = Response(

@@ -28,13 +28,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install Web-LGSM
         run: |
           ./install.sh -d
           cp main.conf main.conf.local  # Setup local copy of conf for tests 
+
       - name: Check sudo access
         run: |
           sudo -l
+
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update
@@ -46,14 +49,15 @@ jobs:
           sudo update-alternatives --list javac
           sudo update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
           javac -version
+
       - name: Run Pytest Tests
         run: |
           RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
 
       - name: Generate coverage report
         run: |
-          coverage html
-          coverage xml
+          /opt/web-lgsm/bin/coverage html
+          /opt/web-lgsm/bin/coverage xml
           
       - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4

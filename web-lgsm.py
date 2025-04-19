@@ -541,56 +541,36 @@ def run_tests():
         db_file = os.path.join(SCRIPTPATH, "app/database.db")
         db_backup = backup_file(db_file)
 
-    # Setup Mockcraft testdir.
-    mockcraft_dir = os.path.join(SCRIPTPATH, "tests/test_data/Mockcraft")
-    cfg_dir = os.path.join(mockcraft_dir, "lgsm/config-lgsm/mcserver/")
-    if not os.path.isdir(mockcraft_dir):
-        # will make mockcraft dir in the process.
-        os.makedirs(cfg_dir)
-
-        os.chdir(mockcraft_dir)
-        run_command("wget -O linuxgsm.sh https://linuxgsm.sh")
-        run_command("chmod +x linuxgsm.sh")
-        run_command("./linuxgsm.sh mcserver")
-        os.chdir(SCRIPTPATH)
-
-    # Reset test server cfg.
-    common_cfg = os.path.join(SCRIPTPATH, "tests/test_data/common.cfg")
-    shutil.copy(common_cfg, cfg_dir)
-
     if os.path.exists("main.conf.local"):
         local_conf_bak = backup_file(db_file)
     print(f"Backing Config to: {local_conf_bak}")
-
-    # Overwrite local config (used for tests) with default conf.
-    shutil.copyfile("main.conf", "main.conf.local")
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:
         O["verbose"] = True
 
-    if O["test_full"]:
-        # Need to get a sudo tty ticket for full game server install.
-#        check_sudo()
-        # Backup Existing MC install, if one exists.
-        mcdir = os.path.join(SCRIPTPATH, "Minecraft")
-        if os.path.isdir(mcdir):
-            backup_dir(mcdir)
+    try:
+        if O["test_full"]:
+            # Backup Existing MC install, if one exists.
+            mcdir = os.path.join(SCRIPTPATH, "Minecraft")
+            if os.path.isdir(mcdir):
+                backup_dir(mcdir)
 
-            # Then torch dir.
-            shutil.rmtree(mcdir)
+                # Then torch dir.
+                shutil.rmtree(mcdir)
 
-        run_command_popen("python -m pytest -v --maxfail=1")
+#            cmd = "python -m pytest -v --maxfail=1"
+            cmd = "coverage run -m pytest -v"
+            run_command_popen(cmd)
 
-    else:
-        run_command_popen(
-            "python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1"
-        )
+        else:
+#            cmd = "python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1"
+            cmd = "coverage run -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser'"
+            run_command_popen(cmd)
 
-    # TODO: Put whole above run tests in a try and make this final.
-    # Restore Database.
-    if db_backup:
-        shutil.move(db_backup, db_file)
+    finally:
+        if db_backup:
+            shutil.move(db_backup, db_file)
 
 
 def add_valid_gs_user(gs_user):

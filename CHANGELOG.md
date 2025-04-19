@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.8.4] - Unreleased
+
+### Added
+
+- Add code coverage report as CI/CD artifact for later perusing.
+- Add documentation about test code.
+
+### Changed
+
+- Restructure test code to ensure _independence_ and _idempotency_.
+
+### Fixed
+
+- Fix test code to ensure every test can be run in isolation and its pass/fail
+  status will not affect any other tests.
+
+---
+
 ## [v1.8.3] - 2025-04-11
 
 ### Added

@@ -49,3 +49,14 @@ jobs:
       - name: Run Pytest Tests
         run: |
           RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
+
+      - name: Generate coverage report
+        run: |
+          coverage html
+          coverage xml
+          
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: htmlcov

@@ -19,3 +19,4 @@ gs_allowed_paths.txt
 Dockerfile
 docker-compose.yml
 main.conf.local
+.coverage

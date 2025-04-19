@@ -456,7 +456,7 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
         assert b"Invalid Server Supplied" in response.data
 
 
-def test_create_new_user(client, authed_client, test_vars):
+def test_create_new_user(db_session, client, authed_client, test_vars):
     """
     Tests adding new web interface user.
     """
@@ -488,7 +488,7 @@ def test_create_new_user(client, authed_client, test_vars):
         assert b"New User Added" in response.data
 
 
-def test_login_as_new_user(client):
+def test_login_as_new_user(db_session, client, add_second_user_no_perms):
     """
     Tests logging in as user created in last test.
 

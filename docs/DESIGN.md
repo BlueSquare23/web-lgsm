@@ -92,8 +92,132 @@
 ---
 
 ## 9. Testing
-- **Testing Strategy**: Describe the testing approach (e.g., unit tests, integration tests).
-- **Test Coverage**: Mention any tools used for test coverage (e.g., pytest, coverage.py).
+- **Testing Strategy**: Practical > Coverage
+
+This project is tested using `pytest`.
+
+The main goal of this projects tests are practically test if shit is working or
+not. I have not put a big focus on code coverage. Toward this end you'll find
+that the bulk of the tests are functional, input output response test of how the
+app's routes behave with scant unit tests.
+
+We're now trying to use the _"Arrange-Act-Assert (AAA)"_ Pattern when creating
+the tests. Below cribbed directly from automationpanda.com.
+
+The Pattern
+
+Arrange-Act-Assert is a great way to structure test cases. It prescribes an
+order of operations:
+
+* Arrange inputs and targets. Arrange steps should set up the test case. Does
+  the test require any objects or special settings? Does it need to prep a
+  database? Does it need to log into a web app? Handle all of these operations
+  at the start of the test.
+
+* Act on the target behavior. Act steps should cover the main thing to be
+  tested. This could be calling a function or method, calling a REST API, or
+  interacting with a web page. Keep actions focused on the target behavior.
+
+* Assert expected outcomes. Act steps should elicit some sort of response.
+  Assert steps verify the goodness or badness of that response. Sometimes,
+  assertions are as simple as checking numeric or string values. Other times,
+  they may require checking multiple facets of a system. Assertions will
+  ultimately determine if the test passes or fails.
+
+[Arrange-Act-Assert (AAA) Pattern Explained](https://automationpanda.com/2020/07/07/arrange-act-assert-a-pattern-for-writing-good-tests/)
+
+### Tests Components & Structure
+
+Here's the basic test dirs structure:
+
+```
+tests/
+├── conftest.py
+├── functional
+│   ├── test_auth.py
+│   ├── test_views.py
+│   └── test_web-lgsm.py
+├── game_servers.py
+├── test_data
+│   ├── common.cfg
+│   └── Mockcraft
+│       ├── linuxgsm.sh
+│       └── mcserver
+├── test_vars.json
+└── unit
+    ├── test_models.py
+    └── test_utils.py
+```
+
+We have a few things going on here: 
+
+* The `conftest.py` file. This is where the test setup and teardown happen.
+
+* The `functional` holds our functional tests. These use the client and other
+  pytest fixtures setup by the `conftest.py` to test the apps various routes
+  and to test the `web-lgsm.py` itself.
+
+* The `game_servers.py`: Loads some json from static file for tests (just a lil util).
+
+* The `test_data` dir holds the fake _"Mockcraft"_ install (not a full game
+  server install, just the bare files for mocking).
+
+* The `test_vars.json` file holds some static data used for testing stuff. Why
+  is this not in the apps json folder? `¯\_(ツ)_/¯`
+
+* The `unit` dir holds the projects straight unit tests of utils functions and
+  the apps models. These could really used expanded and made more through, but
+  ya know time...
+
+Basically, the `conftest.py` has a bunch of pytest fixture functions in it
+that are used to do the setup & teardown (aka the Arrange step) for tests to
+ensure _idempotency_ and _independence_. Then the actual `test_` files
+themselves are where the Act and Assert steps come in.
+
+* Independence: Meaning no test relies on any other test to work working.
+
+* Idempotency: Meaning no test should leave artifacts that affect overall
+  state. Everything should be setup fresh for each test and nothing should be
+  left behind that affects another test.
+
+Both of these things together mean that any one test should be able to be run
+in isolation and be self contained, and its passing or failing should not
+affect any other tests.
+
+### Coverage
+
+Code coverage reports generated with [`coverage`](https://coverage.readthedocs.io/en/7.8.0/).
+
+* Run pytests with coverage:
+
+```
+» coverage run -m pytest -v
+```
+
+```
+# Generated: Sat Apr 19 03:49:24 PM EDT 2025
+» coverage report
+Name                                Stmts   Miss  Cover
+-------------------------------------------------------
+app/__init__.py                        57      4    93%
+app/api.py                            122     34    72%
+app/auth.py                           195     20    90%
+app/cmd_descriptor.py                   9      1    89%
+app/models.py                          33      1    97%
+app/proc_info_vessel.py                15      0   100%
+app/processes_global.py                15      0   100%
+app/utils.py                          746    250    66%
+app/views.py                          532    132    75%
+tests/conftest.py                     113     17    85%
+tests/functional/test_auth.py         205      2    99%
+tests/functional/test_views.py        681     15    98%
+tests/functional/test_web-lgsm.py      29      0   100%
+tests/game_servers.py                   5      0   100%
+tests/unit/test_models.py              26      0   100%
+tests/unit/test_utils.py              127      8    94%
+-------------------------------------------------------
+TOTAL                                2910    484    83%
+```
 
 ---
 

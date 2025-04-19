@@ -1078,7 +1078,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         check_response(response, error_msg, resp_code, "views.home")
 
 
-def test_new_user_has_no_permissions(client, user_authed_client_no_perms, test_vars):
+def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client_no_perms, test_vars):
     """
     Test's that the new user cannot do anything in the web interface yet,
     except login.
@@ -1125,7 +1125,7 @@ def test_new_user_has_no_permissions(client, user_authed_client_no_perms, test_v
         check_response(response, error_msg, resp_code, "views.home")
 
 
-def test_enable_new_user_perms(db_session, client, authed_client, add_second_user_no_perms, test_vars):
+def test_enable_new_user_perms(db_session, client, authed_client, add_mock_server, add_second_user_no_perms, test_vars):
     test_server = test_vars["test_server"]
 
     with client:
@@ -1288,6 +1288,7 @@ def test_delete_new_user(add_second_user_no_perms, client, authed_client, test_v
             "/edit_users?username=test2&delete=true", follow_redirects=True
         )
         assert response.status_code == 200
+        debug_response(response)
         assert b"User test2 deleted" in response.data
 
 

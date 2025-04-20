@@ -130,6 +130,41 @@
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
 
+* [ ] **Spend some time fleshing out new singleton code & integrating into app**
+  - I added this, I got it working, I somewhat tested it. However, I have not
+    gotten around to refactoring fundamental parts of the app to use it yet.
+    - Now seems like a good time to do that because old tests have been brought
+      into the present and updated, however new tests for this have not been
+      added yet.
+    - I was so busy with adjusting from server name -> id that it kinda ate up
+      most of the last releases time. 
+  - Make utils functions work via IDs and access objects from global dict,
+    instead of being passed the whole object directly as arg. 
+  - Note to self, not an excuse to run wild and get distracted refactoring
+    every little thing. Stay on task! Just update core functions to use new
+    code.
+
+* [ ] **Continue fixing up tests**
+  1. As much as I hate to admit it, the coverage reports are kinda useful for
+    spotting things that I have little to no testing for.
+    - A lot of this stuff is newer stuff, I added but never got around to
+      testing, cause was going to do some overhaul on the tests anyways.
+    - [ ] Look at recent coverage reports to find things that lack tests and
+      write some more tests!
+  2. There are a number of existing tests that are pretty weak, kinda don't
+    really test what they're supposed to test well. 
+    - I left myself a bunch of TODOs in comments.
+    - [ ] Refactor existing _"weak"_ tests to improve tactility (aka better
+      grip on subject matter being tested) & robustness (aka no race
+      conditionss, cheats & other hacks to fudge it so tests pass).
+  3. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
+    - I really need to be taking an action, then checking the DB.
+    - I'm checking a lot of responses from the outside to make sure they're as
+      expected. However I'm not really checking directly in the DB itself to
+      make sure things are all good.
+    - But I can do that, so I should be doing that. Oh well always more things
+      to do than time to do them.
+
 ## Version 1.8.5 Todos
 
 * [ ] **Add new page & API route(s) for Edit Game Server Info**

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add Flask-Migrate (Alembic) for handling database migrations between versions.
 - Add code coverage report as CI/CD artifact for later perusing.
 - Add documentation about test code.
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix core update mechanism in `web-lgsm.py`, with Alembic for database upgrades.
 - Fix test code to ensure every test can be run in isolation and its pass/fail
   status will not affect any other tests.
 

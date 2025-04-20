@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_migrate import Migrate
 
 # Prevent creation of __pycache__. Cache messes up auth.
 sys.dont_write_bytecode = True
@@ -66,6 +67,7 @@ def main():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     app.logger.removeHandler(default_handler)
+    migrate = Migrate(app, db)
 
     # Pull in our views route(s).
     from .views import views

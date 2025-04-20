@@ -10,6 +10,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150))
     role = db.Column(db.String(150))
     permissions = db.Column(db.String(600))
+    img_path = db.Column(db.String(150))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
     def __repr__(self):

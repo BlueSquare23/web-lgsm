@@ -94,10 +94,10 @@
   - I want to transition the app to use web sockets for this communication
     instead.
 
-* [ ] **Overhaul & Redesign test code**
-  - [ ] Every single test should be idempotent (they're not rn).
-  - [ ] No test should depend on any other test (they all depend on each other rn).
-  - [ ] I need to learn more about how to actually fucking properly use pytest (rtfm).
+* [x] **Overhaul & Redesign test code**
+  - [x] Every single test should be idempotent (they're not rn).
+  - [x] No test should depend on any other test (they all depend on each other rn).
+  - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
 * [ ] **Improve overall design & documentation for project**
@@ -113,24 +113,12 @@
 
 ## Version 1.8.4 Todos
 
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
+* [~] **Fix core update mechanism... again**
+  - Still needs thoroughly tested but think I mostly got it.
+  - Big key to updates moving forward is the Flask-Migrate (Alembic) database change system.
 
-* [ ] **Fix update mechanism... again**
-  - I need to just mv existing to .bak and install fresh,
-    - If fresh install goes awry move og back into place.
-  - Install steps
-    - Change to binary needs update or no needs update check.
-    - Backup existing
-    - Export DB to flat csv or json or something 
-    - Install fresh
-    - Import db and add any new fields
-
-* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
-  - Might need to just put a little sudo chown back to the user line for those
-    before running git pull or backing up etc.
+* [x] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
+  - Yeah the update mechanism
 
 * [x] **Redesign test code!**
   - [x] Refactor big test and conftest.py functions.
@@ -176,6 +164,11 @@
 
 ## Version 1.8.x Todos
 
+
+* [ ] **Make work for python 3.13**
+  - I was silly and tried to put 3.13 in the tests at the end of this release
+    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
+    make it work soon.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just

@@ -218,6 +218,68 @@ tests/unit/test_utils.py              127      8    94%
 -------------------------------------------------------
 TOTAL                                2910    484    83%
 ```
+---
+
+## 10. Database Upgrades
+- **Flask-Migrate (Aka Alembic)**: Alembic is a lightweight database migration
+  tool for usage with the SQLAlchemy Database Toolkit for Python.
+
+We're using the Flask version of Alembic called `Flask-Migrate`.
+
+* Initial database revision tracking for DB. (This only ever needs done once).
+
+```
+flask --app app:main db init
+```
+
+* Add a new field to a `models.py` file.
+
+```
+img_path = db.Column(db.String(150))  # New field
+```
+
+* Create a new migration: This will generate a new file in `migrations/versions/` for this change.
+
+```
+flask --app app:main db migrate -m "add img_path to User model"
+Root logger level: WARNING
+ * Database Loaded!
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.autogenerate.compare] Detected added column 'user.img_path'
+  Generating /home/blue/Projects/web-lgsm/migrations/versions/d2829b640c78_add_img_path_to_user_model.py ...  done
+```
+
+* Run the migration to apply the changes to the DB.
+
+```
+flask --app app:main db upgrade
+Root logger level: WARNING
+ * Database Loaded!
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> d2829b640c78, add img_path to User model
+```
+
+* See current revision:
+```
+flask --app app:main db current
+Root logger level: WARNING
+ * Database Loaded!
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+d2829b640c78 (head)
+```
+
+* See revision history:
+```
+flask --app app:main db history
+Root logger level: WARNING
+ * Database Loaded!
+<base> -> d2829b640c78 (head), add img_path to User model
+```
+
+[Flask-Migrate Official Docs](https://flask-migrate.readthedocs.io/en/latest/)
 
 ---
 

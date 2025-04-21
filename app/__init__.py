@@ -7,16 +7,28 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
 from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_migrate import Migrate
 
+
 # Prevent creation of __pycache__. Cache messes up auth.
 sys.dont_write_bytecode = True
 
-db = SQLAlchemy()
 DB_NAME = "database.db"
+
+# Naming conventions for Flask-Migrate.
+convention = {
+    "ix": 'ix_%(column_0_label)s',
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s"
+}
+metadata = MetaData(naming_convention=convention)
+db = SQLAlchemy(metadata=metadata)
 
 env_path = Path(".") / ".secret"
 load_dotenv(dotenv_path=env_path)
@@ -65,9 +77,15 @@ def main():
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.init_app(app)
     app.logger.removeHandler(default_handler)
-    migrate = Migrate(app, db)
+    migrate = Migrate(app, db, render_as_batch=True)
+
+    # Initialize DB.
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    # Load models.
+    from .models import User, GameServer
 
     # Pull in our views route(s).
     from .views import views
@@ -105,13 +123,6 @@ def main():
 
     # Register Swagger UI blueprint
     app.register_blueprint(swagger_ui)
-
-    # Initialize DB.
-    from .models import User, GameServer
-
-    with app.app_context():
-        db.create_all()
-        print(" * Database Loaded!")
 
     # Setup LoginManager.
     login_manager = LoginManager()

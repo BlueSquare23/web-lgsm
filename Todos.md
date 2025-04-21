@@ -113,7 +113,7 @@
 
 ## Version 1.8.4 Todos
 
-* [~] **Fix core update mechanism... again**
+* [x] **Fix core update mechanism... again**
   - Still needs thoroughly tested but think I mostly got it.
   - Big key to updates moving forward is the Flask-Migrate (Alembic) database change system.
 
@@ -129,6 +129,15 @@
         dependant on the ones run before them. I'm bad at programming.
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
+
+* [ ] **Add CSRF protection using Flask-WTF**
+  - I did not realize until today that flask doesn't do anything to prevent
+    CSRF natively.
+    - Same Site is set to None and its totally possible to trick someone into
+      making POSTs to forms.
+  - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
+  - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
+  - I might want to use this to handle file uploads one day too.
 
 * [ ] **Spend some time fleshing out new singleton code & integrating into app**
   - I added this, I got it working, I somewhat tested it. However, I have not

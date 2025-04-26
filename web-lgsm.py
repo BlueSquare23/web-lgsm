@@ -93,7 +93,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, main as appmain
 from app.models import User
-from app.utils import contains_bad_chars, check_and_get_lgsmsh
+#from app.utils import contains_bad_chars, check_and_get_lgsmsh
 
 # Import config data.
 CONFIG_FILE = "main.conf"

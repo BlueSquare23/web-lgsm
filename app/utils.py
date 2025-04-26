@@ -1065,53 +1065,54 @@ def check_and_get_lgsmsh(lgsmsh):
         get_lgsmsh(lgsmsh)
 
 
-def contains_bad_chars(input_item):
-    """
-    Checks for the presence of bad chars in supplied user input.
-
-    Args:
-        input_item (str): Supplied input item to check for bad chars.
-
-    Returns:
-        bool: True if item does contain one of the bad chars below, False
-              otherwise.
-    """
-    bad_chars = {
-        " ",
-        "$",
-        "'",
-        '"',
-        "\\",
-        "#",
-        "=",
-        "[",
-        "]",
-        "!",
-        "<",
-        ">",
-        "|",
-        ";",
-        "{",
-        "}",
-        "(",
-        ")",
-        "*",
-        ",",
-        "?",
-        "~",
-        "&",
-    }
-
-    # Its okay to skip None cause should be caught by earlier checks. Also
-    # technically, None does not contain any bad chars...
-    if input_item is None:
-        return False
-
-    for char in bad_chars:
-        if char in input_item:
-            return True
-
-    return False
+# Replace by wtforms Regex check in form validate.
+#def contains_bad_chars(input_item):
+#    """
+#    Checks for the presence of bad chars in supplied user input.
+#
+#    Args:
+#        input_item (str): Supplied input item to check for bad chars.
+#
+#    Returns:
+#        bool: True if item does contain one of the bad chars below, False
+#              otherwise.
+#    """
+#    bad_chars = {
+#        " ",
+#        "$",
+#        "'",
+#        '"',
+#        "\\",
+#        "#",
+#        "=",
+#        "[",
+#        "]",
+#        "!",
+#        "<",
+#        ">",
+#        "|",
+#        ";",
+#        "{",
+#        "}",
+#        "(",
+#        ")",
+#        "*",
+#        ",",
+#        "?",
+#        "~",
+#        "&",
+#    }
+#
+#    # Its okay to skip None cause should be caught by earlier checks. Also
+#    # technically, None does not contain any bad chars...
+#    if input_item is None:
+#        return False
+#
+#    for char in bad_chars:
+#        if char in input_item:
+#            return True
+#
+#    return False
 
 
 def update_self():
@@ -1296,23 +1297,23 @@ def user_has_permissions(current_user, route, server_id=None):
 
     return True
 
-
-def valid_install_type(install_type):
-    """
-    Check's install type is one of the allowed three types.
-
-    Args:
-        install_type (str): User supplied install_type
-
-    Returns:
-        bool: True if valid install_type, False otherwise.
-    """
-    valid_install_types = ["local", "remote", "docker"]
-
-    if install_type in valid_install_types:
-        return True
-
-    return False
+# Replaced by wtforms 
+#def valid_install_type(install_type):
+#    """
+#    Check's install type is one of the allowed three types.
+#
+#    Args:
+#        install_type (str): User supplied install_type
+#
+#    Returns:
+#        bool: True if valid install_type, False otherwise.
+#    """
+#    valid_install_types = ["local", "remote", "docker"]
+#
+#    if install_type in valid_install_types:
+#        return True
+#
+#    return False
 
 
 def is_ssh_accessible(hostname):

@@ -32,6 +32,7 @@ from .utils import *
 from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
+from .forms import *
 
 # Constants.
 CWD = os.getcwd()
@@ -697,149 +698,117 @@ def add():
     if not user_has_permissions(current_user, "add"):
         return redirect(url_for("views.home"))
 
-    # Set default status_code.
     status_code = 200
+    form = AddForm()
 
-    if request.method == "POST":
-        server = GameServer()
-        server.install_finished = True  # All server adds are auto marked finished.
+    if request.method == "GET":
+        return render_template("add.html", user=current_user, form=form), status_code
 
-        install_name = request.form.get("install_name")
-        install_path = request.form.get("install_path")
-        script_name = request.form.get("script_name")
-        username = request.form.get("username")
-        install_type = request.form.get("install_type")
-        install_host = request.form.get("install_host")
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        if form.errors:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+        return redirect(url_for("views.add"))
 
-        ## Validation Logic.
-        # Check all required args are submitted.
-        for required_form_item in (
-            install_name,
-            install_path,
-            script_name,
-            install_type,
-        ):
-            if required_form_item == None or required_form_item == "":
-                flash("Missing required form field(s)!", category="error")
-                return render_template("add.html", user=current_user), 400
+    # Process form submissions.
+    install_name = form.install_name.data
+    install_path = form.install_path.data
+    script_name = form.script_name.data
+    username = form.username.data
+    install_type = form.install_type.data
+    install_host = form.install_host.data
 
-            # Check input lengths.
-            if len(required_form_item) > 150:
-                flash("Form field too long!", category="error")
-                return render_template("add.html", user=current_user), 400
+    server = GameServer()
+    server.install_finished = True  # All server adds are auto marked finished.
 
-        if not valid_script_name(script_name):
-            flash("Invalid game server script file name!", category="error")
+    # Set default user if none provided.
+    if username == None or username == "":
+        username = USER
+
+    # Make install name unix friendly for dir creation.
+    install_name = install_name.replace(" ", "_")
+    install_name = install_name.replace(".", "_")
+    install_name = install_name.replace(":", "")
+
+    # Log & set GameServer obj vars after most of the validation is done.
+    current_app.logger.info(log_wrap("install_name", install_name))
+    current_app.logger.info(log_wrap("install_path", install_path))
+    current_app.logger.info(log_wrap("script_name", script_name))
+    current_app.logger.info(log_wrap("username", username))
+    current_app.logger.info(log_wrap("install_type", install_type))
+    current_app.logger.info(log_wrap("install_host", install_host))
+
+    server.install_name = install_name
+    server.install_path = install_path
+    server.script_name = script_name
+    server.username = username
+    server.install_type = install_type
+
+    if install_type == "remote":
+        if install_host == None or install_host == "":
+            flash("Missing required form field(s)!", category="error")
+            return render_template("add.html", user=current_user), 400
+
+        if not is_ssh_accessible(install_host):
+            flash("Server does not appear to be SSH accessible!", category="error")
+            return render_template("add.html", user=current_user), 400
+
+        server.install_type = "remote"
+        server.install_host = install_host
+
+    if install_type == "local":
+        server.install_type = "local"
+        server.install_host = "127.0.0.1"
+
+        if get_uid(username) == None:
+            flash("User not found on system!", category="error")
             status_code = 400
             return render_template("add.html", user=current_user), status_code
 
-        # Set default user if none provided.
-        if username == None or username == "":
-            username = USER
+    install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
-        if len(username) > 150:
-            flash("Form field too long!", category="error")
-            return render_template("add.html", user=current_user), 400
+    if install_exists:
+        flash("An installation by that name already exits.", category="error")
+        status_code = 400
+        return render_template("add.html", user=current_user), status_code
 
-        # Try to prevent arbitrary bad input.
-        for input_item in (install_name, install_path, script_name, username):
-            if contains_bad_chars(input_item):
-                flash("Illegal Character Entered!", category="error")
-                flash(
-                    r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""",
-                    category="error",
-                )
-                status_code = 400
-                return render_template("add.html", user=current_user), status_code
+    if install_type == "docker":
+        flash(
+            f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
+        )
+        flash(
+            f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
+        )
 
-        # Make install name unix friendly for dir creation.
-        install_name = install_name.replace(" ", "_")
-        install_name = install_name.replace(".", "_")
-        install_name = install_name.replace(":", "")
+    if should_use_ssh(server):
+        keyfile = get_ssh_key_file(username, server.install_host)
+        if keyfile == None:
+            flash(f"Problem generating new ssh keys!", category="error")
+            return redirect(url_for("views.add"))
 
-        # Validate install_type.
-        if not valid_install_type(install_type):
-            flash("Invalid install type!", category="error")
-            return render_template("add.html", user=current_user), 400
+        flash(
+            f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
+        )
 
-        ## Log & set GameServer obj vars after most of the validation is done.
-        current_app.logger.info(log_wrap("install_name", install_name))
-        current_app.logger.info(log_wrap("install_path", install_path))
-        current_app.logger.info(log_wrap("script_name", script_name))
-        current_app.logger.info(log_wrap("username", username))
-        current_app.logger.info(log_wrap("install_type", install_type))
+    db.session.add(server)
+    db.session.commit()
 
-        server.install_name = install_name
-        server.install_path = install_path
-        server.script_name = script_name
-        server.username = username
-        server.install_type = install_type
+    server = GameServer.query.filter_by(install_name=install_name).first()
 
-        if install_type == "remote":
-            if install_host == None or install_host == "":
-                flash("Missing required form field(s)!", category="error")
-                return render_template("add.html", user=current_user), 400
-
-            if not is_ssh_accessible(install_host):
-                flash("Server does not appear to be SSH accessible!", category="error")
-                return render_template("add.html", user=current_user), 400
-
-            server.install_type = "remote"
-            server.install_host = install_host
-
-        if install_type == "local":
-            server.install_type = "local"
-            server.install_host = "127.0.0.1"
-
-            # Returns None if not valid username.
-            if get_uid(username) == None:
-                flash("User not found on system!", category="error")
-                status_code = 400
-                return render_template("add.html", user=current_user), status_code
-
-        install_exists = GameServer.query.filter_by(install_name=install_name).first()
-
-        if install_exists:
-            flash("An installation by that name already exits.", category="error")
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
-
-        if install_type == "docker":
-            flash(
-                f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
-            )
-            flash(
-                f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
-            )
-
-        if should_use_ssh(server):
-            keyfile = get_ssh_key_file(username, server.install_host)
-            if keyfile == None:
-                flash(f"Problem generating new ssh keys!", category="error")
-                return redirect(url_for("views.add"))
-
-            flash(
-                f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
-            )
-
-        db.session.add(server)
+    # Update web user's permissions to give access to new game server after adding it.
+    if current_user.role != "admin":
+        user_ident = User.query.filter_by(username=current_user.username).first()
+        user_perms = json.loads(user_ident.permissions)
+        user_perms["server_ids"].append(server.id)
+        user_ident.permissions = json.dumps(user_perms)
+        current_app.logger.info(log_wrap("Updated User Permissions:", user_ident.permissions))
         db.session.commit()
 
-        server = GameServer.query.filter_by(install_name=install_name).first()
+    flash("Game server added!")
+    return redirect(url_for("views.home"))
 
-        # Update web user's permissions to give access to new game server after adding it.
-        if current_user.role != "admin":
-            user_ident = User.query.filter_by(username=current_user.username).first()
-            user_perms = json.loads(user_ident.permissions)
-            user_perms["server_ids"].append(server.id)
-            user_ident.permissions = json.dumps(user_perms)
-            current_app.logger.info(log_wrap("Updated User Permissions:", user_ident.permissions))
-            db.session.commit()
-
-        flash("Game server added!")
-        return redirect(url_for("views.home"))
-
-    return render_template("add.html", user=current_user), status_code
 
 
 ######### Edit Route #########

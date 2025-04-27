@@ -74,6 +74,21 @@ iframe {
   height: auto;
 }
 
+.floating-submit {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.floating-submit:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    transform: translateX(-50%) translateY(-3px);
+}
+
 /* Animated ... for install page */
 @keyframes blink {50% { color: transparent }}
 .loader__dot { animation: 1s blink infinite }

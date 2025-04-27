@@ -6,6 +6,130 @@
 
       <div class="container bg-dark border border-secondary rounded-3 p-2">
         <form method="POST">
+            {{ form.hidden_tag() }}
+            <h3 align="center" style="color: white;">Web-LGSM Settings</h3>
+            <div class="form-group" style="color: white;">
+                <div class="row mb-4">
+                    <div class="col">
+                        {{ form.text_color.label(class="form-label") }}
+                        {{ form.text_color(class="form-control form-control-color") }}
+                    </div>
+                    <div class="col">
+                        {{ form.graphs_primary.label(class="form-label") }}
+                        {{ form.graphs_primary(class="form-control form-control-color") }}
+                    </div>
+                    <div class="col">
+                        {{ form.graphs_secondary.label(class="form-label") }}
+                        {{ form.graphs_secondary(class="form-control form-control-color") }}
+                    </div>
+                </div>
+
+                <div class="form-floating mb-4">
+                    {{ form.terminal_height(class="form-control") }}
+                    {{ form.terminal_height.label(class="form-label", style="color:black;") }}
+                </div>
+
+                <div class="mb-4">
+                    <h5>User Deletion Settings</h5>
+                    {% for subfield in form.delete_user %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                    <p class="text-muted mt-2">
+                        📍 <i><u>Note: When the system users are deleted, game server files owned by them are automatically deleted as well.</u></i>
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <h5>File Deletion Settings</h5>
+                    {% for subfield in form.remove_files %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    <h5>New Installation User Settings</h5>
+                    {% for subfield in form.install_new_user %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    <h5>Terminal Output Settings</h5>
+                    {% for subfield in form.newline_ending %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    <h5>Error Display Settings</h5>
+                    {% for subfield in form.show_stderr %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-4">
+                    <h5>Terminal Behavior Settings</h5>
+                    {% for subfield in form.clear_output_on_reload %}
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input") }}
+                            {{ subfield.label(class="form-check-label") }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        {{ form.show_stats(class="form-check-input") }}
+                        {{ form.show_stats.label(class="form-check-label") }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        {{ form.purge_tmux_cache(class="form-check-input") }}
+                        {{ form.purge_tmux_cache.label(class="form-check-label") }}
+                        <small class="text-muted d-block mt-1">
+                            <i>Helps fix broken status indicators after game server reinstallation / upgrades.</i>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        {{ form.update_weblgsm(class="form-check-input") }}
+                        {{ form.update_weblgsm.label(class="form-check-label") }}
+                        <small class="text-muted d-block mt-1">
+                            <i>📍 Note: Checking this box will restart your Web LGSM instance if an update is available!</i>
+                        </small>
+                    </div>
+                </div>
+
+                <br>
+
+                <div class="floating-submit">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </div>
+        </form>
+<!--
+        <form method="POST">
           <h3 align="enter" style="color: white;">
             Web-LGSM Settings
           </h3>
@@ -158,6 +282,7 @@
             </center>
           </div>
         </form>
+-->
       </div>
       <script src="/static/js/settings.js"></script>
 {% endblock %}

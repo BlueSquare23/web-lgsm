@@ -1,15 +1,15 @@
 // Marks delete_user checkbox as checked when delete_user is selected.
 function checkDelFiles() {
-  const deleteUser = document.getElementById('delete_user');
-  const deleteFiles = document.getElementById('delete_files');
+  const deleteUser = document.getElementById('delete_user-0');
+  const deleteFiles = document.getElementById('remove_files-0');
   if (deleteUser.checked) {
     deleteFiles.checked = true;
   }
 }
 // Marks keep_user checkbox as checked when leave game servers is selected.
 function checkKeepUser() {
-  const leaveFiles = document.getElementById('leave_files');
-  const keepUser = document.getElementById('keep_user');
+  const leaveFiles = document.getElementById('remove_files-1');
+  const keepUser = document.getElementById('delete_user-1');
   if (leaveFiles.checked) {
     keepUser.checked = true;
   }

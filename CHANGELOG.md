@@ -15,10 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change form handling to use Flask-WTF & WTForms for validation.
 - Restructure test code to ensure _independence_ and _idempotency_.
 
 ### Fixed
 
+- Fix CSRF vulnerabilities in applications forms with Flask-WTF & WTForms.
 - Fix core update mechanism in `web-lgsm.py`, with Alembic for database upgrades.
 - Fix test code to ensure every test can be run in isolation and its pass/fail
   status will not affect any other tests.

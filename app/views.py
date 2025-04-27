@@ -503,6 +503,9 @@ def settings():
     if not user_has_permissions(current_user, "settings"):
         return redirect(url_for("views.home"))
 
+    # Create SettingsForm.
+    form = SettingsForm()
+
     # Since settings also writes to config, open config parse here too.
     config = configparser.ConfigParser()
     config_file = "main.conf"
@@ -517,28 +520,55 @@ def settings():
     current_app.logger.info(log_wrap("config_options", config_options))
 
     if request.method == "GET":
+        # Set form defaults.
+        # NOTE: This logic for setting defaults could be moved into the
+        # SettingsForm class, still thinking abt if I want to do that or not...
+        form.text_color.default = config_options["text_color"]
+        form.graphs_primary.default = config_options["graphs_primary"]
+        form.graphs_secondary.default = config_options["graphs_secondary"]
+        form.terminal_height.default = config_options["terminal_height"]
+        form.delete_user.default = str(config_options["delete_user"]).lower()
+        form.remove_files.default = str(config_options["remove_files"]).lower()
+        form.install_new_user.default = str(config_options["install_create_new_user"]).lower()
+        form.newline_ending.default = str(config_options["end_in_newlines"]).lower()
+        form.show_stderr.default = str(config_options["show_stderr"]).lower()
+        form.clear_output_on_reload.default = str(config_options["clear_output_on_reload"]).lower()
+        # BooleanFields handle setting default differently from RadioFields.
+        if (config_options["show_stats"]):
+            form.show_stats.default = 'true'
+        form.process()  # Required to apply form changes.
+
         return render_template(
             "settings.html",
             user=current_user,
             system_user=USER,
             config_options=config_options,
+            form = form,
         )
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        if form.errors:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+        return redirect(url_for("views.settings"))
 
     # TODO v1.9: Retrieve form options via separate function like read_config()
     # (maybe read_form()) to cleanup the mess that is the block of text below.
-    text_color_pref = request.form.get("text_color")
-    user_del_pref = request.form.get("delete_user")
-    file_pref = request.form.get("delete_files")
-    clear_output_pref = request.form.get("clear_output_on_reload")
-    height_pref = request.form.get("terminal_height")
-    update_weblgsm = request.form.get("update_weblgsm")
-    graphs_primary_pref = request.form.get("graphs_primary")
-    graphs_secondary_pref = request.form.get("graphs_secondary")
-    show_stats_pref = request.form.get("show_stats")
-    purge_tmux_cache = request.form.get("purge_tmux_cache")
-    install_new_user_pref = request.form.get("install_new_user")
-    newline_ending_pref = request.form.get("newline_ending")
-    show_stderr_pref = request.form.get("show_stderr")
+    text_color_pref       = str(form.text_color.data).lower()
+    user_del_pref         = str(form.delete_user.data).lower()
+    file_pref             = str(form.remove_files.data).lower()
+    clear_output_pref     = str(form.clear_output_on_reload.data).lower()
+    height_pref           = str(form.terminal_height.data).lower()
+    update_weblgsm        = str(form.update_weblgsm.data).lower()
+    graphs_primary_pref   = str(form.graphs_primary.data).lower()
+    graphs_secondary_pref = str(form.graphs_secondary.data).lower()
+    show_stats_pref       = str(form.show_stats.data).lower()
+    purge_tmux_cache      = str(form.purge_tmux_cache.data).lower()
+    install_new_user_pref = str(form.install_new_user.data).lower()
+    newline_ending_pref   = str(form.newline_ending.data).lower()
+    show_stderr_pref      = str(form.show_stderr.data).lower()
 
     # Debug messages.
     current_app.logger.info(log_wrap("text_color_pref", text_color_pref))
@@ -587,30 +617,13 @@ def settings():
     if show_stderr_pref == "false":
         config["settings"]["show_stderr"] = "no"
 
-    # Text color settings.
-    def valid_color(color):
-        # Validate color code with regular expression.
-        if re.search("^#(?:[0-9a-fA-F]{1,2}){3}$", color):
-            return True
-
-        return False
-
     if text_color_pref:
-        if not valid_color(text_color_pref):
-            flash("Invalid text color!", category="error")
-            return redirect(url_for("views.settings"))
         config["aesthetic"]["text_color"] = text_color_pref
 
     if graphs_primary_pref:
-        if not valid_color(graphs_primary_pref):
-            flash("Invalid primary color!", category="error")
-            return redirect(url_for("views.settings"))
         config["aesthetic"]["graphs_primary"] = graphs_primary_pref
 
     if graphs_secondary_pref:
-        if not valid_color(graphs_secondary_pref):
-            flash("Invalid secondary color!", category="error")
-            return redirect(url_for("views.settings"))
         config["aesthetic"]["graphs_secondary"] = graphs_secondary_pref
 
     # Default to no, if checkbox is unchecked.
@@ -621,28 +634,15 @@ def settings():
     # Set default text area height setting.
     config["aesthetic"]["terminal_height"] = config_options["terminal_height"]
     if height_pref:
-        # Validate terminal height is int.
-        try:
-            height_pref = int(height_pref)
-        except ValueError:
-            flash("Invalid Terminal Height!", category="error")
-            return redirect(url_for("views.settings"))
-
-        # Check if height pref is invalid range.
-        if height_pref > 100 or height_pref < 5:
-            flash("Invalid Terminal Height!", category="error")
-            return redirect(url_for("views.settings"))
-
-        # Have to cast back to string to save in config.
+        # Have to cast to string to save in config.
         config["aesthetic"]["terminal_height"] = str(height_pref)
 
     with open(config_file, "w") as configfile:
         config.write(configfile)
 
     # Update's the weblgsm.
-    if update_weblgsm:
+    if update_weblgsm == 'true':
         status = update_self()
-        flash("Settings Updated!")
         if "Error:" in status:
             flash(status, category="error")
             return redirect(url_for("views.settings"))

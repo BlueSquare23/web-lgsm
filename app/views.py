@@ -764,15 +764,13 @@ def add():
 
         if get_uid(username) == None:
             flash("User not found on system!", category="error")
-            status_code = 400
-            return render_template("add.html", user=current_user), status_code
+            return redirect(url_for("views.add"))
 
     install_exists = GameServer.query.filter_by(install_name=install_name).first()
 
     if install_exists:
         flash("An installation by that name already exits.", category="error")
-        status_code = 400
-        return render_template("add.html", user=current_user), status_code
+        return redirect(url_for("views.add"))
 
     if install_type == "docker":
         flash(

@@ -229,5 +229,8 @@ random_key=$(echo $RANDOM | md5sum | head -c 20)
 echo "SECRET_KEY=\"$random_key\"" > .secret
 chmod 600 .secret
 
+echo -e "${green}####### Updating Database...${reset}"
+flask --app app:main db upgrade
+
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"

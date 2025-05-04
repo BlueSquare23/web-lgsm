@@ -85,7 +85,6 @@ class AddForm(FlaskForm):
             'placeholder': 'Enter system user game server is installed under. For example, "coolguy123"'
         },
         validators=[
-            InputRequired(),
             Length(max=150, message="Invalid input! Username too long. Max 150 characters."),
             Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
         ]

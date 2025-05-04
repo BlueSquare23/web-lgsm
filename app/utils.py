@@ -1065,54 +1065,54 @@ def check_and_get_lgsmsh(lgsmsh):
         get_lgsmsh(lgsmsh)
 
 
-# Replace by wtforms Regex check in form validate.
-#def contains_bad_chars(input_item):
-#    """
-#    Checks for the presence of bad chars in supplied user input.
-#
-#    Args:
-#        input_item (str): Supplied input item to check for bad chars.
-#
-#    Returns:
-#        bool: True if item does contain one of the bad chars below, False
-#              otherwise.
-#    """
-#    bad_chars = {
-#        " ",
-#        "$",
-#        "'",
-#        '"',
-#        "\\",
-#        "#",
-#        "=",
-#        "[",
-#        "]",
-#        "!",
-#        "<",
-#        ">",
-#        "|",
-#        ";",
-#        "{",
-#        "}",
-#        "(",
-#        ")",
-#        "*",
-#        ",",
-#        "?",
-#        "~",
-#        "&",
-#    }
-#
-#    # Its okay to skip None cause should be caught by earlier checks. Also
-#    # technically, None does not contain any bad chars...
-#    if input_item is None:
-#        return False
-#
-#    for char in bad_chars:
-#        if char in input_item:
-#            return True
-#
-#    return False
+# TODO: Replace by wtforms Regex check in form validate.
+def contains_bad_chars(input_item):
+    """
+    Checks for the presence of bad chars in supplied user input.
+
+    Args:
+        input_item (str): Supplied input item to check for bad chars.
+
+    Returns:
+        bool: True if item does contain one of the bad chars below, False
+              otherwise.
+    """
+    bad_chars = {
+        " ",
+        "$",
+        "'",
+        '"',
+        "\\",
+        "#",
+        "=",
+        "[",
+        "]",
+        "!",
+        "<",
+        ">",
+        "|",
+        ";",
+        "{",
+        "}",
+        "(",
+        ")",
+        "*",
+        ",",
+        "?",
+        "~",
+        "&",
+    }
+
+    # Its okay to skip None cause should be caught by earlier checks. Also
+    # technically, None does not contain any bad chars...
+    if input_item is None:
+        return False
+
+    for char in bad_chars:
+        if char in input_item:
+            return True
+
+    return False
 
 
 def update_self():

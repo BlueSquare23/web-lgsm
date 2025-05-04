@@ -1,4 +1,5 @@
 import os
+import re
 import pwd
 import time
 import json
@@ -40,24 +41,30 @@ def check_main_conf(confstr):
     assert confstr in content
 
 
-def enable_cfg_editor():
+def toggle_cfg_editor(enable=False):
     """
-    Enable cfg editor setting in config file.
+    Toggle cfg_editor setting in config file.
     """
     config = configparser.ConfigParser()
     config.read("main.conf.local")
-    config['settings']['cfg_editor'] = 'yes'
+    if enable:
+        config['settings']['cfg_editor'] = 'yes'
+    else:
+        config['settings']['cfg_editor'] = 'no'
     with open("main.conf.local", "w") as configfile:
         config.write(configfile)
 
 
-def enable_send_cmd():
+def toggle_send_cmd(enable=False):
     """
-    Enable send_cmd setting in config file.
+    Toggle send_cmd setting in config file.
     """
     config = configparser.ConfigParser()
     config.read("main.conf.local")
-    config['settings']['send_cmd'] = 'yes'
+    if enable:
+        config['settings']['send_cmd'] = 'yes'
+    else:
+        config['settings']['send_cmd'] = 'no'
     with open("main.conf.local", "w") as configfile:
         config.write(configfile)
 
@@ -71,6 +78,15 @@ def get_server_id(server_name):
 def check_install_finished(server_id):
     server = GameServer.query.filter_by(id=server_id).first()
     return server.install_finished
+
+
+# Only works on single form pages!!!
+def get_csrf_token(response):
+    # Parse the HTML to get the CSRF token.
+    html = response.data.decode()
+    return re.search(
+        r'<input[^>]*name="csrf_token"[^>]*value="([^"]*)"', html
+    ).group(1)
 
 
 ### Home Page tests.
@@ -139,12 +155,10 @@ def test_add_content(db_session, client, authed_client, test_vars):
         assert b"Game server system username" in response.data
         assert b"Enter system user game server is installed under" in response.data
         assert b"Remote server's IP address or hostname" in response.data
-        assert b"Enter remote server's IP address or hostname" in response.data
+        assert b"Enter remote server&#39;s IP address or hostname. For example, &#34;gmod.domain.tld&#34;" in response.data
         assert b"Submit" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
-
-#    = test_vars[""]
 
 # Test add responses.
 def test_add_responses(db_session, client, authed_client, test_vars):
@@ -154,13 +168,19 @@ def test_add_responses(db_session, client, authed_client, test_vars):
     test_remote_host = test_vars["test_remote_host"]
 
     with client:
+        response = client.get("/add")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        csrf_token = get_csrf_token(response)
+        print(csrf_token)
 
         ## Test empty parameters.
-        resp_code = 400
-        error_msg = b"Missing required form field(s)!"
+        resp_code = 200
+        error_msg = b"This field is required."
+
         response = client.post(
             "/add",
-            data={"install_name": "", "install_path": "", "script_name": ""},
+            data={"csrf_token": csrf_token, "install_name": "", "install_path": "", "script_name": ""},
             follow_redirects=True,
         )
         check_response(response, error_msg, resp_code, "views.add")
@@ -168,6 +188,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": "",
                 "install_path": test_server_path,
@@ -180,6 +201,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": test_server_path,
@@ -192,6 +214,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": "",
@@ -201,14 +224,11 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         )
         check_response(response, error_msg, resp_code, "views.add")
 
-        ## Test empty parameters.
-        resp_code = 400
-        error_msg = b"Missing required form field(s)!"
-
         # Empty install_name.
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": "",
                 "install_path": test_server_path,
@@ -222,6 +242,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": test_server_path,
@@ -235,6 +256,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": "",
@@ -248,6 +270,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_name": test_server,
                 "install_path": test_server_path, 
                 "script_name": test_server_name,
@@ -256,10 +279,25 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         )
         check_response(response, error_msg, resp_code, "views.add")
 
+        ## Test empty csrf_token.
+        error_msg = b"The CSRF token is invalid"
+        response = client.post(
+            "/add",
+            data={
+                "install_type": "local",
+                "install_name": test_server,
+                "install_path": test_server_path,
+                "script_name": test_server_name,
+            },
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
         ## Test legit local server add with mock server.
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": test_server_path,
@@ -277,15 +315,13 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         ## Bad char tests.
         # Checks response to see if it contains bad chars msg.
         def contains_bad_chars(response):
-            assert response.status_code == 400
-
             # DEBUG!
 #            print(response.data.decode('utf-8'))
 #            print('----------------------------------------')
 
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for("views.add")
-            assert "Illegal Character Entered" in response.data.decode('utf-8')
+            assert "Input contains invalid characters" in response.data.decode('utf-8')
 
         bad_chars = {
             "$",
@@ -314,13 +350,11 @@ def test_add_responses(db_session, client, authed_client, test_vars):
 
         # Test all three fields on add page reject bad chars.
         for char in bad_chars:
-#            print(f"Char: {char}")
-
-#            print(f"Bad install_name")
             response = ''
             response1 = client.post(
                 "/add",
                 data={
+                    "csrf_token": csrf_token,
                     "install_type": "local",
                     "install_name": char,
                     "install_path": test_server_path,
@@ -335,6 +369,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             response2 = client.post(
                 "/add",
                 data={
+                    "csrf_token": csrf_token,
                     "install_type": "local",
                     "install_name": test_server,
                     "install_path": char,
@@ -346,39 +381,43 @@ def test_add_responses(db_session, client, authed_client, test_vars):
 
 # Will fail bc script_name validation happens first. Keeping for now bc
 # refactor of main routes may see validation reordered so this is useful again.
-#            response3 = ''
-#            response3 = client.post(
-#                "/add",
-#                data={
-#                    "install_type": "local",
-#                    "install_name": test_server,
-#                    "install_path": test_server_path,
-#                    "script_name": char,
-#                },
-#                follow_redirects=True,
-#            )
-#            contains_bad_chars(response3)
-#
+            response3 = ''
+            response3 = client.post(
+                "/add",
+                data={
+                    "csrf_token": csrf_token,
+                    "install_type": "local",
+                    "install_name": test_server,
+                    "install_path": test_server_path,
+                    "script_name": char,
+                },
+                follow_redirects=True,
+            )
+            contains_bad_chars(response3)
+
 
         ## Test install already exists.
         # Do a legit server add.
         response4 = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "local",
                 "install_name": test_server,
                 "install_path": test_server_path,
                 "script_name": test_server_name,
             },
+            follow_redirects=True,
         )
 
-        assert response4.status_code == 400
+        assert response4.status_code == 200
         assert b"An installation by that name already exits." in response4.data
 
         ## Test legit remote server add with mock server details.
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "remote",
                 "install_name": test_server + '2',
                 "install_path": test_server_path,
@@ -395,6 +434,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": "docker",
                 "install_name": test_server + '3',
                 "install_path": test_server_path,
@@ -414,23 +454,9 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
     test_server = test_vars["test_server"]
 
     with client:
-
         # Test redirect for backward compat works.
         response = client.get(f"/controls?server={test_server}")
-
-        # Debug...
-#        print(type(response))
-#        print(response)
-#        print(response.status_code)
-#        print(response.headers)
-#        print(response.data)
-#        print(response.get_data(as_text=True))
-
-#        assert response.status_code == 302  # Return's 200 to GET requests.
-#        loc_header = response.headers.get('Location')
-#        server_id = loc_header.split('server_id=')[1]
         server_id = get_server_id(test_server)
-        
 
         response = client.get(f"/controls?server_id={server_id}")
         assert response.status_code == 200  # Return's 200 to GET requests.
@@ -443,7 +469,6 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
         assert f"Server Controls for: {test_server}".encode() in response.data
         assert b"Top" in response.data
         assert b"Delete Server" in response.data
-        assert b"" in response.data
 
         # Check all cmds are there.
         short_cmds = ["st", "sp", "r", "m", "ta", "dt", "pd", "ul", "u", "b", "c"]
@@ -490,39 +515,23 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
         assert response.status_code == 200  # Return's 200 to GET requests.
         assert b"Send command to game server console" not in response.data
 
-        # Enable the send_cmd setting.
-#        os.system("sed -i 's/send_cmd = no/send_cmd = yes/g' main.conf.local")
-
         # Enable send_cmd setting in config file.
-        config = configparser.ConfigParser()
-        config.read("main.conf.local")
-        config['settings']['send_cmd'] = 'yes'
-        with open("main.conf.local", "w") as configfile:
-            config.write(configfile)
-
+        toggle_send_cmd(True)
         os.system("cat main.conf.local")
+        time.sleep(1)
 
         # Check send cmd is there after main.conf.local setting is enabled.
         server_id = get_server_id(test_server)
         response = client.get(f"/controls?server_id={server_id}")
+        debug_response(response)
 
-        # DEBUG
-        print(response.data.decode('utf8'))
         assert response.status_code == 200  # Return's 200 to GET requests.
-        # TODO: These first two tests are bad. Should use html element as a
-        # whole for all str matching tests.
         assert b"sd" in response.data
         assert b"send" in response.data
         assert b"Send command to game server console" in response.data
 
-
         # Set it back to default state for sake of idempotency.
-        config['settings']['send_cmd'] = 'no'
-        with open("main.conf.local", "w") as configfile:
-            config.write(configfile)
-
-        # Set it back to default state for sake of idempotency.
-#        os.system("sed -i 's/send_cmd = yes/send_cmd = no/g' main.conf.local")
+        toggle_send_cmd(False)
 
 
 # Test add responses.
@@ -729,131 +738,158 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
     username = test_vars["username"]
     password = test_vars["password"]
 
+    response = client.get("/settings")
+    assert response.status_code == 200  # Return's 200 to GET requests.
+    csrf_token = get_csrf_token(response)
+
+    default_data = {
+        "csrf_token": csrf_token,
+        "text_color": "#09ff00",
+        "graphs_primary": "#e01b24",
+        "graphs_secondary": "#0d6efd",
+        "terminal_height": "10",
+        "delete_user": "false",
+        "remove_files": "false",
+        "install_new_user": "true",
+        "newline_ending": "true",
+        "show_stderr": "true",
+        "clear_output_on_reload": "true",
+    }
+
     with client:
-
-        # Text color change tests.
-        # Only accepts hexcode as text color.
         resp_code = 200
-        error_msg = b"Invalid text color!"
-        response = client.post(
-            "/settings", data={"text_color": "test"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
 
-        response = client.post(
-            "/settings", data={"text_color": "red"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
+        ## Test color input changes
+        # NOTE: Only accepts hexcodes as valid colors.
 
-        response = client.post(
-            "/settings", data={"text_color": "#aaaaaaaaaaaaaaaa"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        error_msg = b"Invalid primary color!"
-        response = client.post(
-            "/settings", data={"graphs_primary": "test"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings", data={"graphs_primary": "red"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings",
-            data={"graphs_primary": "#aaaaaaaaaaaaaaaa"},
-            follow_redirects=True,
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        error_msg = b"Invalid secondary color!"
-        response = client.post(
-            "/settings", data={"graphs_secondary": "test"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings", data={"graphs_secondary": "red"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings",
-            data={"graphs_secondary": "#aaaaaaaaaaaaaaaa"},
-            follow_redirects=True,
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        # Legit color change test.
+        # Legit color change test first.
         error_msg = b"Settings Updated!"
-        text_color = "#0ed0fc"
-        response = client.post(
-            "/settings", data={"text_color": text_color}, follow_redirects=True
-        )
+        data = default_data.copy()
+
+        text_color = "#000000"
+        data["text_color"] = text_color
+        print(data)
+        response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf(f"text_color = {text_color}")
 
-        # Test install as new user settings.
-        error_msg = b"Settings Updated!"
-        response = client.post(
-            "/settings", data={"install_new_user": "false"}, follow_redirects=True
-        )
+        # Text color tests.
+        error_msg = b"Invalid text color!"
+        data = default_data.copy()
+
+        data["text_color"] = "test"
+        response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
+
+        data["text_color"] = "red"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        data["text_color"] = "#aaaaaaaaaaaaaaaa"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Primary color tests
+        error_msg = b"Invalid primary color!"
+        data = default_data.copy()
+
+        data["graphs_primary"] = "test"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        data["graphs_primary"] = "red"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        data["graphs_primary"] = "#aaaaaaaaaaaaaaaa"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Secondary color tests
+        error_msg = b"Invalid secondary color!"
+        data = default_data.copy()
+
+        data["graphs_secondary"] = "test"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        data["graphs_secondary"] = "red"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        data["graphs_secondary"] = "#aaaaaaaaaaaaaaaa"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        ## Test install as new user settings. 
+        data = default_data.copy()
+        error_msg = b"Settings Updated!"
+
+        data["install_new_user"] = "false"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
         # Check changes are reflected in main.conf.local.
         check_main_conf("install_create_new_user = no")
 
-        response = client.post(
-            "/settings", data={"install_new_user": "true"}, follow_redirects=True
-        )
+        data["install_new_user"] = "true"
+        response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
+
         # Check changes are reflected in main.conf.local.
         check_main_conf("install_create_new_user = yes")
 
-        # Check nonsense input has no effect.
-        response = client.post(
-            "/settings",
-            data={"install_new_user": "sneeeeeeeeeeeeeeeeee"},
-            follow_redirects=True,
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-        check_main_conf("install_create_new_user = yes")
-
-        # Test text area height change.
-        # App only accepts terminal height between 5 and 100.
-        error_msg = b"Invalid Terminal Height!"
-        response = client.post(
-            "/settings", data={"terminal_height": "-20"}, follow_redirects=True
-        )
+        # Test invalid choice.
+        error_msg = b"Not a valid choice"
+        data["install_new_user"] = "sneeeeeeeeeeeeeeeeee"
+        response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
-        response = client.post(
-            "/settings", data={"terminal_height": "test"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings", data={"terminal_height": "99999"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
-        response = client.post(
-            "/settings", data={"terminal_height": "-e^(i*3.14)"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
+        ## Test text area height change.
 
         # Legit terminal height test.
+        data = default_data.copy()
         error_msg = b"Settings Updated!"
-        response = client.post(
-            "/settings", data={"terminal_height": "10"}, follow_redirects=True
-        )
+        data["terminal_height"] = "10"
+        response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf("terminal_height = 10")
+
+        # App only accepts terminal height between 5 and 100.
+        error_msg = b"Number must be between 5 and 100"
+        data["terminal_height"] = "-20"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        debug_response(response)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Check nothing changed in conf, just to be sure.
+        check_main_conf("terminal_height = 10")
+
+        data["terminal_height"] = "test"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Check nothing changed in conf, just to be sure.
+        check_main_conf("terminal_height = 10")
+
+        data["terminal_height"] = "99999"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Check nothing changed in conf, just to be sure.
+        check_main_conf("terminal_height = 10")
+
+        data["terminal_height"] = "-e^(i*3.14)"
+        response = client.post("/settings", data=data, follow_redirects=True)
+        check_response(response, error_msg, resp_code, "views.settings")
+
+        # Check nothing changed in conf, just to be sure.
+        check_main_conf("terminal_height = 10")
+
 
 
 ### API system-usage tests.
@@ -933,7 +969,7 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
 #        print(response.data.decode('utf-8'))
         assert response.status_code == 302
 
-        enable_cfg_editor()
+        toggle_cfg_editor(True)
 #        os.system("cat main.conf.local")  # Debug
 
         # Basic page load test.
@@ -971,7 +1007,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
     server_id = get_server_id(test_server)
 
     with client:
-        enable_cfg_editor()
+        toggle_cfg_editor(True)
 
         ## Edit testing.
         # Test if edits are saved.
@@ -1179,7 +1215,6 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
     test_server_path = test_vars["test_server_path"]
 
     with client:
-
         server_id = get_server_id(test_server)
 
         # Test edit_user page. Should never be allowed with or without perms.
@@ -1206,6 +1241,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
 
         # Test add page.
         response = client.get("/add", follow_redirects=True)
+        csrf_token = get_csrf_token(response)
         msg = b"Add an Existing LGSM Installation"
         check_response(response, msg, resp_code, "views.add")
 
@@ -1213,6 +1249,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         response = client.post(
             "/add",
             data={
+                "csrf_token": csrf_token,
                 "install_type": 'local',
                 "install_name": test_server,
                 "install_path": test_server_path,
@@ -1386,7 +1423,7 @@ def game_server_start_stop(client, server_id):
 #    assert resp_dict['status'] == True
 
     # Enable the send_cmd setting.
-    enable_send_cmd()
+    toggle_send_cmd(True)
 
     # Test sending command to game server console
     response = client.get(

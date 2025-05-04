@@ -93,7 +93,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, main as appmain
 from app.models import User
-#from app.utils import contains_bad_chars, check_and_get_lgsmsh
+from app.utils import check_and_get_lgsmsh
 
 # Import config data.
 CONFIG_FILE = "main.conf"
@@ -265,6 +265,55 @@ def start_debug():
     app.run(debug=True, host=HOST, port=PORT)
 
 
+def contains_bad_chars(input_item):
+    """
+    Checks for the presence of bad chars in supplied user input.
+
+    Args:
+        input_item (str): Supplied input item to check for bad chars.
+
+    Returns:
+        bool: True if item does contain one of the bad chars below, False
+              otherwise.
+    """
+    bad_chars = {
+        " ",
+        "$",
+        "'",
+        '"',
+        "\\",
+        "#",
+        "=",
+        "[",
+        "]",
+        "!",
+        "<",
+        ">",
+        "|",
+        ";",
+        "{",
+        "}",
+        "(",
+        ")",
+        "*",
+        ",",
+        "?",
+        "~",
+        "&",
+    }
+
+    # Its okay to skip None cause should be caught by earlier checks. Also
+    # technically, None does not contain any bad chars...
+    if input_item is None:
+        return False
+
+    for char in bad_chars:
+        if char in input_item:
+            return True
+
+    return False
+
+
 # TODO: Just import this from utils.py script. A copy of it is fine for now,
 # but really shouldn't duplicate code like this.
 def validate_password(username, password1, password2):
@@ -420,14 +469,6 @@ def run_command(command):
     return result.stdout.strip()
 
 
-def get_git_info():
-    upstream = "@{u}"
-    local = run_command("git rev-parse @")
-    remote = run_command(f"git rev-parse {upstream}")
-    base = run_command(f"git merge-base @ {upstream}")
-    return local, remote, base
-
-
 def backup_file(filename):
     if not os.path.isfile(filename):
         print(f" [!] Warning: The file '{filename}' does not exist. No backup created!")
@@ -510,9 +551,6 @@ def update_weblgsm():
     install_script = os.path.join(SCRIPTPATH, 'install.sh')
     run_command(f"{install_script} -d")
 
-    print(" [*] Updating database...")
-    run_command("flask --app app:main db upgrade")
-
     # Green check!
     print(f" [\033[32m✓\033[0m] Update Complete!")
     return
@@ -525,9 +563,9 @@ def run_tests():
         db_file = os.path.join(SCRIPTPATH, "app/database.db")
         db_backup = backup_file(db_file)
 
-    if os.path.exists("main.conf.local"):
-        local_conf_bak = backup_file(db_file)
-    print(f"Backing Config to: {local_conf_bak}")
+    local_conf = 'main.conf.local'
+    if os.path.exists(local_conf):
+        local_conf_bak = backup_file(local_conf)
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:

@@ -230,7 +230,7 @@ echo "SECRET_KEY=\"$random_key\"" > .secret
 chmod 600 .secret
 
 echo -e "${green}####### Updating Database...${reset}"
-flask --app app:main db upgrade
+/opt/web-lgsm/bin/flask --app app:main db upgrade
 
 echo -e "${green}####### Project Setup & Installation Complete!!!${reset}"
 echo -e "${green}Run the \`web-lgsm.py\` script to start the server.${reset}"

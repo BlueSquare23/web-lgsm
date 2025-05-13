@@ -3,25 +3,8 @@ import json
 import pytest
 from flask import url_for, request
 from game_servers import game_servers
-
 from app.models import User, GameServer
-
-
-def check_for_error(response, error_msg, url):
-    """
-    Checks response contains correct error msg and redirects to the right page.
-    """
-    # Is 200 bc follow_redirects=True.
-    assert response.status_code == 200
-
-    # Check redirect by seeing if path changed.
-    assert response.request.path == url_for(url)
-    assert error_msg in response.data
-
-
-def get_server_id(server_name, db):
-    server = db.query.filter_by(install_name=server_name).first()
-    return server.id
+from utils import *
 
 
 ### Setup Page tests.
@@ -59,6 +42,7 @@ def test_setup_responses(db_session, client, test_vars):
     with client:
         response = client.get("/setup")
         assert response.status_code == 200  # Return's 200 to GET requests.
+        csrf_token = get_csrf_token(response)
 
         # Using follow_redirects=True bc only redirect on setup page is for
         # missing required args. The rest fall through to the render_template
@@ -68,21 +52,21 @@ def test_setup_responses(db_session, client, test_vars):
         error_msg = b"Missing required form field(s)!"
         response = client.post(
             "/setup",
-            data={"username": "", "password1": "", "password2": ""},
+            data={"csrf_token": csrf_token, "username": "", "password1": "", "password2": ""},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
 
         response = client.post(
             "/setup",
-            data={"username": "a", "password1": "a", "password2": ""},
+            data={"csrf_token": csrf_token, "username": "a", "password1": "a", "password2": ""},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
 
         response = client.post(
             "/setup",
-            data={"username": "", "password1": "a", "password2": "a"},
+            data={"csrf_token": csrf_token, "username": "", "password1": "a", "password2": "a"},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
@@ -99,24 +83,25 @@ def test_setup_responses(db_session, client, test_vars):
             too_long += "a"
             count += 1
 
-        error_msg = b"Form field too long!"
+        error_msg = b"Field must be between 4 and 20 characters long."
         response = client.post(
             "/setup",
-            data={"username": too_long, "password1": password, "password2": password},
+            data={"csrf_token": csrf_token, "username": too_long, "password1": password, "password2": password},
+            follow_redirects=True,
+        )
+        check_for_error(response, error_msg, "auth.setup")
+
+        error_msg = b"Field must be between 12 and 150 characters long."
+        response = client.post(
+            "/setup",
+            data={"csrf_token": csrf_token, "username": username, "password1": too_long, "password2": password},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
 
         response = client.post(
             "/setup",
-            data={"username": username, "password1": too_long, "password2": password},
-            follow_redirects=True,
-        )
-        check_for_error(response, error_msg, "auth.setup")
-
-        response = client.post(
-            "/setup",
-            data={"username": username, "password1": password, "password2": too_long},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": too_long},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.setup")
@@ -125,16 +110,16 @@ def test_setup_responses(db_session, client, test_vars):
         # Test needs uppercase, lowercase, and special char.
         response = client.post(
             "/setup",
-            data={"username": username, "password1": "blah", "password2": "blah"},
+            data={"csrf_token": csrf_token, "username": username, "password1": "blah", "password2": "blah"},
             follow_redirects=True,
         )
-        assert b"Passwords doesn&#39;t meet criteria!" in response.data
+        assert b"Password must contain at least one uppercase letter" in response.data
 
         ## Tests username contains bad char(s).
         def test_username_bad_chars(response):
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for("auth.setup")
-            assert b"Username Contains Illegal Character(s)" in response.data
+            assert b"Username contains invalid characters." in response.data
 
         bad_chars = {
             " ",
@@ -165,7 +150,7 @@ def test_setup_responses(db_session, client, test_vars):
         for char in bad_chars:
             response = client.post(
                 "/setup",
-                data={"username": char, "password1": password, "password2": password},
+                data={"csrf_token": csrf_token, "username": char, "password1": password, "password2": password},
                 follow_redirects=True,
             )
             test_username_bad_chars(response)
@@ -173,23 +158,26 @@ def test_setup_responses(db_session, client, test_vars):
         # Test passwords don't match.
         response = client.post(
             "/setup",
-            data={"username": username, "password1": password, "password2": "blah"},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": "**Test1234"},
             follow_redirects=True,
         )
         # No redirect on setup.
-        assert b"Passwords don&#39;t match!" in response.data
+        assert b"Passwords do not match" in response.data
 
         # Test password too short.
         response = client.post(
             "/setup",
-            data={"username": username, "password1": "Ab3$", "password2": "Ab3$"},
+            data={"csrf_token": csrf_token, "username": username, "password1": "Ab3$", "password2": "Ab3$"},
             follow_redirects=True,
         )
         # No redirect on setup.
-        assert b"Password is too short!" in response.data
+        debug_response(response)
+        error_msg = b"Field must be between 12 and 150 characters long."
+        assert error_msg in response.data
 
         # Try to request the login page, should get redirected to setup.
         response = client.get("/login", follow_redirects=True)
+        csrf_token = get_csrf_token(response)
         assert response.status_code == 200  # 200 because follow_redirects=True.
         assert response.request.path == url_for(f"auth.setup")
         assert b"Please add a user!" in response.data
@@ -197,7 +185,7 @@ def test_setup_responses(db_session, client, test_vars):
         # Finally, create real test user.
         response = client.post(
             "/setup",
-            data={"username": username, "password1": password, "password2": password},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password},
         )
         assert response.status_code == 302
 
@@ -205,7 +193,7 @@ def test_setup_responses(db_session, client, test_vars):
         error_msg = b"User already added. Please sign in!"
         response = client.post(
             "/setup",
-            data={"username": username, "password1": password, "password2": password},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password},
             follow_redirects=True,
         )
         # Is 200 bc follow_redirects=True.
@@ -248,20 +236,36 @@ def test_login_responses(db_session, client, setup_client, test_vars):
 
     with client:
 
+        response = client.get("/login")
+        csrf_token = get_csrf_token(response)
+
+        # First test legit login
+        response = client.post(
+            "/login", data={"csrf_token": csrf_token, "username": username, "password": password}, 
+            follow_redirects=True
+        )
+        msg = b"Logged in"
+        check_for_error(response, msg, "views.home")
+
+        # Logout again.
+        response = client.get("/logout", follow_redirects=True)
+        msg = b"Logged out"
+        check_for_error(response, msg, "auth.login")
+
         # Test empty args.
         error_msg = b"Missing required form field(s)!"
         response = client.post(
-            "/login", data={"username": "", "password": ""}, follow_redirects=True
+            "/login", data={"csrf_token": csrf_token, "username": "", "password": ""}, follow_redirects=True
         )
         check_for_error(response, error_msg, "auth.login")
 
         response = client.post(
-            "/login", data={"username": username, "password": ""}, follow_redirects=True
+            "/login", data={"csrf_token": csrf_token, "username": username, "password": ""}, follow_redirects=True
         )
         check_for_error(response, error_msg, "auth.login")
 
         response = client.post(
-            "/login", data={"username": "", "password": password}, follow_redirects=True
+            "/login", data={"csrf_token": csrf_token, "username": "", "password": password}, follow_redirects=True
         )
         check_for_error(response, error_msg, "auth.login")
 
@@ -273,26 +277,30 @@ def test_login_responses(db_session, client, setup_client, test_vars):
             too_long += "a"
             count += 1
 
-        error_msg = b"Form field too long!"
+        error_msg = b"Field must be between 4 and 20 characters long."
         response = client.post(
             "/login",
-            data={"username": too_long, "password": password},
+            data={"csrf_token": csrf_token, "username": too_long, "password": password},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.login")
 
+        error_msg = b"Field must be between 12 and 150 characters long."
         response = client.post(
             "/login",
-            data={"username": username, "password": too_long},
+            data={"csrf_token": csrf_token, "username": username, "password": too_long},
             follow_redirects=True,
         )
         check_for_error(response, error_msg, "auth.login")
 
-        # Finally, log test user in.
+        # CSRF token required check.
         response = client.post(
-            "/login", data={"username": username, "password": password}
+            "/login",
+            data={"username": username, "password": password},
+            follow_redirects=True,
         )
-        assert response.status_code == 302
+        error_msg = b"The CSRF token is missing."
+        check_for_error(response, error_msg, "auth.login")
 
 
 ### Logout page tests.
@@ -496,9 +504,12 @@ def test_login_as_new_user(db_session, client, add_second_user_no_perms):
     that's okay since they're really two sides of the same coin.
     """
     with client:
+        response = client.get('/login')
+        csrf_token = get_csrf_token(response)
+
         # Log test user in.
         response = client.post(
-            "/login", data={"username": 'test2', "password": "**Testing12345"},
+            "/login", data={"csrf_token":csrf_token, "username": 'test2', "password": "**Testing12345"},
             follow_redirects=True
         )
         assert response.status_code == 200  # 200 bc follow_redirects=True

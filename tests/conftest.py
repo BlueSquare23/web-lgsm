@@ -9,22 +9,7 @@ from werkzeug.security import generate_password_hash
 
 from app import main
 from app.models import User, GameServer
-
-def get_server_id(server_name):
-    server = GameServer.query.filter_by(install_name=server_name).first()
-    return server.id
-
-def debug_response(response):
-    """
-    Debug helper, just prints all teh things for a response.
-    """
-    # Debug...
-    print(type(response))
-    print(response)
-    print(response.status_code)
-    print(response.headers)
-    print(response.data)
-    print(response.get_data(as_text=True))
+from utils import *
 
 
 @pytest.fixture
@@ -107,10 +92,14 @@ def setup_client(db_session, test_vars):
 @pytest.fixture()
 def authed_client(client, setup_client, test_vars):
     # Login the client (still needs HTTP request for session)
+    response = client.get("/login")
+    csrf_token = get_csrf_token(response)
+
     response = client.post("/login",
         data={
             "username": test_vars["username"],
             "password": test_vars["password"],
+            "csrf_token": csrf_token,
         },
         follow_redirects=True)
     assert response.status_code == 200
@@ -187,10 +176,14 @@ def add_second_user_no_perms(db_session, setup_client, test_vars):
 
 @pytest.fixture()
 def user_authed_client_no_perms(client, add_second_user_no_perms, test_vars):
+    # Login the client (still needs HTTP request for session)
+    response = client.get("/login")
+    csrf_token = get_csrf_token(response)
+
     # Login as second user (still needs HTTP request)
     response = client.post(
         "/login", 
-        data={"username": "test2", "password": test_vars["password"]},
+        data={"csrf_token":csrf_token, "username": "test2", "password": test_vars["password"]},
         follow_redirects=True
     )
     assert response.status_code == 200
@@ -238,10 +231,14 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
 
 @pytest.fixture()
 def user_authed_client_all_perms(client, add_second_user_all_perms, test_vars):
+    # Login the client (still needs HTTP request for session)
+    response = client.get("/login")
+    csrf_token = get_csrf_token(response)
+
     # Login as second user (still needs HTTP request)
     response = client.post(
         "/login", 
-        data={"username": "test2", "password": test_vars["password"]},
+        data={"csrf_token":csrf_token, "username": "test2", "password": test_vars["password"]},
         follow_redirects=True
     )
     assert response.status_code == 200

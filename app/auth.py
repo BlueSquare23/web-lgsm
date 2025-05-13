@@ -23,112 +23,101 @@ from flask import (
     abort,
     current_app,
 )
+from .forms import LoginForm, SetupForm
 
 auth = Blueprint("auth", __name__)
 
 ######### Login Route #########
 
-
 @auth.route("/login", methods=["GET", "POST"])
 def login():
-    # Set default return code.
-    response_code = 200
+    # Create LoginForm.
+    form = LoginForm()
 
     if User.query.first() == None:
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
-    # Post route code for login form submission.
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+    if request.method == "GET":
+        return render_template("login.html", user=current_user, form=form), 200
 
-        # Make sure required form items are supplied.
-        for form_item in (username, password):
-            if form_item == None or form_item == "":
-                flash("Missing required form field(s)!", category="error")
-                return redirect(url_for("auth.login"))
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        if form.errors:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+        return redirect(url_for("auth.login"))
 
-            # Check input lengths.
-            if len(form_item) > 150:
-                flash("Form field too long!", category="error")
-                return redirect(url_for("auth.login"))
+    username = form.username.data
+    password = form.password.data
 
-        # Check login info.
-        user = User.query.filter_by(username=username).first()
-        if user:
-            current_app.logger.info(user)
+    # Check login info.
+    user = User.query.filter_by(username=username).first()
+    if user == None:
+        flash("Incorrect Username or Password!", category="error")
+        return render_template("login.html", user=current_user, form=form), 403
 
-            if check_password_hash(user.password, password):
-                if current_user.is_authenticated:
-                    logout_user()
-                flash("Logged in!", category="success")
-                four_weeks_delta = timedelta(days=28)
-                login_user(user, remember=True, duration=four_weeks_delta)
-                confirm_login()
-                return redirect(url_for("views.home"))
-            else:
-                flash("Incorrect Username or Password!", category="error")
-                response_code = 403
-        else:
-            flash("Incorrect Username or Password!", category="error")
-            response_code = 403
+    current_app.logger.info(user)
 
-    return render_template("login.html", user=current_user), response_code
+    if not check_password_hash(user.password, password):
+        flash("Incorrect Username or Password!", category="error")
+        return render_template("login.html", user=current_user, form=form), 403
+
+    if current_user.is_authenticated:
+        logout_user()
+
+    flash("Logged in!", category="success")
+    four_weeks_delta = timedelta(days=28)
+    login_user(user, remember=True, duration=four_weeks_delta)
+    confirm_login()
+    return redirect(url_for("views.home"))
 
 
 ######### Setup Route #########
 
-
 @auth.route("/setup", methods=["GET", "POST"])
 def setup():
-    # Set default response code.
-    response_code = 200
-
-    if request.method == "POST":
-        # Collect form data
-        username = request.form.get("username")
-        password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-
-        # Make sure required form items are supplied.
-        if not check_require_auth_setup_fields(username, password1, password2):
-            return redirect(url_for("auth.setup"))
-
-        # Check if a user already exists and if so don't allow another user to
-        # be created. Only allow authenticated admin users to create new users
-        # after initial setup.
-        if User.query.first() != None:
-            flash("User already added. Please sign in!", category="error")
-            return redirect(url_for("auth.login"))
-
-        if not valid_password(password1, password2):
-            return redirect(url_for("auth.setup"))
-
-        # Add the new_user to the database, then redirect home.
-        new_user = User(
-            username=username,
-            password=generate_password_hash(password1, method="pbkdf2:sha256"),
-            role="admin",
-            permissions=json.dumps({"admin": True}),
-        )
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash("User created!")
-        login_user(new_user, remember=True)
-        return redirect(url_for("views.home"))
-
     # If already a user added, disable the setup route.
     if User.query.first() != None:
         flash("User already added. Please sign in!", category="error")
         return redirect(url_for("auth.login"))
 
-    return render_template("setup.html", user=current_user), response_code
+    # Create SetupForm.
+    form = SetupForm()
+
+    if request.method == "GET":
+        return render_template("setup.html", form=form, user=current_user), 200
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        if form.errors:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+        return redirect(url_for("auth.login"))
+
+    # Collect form data
+    username = form.username.data
+    password1 = form.password1.data
+    password2 = form.password2.data
+
+    # Add the new_user to the database, then redirect home.
+    new_user = User(
+        username=username,
+        password=generate_password_hash(password1, method="pbkdf2:sha256"),
+        role="admin",
+        permissions=json.dumps({"admin": True}),
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    flash("User created!")
+    login_user(new_user, remember=True)
+    return redirect(url_for("views.home"))
 
 
 ######### Logout Route #########
-
 
 @auth.route("/logout")
 @login_required
@@ -139,7 +128,6 @@ def logout():
 
 
 ######### Create / Edit User(s) Route #########
-
 
 @auth.route("/edit_users", methods=["GET", "POST"])
 @login_required

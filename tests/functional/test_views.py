@@ -1478,13 +1478,31 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
     """Test install as new user."""
     version = test_vars["version"]
 
+    response = client.get('/settings')
+    csrf_token = get_csrf_token(response)
+    settings_data = {
+        "csrf_token": csrf_token,
+        "text_color": "#09ff00",
+        "graphs_primary": "#e01b24",
+        "graphs_secondary": "#0d6efd",
+        "terminal_height": "10",
+        "delete_user": "true",
+        "remove_files": "true",
+        "install_new_user": "true",
+        "newline_ending": "true",
+        "show_stderr": "true",
+        "clear_output_on_reload": "true",
+    }
+
     with client:
 
+        # TODO: This should really be done via editing the conf directly, but
+        # ehh this works for now.
         # Change settings.
         error_msg = b"Settings Updated!"
         resp_code = 200
         response = client.post(
-            "/settings", data={"install_new_user": "true"}, follow_redirects=True
+            "/settings", data=settings_data, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.settings")
 
@@ -1499,7 +1517,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         console_output(client)
 
         response = client.post(
-            "/settings", data={"delete_files": "true"}, follow_redirects=True
+            "/settings", data=settings_data, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.settings")
 
@@ -1544,13 +1562,32 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
 
     version = test_vars["version"]
 
+    response = client.get('/settings')
+    csrf_token = get_csrf_token(response)
+    settings_data = {
+        "csrf_token": csrf_token,
+        "text_color": "#09ff00",
+        "graphs_primary": "#e01b24",
+        "graphs_secondary": "#0d6efd",
+        "terminal_height": "10",
+        "delete_user": "false",
+        "remove_files": "true",
+        "install_new_user": "false",
+        "newline_ending": "true",
+        "show_stderr": "true",
+        "clear_output_on_reload": "true",
+    }
+
     with client:
 
+        # TODO: Yeah said this above too, this needs refactored into a static
+        # setup wopaguz. Shouldn't be doing this via post to settings route.
+        # But oh well works for now.
         # Change settings.
         error_msg = b"Settings Updated!"
         resp_code = 200
         response = client.post(
-            "/settings", data={"install_new_user": "false"}, follow_redirects=True
+            "/settings", data=settings_data, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.settings")
 
@@ -1565,13 +1602,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         console_output(client)
 
         server_id = get_server_id("Minecraft")
-        response = client.post(
-            "/settings", data={"delete_files": "true"}, follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "views.settings")
-
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
-        assert not os.path.exists("/home/mcserver")
 
 

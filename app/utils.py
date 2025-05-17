@@ -1763,8 +1763,8 @@ def read_config(route):
         config_options["text_color"] = get_config_value(
             config, "aesthetic", "text_color", "#09ff00"
         )
-        config_options["create_new_user"] = get_config_value(
-            config, "settings", "install_create_new_user", True
+        config_options["install_create_new_user"] = get_config_value(
+            config, "settings", "install_create_new_user", True, True
         )
         return config_options
 

@@ -1,4 +1,5 @@
 import re
+import getpass
 from flask_wtf import FlaskForm
 from wtforms.widgets import ColorInput
 from wtforms.validators import InputRequired, Optional, AnyOf, Length, Regexp, NumberRange, ValidationError
@@ -15,6 +16,8 @@ from wtforms import (
 )
 
 from .utils import get_servers
+
+USERNAME = getpass.getuser()
 
 # Input bad char regex stuff.
 BAD_CHARS = r'^[^ \$\'"\\#=\[\]!<>|;{}()*,?~&]*$'
@@ -263,7 +266,7 @@ class SettingsForm(FlaskForm):
         'User creation on install',
         choices=[
             ('true', 'Setup new system user when installing new game servers'),
-            ('false', f'Install new game servers under the system user')
+            ('false', f'Install new game servers under system user: {USERNAME}')
         ],
         default='true',
         validators=[InputRequired()],

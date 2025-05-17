@@ -404,7 +404,7 @@ def install():
         # reasons, to keep things simple. Inside of a container installs are
         # going to be same user only.
         if "CONTAINER" in os.environ:
-            config_options["create_new_user"] = False
+            config_options["install_create_new_user"] = False
 
         server = GameServer()
         server.install_name = server_install_name
@@ -420,7 +420,7 @@ def install():
         # If install_create_new_user config parameter is true then create a new
         # user for the new game server and set install path to the path in that
         # new users home directory.
-        if config_options["create_new_user"]:
+        if config_options["install_create_new_user"]:
             server.username = server_script_name
             server.install_path = (
                 f"/home/{server_script_name}/GameServers/{server_install_name}"

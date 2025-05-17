@@ -646,7 +646,7 @@ def test_settings_content(db_session, client, authed_client, test_vars):
         assert (
             b"Setup new system user when installing new game servers" in response.data
         )
-        assert b"Install new game servers under the " in response.data
+        assert b"Install new game servers under system user" in response.data
         assert b"Show Live Server Stats on Home Page" in response.data
         assert b"Check for and update the Web LGSM" in response.data
         assert (

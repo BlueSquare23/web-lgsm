@@ -4,6 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms.widgets import ColorInput
 from wtforms.validators import InputRequired, Optional, AnyOf, Length, Regexp, NumberRange, ValidationError
 from wtforms import (
+    Form,
     PasswordField,
     RadioField,
     SelectField,
@@ -13,9 +14,11 @@ from wtforms import (
     StringField,
     IntegerField,
     BooleanField,
+    HiddenField,
 )
 
 from .utils import get_servers
+from .models import *
 
 USERNAME = getpass.getuser()
 
@@ -334,3 +337,56 @@ class SettingsForm(FlaskForm):
             'class': 'btn btn-outline-primary'
         }
     )
+
+
+class ServerExists:
+    """Validator that checks if a server ID exists in the database"""
+    
+    def __init__(self, message=None):
+        if not message:
+            message = 'Invalid game server ID!'
+        self.message = message
+    
+    def __call__(self, form, field):
+        server = GameServer.query.filter_by(id=field.data).first()
+        if server is None:
+            raise ValidationError(self.message)
+
+
+class UploadTextForm(FlaskForm):
+    """Form for editing and saving config file content"""
+    server_id = HiddenField('Server ID', 
+        validators=[
+            InputRequired(),
+            ServerExists(message="Invalid game server ID!"),
+        ]
+    )
+    cfg_path = HiddenField('Config Path', validators=[InputRequired()])
+    file_contents = TextAreaField('File Contents', validators=[InputRequired()])
+    save_submit = SubmitField('Save File 💾')
+
+
+class DownloadCfgForm(FlaskForm):
+    """Form for downloading config file"""
+    server_id = HiddenField('Server ID', 
+        validators=[
+            InputRequired(),
+            ServerExists(message="Invalid game server ID!"),
+        ]
+    )
+    cfg_path = HiddenField('Config Path', validators=[InputRequired()])
+    download_submit = SubmitField('Download Config File ⏬')
+
+
+# Form instead of FlaskForm to bypass csrf validation, since just GET req to
+# load page.
+class SelectCfgForm(Form):
+    """Form for selecting a config file to edit"""
+    server_id = HiddenField('Server ID',
+        validators=[
+            InputRequired(),
+            ServerExists(message="Invalid game server ID!"),
+        ]
+    )
+    cfg_path = HiddenField('Config Path', validators=[InputRequired()])
+

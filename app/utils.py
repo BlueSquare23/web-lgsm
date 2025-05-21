@@ -1,4 +1,5 @@
 import os
+import io
 import re
 import sys
 import pwd
@@ -20,7 +21,7 @@ import configparser
 
 from datetime import datetime, timedelta
 from threading import Thread
-from flask import flash, current_app
+from flask import flash, current_app, send_file
 
 from . import db
 from .models import GameServer
@@ -1874,3 +1875,114 @@ def clear_proc_info_post_install(server_id, app_context):
 
         time.sleep(5)
         runtime += 5
+
+
+def validation_errors(form):
+    """
+    Flashes messages for validation errors if there are any.
+
+    Args:
+        form (FlaskForm): Flask form object to check.
+    """
+    if form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                 flash(error, 'error')
+
+
+def read_cfg_file(server, cfg_path):
+    """
+    Wraps up reading in file contents for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file
+    """
+    file_contents = ""
+
+    if should_use_ssh(server):
+        # Read in file contents over ssh.
+        file_contents = read_file_over_ssh(server, cfg_path)
+
+        if file_contents == None:
+            flash("Problem reading cfg file!", category="error")
+            return redirect(url_for("views.home"))
+
+        return file_contents
+
+    # Read in file contents from cfg file.
+    # Try except in case problem with file.
+    try:
+        with open(cfg_path) as f:
+            file_contents = f.read()
+    except:
+        flash("Error reading config!", category="error")
+        return redirect(url_for("views.home"))
+
+    return file_contents
+
+
+def download_cfg(server, cfg_path):
+    """
+    Wraps up cfg file download logic for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file
+    """
+
+    file_contents = read_cfg_file(server, cfg_path)
+    cfg_file = os.path.basename(cfg_path)
+
+    if should_use_ssh(server):
+        file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
+        return send_file(
+            file_like_thingy,
+            as_attachment=True,
+            download_name=cfg_file,
+            mimetype="text/plain",
+        )
+
+    basedir, basename = os.path.split(cfg_path)
+    current_app.logger.info(log_wrap("basedir", basedir))
+    current_app.logger.info(log_wrap("basename", basename))
+    return send_from_directory(basedir, basename, as_attachment=True)
+
+
+def write_cfg(server, cfg_path, new_file_contents):
+    """
+    Wraps up cfg file write logic for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file.
+        new_file_contents (str): New stuff to be written.
+
+    Returns:
+        bool: True if written successfully, false otherwise.
+    """
+
+    if should_use_ssh(server):
+        written = write_file_over_ssh(
+            server, cfg_path, new_file_contents.replace("\r", "")
+        )
+        if written:
+            return True
+        
+        return False
+
+    # Check that file exists before allowing writes to it. Aka don't allow
+    # arbitrary file creation. Even though the above should block creating
+    # files with arbitrary names, we still don't want to allow arbitrary file
+    # creation anywhere on the file system the app has write perms to.
+    if not os.path.isfile(cfg_path):
+        return False
+
+    try:
+        with open(cfg_path, "w") as f:
+            f.write(new_file_contents.replace("\r", ""))
+        return True
+    except:
+        return False
+
+

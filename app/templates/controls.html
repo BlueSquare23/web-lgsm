@@ -36,12 +36,16 @@
 
               {% for cfg_path in cfg_paths %}
                 <div class="col">
+                  {% set cfg_file = cfg_path.split('/')[-1] %}
+                  <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" role="button" class="btn btn-outline-primary">Edit: {{cfg_file}}</a>
+<!--
                   <form method="POST" id="edit-form" action="/edit">
                     <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
                     <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_path}}" class="form-control" />
                     {% set cfg_file = cfg_path.split('/')[-1] %}
                     <input class="btn btn-outline-primary" type="submit" title="{{cfg_path}}" value="Edit: {{cfg_file}}" />
                   </form>
+-->
                 </div>
                 <br />
               {% endfor %}

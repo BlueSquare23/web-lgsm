@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change edit page to accept `cfg_path` & `server_id` via GET args.
 - Change form handling to use Flask-WTF & WTForms for validation.
 - Restructure test code to ensure _independence_ and _idempotency_.
 

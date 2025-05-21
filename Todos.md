@@ -140,11 +140,22 @@
     CSRF natively.
     - Same Site is set to None and its totally possible to trick someone into
       making POSTs to forms.
-  - https://flask-wtf.readthedocs.io/en/1.0.x/quickstart/
-  - https://wtforms.readthedocs.io/en/2.3.x/fields/
-  - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
-  - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
-  - I might want to use this to handle file uploads one day too.
+  - Forms to do:
+    - [x] Add
+    - [x] Settings
+    - [x] Login
+    - [x] Setup
+    - [ ] Controls
+    - [x] Edit
+    - [ ] Edit Users
+    - [ ] Home
+    - [ ] Install
+  - Resources:
+    - https://flask-wtf.readthedocs.io/en/1.0.x/quickstart/
+    - https://wtforms.readthedocs.io/en/2.3.x/fields/
+    - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
+    - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
+    - I might want to use this to handle file uploads one day too.
 
 * [ ] **Do research into JWT tokens for web api access**
 

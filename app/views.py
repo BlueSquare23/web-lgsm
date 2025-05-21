@@ -1,5 +1,4 @@
 import os
-import io
 import re
 import sys
 import json
@@ -21,7 +20,6 @@ from flask import (
     url_for,
     redirect,
     Response,
-    send_file,
     send_from_directory,
     jsonify,
     current_app,
@@ -94,6 +92,8 @@ def controls():
     short_cmd = request.args.get("command")
     console_cmd = request.args.get("cmd")
 
+    select_cfg_form = SelectCfgForm()
+
     # Serve a redirect to id for server_name for legacy compat reasons.
     if server_name:
         server = GameServer.query.filter_by(install_name=server_name).first()
@@ -137,10 +137,13 @@ def controls():
     if not config_options["cfg_editor"]:
         cfg_paths = []
     else:
+        current_app.logger.info("Getting cfg_paths")
         cfg_paths = find_cfg_paths(server)
         if cfg_paths == "failed":
             flash("Error reading accepted_cfgs.json!", category="error")
             cfg_paths = []
+
+    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in commands list from commands.json file.
     cmds_list = get_commands(
@@ -188,6 +191,7 @@ def controls():
                 server_commands=cmds_list,
                 config_options=config_options,
                 cfg_paths=cfg_paths,
+                select_cfg_form=select_cfg_form,
                 console=True,
             )
 
@@ -295,6 +299,7 @@ def controls():
         server_commands=cmds_list,
         config_options=config_options,
         cfg_paths=cfg_paths,
+        select_cfg_form=select_cfg_form,
     )
 
 
@@ -825,112 +830,82 @@ def edit():
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("views.home"))
 
-    # Collect args from POST request.
-    server_id = request.form.get("server_id")
-    cfg_path = request.form.get("cfg_path")
-    new_file_contents = request.form.get("file_contents")
-    download = request.form.get("download")
+    upload_form = UploadTextForm()
+    download_form = DownloadCfgForm()
 
-    # Can't load the edit page without a server specified.
-    if server_id == None or server_id == "":
-        flash("No server specified!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Can't load the edit page without a cfg specified.
-    if cfg_path == None or cfg_path == "":
-        flash("No config file specified!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Check that the submitted server exists in db.
-    server = GameServer.query.filter_by(id=server_id).first()
-    # If game server doesn't exist in db, can't load page for it.
-    if server == None:
-        flash("Invalid game server id!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Try to pull script's basename from supplied cfg_path.
-    try:
-        cfg_file = os.path.basename(cfg_path)
-    except:
-        flash("Error getting config file basename!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Validate cfg_file name is in list of accepted cfgs.
-    if not valid_cfg_name(cfg_file):
-        flash("Invalid config file name!", category="error")
-        return redirect(url_for("views.home"))
-
-    if should_use_ssh(server):
-        # If new contents are supplied via POST, write them to file over ssh.
-        if new_file_contents:
-            written = write_file_over_ssh(
-                server, cfg_path, new_file_contents.replace("\r", "")
-            )
-            if written:
-                flash("Cfg file updated!", category="success")
-            else:
-                flash("Error writing to cfg file!", category="error")
+    if request.method == "GET":
+        current_app.logger.debug(request.args.keys())
+        if 'download_submit' in request.args.keys():
+            download_form = DownloadCfgForm(request.args)
+            if not download_form.validate():
+                current_app.logger.debug("Download form invalid")
+                if download_form.errors:
+                    for field, errors in download_form.errors.items():
+                        for error in errors:
+                            current_app.logger.debug(f"{field}: {error}")
+                            flash(f"{field}: {error}", 'error')
                 return redirect(url_for("views.home"))
 
-        # Read in file contents over ssh.
-        file_contents = read_file_over_ssh(server, cfg_path)
-        if file_contents == None:
-            flash("Problem reading cfg file!", category="error")
+            server_id = download_form.server_id.data
+            cfg_path = download_form.cfg_path.data
+            server = GameServer.query.filter_by(id=server_id).first()
+
+            return download_cfg(server, cfg_path)
+
+        # Convert raw get args into select_form args.
+        select_form = SelectCfgForm(request.args)
+        if not select_form.validate():
+            current_app.logger.debug("Select form invalid")
+            if select_form.errors:
+                for field, errors in select_form.errors.items():
+                    for error in errors:
+                         current_app.logger.debug(f"{field}: error")
+                         flash(error, 'error')
+
             return redirect(url_for("views.home"))
 
-        # If is download request.
-        if download == "yes":
-            file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
-            return send_file(
-                file_like_thingy,
-                as_attachment=True,
-                download_name=cfg_file,
-                mimetype="text/plain",
-            )
+        server_id = select_form.server_id.data
+        cfg_path = select_form.cfg_path.data
+        server = GameServer.query.filter_by(id=server_id).first()
+
+        current_app.logger.info(log_wrap("server_id", server_id))
+        current_app.logger.info(log_wrap("cfg_path", cfg_path))
+        current_app.logger.info(log_wrap("server", server))
+
+        file_contents = read_cfg_file(server, cfg_path)
+
+        return render_template(
+            "edit.html",
+            user=current_user,
+            server_id=server.id,
+            cfg_file=cfg_path,
+            file_contents=file_contents,
+            download_form=download_form,
+            upload_form=upload_form,
+        )
+
+    # Handle POSTs.
+
+    # Handle Invalid form submissions.
+    if not upload_form.validate_on_submit():
+        if upload_form.errors:
+            for field, errors in upload_form.errors.items():
+                for error in errors:
+                    flash(error, 'error')
+        return redirect(url_for("views.home"))
+
+    # Process form submissions.
+    server_id = upload_form.server_id.data
+    cfg_path = upload_form.cfg_path.data
+    new_file_contents = upload_form.file_contents.data
+    server = GameServer.query.filter_by(id=server_id).first()
+
+    if write_cfg(server, cfg_path, new_file_contents):
+        flash("Cfg file updated!", category="success")
     else:
-        # Check that file exists before allowing writes to it. Aka don't allow
-        # arbitrary file creation. Even though the above should block creating
-        # files with arbitrary names, we still don't want to allow arbitrary file
-        # creation anywhere on the file system the app has write perms to.
-        if not os.path.isfile(cfg_path):
-            flash("No such file!", category="error")
-            return redirect(url_for("views.home"))
+        flash("Error writing to cfg file!", category="error")
 
-        # If new_file_contents supplied in post request, write the new file
-        # contents to the cfg file.
-        if new_file_contents:
-            try:
-                with open(cfg_path, "w") as f:
-                    f.write(new_file_contents.replace("\r", ""))
-                flash("Cfg file updated!", category="success")
-            except:
-                flash("Error writing to cfg file!", category="error")
-
-        # Read in file contents from cfg file.
-        file_contents = ""
-        # Try except in case problem with file.
-        try:
-            with open(cfg_path) as f:
-                file_contents = f.read()
-        except:
-            flash("Error reading config!", category="error")
-            return redirect(url_for("views.home"))
-
-        # If is download request.
-        if download == "yes":
-            basedir, basename = os.path.split(cfg_path)
-            current_app.logger.info(log_wrap("basedir", basedir))
-            current_app.logger.info(log_wrap("basename", basename))
-            return send_from_directory(basedir, basename, as_attachment=True)
-
-    return render_template(
-        "edit.html",
-        user=current_user,
-        server_id=server.id,
-        cfg_file=cfg_path,
-        file_contents=file_contents,
-        cfg_file_name=cfg_file,
-    )
+    return redirect(url_for("views.edit", server_id=server_id, cfg_path=cfg_path))
 
 
 ######### Swagger API Docs #########

@@ -504,6 +504,7 @@ def backup_dir(dirname, tar=False):
 
     return backup_dirname
 
+
 def is_up_to_date():
     """
     Check's if web-lgsm already up-to-date or not.
@@ -591,6 +592,9 @@ def run_tests():
     finally:
         if db_backup:
             shutil.move(db_backup, db_file)
+
+        shutil.move(local_conf_bak, local_conf)
+        print("Restored database and main.conf.local")
 
 
 def add_valid_gs_user(gs_user):

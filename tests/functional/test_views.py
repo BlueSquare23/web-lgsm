@@ -1507,6 +1507,8 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
 
         # Check changes are reflected in main.conf.local.
         check_main_conf("install_create_new_user = yes")
+        check_main_conf("remove_files = yes")
+        check_main_conf("delete_user = yes")
 
         # Test full install as new user.
         full_game_server_install(client)
@@ -1515,6 +1517,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         game_server_start_stop(client, server_id)
         console_output(client)
 
+        # Refresh settings again after full server install and stuff.
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
@@ -1537,14 +1540,6 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         assert response.status_code == 204
 
         dir_path = "/home/mcserver"
-        i = 0
-        while os.path.exists(dir_path):
-            # hacky timeout.
-            if i > 10:
-                assert True == False
-            print(f"{dir_path} exists. Checking again in 1 second...")
-            time.sleep(1)
-            i += 1
         assert not os.path.exists(dir_path)
 
     # Will pass for both newuser and sameuser installs.

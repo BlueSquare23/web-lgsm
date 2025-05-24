@@ -887,10 +887,9 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
         print(f"Payload: {payload}")
 
         # Default should be cfg_editor off, so page should 302 to home.
-        response = client.post(
-            "/edit", data=payload
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
         )
-#        print(response.data.decode('utf-8'))
         assert response.status_code == 302
 
         toggle_cfg_editor(True)
@@ -898,17 +897,15 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
 
         # Basic page load test.
         response = client.get(
-            "/edit", data={"server_id": server_id, "cfg_path": cfg_path}
+            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
         )
         assert response.status_code == 200
-
-#        print(response.get_data(as_text=True))  # Debug
 
         # Check content matches.
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Editing Config: common.cfg" in response.data
+        assert b"Editing Config:" in response.data
         assert b"Full Path: " in response.data
         assert b"#### Game Server Settings ####" in response.data
         assert b"#### Testing..." in response.data
@@ -933,15 +930,23 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
     with client:
         toggle_cfg_editor(True)
 
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
+        )
+#        debug_response(response)
+        csrf_token = get_csrf_token(response)
+
         ## Edit testing.
         # Test if edits are saved.
         response = client.post(
             "/edit",
             data={
+                "csrf_token": csrf_token,
                 "server_id": server_id,
                 "cfg_path": cfg_path,
                 "file_contents": "#### Testing...",
             },
+            follow_redirects=True
         )
         assert response.status_code == 200
 
@@ -949,7 +954,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Editing Config: common.cfg" in response.data
+        assert b"Editing Config:" in response.data
         assert b"Full Path: " in response.data
         assert b"#### Testing..." in response.data
         assert b"Save File" in response.data
@@ -959,60 +964,53 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
         ## Download testing.
-        response = client.post(
-            "/edit",
-            data={"server_id": server_id, "cfg_path": cfg_path, "download": "yes"},
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={cfg_path}&csrf_token={csrf_token}&download_submit=Download"
         )
         assert response.status_code == 200
 
         # No server specified tests.
         resp_code = 200
-        error_msg = b"No server specified!"
+        error_msg = b"This field is required"
         # Test is none.
-        response = client.post(
-            "/edit", data={"cfg_path": cfg_path}, follow_redirects=True
+        response = client.get(
+            f"/edit?cfg_path={cfg_path}", follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.home")
 
         # Test is null.
-        response = client.post(
-            "/edit", data={"server_id": "", "cfg_path": cfg_path}, follow_redirects=True
+        response = client.get(
+            f"/edit?server_id=&cfg_path={cfg_path}", follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.home")
 
         # No cfg specified tests.
-        error_msg = b"No config file specified!"
         # Test is none.
-        response = client.post(
-            "/edit", data={"server_id": server_id}, follow_redirects=True
+        response = client.get(
+            f"/edit?server_id={server_id}", follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.home")
 
         # Test is null.
-        response = client.post(
-            "/edit", data={"server_id": server_id, "cfg_path": ""}, follow_redirects=True
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path=", follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.home")
 
         # Invalid game server name test.
-        error_msg = b"Invalid game server id!"
-        response = client.post(
-            "/edit",
-            data={"server_id": "test", "cfg_path": cfg_path},
-            follow_redirects=True,
+        error_msg = b"Invalid game server ID"
+        response = client.get(
+            f"/edit?server_id=TEST&cfg_path={cfg_path}", follow_redirects=True
         )
-        debug_response(response)
         check_response(response, error_msg, resp_code, "views.home")
 
         # No game server installation directory found test.
         # First move the installation directory to .bak.
         os.system(f"mv {test_server_path} {test_server_path}.bak")
 
-        error_msg = b"No such file"
-        response = client.post(
-            "/edit",
-            data={"server_id": server_id, "cfg_path": cfg_path},
-            follow_redirects=True,
+        error_msg = b"Error reading file"
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={cfg_path}", follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.home")
 
@@ -1021,20 +1019,21 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
 
         # Invalid config file name test.
         error_msg = b"Invalid config file name!"
-        response = client.post(
-            "/edit",
-            data={"server_id": server_id, "cfg_path": cfg_path + "test"},
+        invalid_name = cfg_path + "fartingbuttz"
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
             follow_redirects=True,
         )
         check_response(response, error_msg, resp_code, "views.home")
 
         # No such file test.
-        error_msg = b"No such file!"
-        response = client.post(
-            "/edit",
-            data={"server_id": server_id, "cfg_path": "/test" + cfg_path},
+        error_msg = b"Error reading file!"
+        invalid_name = "/blahfart" + cfg_path
+        response = client.get(
+            f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
             follow_redirects=True,
         )
+        debug_response(response)
         check_response(response, error_msg, resp_code, "views.home")
 
 

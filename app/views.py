@@ -20,7 +20,6 @@ from flask import (
     url_for,
     redirect,
     Response,
-    send_from_directory,
     jsonify,
     current_app,
 )
@@ -873,6 +872,10 @@ def edit():
         current_app.logger.info(log_wrap("server", server))
 
         file_contents = read_cfg_file(server, cfg_path)
+
+        if file_contents == None:
+            flash("Error reading file!", category="error")
+            return redirect(url_for("views.home"))
 
         return render_template(
             "edit.html",

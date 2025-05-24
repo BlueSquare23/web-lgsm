@@ -21,7 +21,7 @@ import configparser
 
 from datetime import datetime, timedelta
 from threading import Thread
-from flask import flash, current_app, send_file
+from flask import flash, current_app, send_file, send_from_directory
 
 from . import db
 from .models import GameServer
@@ -1897,16 +1897,15 @@ def read_cfg_file(server, cfg_path):
     Args:
         server (GameServer): Game server object cfg file's related to.
         cfg_path (str): Path to cfg file
+
+    Returns:
+        str: String of file contents if can read it, None otherwise.
     """
     file_contents = ""
 
     if should_use_ssh(server):
         # Read in file contents over ssh.
         file_contents = read_file_over_ssh(server, cfg_path)
-
-        if file_contents == None:
-            flash("Problem reading cfg file!", category="error")
-            return redirect(url_for("views.home"))
 
         return file_contents
 
@@ -1916,10 +1915,10 @@ def read_cfg_file(server, cfg_path):
         with open(cfg_path) as f:
             file_contents = f.read()
     except:
-        flash("Error reading config!", category="error")
-        return redirect(url_for("views.home"))
+        return None
 
     return file_contents
+
 
 
 def download_cfg(server, cfg_path):
@@ -1932,6 +1931,10 @@ def download_cfg(server, cfg_path):
     """
 
     file_contents = read_cfg_file(server, cfg_path)
+    if file_contents == None:
+        flash("Passwords doesn't meet criteria!", category="error")
+        return redirect(url_for("views.home"))
+
     cfg_file = os.path.basename(cfg_path)
 
     if should_use_ssh(server):

@@ -73,7 +73,6 @@ def get_server_id(server_name):
     return server.id
 
 
-# Only works on single form pages!!!
 def get_csrf_token(response):
     # Parse the HTML to get the CSRF token.
     html = response.data.decode()

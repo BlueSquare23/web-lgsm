@@ -79,58 +79,139 @@ def home():
 
 ######### Controls Page #########
 
-@views.route("/controls", methods=["GET"])
+@views.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
     config_options = read_config("controls")
     current_app.logger.info(log_wrap("config_options", config_options))
 
-    # Collect args from GET request.
-    server_name = request.args.get("server")
-    server_id = request.args.get("server_id")
-    short_cmd = request.args.get("command")
-    console_cmd = request.args.get("cmd")
-
+    # Initialize forms
+    send_cmd_form = SendCommandForm()
+    controls_form = ServerControlForm()
     select_cfg_form = SelectCfgForm()
 
-    # Serve a redirect to id for server_name for legacy compat reasons.
-    if server_name:
-        server = GameServer.query.filter_by(install_name=server_name).first()
-        current_app.logger.info(log_wrap("server", server))
-        if server == None:
-            flash("Invalid game server name!", category="error")
+    if request.method == "GET":
+        # Serve a redirect to id for server_name because its nice :)
+        server_name = request.args.get("server")
+        if server_name:
+            current_app.logger.info(log_wrap("server_name", server_name))
+            server = GameServer.query.filter_by(install_name=server_name).first()
+            current_app.logger.info(log_wrap("server", server))
+            if server == None:
+                flash("Invalid game server name!", category="error")
+                return redirect(url_for("views.home"))
+
+            return redirect(url_for("views.controls", server_id=server.id))
+
+        # Checking id is valid.
+        id_form = ValidateID(request.args)
+        if not id_form.validate():
+            current_app.logger.debug("Server ID Invalid!")
+            if id_form.errors:
+                for field, errors in id_form.errors.items():
+                    for error in errors:
+                        current_app.logger.debug(f"{field}: {error}")
+                        flash(f"{field}: {error}", 'error')
             return redirect(url_for("views.home"))
 
-        return redirect(url_for("views.controls", server_id=server.id))
+        server_id = request.args.get("server_id")
+        server = GameServer.query.filter_by(id=server_id).first()
+        current_app.logger.info(log_wrap("server_id", server_id))
+
+        # TODO: Build this into the form validation at some point.
+        # Check if user has permissions to game server for controls route.
+        if not user_has_permissions(current_user, "controls", server_id):
+            return redirect(url_for("views.home"))
+
+        # Pull in commands list from commands.json file.
+        cmds_list = get_commands(
+            server.script_name, config_options["send_cmd"], current_user
+        )
+
+        if should_use_ssh(server):
+            if not is_ssh_accessible(server.install_host):
+                if server.install_type == "remote":
+                    flash("Unable to access remote server over ssh!", category="error")
+                    return redirect(url_for("views.home"))
+                else:
+                    flash("Unable to access local install over ssh!", category="error")
+                    return redirect(url_for("views.home"))
+    
+        elif server.install_type == "local" and not os.path.isdir(server.install_path):
+            flash("No game server installation directory found!", category="error")
+            return redirect(url_for("views.home"))
+
+        # If cfg editor is disabled in the main.conf.
+        if not config_options["cfg_editor"]:
+            cfg_paths = []
+        else:
+            current_app.logger.info("Getting cfg_paths")
+            cfg_paths = find_cfg_paths(server)
+            if cfg_paths == "failed":
+                flash("Error reading accepted_cfgs.json!", category="error")
+                cfg_paths = []
+    
+        current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
+
+        return render_template(
+            "controls.html",
+            user=current_user,
+            server_id=server_id,
+            server_name=server.install_name,
+            server_commands=cmds_list,
+            config_options=config_options,
+            cfg_paths=cfg_paths,
+            select_cfg_form=select_cfg_form,
+            controls_form=controls_form,
+            send_cmd_form=send_cmd_form,
+        )
+
+    # Handle POST requests.
+    if controls_form.ctrl_form.data:
+        if not controls_form.validate_on_submit():
+            current_app.logger.debug("Controls form invalid!")
+            if controls_form.errors:
+                for field, errors in controls_form.errors.items():
+                    for error in errors:
+                        current_app.logger.debug(f"{field}: {error}")
+                        flash(f"{field}: {error}", 'error')
+            return redirect(url_for("views.home"))
+
+        server_id = controls_form.server_id.data
+        short_cmd = controls_form.command.data
+
+    if send_cmd_form.send_form.data:
+        if not send_cmd_form.validate_on_submit():
+            current_app.logger.debug("Send cmd form invalid!")
+            if send_cmd_form.errors:
+                for field, errors in send_cmd_form.errors.items():
+                    for error in errors:
+                        current_app.logger.debug(f"{field}: {error}")
+                        flash(f"{field}: {error}", 'error')
+            return redirect(url_for("views.home"))
+
+        server_id = send_cmd_form.server_id.data
+        short_cmd = send_cmd_form.command.data
+        send_cmd = send_cmd_form.send_cmd.data
+
+    server = GameServer.query.filter_by(id=server_id).first()
+    current_app.logger.info(log_wrap("server_id", server_id))
+
+    # TODO: Eventually find a way to move this into ServerControlForm class
+    # validation. Problem is right now, not sure how to validate server id
+    # first, then get server in order to run this validation. So this works for
+    # rn.
+    # Validate short_cmd against contents of commands.json file.
+    if not valid_command(
+        short_cmd, server.script_name, config_options["send_cmd"], current_user
+    ):
+        flash("Invalid Command!", category="error")
+        return redirect(url_for("views.controls", server_id=server_id))
 
     # Check if user has permissions to game server for controls route.
     if not user_has_permissions(current_user, "controls", server_id):
         return redirect(url_for("views.home"))
 
-    # Can't load the controls page without a server specified.
-    if server_id == None:
-        flash("No server specified!", category="error")
-        return redirect(url_for("views.home"))
-
-    # Check that the submitted server exists in db.
-    server = GameServer.query.filter_by(id=server_id).first()
-    # If game server doesn't exist in db, can't load page for it.
-    if server == None:
-        flash("Invalid game server id!", category="error")
-        return redirect(url_for("views.home"))
-
-    if should_use_ssh(server):
-        if not is_ssh_accessible(server.install_host):
-            if server.install_type == "remote":
-                flash("Unable to access remote server over ssh!", category="error")
-                return redirect(url_for("views.home"))
-            else:
-                flash("Unable to access local install over ssh!", category="error")
-                return redirect(url_for("views.home"))
-
-    elif server.install_type == "local" and not os.path.isdir(server.install_path):
-        flash("No game server installation directory found!", category="error")
-        return redirect(url_for("views.home"))
 
     # If cfg editor is disabled in the main.conf.
     if not config_options["cfg_editor"]:
@@ -162,144 +243,121 @@ def controls():
 
     script_path = os.path.join(server.install_path, server.script_name)
 
-    # This code block is only triggered in the event the short_cmd param is
-    # supplied with the GET request. Aka if a user has clicked one of the
-    # control button.
-    if short_cmd:
-        # Validate short_cmd against contents of commands.json file.
-        if not valid_command(
-            short_cmd, server.script_name, config_options["send_cmd"], current_user
-        ):
-            flash("Invalid Command!", category="error")
+    # Console option, use tmux capture-pane to get output.
+    if short_cmd == "c":
+        active = get_server_status(server)
+        if not active:
+            flash("Server is Off! No Console Output!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
 
-        # Console option, use tmux capture-pane to get output.
-        if short_cmd == "c":
-            active = get_server_status(server)
-            if not active:
-                flash("Server is Off! No Console Output!", category="error")
-                return redirect(url_for("views.controls", server_id=server_id))
+        # Console mode is trigger in JS, set off by console=True. Nothing
+        # for backend console happens here. See /api/update-console route!
+        return render_template(
+            "controls.html",
+            user=current_user,
+            server_id=server_id,
+            server_name=server.install_name,
+            server_commands=cmds_list,
+            config_options=config_options,
+            cfg_paths=cfg_paths,
+            select_cfg_form=select_cfg_form,
+            controls_form=controls_form,
+            send_cmd_form=send_cmd_form,
+            console=True,
+        )
 
-            # Console mode is trigger in JS, set off by console=True. Nothing
-            # for backend console happens here. See /api/update-console route!
-            return render_template(
-                "controls.html",
-                user=current_user,
-                server_id=server_id,
-                server_name=server.install_name,
-                server_commands=cmds_list,
-                config_options=config_options,
-                cfg_paths=cfg_paths,
-                select_cfg_form=select_cfg_form,
-                console=True,
+    elif short_cmd == "sd":
+        # Check if send_cmd is enabled in main.conf.
+        if not config_options["send_cmd"]:
+            flash("Send console command button disabled!", category="error")
+            return redirect(url_for("views.controls", server_id=server_id))
+
+#        if console_cmd == None:
+#            flash("No command provided!", category="error")
+#            return redirect(url_for("views.controls", server_id=server_id))
+
+        active = get_server_status(server)
+        if not active:
+            flash(
+                "Server is Off! Cannot send commands to console!", category="error"
             )
+            return redirect(url_for("views.controls", server_id=server_id))
 
-        elif short_cmd == "sd":
-            # Check if send_cmd is enabled in main.conf.
-            if not config_options["send_cmd"]:
-                flash("Send console command button disabled!", category="error")
-                return redirect(url_for("views.controls", server_id=server_id))
+        cmd = [script_path, short_cmd, send_cmd]
 
-            if console_cmd == None:
-                flash("No command provided!", category="error")
-                return redirect(url_for("views.controls", server_id=server_id))
-
-            active = get_server_status(server)
-            if not active:
-                flash(
-                    "Server is Off! Cannot send commands to console!", category="error"
-                )
-                return redirect(url_for("views.controls", server_id=server_id))
-
-            cmd = [script_path, short_cmd, console_cmd]
-
-            if should_use_ssh(server):
-                pub_key_file = get_ssh_key_file(server.username, server.install_host)
-                daemon = Thread(
-                    target=run_cmd_ssh,
-                    args=(
-                        cmd,
-                        server.install_host,
-                        server.username,
-                        pub_key_file,
-                        proc_info,
-                        current_app.app_context(),
-                        None,
-                    ),
-                    daemon=True,
-                    name="send",
-                )
-                daemon.start()
-                return redirect(url_for("views.controls", server_id=server_id))
-
-            if server.install_type == "docker":
-                cmd = docker_cmd_build(server) + cmd
-
+        flash("Sending command to console")
+        if should_use_ssh(server):
+            pub_key_file = get_ssh_key_file(server.username, server.install_host)
             daemon = Thread(
-                target=run_cmd_popen,
-                args=(cmd, proc_info, current_app.app_context()),
+                target=run_cmd_ssh,
+                args=(
+                    cmd,
+                    server.install_host,
+                    server.username,
+                    pub_key_file,
+                    proc_info,
+                    current_app.app_context(),
+                    None,
+                ),
                 daemon=True,
-                name="ConsoleCMD",
+                name="send",
             )
             daemon.start()
             return redirect(url_for("views.controls", server_id=server_id))
 
-        else:
-            if short_cmd == "st":
-                # On start, check if socket_name is null. If so delete the
-                # socket file cache for game server before startup. This
-                # ensures the status indicators work properly after initial
-                # install.
-                socket_name = get_tmux_socket_name(server)
-                if socket_name == None:
-                    update_tmux_socket_name_cache(server.id, None, True)
+        if server.install_type == "docker":
+            cmd = docker_cmd_build(server) + cmd
 
-            cmd = [script_path, short_cmd]
+        daemon = Thread(
+            target=run_cmd_popen,
+            args=(cmd, proc_info, current_app.app_context()),
+            daemon=True,
+            name="ConsoleCMD",
+        )
+        daemon.start()
+        return redirect(url_for("views.controls", server_id=server_id))
 
-            if should_use_ssh(server):
-                pub_key_file = get_ssh_key_file(server.username, server.install_host)
-                daemon = Thread(
-                    target=run_cmd_ssh,
-                    args=(
-                        cmd,
-                        server.install_host,
-                        server.username,
-                        pub_key_file,
-                        proc_info,
-                        current_app.app_context(),
-                    ),
-                    daemon=True,
-                    name="Command",
-                )
-                daemon.start()
-                return redirect(url_for("views.controls", server_id=server_id))
+    else:
+        if short_cmd == "st":
+            # On start, check if socket_name is null. If so delete the
+            # socket file cache for game server before startup. This
+            # ensures the status indicators work properly after initial
+            # install.
+            socket_name = get_tmux_socket_name(server)
+            if socket_name == None:
+                update_tmux_socket_name_cache(server.id, None, True)
 
-            if server.install_type == "docker":
-                cmd = docker_cmd_build(server) + cmd
+        cmd = [script_path, short_cmd]
 
+        if should_use_ssh(server):
+            pub_key_file = get_ssh_key_file(server.username, server.install_host)
             daemon = Thread(
-                target=run_cmd_popen,
-                args=(cmd, proc_info, current_app.app_context()),
+                target=run_cmd_ssh,
+                args=(
+                    cmd,
+                    server.install_host,
+                    server.username,
+                    pub_key_file,
+                    proc_info,
+                    current_app.app_context(),
+                ),
                 daemon=True,
                 name="Command",
             )
             daemon.start()
             return redirect(url_for("views.controls", server_id=server_id))
 
-    current_app.logger.info(log_wrap("server_id", server_id))
-    current_app.logger.info(log_wrap("cmds_list", cmds_list))
-    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
+        if server.install_type == "docker":
+            cmd = docker_cmd_build(server) + cmd
 
-    return render_template(
-        "controls.html",
-        user=current_user,
-        server_id=server_id,
-        server_name=server.install_name,
-        server_commands=cmds_list,
-        config_options=config_options,
-        cfg_paths=cfg_paths,
-        select_cfg_form=select_cfg_form,
-    )
+        daemon = Thread(
+            target=run_cmd_popen,
+            args=(cmd, proc_info, current_app.app_context()),
+            daemon=True,
+            name="Command",
+        )
+        daemon.start()
+        return redirect(url_for("views.controls", server_id=server_id))
 
 
 ######### Install Page #########

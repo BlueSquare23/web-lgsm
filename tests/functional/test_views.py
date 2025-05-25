@@ -447,7 +447,6 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
         # Check send cmd is there after main.conf.local setting is enabled.
         server_id = get_server_id(test_server)
         response = client.get(f"/controls?server_id={server_id}")
-        debug_response(response)
 
         assert response.status_code == 200  # Return's 200 to GET requests.
         assert b"sd" in response.data
@@ -472,7 +471,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
         assert response.request.path == url_for("views.home")
-        assert b"No server specified!" in response.data
+        assert b"server_id: This field is required." in response.data
 
         ## Test empty server name.
         response = client.get(f"/controls?server=", follow_redirects=True)
@@ -480,7 +479,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
         assert response.request.path == url_for("views.home")
-        assert b"No server specified!" in response.data
+        assert b"server_id: This field is required." in response.data
 
         ## Test invalid server name.
         response = client.get(f"/controls?server=Blah", follow_redirects=True)
@@ -515,7 +514,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
         assert response.request.path == url_for("views.home")
-        assert b"Invalid game server id!" in response.data
+        assert b"server_id: This field is required." in response.data
 
         ## Test invalid server name.
         response = client.get(f"/controls?server_id=Blah", follow_redirects=True)
@@ -523,7 +522,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
         assert response.request.path == url_for("views.home")
-        assert b"Invalid game server id!" in response.data
+        assert b"Invalid game server ID!" in response.data
 
         ## Test No game server installation directory error.
         # First move the installation directory to .bak.
@@ -539,10 +538,6 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
 
         # Finally move the installation back into place.
         os.system(f"mv {test_server_path}.bak {test_server_path}")
-
-        ### Controls Page POST Request test (should only accept GET's).
-        response = client.post("/controls", data=dict(test=""))
-        assert response.status_code == 405  # Return's 405 to POST requests.
 
 
 ### Install Page tests.
@@ -787,7 +782,6 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         error_msg = b"Number must be between 5 and 100"
         data["terminal_height"] = "-20"
         response = client.post("/settings", data=data, follow_redirects=True)
-        debug_response(response)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check nothing changed in conf, just to be sure.
@@ -1033,7 +1027,6 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
             f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
             follow_redirects=True,
         )
-        debug_response(response)
         check_response(response, error_msg, resp_code, "views.home")
 
 
@@ -1248,7 +1241,6 @@ def test_delete_new_user(add_second_user_no_perms, client, authed_client, test_v
             "/edit_users?username=test2&delete=true", follow_redirects=True
         )
         assert response.status_code == 200
-        debug_response(response)
         assert b"User test2 deleted" in response.data
 
 
@@ -1296,9 +1288,23 @@ def full_game_server_install(client):
 
 
 def game_server_start_stop(client, server_id):
-    # Test starting the server.
     response = client.get(
-        f"/controls?server_id={server_id}&command=st", follow_redirects=True
+        f"/controls?server_id={server_id}",
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+    csrf_token = get_csrf_token(response)
+
+    # Test starting the server.
+    response = client.post(
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "command": 'st',
+            "ctrl_form": 'true',
+        },
+        follow_redirects=True
     )
     assert response.status_code == 200
 
@@ -1315,19 +1321,13 @@ def game_server_start_stop(client, server_id):
     #json_data = json.loads(response.data.decode("utf8"))
     #assert empty_resp != json.dumps(json_data)
 
-    # Test starting the server.
-    response = client.get(
-        f"/controls?server_id={server_id}&command=st", follow_redirects=True
-    )
-    assert response.status_code == 200
-
-    time.sleep(5)
-
+#    print("######################## START MINECRAFT SERVER\n")
     # Sleep until process is finished.
     while (b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data):
+#        print(client.get(f"/api/cmd-output/{server_id}").data)
         time.sleep(5)
 
-    # Can win the race if you're asleep.
+    # Cant win the race if you're asleep.
     time.sleep(10)
 
 # Things have changed, disabling for now.
@@ -1347,32 +1347,55 @@ def game_server_start_stop(client, server_id):
 
     # Enable the send_cmd setting.
     toggle_send_cmd(True)
-
-    # Test sending command to game server console
-    response = client.get(
-        f"/controls?server_id={server_id}&command=sd&cmd=test", follow_redirects=True
-    )
-    assert response.status_code == 200
     time.sleep(1)
 
+    # Test sending command to game server console
+    response = client.post(
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "command": 'sd',
+            "send_cmd": 'test',
+            "send_form": 'true',
+        },
+        follow_redirects=True
+#        f"/controls?server_id={server_id}&command=sd&cmd=test", follow_redirects=True
+    )
+    assert response.status_code == 200
+    # From flashed message
+    assert b'Sending command to console' in response.data
+
+    time.sleep(5)
+
+    print("######################## SEND COMMAND TO CONSOLE\n")
     # Sleep until process is finished.
     while (
         b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data
     ):
-        time.sleep(3)
+        response = client.get(f"/api/cmd-output/{server_id}")
+        print(response.get_data(as_text=True))
+        time.sleep(5)
 
     time.sleep(1)
 
-    assert (
-        b"Sending command to console"
-        in client.get(f"/api/cmd-output/{server_id}").data
-    )
+    response = client.get(f"/api/cmd-output/{server_id}")
+    # From json data
+    assert b"Sending command to console" in response.data
 
     time.sleep(1)
 
     # Test stopping the server
     response = client.get(
-        f"/controls?server_id={server_id}&command=sp", follow_redirects=True
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "command": 'sp',
+            "ctrl_form": "true",
+        },
+        follow_redirects=True
+#        f"/controls?server_id={server_id}&command=sp", follow_redirects=True
     )
     assert response.status_code == 200
 
@@ -1411,7 +1434,20 @@ def console_output(client):
 
     # Test starting the server.
     response = client.get(
-        f"/controls?server_id={server_id}&command=st", follow_redirects=True
+        f"/controls?server_id={server_id}", follow_redirects=True
+    )
+    csrf_token = get_csrf_token(response)
+
+    # Start the server
+    response = client.post(
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "command": 'st',
+            "ctrl_form": "true",
+        },
+        follow_redirects=True
     )
     assert response.status_code == 200
 
@@ -1524,8 +1560,19 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Stop the server.
+#        response = client.get(
+#            f"/controls?server_id={server_id}&command=sp", follow_redirects=True
+#        )
         response = client.get(
-            f"/controls?server_id={server_id}&command=sp", follow_redirects=True
+            "/controls",
+            data={
+                "csrf_token": csrf_token,
+                "server_id": server_id,
+                "command": 'sp',
+                "ctrl_form": "true",
+            },
+            follow_redirects=True
+#            f"/controls?server_id={server_id}&command=sp", follow_redirects=True
         )
         assert response.status_code == 200
 

@@ -396,7 +396,7 @@ class DownloadCfgForm(FlaskForm):
     server_id = HiddenField('Server ID', 
         validators=[
             InputRequired(),
-            ServerExists(message="Invalid game server ID!"),
+            ServerExists(),
         ]
     )
     cfg_path = HiddenField('Config Path',
@@ -415,7 +415,7 @@ class SelectCfgForm(Form):
     server_id = HiddenField('Server ID',
         validators=[
             InputRequired(),
-            ServerExists(message="Invalid game server ID!"),
+            ServerExists(),
         ]
     )
     cfg_path = HiddenField('Config Path',
@@ -424,4 +424,32 @@ class SelectCfgForm(Form):
             ValidConfigFile(),
         ]
     )
+
+
+# Form instead of FlaskForm to bypass csrf validation, since just GET req to
+# load page.
+class ValidateID(Form):
+    """Form for selecting a game server control to send"""
+    server_id = HiddenField('Server ID',
+        validators=[
+            InputRequired(),
+            ServerExists(),
+        ]
+    )
+
+
+class SendCommandForm(FlaskForm):
+    send_form = HiddenField('Send Command Form')
+    server_id = HiddenField('Server ID')
+    command = HiddenField('Command', default='sd')
+    send_cmd = StringField('Console Command', validators=[InputRequired()])
+    submit = SubmitField('Send')
+
+
+class ServerControlForm(FlaskForm):
+    ctrl_form = HiddenField('Control Form')
+    server_id = HiddenField('Server ID')
+    command = HiddenField('Command', validators=[InputRequired()])
+    submit = SubmitField('Execute')
+
 

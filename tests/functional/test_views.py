@@ -578,39 +578,54 @@ def test_install_responses(db_session, client, authed_client, test_vars):
     password = test_vars["password"]
 
     with client:
-        response = client.post(
-            "/login", data={"username": username, "password": password}
-        )
-        assert response.status_code == 302
+        response = client.get("/install")
+        assert response.status_code == 200
+        csrf_token = get_csrf_token(response)
 
         ## Leaving off legit install test(s) for now because that takes a
         # while to run. Only testing bad posts atm.
 
-        ## Test for Missing Required Form Feild error msg.
+        ## Test for Missing Required Form Field error msg.
 
-        # Test for no feilds supplied.
+        # Test for no fields supplied.
         resp_code = 200
-        error_msg = b"Missing Required Form Field!"
+        error_msg = b"The CSRF token is missing."
         response = client.post("/install", follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.install")
 
-        # Test no server_name.
+        # Test no script_name.
+        error_msg = b"This field is required."
         response = client.post(
-            "/install", data={"full_name": "", "sudo_pass": ""}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "full_name": "Minecraft"}, follow_redirects=True
+        )
+        check_response(response, error_msg, resp_code, "views.install")
+
+        # Test invalid script_name.
+        error_msg = b"Invalid script name."
+        response = client.post(
+            "/install", data={"csrf_token": csrf_token, "script_name": "fartingbuttz", "full_name": "Minecraft"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.install")
 
         # Test no full_name.
+        error_msg = b"This field is required."
         response = client.post(
-            "/install", data={"server_name": "", "sudo_pass": ""}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "views.install")
 
         # Test for empty form fields.
-        error_msg = b"Invalid Installation Option(s)!"
+        error_msg = b"Invalid full name."
+        response = client.post(
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Jerry's still dead man"}, follow_redirects=True
+        )
+        check_response(response, error_msg, resp_code, "views.install")
+
+        # Test for empty form fields.
+        error_msg = b"This field is required."
         response = client.post(
             "/install",
-            data={"server_name": "", "full_name": "", "sudo_pass": ""},
+            data={"csrf_token": csrf_token, "server_name": "", "full_name": ""},
             follow_redirects=True,
         )
 
@@ -1245,10 +1260,14 @@ def test_delete_new_user(add_second_user_no_perms, client, authed_client, test_v
 
 
 def full_game_server_install(client):
+    response = client.get("/install")
+    assert response.status_code == 200
+    csrf_token = get_csrf_token(response)
+
     # Do an install.
     response = client.post(
         "/install",
-        data={"server_name": "mcserver", "full_name": "Minecraft"},
+        data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Minecraft"},
         follow_redirects=True,
     )
 
@@ -1366,7 +1385,7 @@ def game_server_start_stop(client, server_id):
     # From flashed message
     assert b'Sending command to console' in response.data
 
-    time.sleep(5)
+    time.sleep(15)
 
     print("######################## SEND COMMAND TO CONSOLE\n")
     # Sleep until process is finished.
@@ -1383,10 +1402,10 @@ def game_server_start_stop(client, server_id):
     # From json data
     assert b"Sending command to console" in response.data
 
-    time.sleep(1)
+    time.sleep(15)
 
     # Test stopping the server
-    response = client.get(
+    response = client.post(
         "/controls",
         data={
             "csrf_token": csrf_token,

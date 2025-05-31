@@ -388,6 +388,8 @@ def install():
     # Check if any installs are currently running.
     running_installs = get_running_installs()
 
+    form = InstallForm()
+
     if request.method == "GET":
         server_id = request.args.get("server_id")
         cancel = request.args.get("cancel")
@@ -423,137 +425,134 @@ def install():
             server_id=server_id,
             config_options=config_options,
             running_installs=running_installs,
+            form=form,
         )
 
-    # Note: For install POSTs we need to user server_name cause server not in
+    # Handle POSTs
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        current_app.logger.info("Invalid installation options!")
+        if form.errors:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    current_app.logger.debug(f"{field}: {error}")
+                    flash(f"{field}: {error}", 'error')
+        return redirect(url_for("views.install"))
+
+    # NOTE: For install POSTs we need to user server_name cause server not in
     # DB yet so doesn't have an ID.
-    if request.method == "POST":
-        server_script_name = request.form.get("server_name")
-        server_install_name = request.form.get("full_name")
+    server_script_name = form.script_name.data
+    server_install_name = form.full_name.data
 
-        # Make sure required options are supplied.
-        for required_form_item in (server_script_name, server_install_name):
-            if required_form_item == None:
-                flash("Missing Required Form Field!", category="error")
-                return redirect(url_for("views.install"))
+    # Make server_install_name a unix friendly directory name.
+    server_install_name = server_install_name.replace(" ", "_")
+    server_install_name = server_install_name.replace(":", "")
 
-            # Check input lengths.
-            if len(required_form_item) > 150:
-                flash("Form field too long!", category="error")
-                return redirect(url_for("views.install"))
+    # Used to pass install_name to frontend js.
+    install_name = server_install_name
 
-        # Validate form submission data against install list in json file.
-        if not valid_install_options(server_script_name, server_install_name):
-            flash("Invalid Installation Option(s)!", category="error")
-            return redirect(url_for("views.install"))
+    install_exists = GameServer.query.filter_by(
+        install_name=server_install_name
+    ).first()
 
-        # Make server_install_name a unix friendly directory name.
-        server_install_name = server_install_name.replace(" ", "_")
-        server_install_name = server_install_name.replace(":", "")
+    if install_exists:
+        flash("An installation by that name already exits.", category="error")
+        return redirect(url_for("views.install"))
 
-        # Used to pass install_name to frontend js.
-        install_name = server_install_name
+    # If running in a container do not allow install new user! For design
+    # reasons, to keep things simple. Inside of a container installs are
+    # going to be same user only.
+    if "CONTAINER" in os.environ:
+        config_options["install_create_new_user"] = False
 
-        install_exists = GameServer.query.filter_by(
-            install_name=server_install_name
-        ).first()
+    server = GameServer()
+    server.install_name = server_install_name
+    server.install_path = os.path.join(CWD, f"GameServers/{server_install_name}")
+    server.script_name = server_script_name
+    server.username = USER
+    server.is_container = False
+    server.install_type = "local"
+    server.install_host = "127.0.0.1"
+    server.install_finished = False
+    server.keyfile_path = ""
 
-        if install_exists:
-            flash("An installation by that name already exits.", category="error")
-            return redirect(url_for("views.install"))
+    # If install_create_new_user config parameter is true then create a new
+    # user for the new game server and set install path to the path in that
+    # new users home directory.
+    if config_options["install_create_new_user"]:
+        server.username = server_script_name
+        server.install_path = (
+            f"/home/{server_script_name}/GameServers/{server_install_name}"
+        )
 
-        # If running in a container do not allow install new user! For design
-        # reasons, to keep things simple. Inside of a container installs are
-        # going to be same user only.
-        if "CONTAINER" in os.environ:
-            config_options["install_create_new_user"] = False
+        # Add keyfile path for server to DB.
+        keyfile = get_ssh_key_file(server.username, server.install_host)
+        server.keyfile_path = keyfile
 
-        server = GameServer()
-        server.install_name = server_install_name
-        server.install_path = os.path.join(CWD, f"GameServers/{server_install_name}")
-        server.script_name = server_script_name
-        server.username = USER
-        server.is_container = False
-        server.install_type = "local"
-        server.install_host = "127.0.0.1"
-        server.install_finished = False
-        server.keyfile_path = ""
+    current_app.logger.info(log_wrap("server", server))
 
-        # If install_create_new_user config parameter is true then create a new
-        # user for the new game server and set install path to the path in that
-        # new users home directory.
-        if config_options["install_create_new_user"]:
-            server.username = server_script_name
-            server.install_path = (
-                f"/home/{server_script_name}/GameServers/{server_install_name}"
-            )
+    # Add the install to the database.
+    db.session.add(server)
+    db.session.commit()
 
-            # Add keyfile path for server to DB.
-            keyfile = get_ssh_key_file(server.username, server.install_host)
-            server.keyfile_path = keyfile
+    server_id = (
+        GameServer.query.filter_by(install_name=server_install_name).first().id
+    )
 
-        current_app.logger.info(log_wrap("server", server))
+    # Add new proc_info object for install process and associate with new
+    # game server ID.
+    proc_info = add_process(server_id, ProcInfoVessel())
 
-        # Add the install to the database.
-        db.session.add(server)
+    current_app.logger.info(log_wrap("server_id", server_id))
+    current_app.logger.info(log_wrap("proc_info", proc_info))
+
+    # Update web user's permissions to give access to new game server post install.
+    if current_user.role != "admin":
+        user_ident = User.query.filter_by(username=current_user.username).first()
+        user_perms = json.loads(user_ident.permissions)
+        user_perms["server_ids"].append(server_id)
+        user_ident.permissions = json.dumps(user_perms)
         db.session.commit()
 
-        server_id = (
-            GameServer.query.filter_by(install_name=server_install_name).first().id
-        )
+    cmd = [
+        PATHS["sudo"],
+        "-n",
+        os.path.join(VENV, "bin/python"),
+        ANSIBLE_CONNECTOR,
+        "--install",
+        str(server_id),
+    ]
 
-        # Add new proc_info object for install process and associate with new
-        # game server ID.
-        proc_info = add_process(server_id, ProcInfoVessel())
+    current_app.logger.info(log_wrap("cmd", cmd))
+    current_app.logger.info(log_wrap("all processes", get_all_processes()))
 
-        current_app.logger.info(log_wrap("server_id", server_id))
-        current_app.logger.info(log_wrap("proc_info", proc_info))
+    install_daemon = Thread(
+        target=run_cmd_popen,
+        args=(cmd, proc_info, current_app.app_context()),
+        daemon=True,
+        name=f"web_lgsm_install_{server_id}",
+    )
+    install_daemon.start()
 
-        # Update web user's permissions to give access to new game server post install.
-        if current_user.role != "admin":
-            user_ident = User.query.filter_by(username=current_user.username).first()
-            user_perms = json.loads(user_ident.permissions)
-            user_perms["server_ids"].append(server_id)
-            user_ident.permissions = json.dumps(user_perms)
-            db.session.commit()
+    clear_daemon = Thread(
+        target=clear_proc_info_post_install,
+        args=(server_id, current_app.app_context()),
+        daemon=True,
+        name=f"clear_install_{server_id}",
+    )
+    clear_daemon.start()
 
-        cmd = [
-            PATHS["sudo"],
-            "-n",
-            os.path.join(VENV, "bin/python"),
-            ANSIBLE_CONNECTOR,
-            "--install",
-            str(server_id),
-        ]
-
-        current_app.logger.info(log_wrap("cmd", cmd))
-        current_app.logger.info(log_wrap("all processes", get_all_processes()))
-
-        install_daemon = Thread(
-            target=run_cmd_popen,
-            args=(cmd, proc_info, current_app.app_context()),
-            daemon=True,
-            name=f"web_lgsm_install_{server_id}",
-        )
-        install_daemon.start()
-
-        clear_daemon = Thread(
-            target=clear_proc_info_post_install,
-            args=(server_id, current_app.app_context()),
-            daemon=True,
-            name=f"clear_install_{server_id}",
-        )
-        clear_daemon.start()
-
-        return render_template(
-            "install.html",
-            user=current_user,
-            servers=install_list,
-            config_options=config_options,
-            install_name=install_name,
-            server_id=server_id,
-            running_installs=running_installs,
-        )
+    return render_template(
+        "install.html",
+        user=current_user,
+        servers=install_list,
+        config_options=config_options,
+        install_name=install_name,
+        server_id=server_id,
+        running_installs=running_installs,
+        form=form,
+    )
 
 
 ######### Settings Page #########

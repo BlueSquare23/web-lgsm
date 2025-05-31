@@ -1883,11 +1883,17 @@ def validation_errors(form):
 
     Args:
         form (FlaskForm): Flask form object to check.
+
+    Returns:
+        dict: Returns dictionary of errors and fields.
     """
+    form_name = type(form).__name__
+    current_app.logger.info(f"{form_name} submission invalid!")
     if form.errors:
         for field, errors in form.errors.items():
             for error in errors:
-                 flash(error, 'error')
+                current_app.logger.debug(f"{field}: {error}")
+                flash(f"{field}: {error}", 'error')
 
 
 def read_cfg_file(server, cfg_path):

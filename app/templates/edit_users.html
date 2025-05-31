@@ -35,6 +35,109 @@
           User Settings:
         </h4>
         <form method="POST">
+          {{ form.csrf_token }}
+          <div class="form-group" style="color: white;">
+              <input type="hidden" id="selected_user" name="selected_user" value="{{ selected_user }}">
+              
+              {% if selected_user == 'newuser' %}
+              <div id="user_pass_fields">
+              {% else %}
+              <div class="form-check form-switch">
+                {{ form.change_username_password(class="form-check-input", onchange="toggleViewUserPassFields()") }}
+                {{ form.change_username_password.label(class="form-check-label") }}
+              </div>
+              <div id="user_pass_fields" class="d-none">
+              {% endif %}
+                {{ form.username.label }}
+                {% if selected_user == 'newuser' %}
+                {{ form.username(class="form-control", placeholder="Enter New Username") }}
+                {% else %}
+                {{ form.username(class="form-control", value=selected_user, placeholder=selected_user) }}
+                {% endif %}
+      
+                {{ form.password1.label(style="color: white;") }}
+                {{ form.password1(class="form-control", placeholder="Enter New Password") }}
+      
+                {{ form.password2.label(style="color: white;") }}
+                {{ form.password2(class="form-control", placeholder="Retype New Password") }}
+
+                <i>Note: Passwords must be at least 12 characters long and contain at least 1 uppercase letter, 1 lowercase letter, & 1 special character!</i>
+                <br />
+              </div>
+      
+              <!-- Admin radio buttons -->
+              {{ form.is_admin.label(class="form-label") }}
+              {% for subfield in form.is_admin %}
+                  <div class="form-check">
+                      {{ subfield(id="is_admin", class="form-check-input", onchange="togglePermissions()") }}
+                      {{ subfield.label(class="form-check-label") }}
+                  </div>
+              {% endfor %}
+      
+              <br />
+      
+              <div class="container">
+                  <div class="row">
+                      <!-- Non-admin permissions, disabled if Admin is checked -->
+                      <div id="non-admin-permissions">
+                          <label><i><u>Basic Permissions</u></i></label><br />
+      
+                          {{ form.install_servers(class="form-check-input") }}
+                          {{ form.install_servers.label }}<br />
+      
+                          {{ form.add_servers(class="form-check-input") }}
+                          {{ form.add_servers.label }}<br />
+      
+                          {{ form.mod_settings(class="form-check-input") }}
+                          {{ form.mod_settings.label }}<br />
+      
+                          {{ form.edit_cfgs(class="form-check-input") }}
+                          {{ form.edit_cfgs.label }}<br />
+      
+                          {{ form.delete_server(class="form-check-input") }}
+                          {{ form.delete_server.label }}<br />
+                          <br />
+      
+                          <label><i><u>Allowed Controls</u></i></label><br />
+                          <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllControls()">All Controls</button>
+      
+                          <div class="form-check">
+                              {% for control in controls %}
+                                  <input class="form-check-input control-checkbox" type="checkbox" 
+                                         id="control_{{ loop.index }}" name="controls" 
+                                         value="{{ control }}">
+                                  <label class="form-check-label" for="control_{{ loop.index }}">{{ control }}</label><br />
+                              {% endfor %}
+                          </div>
+      
+                          <br />
+      
+                          <label><i><u>Allow Access to Game Servers</u></i></label><br />
+                          {% if installed_servers | length > 0 %}
+                          <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllGameServers()">All Game Servers</button>
+                          <div class="form-check">
+                              {% for server in installed_servers %}
+                                  <input class="form-check-input gameserver-checkbox" type="checkbox" 
+                                         id="server_{{ server.id }}" name="server_ids" 
+                                         value="{{ server.id }}">
+                                  <label class="form-check-label" for="server_{{ server.id }}">{{ server.install_name }}</label><br />
+                              {% endfor %}
+                          </div>
+                          {% else %}
+                          <p>No game servers installed yet!<br/>
+                          You can adjust what servers this user has access to after installing or adding a game server.</p>
+                          {% endif %}
+                      </div>
+      
+                      <br />
+                  </div>
+              </div>
+      
+              <div class="text-center">
+                  <button class="btn btn-outline-primary" type="submit">Submit</button>
+              </div>
+          </div>
+<!--
           <div class="form-group" style="color: white;">
             <input type="hidden" id="selected_user" name="selected_user" value="{{selected_user}}">
             {% if selected_user == 'newuser' %}
@@ -64,7 +167,6 @@
             <br />
             <br />
 
-            <!-- Admin checkbox -->
             <div class="form-check">
               <input class="form-check-input" type="radio" name="is_admin" id="is_admin" value="true" onchange="togglePermissions()">
               <label class="form-check-label" for="is_admin">
@@ -82,7 +184,6 @@
 
             <div class="container">
               <div class="row">
-                <!-- Non-admin permissions, disabled if Admin is checked -->
                 <div id="non-admin-permissions">
                   <label><i><u>Basic Permissions</u></i></label><br />
 
@@ -109,11 +210,9 @@
 
                   <label><i><u>Allowed Controls</u></i></label><br />
 
-                  <!-- Button to select/unselect all controls -->
                   <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllControls()">All Controls</button>
 
                   <div class="form-check">
-                      <!-- Loop over a Jinja list of controls -->
                       {% for control in controls %}
                           <input class="form-check-input control-checkbox" type="checkbox" id="control_{{ loop.index }}" name="controls" value="{{ control }}">
                           <label class="form-check-label" for="control_{{ loop.index }}">{{ control }}</label><br />
@@ -122,7 +221,6 @@
 
                   <br />
 
-                  <!-- Loop over installed servers for checkboxes -->
                   <label><i><u>Allow Access to Game Servers</u></i></label><br />
                   {% if installed_servers | length > 0 %}
                   <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllGameServers()">All Game Servers</button>
@@ -147,11 +245,12 @@
               <button class="btn btn-outline-primary" type="submit">Submit</button>
             </div>
           </div>
+-->
         </form>
         {% endif %}
       </div>
       {% if selected_user != 'newuser' %}
-      <a id="del-button" title="Perminantly delete web-lgsm user" onclick="return confirm('Are you sure you want to delete {{selected_user}}?');" class="btn btn-outline-danger" href="/edit_users?username={{selected_user}}&delete=true" role="button">
+      <a id="delete-btn" title="Perminantly delete web-lgsm user" onclick="return confirm('Are you sure you want to delete {{selected_user}}?');" class="btn btn-outline-danger" href="/edit_users?username={{selected_user}}&delete=true" role="button">
         Delete {{selected_user}}
       </a>
       {% endif %}

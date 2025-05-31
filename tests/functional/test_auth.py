@@ -389,39 +389,43 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
         response = client.get("/edit_users", follow_redirects=True)
         assert response.status_code == 200
         assert response.request.path == url_for("auth.edit_users")
+        csrf_token = get_csrf_token(response)
 
         # Test cannot edit invalid username.
-        invalid_user_json = """{
+        invalid_user_data = {
+            "csrf_token": csrf_token, 
             "selected_user": "noauser",
             "username": "notauser",
             "password1": "",
             "password2": "",
             "is_admin": "false"
-        }"""
+        }
         response = client.post(
-            "/edit_users", data=json.loads(invalid_user_json), follow_redirects=True
+            "/edit_users", data=invalid_user_data, follow_redirects=True
         )
 #        print(response.data)
         assert response.request.path == url_for("auth.edit_users")
         assert b"Invalid user selected" in response.data
 
         # Test cannot edit main admin user.
-        admin_user_json = """{
+        admin_user_data = {
+            "csrf_token": csrf_token, 
             "selected_user": "test",
             "username": "test",
             "password1": "",
             "password2": "",
             "is_admin": "false"
-        }"""
+        }
         response = client.post(
-            "/edit_users", data=json.loads(admin_user_json), follow_redirects=True
+            "/edit_users", data=admin_user_data, follow_redirects=True
         )
         assert response.request.path == url_for("auth.edit_users")
         assert b"Cannot modify main admin user" in response.data
         assert b"Anti-lockout protection" in response.data
 
         # Test add with invalid control supplied.
-        invalid_control_user_json = """{
+        invalid_control_user_data = { 
+            "csrf_token": csrf_token, 
             "selected_user": "newuser",
             "username": "test2",
             "password1": "**Testing12345",
@@ -433,17 +437,19 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
                 "blah",
                 "notacontrolvalue"
             ]
-        }"""
+        }
         response = client.post(
             "/edit_users",
-            data=json.loads(invalid_control_user_json),
+            data=invalid_control_user_data,
             follow_redirects=True,
         )
         assert response.request.path == url_for("auth.edit_users")
-        assert b"Invalid Control Supplied" in response.data
+        assert b"controls:" in response.data
+        assert b"are not valid choices for this field." in response.data
 
         # Test add with invalid server supplied.
-        invalid_server_user_json = """{
+        invalid_server_user_data = { 
+            "csrf_token": csrf_token, 
             "selected_user": "newuser",
             "username": "test2",
             "password1": "**Testing12345",
@@ -454,14 +460,16 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
                 "blah",
                 "notaservervalue"
             ]
-        }"""
+        }
         response = client.post(
             "/edit_users",
-            data=json.loads(invalid_server_user_json),
+            data=invalid_server_user_data,
             follow_redirects=True,
         )
+        debug_response(response)
         assert response.request.path == url_for("auth.edit_users")
-        assert b"Invalid Server Supplied" in response.data
+        assert b"server_ids:" in response.data 
+        assert b"are not valid choices for this field." in response.data
 
 
 def test_create_new_user(db_session, client, authed_client, test_vars):
@@ -474,12 +482,15 @@ def test_create_new_user(db_session, client, authed_client, test_vars):
     with client:
         response = client.get("/edit_users?username=newuser")
         assert response.status_code == 200
+        assert response.request.path == url_for("auth.edit_users")
+        csrf_token = get_csrf_token(response)
 
-        create_user_json = f"""{{
+        create_user_data = {
+            "csrf_token": csrf_token,
             "selected_user": "newuser",
             "username": "test2",
-            "password1": "{password}",
-            "password2": "{password}",
+            "password1": password,
+            "password2": password,
             "is_admin": "false",
             "install_servers": "false",
             "add_servers": "false",
@@ -487,10 +498,10 @@ def test_create_new_user(db_session, client, authed_client, test_vars):
             "edit_cfgs": "false",
             "delete_server": "false",
             "controls": []
-        }}"""
+        }
 
         response = client.post(
-            "/edit_users", data=json.loads(create_user_json), follow_redirects=True
+            "/edit_users", data=create_user_data, follow_redirects=True
         )
         assert response.request.path == url_for("views.home")
         assert b"New User Added" in response.data

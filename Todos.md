@@ -149,7 +149,7 @@
     - [x] Edit
     - [x] Home: Doesn't really need one, not a real form that gets submitted to the backend. Just a button that triggers js to make fetch reqs to api /delete.
     - [x] Install
-    - [ ] Edit Users
+    - [x] Edit Users
   - Resources:
     - https://flask-wtf.readthedocs.io/en/1.0.x/quickstart/
     - https://wtforms.readthedocs.io/en/2.3.x/fields/

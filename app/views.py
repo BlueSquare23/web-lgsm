@@ -106,12 +106,7 @@ def controls():
         # Checking id is valid.
         id_form = ValidateID(request.args)
         if not id_form.validate():
-            current_app.logger.debug("Server ID Invalid!")
-            if id_form.errors:
-                for field, errors in id_form.errors.items():
-                    for error in errors:
-                        current_app.logger.debug(f"{field}: {error}")
-                        flash(f"{field}: {error}", 'error')
+            validation_errors(id_form)
             return redirect(url_for("views.home"))
 
         server_id = request.args.get("server_id")
@@ -169,12 +164,7 @@ def controls():
     # Handle POST requests.
     if controls_form.ctrl_form.data:
         if not controls_form.validate_on_submit():
-            current_app.logger.debug("Controls form invalid!")
-            if controls_form.errors:
-                for field, errors in controls_form.errors.items():
-                    for error in errors:
-                        current_app.logger.debug(f"{field}: {error}")
-                        flash(f"{field}: {error}", 'error')
+            validation_errors(controls_form)
             return redirect(url_for("views.home"))
 
         server_id = controls_form.server_id.data
@@ -182,12 +172,7 @@ def controls():
 
     if send_cmd_form.send_form.data:
         if not send_cmd_form.validate_on_submit():
-            current_app.logger.debug("Send cmd form invalid!")
-            if send_cmd_form.errors:
-                for field, errors in send_cmd_form.errors.items():
-                    for error in errors:
-                        current_app.logger.debug(f"{field}: {error}")
-                        flash(f"{field}: {error}", 'error')
+            validation_errors(send_cmd_form)
             return redirect(url_for("views.home"))
 
         server_id = send_cmd_form.server_id.data
@@ -432,12 +417,7 @@ def install():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        current_app.logger.info("Invalid installation options!")
-        if form.errors:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    current_app.logger.debug(f"{field}: {error}")
-                    flash(f"{field}: {error}", 'error')
+        validation_errors(form)
         return redirect(url_for("views.install"))
 
     # NOTE: For install POSTs we need to user server_name cause server not in
@@ -609,10 +589,7 @@ def settings():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        if form.errors:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(error, 'error')
+        validation_errors(form)
         return redirect(url_for("views.settings"))
 
     # TODO v1.9: Retrieve form options via separate function like read_config()
@@ -767,10 +744,7 @@ def add():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        if form.errors:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(error, 'error')
+        validation_errors(form)
         return redirect(url_for("views.add"))
 
     # Process form submissions.
@@ -894,12 +868,7 @@ def edit():
         if 'download_submit' in request.args.keys():
             download_form = DownloadCfgForm(request.args)
             if not download_form.validate():
-                current_app.logger.debug("Download form invalid")
-                if download_form.errors:
-                    for field, errors in download_form.errors.items():
-                        for error in errors:
-                            current_app.logger.debug(f"{field}: {error}")
-                            flash(f"{field}: {error}", 'error')
+                validation_errors(download_form)
                 return redirect(url_for("views.home"))
 
             server_id = download_form.server_id.data
@@ -911,13 +880,7 @@ def edit():
         # Convert raw get args into select_form args.
         select_form = SelectCfgForm(request.args)
         if not select_form.validate():
-            current_app.logger.debug("Select form invalid")
-            if select_form.errors:
-                for field, errors in select_form.errors.items():
-                    for error in errors:
-                         current_app.logger.debug(f"{field}: error")
-                         flash(error, 'error')
-
+            validation_errors(select_form)
             return redirect(url_for("views.home"))
 
         server_id = select_form.server_id.data
@@ -948,10 +911,7 @@ def edit():
 
     # Handle Invalid form submissions.
     if not upload_form.validate_on_submit():
-        if upload_form.errors:
-            for field, errors in upload_form.errors.items():
-                for error in errors:
-                    flash(error, 'error')
+        validation_errors(upload_form)
         return redirect(url_for("views.home"))
 
     # Process form submissions.

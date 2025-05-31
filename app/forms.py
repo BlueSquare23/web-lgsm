@@ -4,7 +4,7 @@ import json
 import getpass
 from flask_wtf import FlaskForm
 from wtforms.widgets import ColorInput
-from wtforms.validators import InputRequired, Optional, AnyOf, Length, Regexp, NumberRange, ValidationError
+from wtforms.validators import InputRequired, Optional, AnyOf, Length, Regexp, NumberRange, ValidationError, EqualTo
 from wtforms import (
     Form,
     PasswordField,
@@ -17,6 +17,7 @@ from wtforms import (
     IntegerField,
     BooleanField,
     HiddenField,
+    SelectMultipleField,
 )
 
 from .utils import get_servers
@@ -470,4 +471,64 @@ class InstallForm(FlaskForm):
             AnyOf(list(servers.values()), message='Invalid full name.')
         ]
     )
+
+
+class EditUsersForm(FlaskForm):
+    selected_user = StringField('Selected User')
+    change_username_password = BooleanField('Change Password', default=False)
+
+    # Username and password fields
+    username = StringField('Username',
+        validators=[
+            Optional(),
+            Length(min=4, max=150),
+        ]
+    )
+    password1 = PasswordField('Password', 
+        validators=[
+            Optional(),
+            Length(min=12, max=150, message='Password must be at least 12 characters long')
+        ]
+    )
+    password2 = PasswordField('Confirm Password', 
+        validators=[
+            Optional(),
+            EqualTo('password1', message='Passwords must match')
+        ]
+    )
+
+    # Admin toggle
+    is_admin = RadioField('User Type', choices=[
+        ('true', 'Admin User - Can do anything in the web interface'),
+        ('false', 'Regular User - Configure limited user permissions below')
+    ], default='false')
+
+    # Permissions
+    install_servers = BooleanField('Can Install New Game Servers')
+    add_servers = BooleanField('Can Add Existing Game Servers')
+    mod_settings = BooleanField('Can Modify Web-LGSM Settings Page')
+    edit_cfgs = BooleanField('Can Edit Game Server Configs')
+    delete_server = BooleanField('Can Delete Game Servers')
+
+    # Controls and servers (using SelectMultipleField for multiple checkboxes)
+    controls = SelectMultipleField('Allowed Controls', choices=[], coerce=str)
+    server_ids = SelectMultipleField('Allowed Game Servers', choices=[], coerce=str)
+
+    # TODO: This is duplicate code with SetupForm. Refactor into one reusable
+    # utils function.
+    def validate_password1(self, field):
+        password = field.data
+        # Check for at least one uppercase letter
+        if not re.search(r'[A-Z]', password):
+            raise ValidationError('Password must contain at least one uppercase letter')
+        # Check for at least one lowercase letter
+        if not re.search(r'[a-z]', password):
+            raise ValidationError('Password must contain at least one lowercase letter')
+        # Check for at least one digit
+        if not re.search(r'[0-9]', password):
+            raise ValidationError('Password must contain at least one number')
+        # Check for at least one special character
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise ValidationError('Password must contain at least one special character')
+
 

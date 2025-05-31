@@ -1101,8 +1101,10 @@ def test_enable_new_user_perms(db_session, client, authed_client, add_mock_serve
 
         response = client.get("/edit_users?username=newuser")
         assert response.status_code == 200
+        csrf_token = get_csrf_token(response)
 
-        create_user_json = f"""{{
+        create_user_data = {
+            "csrf_token": csrf_token,
             "selected_user": "test2",
             "username": "test2",
             "is_admin": "false",
@@ -1126,11 +1128,11 @@ def test_enable_new_user_perms(db_session, client, authed_client, add_mock_serve
                 "console",
                 "send"
             ],
-            "server_ids": ["{server_id}"]
-        }}"""
+            "server_ids": [server_id]
+        }
 
         response = client.post(
-            "/edit_users", data=json.loads(create_user_json), follow_redirects=True
+            "/edit_users", data=create_user_data, follow_redirects=True
         )
         assert response.request.path == url_for("auth.edit_users")
 #        print(response.data.decode("utf-8"))

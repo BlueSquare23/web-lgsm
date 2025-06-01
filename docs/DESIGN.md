@@ -21,12 +21,16 @@
   * Testing: [Pytest](https://docs.pytest.org/)
   * Automation: [Ansible](https://www.ansible.com/)
   * Web Server: [Gunicorn](https://gunicorn.org/)
+  * DB Migrations: [Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/)
+  * Form Handling: [Flask-WTF](https://flask-wtf.readthedocs.io/en/1.2.x/)
 
 ---
 
 ## 3. Architecture
 - **High-Level Diagram**:
+
 ![Design Diagram](images/design_diagram.png)
+
 - **Components**:
   * `web-lgsm.py`: Main project init script. Takes care of starting, stopping, restarting the main gunicorn server. But can also be used to run pytests, updating the app, changing passwords, and more. Main point of entry script for the project.
   * `Flask App`: The main flask application. Basic MVC architecture. Game server and user info is stored in the SQLite db, config options in main.conf. Utilized external ansible connector for game server install & delete.
@@ -59,17 +63,67 @@
     - `/api/update-console`: Handles running the underlying cmd for dumping tmux session live console output and returning it as a json object. (this is a hack and is bad!)
     - `/api/server-status`: Handles returning live server status json used by home page cpu, mem, disk, net charts.
     - `/api/cmd-output`: Handles running cmds and returning json output for all non-live console output cmds. (live console is weird, needs it own route)
-- **Models**: Describe the database models (if using SQLAlchemy or another ORM).
-- **Services**: Explain any backend services or business logic.
-- **Templates/Views**: If using Flask templates, describe how they are structured.
-- **Static Files**: Explain how static files (CSS, JS, images) are organized and used.
+
+- **Models**: The Flask SqlAlchemy Models for this project are very simple:
+  * User: Model for holding user information. Permission, Username, Pass Hash, etc.
+  * GameServer: Model for information about individual game servers. Install Path, Name, Install Type, Install Host, etc.
+
+- **Basic App Structure**:
+```
+app/
+├── api.py                  # Houses all API logic.
+├── auth.py                 # Houses setup, login, & add/edit user pages.
+├── cmd_descriptor.py       # Houses CmdDescriptor class for creating command description objects.
+├── database.db             # Sqlite DB file for project.
+├── forms.py                # Houses Flask-WTF form classes for form handling & validation.
+├── __init__.py             # Main entrypoint for app. Set's up app, db, imports route blueprints, etc.
+├── models.py               # Houses main Flask SqlAlchemy db classes.
+├── processes_global.py     # Houses global singleton dict of ProcInfoVessel objects.
+├── proc_info_vessel.py     # Houses ProcInfoVessel class for creating proc_info objects.
+├── specs
+│   └── api_spec.yaml       # Swagger API Docs yaml spec sheet, used for building interactive swagger docs.
+├── static
+│   ├── css
+│   │   └── main.css        # For custom non-bootstrap CSS.
+│   ├── img
+│   │   ├── ...
+│   │   └── favicon.ico     
+│   └── js                  # Javascript dir for vanilla & Jquery scripts.
+│       ├── node_modules    
+│       │   └── @xterm      # Npm Xterm.js library for web terminal.
+│       │       └── ...
+│       ├── ...
+│       └── update-xterm.js
+├── templates               # Houses Jinja2/HTML templates for app's pages.
+│   ├── about.html
+│   ├── add.html
+│   ├── base.html
+│   └── ...
+├── utils.py            # Houses all the shit I didn't have a better place for.
+└── views.py            # Houses main views blueprints for the app. Aka home, add, edit, settings, etc. pages.
+
+```
 
 ---
 
 ## 5. Design Decisions
-- **Rationale**: Explain why certain design choices were made (e.g., why Flask, why a specific database, etc.).
-- **Trade-offs**: Discuss any trade-offs or compromises in the design.
-- **Alternatives Considered**: Mention any alternative approaches that were considered and why they were not chosen.
+- **Primary Motivator**: Make it work! This project has NOT been well designed.
+  Trying now to do a better job at design now, hence this doc. But many aspects
+  of this project have just been assembled until they work. So if you see
+  something dumb, and think "why is that stupid" answer likely is because I
+  didn't know any better or was too lazy at the time.
+
+- **Why Ansible Connector**: This app needed the ability to create and destroy
+  new system users, setup directories and permissions for them, etc. So lots of
+  sort of system administrative tasks. I don't want to re-invent the wheel so
+  just went with ansible. Problem is, playbooks for this app need to run as root
+  without a pass. Rather than creating a mess of sudoers rules, I decided on a
+  single external script (aka the `ansible_connector.py`) for being the interface
+  between the project's playbooks and the running flask app itself.
+
+- **More Stuff**: Fill me out with even more considerations that came up while
+  building this app. Will add more stuff later, cause yeah there's more I
+  should prolly esplain. For now, see the faqs if you have questions.
 
 ---
 
@@ -80,14 +134,14 @@
 ---
 
 ## 7. Configuration
-- **Environment Variables**: List and describe the required environment variables.
-- **Configuration Files**: Explain any configuration files and their structure.
+- **main.conf**: For more info about main.conf variables see [`config_options.md`](config_options.md)
 
 ---
 
 ## 8. Deployment
-- **Deployment Process**: Describe how the application is deployed (e.g., using Docker, Heroku, etc.).
-- **CI/CD**: If applicable, explain any continuous integration/continuous deployment pipelines.
+- **Deployment Process**: For more information about sugested deployment for this app see [`suggested_deployment.md`](suggested_deployment.md)
+- **CI/CD**: Continuous Integration for this project is handled by Github Actions runners. 
+  - These runs are triggered by the [`.github/workflows/test.yml`](../.github/workflows/test.yml)
 
 ---
 
@@ -386,20 +440,150 @@ Root logger level: WARNING
 
 ---
 
-## 10. Future Work
-- **Planned Features**: List any features or improvements planned for the future.
-- **Known Issues**: Document any known bugs or limitations.
+## 10. Form Handling & Validation
+
+- **Flask-WTF (Aka WTForms)**: Flask-wtf is extension for Wtforms, which is a
+  form validation and handling library.
+
+We're primarily using it for A) builtin CSRF protection, and B) form validation
+& easy handling, all in one place. 
+
+### TLDR How it works
+
+In the [`app/forms.py`](../app/forms.py) file are all of the FlaskForm classes
+for handling form submissions.
+
+If we look at the settings form we can see a class for each form. Let's look at
+the SettingsForm, because its got a good variety of different input types.
+
+* `app/forms.py`
+
+```python
+class SettingsForm(FlaskForm):
+    # Color fields
+    text_color = ColorField(
+        'Output Text Color',
+        validators=[
+            InputRequired(),
+            Regexp(VALID_HEX_COLOR, message='Invalid text color!'),
+        ],
+        render_kw={
+            'class': 'form-control form-control-color',
+            'title': 'Choose your color'
+        }
+    )
+...
+
+    # Terminal settings
+    terminal_height = IntegerField(
+        'Default Terminal Height',
+        validators=[
+            InputRequired(),
+            NumberRange(min=5, max=100)
+        ],
+        default=10,
+        render_kw={
+            'class': 'form-control',
+            'min': '5',
+            'max': '100'
+        }
+    )
+
+    # Radio button options
+    delete_user = RadioField(
+        'Delete user on server delete',
+        choices=[
+            ('true', 'Delete game server\'s system user on delete'),
+            ('false', 'Keep user on game server delete')
+        ],
+        default='false',
+        validators=[InputRequired()],
+        render_kw={
+            'class': 'form-check-input',
+            'onchange': 'checkDelFiles()'
+        }
+    )
+...
+
+    # Checkbox options
+    show_stats = BooleanField(
+        'Show Live Server Stats on Home Page',
+        render_kw={
+            'class': 'form-check-input'
+        }
+    )
+...
+```
+
+And then in our route code we just have to instantiate a new form object and
+pass it to our `render_template` call.
+
+* `app/views.py`
+
+```python
+@views.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    ...
+    form = SettingsForm()
+
+    if request.method == "GET":
+
+        return render_template(
+            "settings.html",
+            ...
+            form = form,
+        )
+
+```
+
+Then finally in our template file we can use some jinja to add our input fields
+for our form.
+
+* `app/templates/settings.html`
+
+```html
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <h3 align="center" style="color: white;">Web-LGSM Settings</h3>
+            <div class="form-group" style="color: white;">
+                <div class="row mb-4">
+                    <div class="col">
+                        {{ form.text_color.label(class="form-label") }}
+                        {{ form.text_color(class="form-control form-control-color") }}
+                    </div>
+                    <div class="col">
+                        {{ form.graphs_primary.label(class="form-label") }}
+                        {{ form.graphs_primary(class="form-control form-control-color") }}
+                    </div>
+                    <div class="col">
+                        {{ form.graphs_secondary.label(class="form-label") }}
+                        {{ form.graphs_secondary(class="form-control form-control-color") }}
+                    </div>
+                </div>
+...
+```
 
 ---
 
-## 11. Contributing
-- **How to Contribute**: Provide guidelines for contributors (e.g., how to set up the project, coding standards, etc.).
-- **Code of Conduct**: Link to or include a code of conduct for the project.
+## 11. Future Work
+- **Planned Features**: See [`Todos.md`](../Todos.md) for planned features and maintenance.
+- **Known Issues**: You can find known issues and suggested features for the project under [its github issues page](https://github.com/bluesquare23/web-lgsm/issues).
 
 ---
 
-## 12. References
-- **Links**: Include links to relevant documentation, tutorials, or resources.
-- **Inspiration**: Mention any projects or designs that inspired your work.
+## 12. Contributing
+- **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+
+---
+
+## 13. References
+- **Links**:
+  - [Docs](.)
+  - [Youtube Tutorials](NOT FINISHED YET...)
+- **Shout Out**: Thanks [Official LGSM Project](https://linuxgsm.com/) for
+  making this possible. Although we're not affiliated, we wouldn't exist
+  without their generous contribution to the open source community!
 
 ---

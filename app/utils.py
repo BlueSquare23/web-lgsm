@@ -71,93 +71,6 @@ def log_wrap(item_name, item):
     return log_msg
 
 
-def check_require_auth_setup_fields(username, password1, password2):
-    """
-    Ensure supplied auth fields for creating a new user are supplied.
-    Returns True if they're all good, False if there's a problem with them.
-
-    Args:
-        username (str): Supplied username
-        password1 (str): Password enter in field one
-        password2 (str): Password enter in field two
-
-    Returns:
-        bool: True if no problems with supplied auth fields, False otherwise.
-    """
-    # Make sure required form items are supplied.
-    for form_item in (username, password1, password2):
-        if form_item == None or form_item == "":
-            flash("Missing required form field(s)!", category="error")
-            return False
-
-        if len(form_item) > 150:
-            flash("Form field too long!", category="error")
-            return False
-
-    # To try to nip sql, xss, template injections in the bud.
-    if contains_bad_chars(username):
-        flash("Username Contains Illegal Character(s)", category="error")
-        flash(
-            r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""",
-            category="error",
-        )
-        return False
-
-    return True
-
-
-def valid_password(password1, password2):
-    """
-    Runs supplied auth route passwords against some basic checks. Returns
-    False if passwords bad, True if all good.
-
-    Args:
-        password1 (str): Password enter in field one
-        password2 (str): Password enter in field two
-
-    Returns:
-        bool: True if passwords match and are valid (aka are basically strong),
-              False otherwise
-    """
-    # Setup rudimentary password strength counter.
-    lower_alpha_count = 0
-    upper_alpha_count = 0
-    number_count = 0
-    special_char_count = 0
-
-    # Adjust password strength values.
-    for char in list(password1):
-        if char in string.ascii_lowercase:
-            lower_alpha_count += 1
-        elif char in string.ascii_uppercase:
-            upper_alpha_count += 1
-        elif char in string.digits:
-            number_count += 1
-        else:
-            special_char_count += 1
-
-    ## Check if submitted form data for issues.
-    # Verify password passes basic strength tests.
-    if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
-        flash("Passwords doesn't meet criteria!", category="error")
-        flash(
-            "Must contain: an upper case character, a number, and a \
-                                special character",
-            category="error",
-        )
-        return False
-
-    elif password1 != password2:
-        flash("Passwords don't match!", category="error")
-        return False
-
-    elif len(password1) < 12:
-        flash("Password is too short!", category="error")
-        return False
-
-    return True
-
-
 def process_popen_output(proc, proc_info, output_type):
     """
     Reads stdout & stderr from proc subprocess object to parse it and append it
@@ -824,30 +737,6 @@ def delete_server(server, remove_files, delete_user):
     return True
 
 
-def valid_cfg_name(cfg_file):
-    """
-    Validates submitted cfg_file for edit route by checking name against
-    accepted name list in json file. Used to ensure cfg editor can only be used
-    to edit files from accepted cfg name list.
-
-    Args:
-        cfg_file (str): Name of cfg file to validate.
-
-    Returns:
-        bool: True if valid cfg file name, False otherwise.
-    """
-    gs_cfgs = open("json/accepted_cfgs.json", "r")
-    json_data = json.load(gs_cfgs)
-    gs_cfgs.close()
-
-    valid_gs_cfgs = json_data["accepted_cfgs"]
-
-    if cfg_file in valid_gs_cfgs:
-        return True
-
-    return False
-
-
 def get_commands(server, send_cmd, current_user):
     """
     Turns data in commands.json into list of command objects that implement the
@@ -936,6 +825,9 @@ def get_servers():
         return {}
 
 
+# TODO/NOTE: This can stay for now, but its on the chopping block. This
+# validation should now be handled by flask-wtf/wtforms classes. Once I get
+# this fixed up in the controls route, this can go.
 def valid_command(cmd, server, send_cmd, current_user):
     """
     Validates short commands from controls route form for game server. Some
@@ -959,66 +851,6 @@ def valid_command(cmd, server, send_cmd, current_user):
         if cmd == command.short_cmd:
             return True
 
-    return False
-
-
-def valid_install_options(script_name, full_name):
-    """
-    Validates form submitted server_script_name and server_full_name options
-    for install route. Basically just checks if supplied args are in list of
-    accepted servers from get_servers().
-
-    Args:
-        script_name (str): Short name of game server (aka script name).
-        full_name (str): Full name of game server.
-
-    Returns:
-        bool: True if short and long names are both valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, server_name in servers.items():
-        if server == script_name and server_name == full_name:
-            return True
-    return False
-
-
-def valid_script_name(script_name):
-    """
-    Validates supplied script_name for install route. Basically just checks if
-    supplied script_name is in list of accepted servers from get_servers().
-
-    Args:
-        script_name (str): Short name of game server to check (aka script name).
-
-    Returns:
-        bool: True if short name is valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, server_name in servers.items():
-        if server == script_name:
-            return True
-    return False
-
-
-def valid_server_name(server_name):
-    """
-    Validates supplied server_name for install route. Basically just checks if
-    supplied server_name is in list of accepted servers from get_servers().
-
-    Args:
-        server_name (str): Long name of game server to check.
-
-    Returns:
-        bool: True if long name is valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, s_name in servers.items():
-        # Convert s_name to a unix friendly directory name.
-        s_name = s_name.replace(" ", "_")
-        s_name = s_name.replace(":", "")
-
-        if s_name == server_name:
-            return True
     return False
 
 
@@ -1064,56 +896,6 @@ def check_and_get_lgsmsh(lgsmsh):
     three_weeks_in_seconds = 1814400
     if int(time.time() - os.path.getmtime(lgsmsh)) > three_weeks_in_seconds:
         get_lgsmsh(lgsmsh)
-
-
-# TODO: Replace by wtforms Regex check in form validate.
-def contains_bad_chars(input_item):
-    """
-    Checks for the presence of bad chars in supplied user input.
-
-    Args:
-        input_item (str): Supplied input item to check for bad chars.
-
-    Returns:
-        bool: True if item does contain one of the bad chars below, False
-              otherwise.
-    """
-    bad_chars = {
-        " ",
-        "$",
-        "'",
-        '"',
-        "\\",
-        "#",
-        "=",
-        "[",
-        "]",
-        "!",
-        "<",
-        ">",
-        "|",
-        ";",
-        "{",
-        "}",
-        "(",
-        ")",
-        "*",
-        ",",
-        "?",
-        "~",
-        "&",
-    }
-
-    # Its okay to skip None cause should be caught by earlier checks. Also
-    # technically, None does not contain any bad chars...
-    if input_item is None:
-        return False
-
-    for char in bad_chars:
-        if char in input_item:
-            return True
-
-    return False
 
 
 def update_self():
@@ -1297,24 +1079,6 @@ def user_has_permissions(current_user, route, server_id=None):
             return False
 
     return True
-
-# Replaced by wtforms 
-#def valid_install_type(install_type):
-#    """
-#    Check's install type is one of the allowed three types.
-#
-#    Args:
-#        install_type (str): User supplied install_type
-#
-#    Returns:
-#        bool: True if valid install_type, False otherwise.
-#    """
-#    valid_install_types = ["local", "remote", "docker"]
-#
-#    if install_type in valid_install_types:
-#        return True
-#
-#    return False
 
 
 def is_ssh_accessible(hostname):

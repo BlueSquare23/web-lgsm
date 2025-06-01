@@ -4,7 +4,7 @@ from . import db
 from pathlib import Path
 from datetime import timedelta
 from .models import User, GameServer
-from .utils import check_require_auth_setup_fields, valid_password, validation_errors
+from .utils import validation_errors, log_wrap
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import (
     login_user,
@@ -43,10 +43,7 @@ def login():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        if form.errors:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(error, 'error')
+        validation_errors(form)
         return redirect(url_for("auth.login"))
 
     username = form.username.data
@@ -91,10 +88,7 @@ def setup():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        if form.errors:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(error, 'error')
+        validation_errors(form)
         return redirect(url_for("auth.login"))
 
     # Collect form data
@@ -210,12 +204,12 @@ def edit_users():
             form=form,
         )
 
+    # Handle POSTs.
+
     # TODO v1.9: Fix change username! Make user lookup work via ID instead of
     # username. That way we can accept a new username for a given ID and do
     # lookup with ID instead of username, then update that users info with
     # newly supplied instead.
-
-    # Handle POSTs.
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
@@ -236,15 +230,22 @@ def edit_users():
     controls = form.controls.data
     server_ids = form.server_ids.data
 
-    # TODO: Eventually move these validation steps into the EditUsersForm forms
-    # class as validator steps. Works for rn, so will refactor l8tr.
-    if selected_user == "newuser" or change_user_pass == "true":
-        if not check_require_auth_setup_fields(username, password1, password2):
-            return redirect(url_for("auth.edit_users"))
+    # Debug logging for post args.
+    current_app.logger.debug(log_wrap("selected_user", selected_user))
+    current_app.logger.debug(log_wrap("change_user_pass", change_user_pass))
+    current_app.logger.debug(log_wrap("username", username))
+    current_app.logger.debug(log_wrap("password1", password1))
+    current_app.logger.debug(log_wrap("password2", password2))
+    current_app.logger.debug(log_wrap("is_admin", is_admin))
+    current_app.logger.debug(log_wrap("install_servers", install_servers))
+    current_app.logger.debug(log_wrap("add_servers", add_servers))
+    current_app.logger.debug(log_wrap("mod_settings", mod_settings))
+    current_app.logger.debug(log_wrap("edit_cfgs", edit_cfgs))
+    current_app.logger.debug(log_wrap("delete_server", delete_server))
+    current_app.logger.debug(log_wrap("controls", controls))
+    current_app.logger.debug(log_wrap("server_ids", server_ids))
 
-        if not valid_password(password1, password2):
-            return redirect(url_for("auth.edit_users"))
-
+    # TODO: Eventually this should probably be in FlaskForm validator.
     if selected_user == "newuser":
         for user in all_users:
             if user.username == username:
@@ -309,7 +310,7 @@ def edit_users():
         permissions["server_ids"] = server_ids
 
     # Only explicitly set admin if supplied.
-    if is_admin:
+    if is_admin == "true":
         role = "admin"
 
     if selected_user == "newuser":
@@ -325,6 +326,9 @@ def edit_users():
         flash("New User Added!")
         return redirect(url_for("views.home"))
 
+    # This is a bool because it comes from a toggle, whereas above inputs are
+    # from radios, so are str "true/false". Confusing I know, sorry. Will get my
+    # shit 2g3th3r 2m0rr0w.
     if change_user_pass:
         user_ident.username = username
         user_ident.password = generate_password_hash(

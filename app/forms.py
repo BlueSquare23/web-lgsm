@@ -482,6 +482,7 @@ class EditUsersForm(FlaskForm):
         validators=[
             Optional(),
             Length(min=4, max=150),
+            Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
         ]
     )
     password1 = PasswordField('Password', 

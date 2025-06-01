@@ -6,10 +6,15 @@
 from .proc_info_vessel import ProcInfoVessel
 
 # Singletonawopaguz.
-processes = {}  # Holds ProcInfoVessel objects.
+processes = dict()  # Holds ProcInfoVessel objects.
+
 
 def get_all_processes():
+    """
+    Getem all
+    """
     return processes
+
 
 def add_process(server_id, proc_info=ProcInfoVessel()):
     """

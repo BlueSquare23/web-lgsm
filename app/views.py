@@ -66,7 +66,6 @@ def home():
         current_app.logger.info(server.id)
 
     current_app.logger.info(log_wrap("installed_servers", installed_servers))
-    
     current_app.logger.info(log_wrap("All Processes", get_all_processes()))
 
     return render_template(
@@ -113,7 +112,6 @@ def controls():
         server = GameServer.query.filter_by(id=server_id).first()
         current_app.logger.info(log_wrap("server_id", server_id))
 
-        # TODO: Build this into the form validation at some point.
         # Check if user has permissions to game server for controls route.
         if not user_has_permissions(current_user, "controls", server_id):
             return redirect(url_for("views.home"))
@@ -256,10 +254,6 @@ def controls():
         if not config_options["send_cmd"]:
             flash("Send console command button disabled!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
-
-#        if console_cmd == None:
-#            flash("No command provided!", category="error")
-#            return redirect(url_for("views.controls", server_id=server_id))
 
         active = get_server_status(server)
         if not active:

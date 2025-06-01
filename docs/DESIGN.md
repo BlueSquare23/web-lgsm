@@ -23,6 +23,7 @@
   * Web Server: [Gunicorn](https://gunicorn.org/)
   * DB Migrations: [Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/)
   * Form Handling: [Flask-WTF](https://flask-wtf.readthedocs.io/en/1.2.x/)
+  * Logging: [Flask Logging](https://flask.palletsprojects.com/en/stable/logging/)
 
 ---
 

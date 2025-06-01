@@ -130,12 +130,12 @@
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
 
-* [ ] **Fix install.sh --docker for Debian**
+* [x] **Fix install.sh --docker for Debian**
   - User noticed the issue:
     https://github.com/BlueSquare23/web-lgsm/issues/41
   - Just need to make docker install case on debian vs ubuntu.
 
-* [ ] **Add CSRF protection using Flask-WTF**
+* [x] **Add CSRF protection using Flask-WTF**
   - I did not realize until today that flask doesn't do anything to prevent
     CSRF natively.
     - Same Site is set to None and its totally possible to trick someone into
@@ -156,8 +156,6 @@
     - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
     - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
     - I might want to use this to handle file uploads one day too.
-
-* [ ] **Do research into JWT tokens for web api access**
 
 * [ ] **Spend some time fleshing out new singleton code & integrating into app**
   - I added this, I got it working, I somewhat tested it. However, I have not

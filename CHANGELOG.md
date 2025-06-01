@@ -15,12 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change auth cookies from `SameSite: None` to `SameSite: Lax` for sec reasons.
 - Change edit page to accept `cfg_path` & `server_id` via GET args.
 - Change form handling to use Flask-WTF & WTForms for validation.
 - Restructure test code to ensure _independence_ and _idempotency_.
 
 ### Fixed
 
+- Fix `install.sh --docker` for Debian. [Github Issue](https://github.com/BlueSquare23/web-lgsm/issues/41)
 - Fix CSRF vulnerabilities in applications forms with Flask-WTF & WTForms.
 - Fix core update mechanism in `web-lgsm.py`, with Alembic for database upgrades.
 - Fix test code to ensure every test can be run in isolation and its pass/fail

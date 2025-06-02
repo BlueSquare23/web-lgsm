@@ -473,6 +473,37 @@ class InstallForm(FlaskForm):
     )
 
 
+class ConditionalPasswordRequired:
+    """Validator that makes password required only if changing password or creating new user"""
+
+    def __init__(self, message=None):
+        if not message:
+            message = 'Password is required when changing password or creating new user'
+        self.message = message
+
+    def __call__(self, form, field):
+        # Skip validation if neither condition is true
+        if not form.change_username_password.data and form.selected_user.data != 'newuser':
+            return
+
+        # Check if password is empty when required
+        if not field.data:
+            raise ValidationError(self.message)
+
+        # Additional password complexity checks
+        password = field.data
+        if len(password) < 12 or len(password) > 150:
+            raise ValidationError('Password must be at least 12 characters long')
+        if not re.search(r'[A-Z]', password):
+            raise ValidationError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', password):
+            raise ValidationError('Password must contain at least one lowercase letter')
+        if not re.search(r'[0-9]', password):
+            raise ValidationError('Password must contain at least one number')
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise ValidationError('Password must contain at least one special character')
+
+
 class EditUsersForm(FlaskForm):
     selected_user = StringField('Selected User')
     change_username_password = BooleanField('Change Password', default=False)
@@ -480,20 +511,18 @@ class EditUsersForm(FlaskForm):
     # Username and password fields
     username = StringField('Username',
         validators=[
-            Optional(),
+            InputRequired(),
             Length(min=4, max=150),
             Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
         ]
     )
     password1 = PasswordField('Password', 
         validators=[
-            Optional(),
-            Length(min=12, max=150, message='Password must be at least 12 characters long')
+            ConditionalPasswordRequired(),
         ]
     )
     password2 = PasswordField('Confirm Password', 
         validators=[
-            Optional(),
             EqualTo('password1', message='Passwords must match')
         ]
     )
@@ -514,22 +543,4 @@ class EditUsersForm(FlaskForm):
     # Controls and servers (using SelectMultipleField for multiple checkboxes)
     controls = SelectMultipleField('Allowed Controls', choices=[], coerce=str)
     server_ids = SelectMultipleField('Allowed Game Servers', choices=[], coerce=str)
-
-    # TODO: This is duplicate code with SetupForm. Refactor into one reusable
-    # utils function.
-    def validate_password1(self, field):
-        password = field.data
-        # Check for at least one uppercase letter
-        if not re.search(r'[A-Z]', password):
-            raise ValidationError('Password must contain at least one uppercase letter')
-        # Check for at least one lowercase letter
-        if not re.search(r'[a-z]', password):
-            raise ValidationError('Password must contain at least one lowercase letter')
-        # Check for at least one digit
-        if not re.search(r'[0-9]', password):
-            raise ValidationError('Password must contain at least one number')
-        # Check for at least one special character
-        if not re.search(r'[^A-Za-z0-9]', password):
-            raise ValidationError('Password must contain at least one special character')
-
 

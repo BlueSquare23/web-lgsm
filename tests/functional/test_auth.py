@@ -396,8 +396,8 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
             "csrf_token": csrf_token, 
             "selected_user": "noauser",
             "username": "notauser",
-            "password1": "",
-            "password2": "",
+            "password1": "**Testing1234",
+            "password2": "**Testing1234",
             "is_admin": "false"
         }
         response = client.post(
@@ -412,8 +412,8 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
             "csrf_token": csrf_token, 
             "selected_user": "test",
             "username": "test",
-            "password1": "",
-            "password2": "",
+            "password1": "**Testing1234",
+            "password2": "**Testing1234",
             "is_admin": "false"
         }
         response = client.post(

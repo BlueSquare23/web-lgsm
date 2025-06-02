@@ -6,6 +6,7 @@ import pwd
 import json
 import glob
 import time
+import uuid
 import shlex
 import string
 import logging
@@ -131,21 +132,22 @@ def process_popen_output(proc, proc_info, output_type):
                     current_app.logger.debug(log_msg)
 
 
-def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
+def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
     """
     General purpose subprocess.Popen wrapper function. Keeps track of processes
     stdout, stderr, pid, and other info via ProcInfo object.
 
     Args:
         cmd (list): Command to be run via subprocess.Popen.
-        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
-                                    process information.
+        cmd_id (str): Optional cmd_id to associate proc_info obj w/.
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
 
     Returns:
         None: Doesn't return anything, just updates ProcInfoVessel object.
     """
+    proc_info = get_process(cmd_id, create=True)
+
     config = configparser.ConfigParser()
     config.read("main.conf")
     clear_output_on_reload = get_config_value(
@@ -181,25 +183,28 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     proc_info.process_lock = False
 
 
-def cancel_install(proc_info):
+def cancel_install(pid):
     """
     Calls the ansible playbook connector to kill running installs upon request.
 
     Args:
-        proc_info (ProcInfoVessel): ProcInfoVessel object holding process
-                                    information.
+        pid (int): Process ID or running install to cancel.
 
     Returns:
         bool: True if install canceled successfully, False otherwise.
     """
     # NOTE: For the --cancel option on the ansible connector script we pass in
-    # the pid of the running install, instead of the game server's ID.
-    cmd = CONNECTOR_CMD + ["--cancel", str(proc_info.pid)]
-    cancel_proc_info = ProcInfoVessel()
+    # the pid of the running install, instead of a game server's ID.
+    cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
-    run_cmd_popen(cmd, cancel_proc_info)
+    cmd_id = str(uuid.uuid4())
+    run_cmd_popen(cmd, cmd_id)
+    proc_info = get_process(cmd_id)
 
-    if cancel_proc_info.exit_status > 0:
+    if proc_info == None:
+        return False
+
+    if proc_info.exit_status > 0:
         return False
 
     return True
@@ -284,10 +289,9 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
-    proc_info = ProcInfoVessel()
     cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
-    run_cmd_popen(cmd, proc_info)
+    run_cmd_popen(cmd, server.id)
 
     if proc_info.exit_status > 0:
         current_app.logger.info(proc_info)
@@ -313,11 +317,12 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
-    proc_info = ProcInfoVessel()
     cmd = [PATHS["cat"], gs_id_file_path]
-    keyfile = get_ssh_key_file(server.username, server.install_host)
 
-    success = run_cmd_ssh(cmd, server.install_host, server.username, keyfile, proc_info)
+    success = run_cmd_ssh(cmd, server)
+    proc_info = get_process(server.id)
+    if proc_info == None:
+        return None
 
     # If the ssh connection itself fails return None.
     if not success:
@@ -472,26 +477,19 @@ def get_server_status(server):
         bool|None: True if game server is active, False if inactive, None if
                    indeterminate.
     """
-    proc_info = ProcInfoVessel()
-
     socket = get_tmux_socket_name(server)
     if socket == None:
         return None
 
     cmd = [PATHS["tmux"], "-L", socket, "list-session"]
 
+    cmd_id = "get_server_status:" + server.install_name
+
     if should_use_ssh(server):
-        gs_id_file_path = os.path.join(
-            server.install_path, f"lgsm/data/{server.script_name}.uid"
-        )
-        keyfile = get_ssh_key_file(server.username, server.install_host)
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server, False, 5.0, cmd_id)
 
         # If the ssh connection itself fails return None.
         if not success:
-            current_app.logger.info(proc_info)
             return None
 
     elif server.install_type == "docker":
@@ -504,13 +502,18 @@ def get_server_status(server):
             server.username,
             server.script_name,
         ] + cmd
-        run_cmd_popen(cmd, proc_info)
+        run_cmd_popen(cmd, cmd_id)
 
     # Else type local same user.
     else:
-        run_cmd_popen(cmd, proc_info)
+        run_cmd_popen(cmd, cmd_id)
 
-    current_app.logger.info(proc_info)
+    proc_info = get_process(cmd_id)
+    current_app.logger.info(log_wrap("proc_info", proc_info))
+
+    if proc_info == None:
+        return None
+
     if proc_info.exit_status > 0:
         return False
 
@@ -588,8 +591,6 @@ def find_cfg_paths(server):
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
     if should_use_ssh(server):
-        proc_info = ProcInfoVessel()
-        keyfile = get_ssh_key_file(server.username, server.install_host)
         wanted = []
         for cfg in valid_gs_cfgs:
             wanted += ["-name", cfg, "-o"]
@@ -603,9 +604,7 @@ def find_cfg_paths(server):
             "f",
         ] + wanted[:-1]
 
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server)
 
         # If the ssh connection itself fails return False.
         if not success:
@@ -713,17 +712,14 @@ def delete_server(server, remove_files, delete_user):
             flash("Will not delete remote users home directories!", category="error")
             return False
 
-        proc_info = ProcInfoVessel()
-        keyfile = get_ssh_key_file(server.username, server.install_host)
         cmd = [PATHS["rm"], "-rf", server.install_path]
 
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server)
+        proc_info = get_process(server.id)
 
         # If the ssh connection itself fails return False.
-        if not success:
-            current_app.logger.info(proc_info)
+        if not success or proc_info == None:
+            current_app.logger.info(log_wrap("proc_info", proc_info))
             flash("Problem connecting to remote host!", category="error")
             return False
 
@@ -909,8 +905,12 @@ def update_self():
     """
     update_cmd = ["./web-lgsm.py", "--auto"]
 
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(update_cmd, proc_info)
+    cmd_id = str(uuid.uuid4())
+    run_cmd_popen(update_cmd, cmd_id)
+    proc_info = get_process(cmd_id)
+    if proc_info == None:
+        return "Error: Something went wrong checking update status"
+
     if proc_info.exit_status > 0:
         return f"Error: {proc_info.stderr}"
 
@@ -1139,8 +1139,13 @@ def generate_ecdsa_ssh_keypair(key_name):
         "",
     ]
 
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(cmd, proc_info)
+    cmd_id = str(uuid.uuid4())
+    run_cmd_popen(cmd, cmd_id)
+
+    proc_info = get_process(cmd_id)
+    if proc_info == None:
+        return False
+
     if proc_info.exit_status > 0:
         return False
 
@@ -1180,32 +1185,32 @@ def get_ssh_key_file(user, host):
     return keyfile
 
 
-def run_cmd_ssh(
-    cmd,
-    hostname,
-    username,
-    key_filename,
-    proc_info=ProcInfoVessel(),
-    app_context=False,
-    timeout=5.0,
-):
+def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     """
     Runs remote commands over ssh to admin game servers.
 
     Args:
         cmd (list): Command to run over SSH.
-        hostname (str): The hostname or IP address of the server.
-        username (str): The username to use for the SSH connection.
-        key_filename (str): The path to the private key file.
-        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
-                                    process information.
+        server (GameServer): Game server associated with machine to ssh into.
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
         timeout (float): Timeout in seconds for ssh command. None = no timeout.
+        opt_id (str): Optional alternative ID to use for storing process info.
+                      Will be used instead of server.id.
 
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+    hostname = server.install_host 
+    username = server.username
+    cmd_id = server.id
+    if opt_id:
+        cmd_id = opt_id
+
+    proc_info = get_process(cmd_id, create=True)
+
+    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+
     config = configparser.ConfigParser()
     config.read("main.conf")
     end_in_newlines = get_config_value(
@@ -1226,11 +1231,12 @@ def run_cmd_ssh(
     safe_cmd = shlex.join(cmd)
 
     # Log info.
+    current_app.logger.debug(log_wrap("proc_info pre ssh cmd:", proc_info))
     current_app.logger.info(cmd)
     current_app.logger.info(safe_cmd)
     current_app.logger.info(hostname)
     current_app.logger.info(username)
-    current_app.logger.info(key_filename)
+    current_app.logger.info(pub_key_file)
     current_app.logger.info("pre stdout: " + str(proc_info.stdout))
     current_app.logger.info("pre stderr: " + str(proc_info.stderr))
 
@@ -1241,14 +1247,13 @@ def run_cmd_ssh(
 
     try:
         client.connect(
-            hostname, username=username, key_filename=key_filename, timeout=3
+            hostname, username=username, key_filename=pub_key_file, timeout=3
         )
         current_app.logger.debug(cmd)
 
         proc_info.process_lock = True
         # Open a new session and request a PTY.
         channel = client.get_transport().open_session()
-        #        channel.get_pty()  # This shut's off the stderr stream for some reason... Not sure if pty still needed.
         channel.set_combine_stderr(False)
         channel.exec_command(safe_cmd)
 

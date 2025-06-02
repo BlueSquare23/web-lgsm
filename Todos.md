@@ -157,7 +157,7 @@
     - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
     - I might want to use this to handle file uploads one day too.
 
-* [ ] **Spend some time fleshing out new singleton code & integrating into app**
+* [x] **Spend some time fleshing out new singleton code & integrating into app**
   - I added this, I got it working, I somewhat tested it. However, I have not
     gotten around to refactoring fundamental parts of the app to use it yet.
     - Now seems like a good time to do that because old tests have been brought
@@ -170,6 +170,10 @@
   - Note to self, not an excuse to run wild and get distracted refactoring
     every little thing. Stay on task! Just update core functions to use new
     code.
+
+* [ ] **Use Pylint & Black for linting and formatting**
+  - There's some dead code still and some unused modules etc.
+  - Can also show errors with `pylint --load-plugins pylint_flask -E app/`
 
 * [ ] **Continue fixing up tests**
   1. As much as I hate to admit it, the coverage reports are kinda useful for
@@ -191,6 +195,7 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
+
 
 ## Version 1.8.5 Todos
 

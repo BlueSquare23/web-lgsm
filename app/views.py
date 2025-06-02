@@ -65,8 +65,9 @@ def home():
     for server in installed_servers:
         current_app.logger.info(server.id)
 
-    current_app.logger.info(log_wrap("installed_servers", installed_servers))
-    current_app.logger.info(log_wrap("All Processes", get_all_processes()))
+    current_app.logger.debug(log_wrap("installed_servers", installed_servers))
+    for proc_id, proc in get_all_processes().items():
+        current_app.logger.debug(log_wrap(proc_id, proc))
 
     return render_template(
         "home.html",
@@ -217,13 +218,6 @@ def controls():
         flash("Error loading commands.json file!", category="error")
         return redirect(url_for("views.home"))
 
-    # Object to hold process info from cmd in daemon thread.
-    proc_info = get_process(server_id)
-    if proc_info == None: 
-        proc_info = add_process(server_id, proc_info=ProcInfoVessel())
-
-    current_app.logger.info(log_wrap("proc_info", proc_info))
-
     script_path = os.path.join(server.install_path, server.script_name)
 
     # Console option, use tmux capture-pane to get output.
@@ -266,15 +260,11 @@ def controls():
 
         flash("Sending command to console")
         if should_use_ssh(server):
-            pub_key_file = get_ssh_key_file(server.username, server.install_host)
             daemon = Thread(
                 target=run_cmd_ssh,
                 args=(
                     cmd,
-                    server.install_host,
-                    server.username,
-                    pub_key_file,
-                    proc_info,
+                    server,
                     current_app.app_context(),
                     None,
                 ),
@@ -289,7 +279,7 @@ def controls():
 
         daemon = Thread(
             target=run_cmd_popen,
-            args=(cmd, proc_info, current_app.app_context()),
+            args=(cmd, server_id, current_app.app_context()),
             daemon=True,
             name="ConsoleCMD",
         )
@@ -309,15 +299,11 @@ def controls():
         cmd = [script_path, short_cmd]
 
         if should_use_ssh(server):
-            pub_key_file = get_ssh_key_file(server.username, server.install_host)
             daemon = Thread(
                 target=run_cmd_ssh,
                 args=(
                     cmd,
-                    server.install_host,
-                    server.username,
-                    pub_key_file,
-                    proc_info,
+                    server,
                     current_app.app_context(),
                 ),
                 daemon=True,
@@ -331,7 +317,7 @@ def controls():
 
         daemon = Thread(
             target=run_cmd_popen,
-            args=(cmd, proc_info, current_app.app_context()),
+            args=(cmd, server_id, current_app.app_context()),
             daemon=True,
             name="Command",
         )
@@ -386,6 +372,7 @@ def install():
                 )
                 return redirect(url_for("views.install"))
 
+            # Log proc info so can see what's going on.
             proc_info = get_process(server.id)
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
@@ -476,10 +463,10 @@ def install():
 
     # Add new proc_info object for install process and associate with new
     # game server ID.
-    proc_info = add_process(server_id, ProcInfoVessel())
+#    proc_info = add_process(server_id, ProcInfoVessel())
 
     current_app.logger.info(log_wrap("server_id", server_id))
-    current_app.logger.info(log_wrap("proc_info", proc_info))
+#    current_app.logger.info(log_wrap("proc_info", proc_info))
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
@@ -503,7 +490,7 @@ def install():
 
     install_daemon = Thread(
         target=run_cmd_popen,
-        args=(cmd, proc_info, current_app.app_context()),
+        args=(cmd, server_id, current_app.app_context()),
         daemon=True,
         name=f"web_lgsm_install_{server_id}",
     )
@@ -684,7 +671,7 @@ def settings():
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
             target=run_cmd_popen,
-            args=(cmd, ProcInfoVessel(), current_app.app_context()),
+            args=(cmd, str(uuid.uuid4()), current_app.app_context()),
             daemon=True,
             name="restart",
         )

@@ -1,10 +1,9 @@
 import json
 
-from flask import Blueprint, request, Response, redirect
+from flask import Blueprint, Response
 from flask_login import login_required, current_user
-from flask_restful import Api, Resource, reqparse, abort
+from flask_restful import Api, Resource, abort
 
-from . import db
 from .utils import *
 from .models import *
 from .proc_info_vessel import ProcInfoVessel
@@ -67,24 +66,12 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        if server.id in get_all_processes():
-            proc_info = get_process(server_id)
-        else:
-            proc_info = add_process(server.id)
+        proc_info = get_process(server_id, create=True)
 
         if should_use_ssh(server):
-            pub_key_file = get_ssh_key_file(server.username, server.install_host)
-            run_cmd_ssh(
-                cmd,
-                server.install_host,
-                server.username,
-                pub_key_file,
-                proc_info,
-                None,
-                None,
-            )
+            run_cmd_ssh(cmd, server)
         else:
-            run_cmd_popen(cmd, proc_info)
+            run_cmd_popen(cmd, server_id)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}
@@ -171,9 +158,7 @@ class CmdOutput(Resource):
             )
             return response
 
-        output = get_process(server_id)
-        if output == None:
-            output = add_process(server_id)
+        output = get_process(server_id, create=True)
 
         # Returns json for used by ajax code on /controls route.
         response = Response(output.toJSON(), status=200, mimetype="application/json")

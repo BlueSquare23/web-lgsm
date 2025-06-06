@@ -1,7 +1,5 @@
-import os
 import json
 from . import db
-from pathlib import Path
 from datetime import timedelta
 from .models import User, GameServer
 from .utils import validation_errors, log_wrap
@@ -20,7 +18,6 @@ from flask import (
     url_for,
     request,
     flash,
-    abort,
     current_app,
 )
 from .forms import LoginForm, SetupForm, EditUsersForm
@@ -93,13 +90,12 @@ def setup():
 
     # Collect form data
     username = form.username.data
-    password1 = form.password1.data
-    password2 = form.password2.data
+    password = form.password1.data
 
     # Add the new_user to the database, then redirect home.
     new_user = User(
         username=username,
-        password=generate_password_hash(password1, method="pbkdf2:sha256"),
+        password=generate_password_hash(password, method="pbkdf2:sha256"),
         role="admin",
         permissions=json.dumps({"admin": True}),
     )

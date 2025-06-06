@@ -87,7 +87,7 @@ def main():
     migrate.init_app(app, db)
 
     # Load models.
-    from .models import User, GameServer
+    from .models import User
 
     # Pull in our views route(s).
     from .views import views

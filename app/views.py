@@ -1,11 +1,6 @@
 import os
-import re
-import sys
 import json
 import yaml
-import time
-import signal
-import shutil
 import getpass
 import configparser
 import markdown
@@ -19,8 +14,6 @@ from flask import (
     flash,
     url_for,
     redirect,
-    Response,
-    jsonify,
     current_app,
 )
 
@@ -169,7 +162,7 @@ def controls():
         server_id = controls_form.server_id.data
         short_cmd = controls_form.command.data
 
-    if send_cmd_form.send_form.data:
+    elif send_cmd_form.send_form.data:
         if not send_cmd_form.validate_on_submit():
             validation_errors(send_cmd_form)
             return redirect(url_for("views.home"))
@@ -177,6 +170,11 @@ def controls():
         server_id = send_cmd_form.server_id.data
         short_cmd = send_cmd_form.command.data
         send_cmd = send_cmd_form.send_cmd.data
+
+    else:
+        flash("Invalid form submission!", category="error")
+        return redirect(url_for("views.controls", server_id=server_id))
+        
 
     server = GameServer.query.filter_by(id=server_id).first()
     current_app.logger.info(log_wrap("server_id", server_id))

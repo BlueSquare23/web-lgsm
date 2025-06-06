@@ -4,15 +4,13 @@ import json
 import getpass
 from flask_wtf import FlaskForm
 from wtforms.widgets import ColorInput
-from wtforms.validators import InputRequired, Optional, AnyOf, Length, Regexp, NumberRange, ValidationError, EqualTo
+from wtforms.validators import InputRequired, AnyOf, Length, Regexp, NumberRange, ValidationError, EqualTo
 from wtforms import (
     Form,
     PasswordField,
     RadioField,
-    SelectField,
     SubmitField,
     TextAreaField,
-    DecimalField,
     StringField,
     IntegerField,
     BooleanField,

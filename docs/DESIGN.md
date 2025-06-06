@@ -612,7 +612,7 @@ pylint --load-plugins pylint_flask -E app/
 
 
 # Only check for unused imports/variables:
-pylint --disable=all --enable=W0611,W0612 app/
+pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 ```
 
 ---

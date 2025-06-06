@@ -1,15 +1,11 @@
 import os
 import io
 import re
-import sys
 import pwd
 import json
-import glob
 import time
 import uuid
 import shlex
-import string
-import logging
 import psutil
 import shutil
 import socket
@@ -21,12 +17,9 @@ import threading
 import configparser
 
 from datetime import datetime, timedelta
-from threading import Thread
-from flask import flash, current_app, send_file, send_from_directory
+from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 
-from . import db
 from .models import GameServer
-from .proc_info_vessel import ProcInfoVessel
 from .cmd_descriptor import CmdDescriptor
 from .processes_global import *
 
@@ -291,7 +284,9 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
     """
     cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
-    run_cmd_popen(cmd, server.id)
+    cmd_id = 'get_tmux_socket_name_docker'
+    run_cmd_popen(cmd, cmd_id)
+    proc_info = get_process(cmd_id)
 
     if proc_info.exit_status > 0:
         current_app.logger.info(proc_info)
@@ -579,6 +574,7 @@ def find_cfg_paths(server):
         cfg_paths (list): List of found valid config files.
     """
     cfg_paths = []
+    cmd_id = 'find_cfg_paths'
 
     # Try except in case problem with json files.
     try:
@@ -604,7 +600,8 @@ def find_cfg_paths(server):
             "f",
         ] + wanted[:-1]
 
-        success = run_cmd_ssh(cmd, server)
+        success = run_cmd_ssh(cmd, server, False, 5.0, cmd_id)
+        proc_info = get_process(cmd_id)
 
         # If the ssh connection itself fails return False.
         if not success:
@@ -905,7 +902,7 @@ def update_self():
     """
     update_cmd = ["./web-lgsm.py", "--auto"]
 
-    cmd_id = str(uuid.uuid4())
+    cmd_id = 'update_self'
     run_cmd_popen(update_cmd, cmd_id)
     proc_info = get_process(cmd_id)
     if proc_info == None:
@@ -1139,7 +1136,7 @@ def generate_ecdsa_ssh_keypair(key_name):
         "",
     ]
 
-    cmd_id = str(uuid.uuid4())
+    cmd_id = 'generate_ecdsa_ssh_keypair'
     run_cmd_popen(cmd, cmd_id)
 
     proc_info = get_process(cmd_id)
@@ -1177,7 +1174,7 @@ def get_ssh_key_file(user, host):
     if key_name + ".pub" not in all_pub_keys:
         # Log keygen failures.
         if not generate_ecdsa_ssh_keypair(key_name):
-            log_msg = f"Failed to generate new key pair for {user}:{server}!"
+            log_msg = f"Failed to generate new key pair for {user}:{host}!"
             current_app.logger.info(log_msg)
             return
 
@@ -1707,7 +1704,7 @@ def download_cfg(server, cfg_path):
 
     file_contents = read_cfg_file(server, cfg_path)
     if file_contents == None:
-        flash("Passwords doesn't meet criteria!", category="error")
+        flash("Problem retrieving file contents", category="error")
         return redirect(url_for("views.home"))
 
     cfg_file = os.path.basename(cfg_path)

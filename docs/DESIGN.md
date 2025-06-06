@@ -5,6 +5,24 @@
 - **Scope**: This document covers the high-level architecture and specific components of the web-lgsm.
 - **Audience**: This document is intended for developers, contributors, and maintainers. However, general users may find it interesting as well.
 
+### Table of Contents
+
+1. [Introduction](#1-introduction)
+2. [Overview](#2-overview)
+3. [Architecture](#3-architecture)
+4. [Detailed Design](#4-detailed-design)
+5. [Design Decisions](#5-design-decisions)
+6. [API Documentation](#6-api-documentation)
+7. [Configuration](#7-configuration)
+8. [Deployment](#8-deployment)
+9. [Testing](#9-testing)
+10. [Database Upgrades](#10-database-upgrades)
+11. [Form Handling & Validation](#11-form-handling--validation)
+12. [Formatting & Linting](#12-formatting--linting)
+13. [Future Work](#13-future-work)
+14. [Contributing](#14-contributing)
+15. [References](#15-references)
+
 ---
 
 ## 2. Overview
@@ -441,7 +459,7 @@ Root logger level: WARNING
 
 ---
 
-## 10. Form Handling & Validation
+## 11. Form Handling & Validation
 
 - **Flask-WTF (Aka WTForms)**: Flask-wtf is extension for Wtforms, which is a
   form validation and handling library.
@@ -567,19 +585,51 @@ for our form.
 
 ---
 
-## 11. Future Work
+## 12. Formatting & Linting
+
+- **Formatting**: [black](https://pypi.org/project/black/) 
+
+Formatting is very simple:
+```
+black app/
+```
+
+- **Linting**: [pylint](https://pypi.org/project/pylint/) 
+
+Pylint is a little more complicated. We're using pylint-flask to catch some
+flask specific stuff.
+
+```
+pip install pylint pylint-flask
+```
+
+Example Usage:
+```
+pylint --load-plugins pylint_flask app/
+
+# Only see errors:
+pylint --load-plugins pylint_flask -E app/
+
+
+# Only check for unused imports/variables:
+pylint --disable=all --enable=W0611,W0612 app/
+```
+
+---
+
+## 13. Future Work
 - **Planned Features**: See [`Todos.md`](../Todos.md) for planned features and maintenance.
 - **Known Issues**: You can find known issues and suggested features for the project under [its github issues page](https://github.com/bluesquare23/web-lgsm/issues).
 
 ---
 
-## 12. Contributing
+## 14. Contributing
 - **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 ---
 
-## 13. References
+## 15. References
 - **Links**:
   - [Docs](.)
   - [Youtube Tutorials](NOT FINISHED YET...)

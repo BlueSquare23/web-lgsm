@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add fully fleshed-out [DESIGN.md](https://github.com/BlueSquare23/web-lgsm/blob/master/docs/DESIGN.md) doc.
 - Add Flask-Migrate (Alembic) for handling database migrations between versions.
 - Add code coverage report as CI/CD artifact for later perusing.
 - Add documentation about test code.

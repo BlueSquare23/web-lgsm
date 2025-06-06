@@ -38,6 +38,7 @@ PATHS = {
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
 
+
 ######### Home Page #########
 
 @views.route("/", methods=["GET"])
@@ -123,7 +124,7 @@ def controls():
                 else:
                     flash("Unable to access local install over ssh!", category="error")
                     return redirect(url_for("views.home"))
-    
+
         elif server.install_type == "local" and not os.path.isdir(server.install_path):
             flash("No game server installation directory found!", category="error")
             return redirect(url_for("views.home"))
@@ -137,7 +138,7 @@ def controls():
             if cfg_paths == "failed":
                 flash("Error reading accepted_cfgs.json!", category="error")
                 cfg_paths = []
-    
+
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
         return render_template(
@@ -174,7 +175,6 @@ def controls():
     else:
         flash("Invalid form submission!", category="error")
         return redirect(url_for("views.controls", server_id=server_id))
-        
 
     server = GameServer.query.filter_by(id=server_id).first()
     current_app.logger.info(log_wrap("server_id", server_id))
@@ -193,7 +193,6 @@ def controls():
     # Check if user has permissions to game server for controls route.
     if not user_has_permissions(current_user, "controls", server_id):
         return redirect(url_for("views.home"))
-
 
     # If cfg editor is disabled in the main.conf.
     if not config_options["cfg_editor"]:
@@ -249,9 +248,7 @@ def controls():
 
         active = get_server_status(server)
         if not active:
-            flash(
-                "Server is Off! Cannot send commands to console!", category="error"
-            )
+            flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
 
         cmd = [script_path, short_cmd, send_cmd]
@@ -359,7 +356,10 @@ def install():
         if server_id != None and cancel == "true":
             server = GameServer.query.filter_by(id=server_id).first()
             if server == None:
-                flash("Problem canceling installation! Game server id not found.", category="error")
+                flash(
+                    "Problem canceling installation! Game server id not found.",
+                    category="error",
+                )
                 return redirect(url_for("views.install"))
 
             # Check if install thread is still running.
@@ -455,16 +455,14 @@ def install():
     db.session.add(server)
     db.session.commit()
 
-    server_id = (
-        GameServer.query.filter_by(install_name=server_install_name).first().id
-    )
+    server_id = GameServer.query.filter_by(install_name=server_install_name).first().id
 
     # Add new proc_info object for install process and associate with new
     # game server ID.
-#    proc_info = add_process(server_id, ProcInfoVessel())
+    #    proc_info = add_process(server_id, ProcInfoVessel())
 
     current_app.logger.info(log_wrap("server_id", server_id))
-#    current_app.logger.info(log_wrap("proc_info", proc_info))
+    #    current_app.logger.info(log_wrap("proc_info", proc_info))
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
@@ -549,13 +547,17 @@ def settings():
         form.terminal_height.default = config_options["terminal_height"]
         form.delete_user.default = str(config_options["delete_user"]).lower()
         form.remove_files.default = str(config_options["remove_files"]).lower()
-        form.install_new_user.default = str(config_options["install_create_new_user"]).lower()
+        form.install_new_user.default = str(
+            config_options["install_create_new_user"]
+        ).lower()
         form.newline_ending.default = str(config_options["end_in_newlines"]).lower()
         form.show_stderr.default = str(config_options["show_stderr"]).lower()
-        form.clear_output_on_reload.default = str(config_options["clear_output_on_reload"]).lower()
+        form.clear_output_on_reload.default = str(
+            config_options["clear_output_on_reload"]
+        ).lower()
         # BooleanFields handle setting default differently from RadioFields.
-        if (config_options["show_stats"]):
-            form.show_stats.default = 'true'
+        if config_options["show_stats"]:
+            form.show_stats.default = "true"
         form.process()  # Required to apply form changes.
 
         return render_template(
@@ -563,7 +565,7 @@ def settings():
             user=current_user,
             system_user=USER,
             config_options=config_options,
-            form = form,
+            form=form,
         )
 
     # Handle Invalid form submissions.
@@ -573,19 +575,19 @@ def settings():
 
     # TODO v1.9: Retrieve form options via separate function like read_config()
     # (maybe read_form()) to cleanup the mess that is the block of text below.
-    text_color_pref       = str(form.text_color.data).lower()
-    user_del_pref         = str(form.delete_user.data).lower()
-    file_pref             = str(form.remove_files.data).lower()
-    clear_output_pref     = str(form.clear_output_on_reload.data).lower()
-    height_pref           = str(form.terminal_height.data).lower()
-    update_weblgsm        = str(form.update_weblgsm.data).lower()
-    graphs_primary_pref   = str(form.graphs_primary.data).lower()
+    text_color_pref = str(form.text_color.data).lower()
+    user_del_pref = str(form.delete_user.data).lower()
+    file_pref = str(form.remove_files.data).lower()
+    clear_output_pref = str(form.clear_output_on_reload.data).lower()
+    height_pref = str(form.terminal_height.data).lower()
+    update_weblgsm = str(form.update_weblgsm.data).lower()
+    graphs_primary_pref = str(form.graphs_primary.data).lower()
     graphs_secondary_pref = str(form.graphs_secondary.data).lower()
-    show_stats_pref       = str(form.show_stats.data).lower()
-    purge_tmux_cache      = str(form.purge_tmux_cache.data).lower()
+    show_stats_pref = str(form.show_stats.data).lower()
+    purge_tmux_cache = str(form.purge_tmux_cache.data).lower()
     install_new_user_pref = str(form.install_new_user.data).lower()
-    newline_ending_pref   = str(form.newline_ending.data).lower()
-    show_stderr_pref      = str(form.show_stderr.data).lower()
+    newline_ending_pref = str(form.newline_ending.data).lower()
+    show_stderr_pref = str(form.show_stderr.data).lower()
 
     # Debug messages.
     current_app.logger.info(log_wrap("text_color_pref", text_color_pref))
@@ -658,7 +660,7 @@ def settings():
         config.write(configfile)
 
     # Update's the weblgsm.
-    if update_weblgsm == 'true':
+    if update_weblgsm == "true":
         status = update_self()
         if "Error:" in status:
             flash(status, category="error")
@@ -699,7 +701,7 @@ def about():
 @login_required
 def changelog():
     changelog_md = read_changelog()
-    changelog_html =  markdown.markdown(changelog_md)
+    changelog_html = markdown.markdown(changelog_md)
 
     return render_template(
         "changelog.html", user=current_user, changelog_html=changelog_html
@@ -815,12 +817,13 @@ def add():
         user_perms = json.loads(user_ident.permissions)
         user_perms["server_ids"].append(server.id)
         user_ident.permissions = json.dumps(user_perms)
-        current_app.logger.info(log_wrap("Updated User Permissions:", user_ident.permissions))
+        current_app.logger.info(
+            log_wrap("Updated User Permissions:", user_ident.permissions)
+        )
         db.session.commit()
 
     flash("Game server added!")
     return redirect(url_for("views.home"))
-
 
 
 ######### Edit Route #########
@@ -844,7 +847,7 @@ def edit():
 
     if request.method == "GET":
         current_app.logger.debug(request.args.keys())
-        if 'download_submit' in request.args.keys():
+        if "download_submit" in request.args.keys():
             download_form = DownloadCfgForm(request.args)
             if not download_form.validate():
                 validation_errors(download_form)
@@ -910,22 +913,19 @@ def edit():
 ######### Swagger API Docs #########
 
 def load_spec():
-    spec_path = os.path.join(os.path.dirname(__file__), 'specs', 'api_spec.yaml')
-    with open(spec_path, 'r') as f:
+    spec_path = os.path.join(os.path.dirname(__file__), "specs", "api_spec.yaml")
+    with open(spec_path, "r") as f:
         spec = yaml.safe_load(f)
 
-    base_url = request.host_url.rstrip('/')
+    base_url = request.host_url.rstrip("/")
     api_url = f"{base_url}/api"
 
-    spec['servers'] = [{
-        'url': api_url,
-        'description': 'Current host'
-    }]
+    spec["servers"] = [{"url": api_url, "description": "Current host"}]
 
     return spec
 
-@views.route('/api/spec')
+
+@views.route("/api/spec")
 @login_required
 def get_spec():
     return load_spec()
-

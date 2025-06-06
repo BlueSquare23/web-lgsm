@@ -40,7 +40,7 @@ def get_process(server_id, create=False):
     Args:
         server_id (int): ID in database for GameServer object this process is
                          associated with.
-        create (bool): Optional Create new process if none found.                         
+        create (bool): Optional Create new process if none found.
 
     Returns:
         proc_info (ProcInfoVessel): Returns proc_info object in dictionary,

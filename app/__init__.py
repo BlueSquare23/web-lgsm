@@ -21,11 +21,11 @@ DB_NAME = "database.db"
 
 # Naming conventions for Flask-Migrate.
 convention = {
-    "ix": 'ix_%(column_0_label)s',
+    "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s"
+    "pk": "pk_%(table_name)s",
 }
 metadata = MetaData(naming_convention=convention)
 db = SQLAlchemy(metadata=metadata)
@@ -33,15 +33,16 @@ db = SQLAlchemy(metadata=metadata)
 env_path = Path(".") / ".secret"
 load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ["SECRET_KEY"]
-SWAGGER_URL = '/docs'
-API_URL = '/api/spec'
+SWAGGER_URL = "/docs"
+API_URL = "/api/spec"
+
 
 def main():
     # Setup logging.
     log_level_map = {
-        "info": logging.INFO,        # General operational info.
+        "info": logging.INFO,  # General operational info.
         "warning": logging.WARNING,  # Warnings and above.
-        "debug": logging.DEBUG,      # Most verbose, debug info.
+        "debug": logging.DEBUG,  # Most verbose, debug info.
     }
 
     if "DEBUG" in os.environ:
@@ -77,8 +78,8 @@ def main():
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SESSION_COOKIE_SAMESITE"] = 'Lax'
-    app.config["REMEMBER_COOKIE_SAMESITE"] = 'Lax'
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
     app.logger.removeHandler(default_handler)
     migrate = Migrate(app, db, render_as_batch=True)
 
@@ -91,14 +92,17 @@ def main():
 
     # Pull in our views route(s).
     from .views import views
+
     app.register_blueprint(views, url_prefix="/")
 
     # Pull in our auth route(s).
     from .auth import auth
+
     app.register_blueprint(auth, url_prefix="/")
 
     # Pull in our api route(s).
     from .api import api_bp
+
     app.register_blueprint(api_bp, url_prefix="/api")
 
     # Create Swagger UI blueprint.
@@ -106,21 +110,21 @@ def main():
         SWAGGER_URL,
         API_URL,
         config={
-            'app_name': "Web-LGSM API",
-            'validatorUrl': None,
-            'displayRequestDuration': True,
-            'docExpansion': 'none',
-            'persistAuthorization': True,
-            'supportedSubmitMethods': ['get', 'post', 'put', 'delete', 'patch'],
-            'securityDefinitions': {
-                'cookieAuth': {
-                    'type': 'apiKey',
-                    'name': 'session',
-                    'in': 'cookie',
-                    'description': 'Session cookie for authentication'
+            "app_name": "Web-LGSM API",
+            "validatorUrl": None,
+            "displayRequestDuration": True,
+            "docExpansion": "none",
+            "persistAuthorization": True,
+            "supportedSubmitMethods": ["get", "post", "put", "delete", "patch"],
+            "securityDefinitions": {
+                "cookieAuth": {
+                    "type": "apiKey",
+                    "name": "session",
+                    "in": "cookie",
+                    "description": "Session cookie for authentication",
                 }
-            }
-        }
+            },
+        },
     )
 
     # Register Swagger UI blueprint

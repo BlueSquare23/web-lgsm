@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func
 import uuid
 
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True)
@@ -24,8 +25,8 @@ class GameServer(db.Model):
         db.String(36),
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
-        unique=True,    # Ensure uniqueness
-        nullable=False  # Ensure not null
+        unique=True,  # Ensure uniqueness
+        nullable=False,  # Ensure not null
     )
     # Unique name.
     install_name = db.Column(db.String(150), unique=True)

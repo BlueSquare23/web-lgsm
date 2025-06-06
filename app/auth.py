@@ -26,6 +26,7 @@ auth = Blueprint("auth", __name__)
 
 ######### Login Route #########
 
+
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     # Create LoginForm.
@@ -70,6 +71,7 @@ def login():
 
 ######### Setup Route #########
 
+
 @auth.route("/setup", methods=["GET", "POST"])
 def setup():
     # If already a user added, disable the setup route.
@@ -109,6 +111,7 @@ def setup():
 
 ######### Logout Route #########
 
+
 @auth.route("/logout")
 @login_required
 def logout():
@@ -118,6 +121,7 @@ def logout():
 
 
 ######### Create / Edit User(s) Route #########
+
 
 @auth.route("/edit_users", methods=["GET", "POST"])
 @login_required
@@ -148,7 +152,9 @@ def edit_users():
 
     # Dynamically set the choices for the SelectMultipleFields.
     form.controls.choices = [(control, control) for control in all_controls]
-    form.server_ids.choices = [(server.id, server.install_name) for server in installed_servers]
+    form.server_ids.choices = [
+        (server.id, server.install_name) for server in installed_servers
+    ]
 
     if request.method == "GET":
         selected_user = request.args.get("username")
@@ -245,7 +251,8 @@ def edit_users():
     if selected_user == "newuser":
         for user in all_users:
             if user.username == username:
-                flash("Cannot add new user with existing username!",
+                flash(
+                    "Cannot add new user with existing username!",
                     category="error",
                 )
                 return redirect(url_for("auth.edit_users"))
@@ -327,9 +334,7 @@ def edit_users():
     # shit 2g3th3r 2m0rr0w.
     if change_user_pass:
         user_ident.username = username
-        user_ident.password = generate_password_hash(
-            password1, method="pbkdf2:sha256"
-        )
+        user_ident.password = generate_password_hash(password1, method="pbkdf2:sha256")
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
         db.session.commit()

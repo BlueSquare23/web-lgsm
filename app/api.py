@@ -9,8 +9,9 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
+
 
 def abort_if_id_none(server_id):
     if server_id == None:
@@ -86,7 +87,9 @@ class UpdateConsole(Resource):
         )
         return response
 
+
 api.add_resource(UpdateConsole, "/update-console/<string:server_id>")
+
 
 ######### API Server Statuses #########
 
@@ -94,7 +97,7 @@ class ServerStatus(Resource):
     @login_required
     def get(self, server_id):
         abort_if_id_none(server_id)
-        
+
         server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Invalid id"}
@@ -119,6 +122,7 @@ class ServerStatus(Resource):
         )
         return response
 
+
 api.add_resource(ServerStatus, "/server-status/<string:server_id>")
 
 
@@ -132,6 +136,7 @@ class SystemUsage(Resource):
             json.dumps(server_stats, indent=4), status=200, mimetype="application/json"
         )
         return response
+
 
 api.add_resource(SystemUsage, "/system-usage")
 
@@ -164,6 +169,7 @@ class CmdOutput(Resource):
         response = Response(output.toJSON(), status=200, mimetype="application/json")
         return response
 
+
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 
 
@@ -193,7 +199,9 @@ class GameServerDelete(Resource):
 
         # Check if user has permissions to delete route & server.
         if not user_has_permissions(current_user, "delete", server_id):
-            resp_dict = {"Error": f"Insufficient permission to delete {server.install_name}"}
+            resp_dict = {
+                "Error": f"Insufficient permission to delete {server.install_name}"
+            }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
             )
@@ -210,16 +218,18 @@ class GameServerDelete(Resource):
         current_app.logger.info(log_wrap("All processes", get_all_processes()))
 
         if not delete_server(server, config["remove_files"], config["delete_user"]):
-            resp_dict = {"Error": "Problem deleting server, see error logs for more details."}
+            resp_dict = {
+                "Error": "Problem deleting server, see error logs for more details."
+            }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
             )
             return response
-            
+
         # We don't want to keep deleted servers in the cache.
         update_tmux_socket_name_cache(server_id, None, True)
 
         return "", 204
 
-api.add_resource(GameServerDelete, "/delete/<string:server_id>")
 
+api.add_resource(GameServerDelete, "/delete/<string:server_id>")

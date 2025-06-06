@@ -284,7 +284,7 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
     """
     cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
-    cmd_id = 'get_tmux_socket_name_docker'
+    cmd_id = "get_tmux_socket_name_docker"
     run_cmd_popen(cmd, cmd_id)
     proc_info = get_process(cmd_id)
 
@@ -556,7 +556,7 @@ def get_running_installs():
 
             # Check game server exists.
             if server:
-                running_install_threads[server_id] =  server.install_name
+                running_install_threads[server_id] = server.install_name
 
     return running_install_threads
 
@@ -574,7 +574,7 @@ def find_cfg_paths(server):
         cfg_paths (list): List of found valid config files.
     """
     cfg_paths = []
-    cmd_id = 'find_cfg_paths'
+    cmd_id = "find_cfg_paths"
 
     # Try except in case problem with json files.
     try:
@@ -902,7 +902,7 @@ def update_self():
     """
     update_cmd = ["./web-lgsm.py", "--auto"]
 
-    cmd_id = 'update_self'
+    cmd_id = "update_self"
     run_cmd_popen(update_cmd, cmd_id)
     proc_info = get_process(cmd_id)
     if proc_info == None:
@@ -1068,7 +1068,7 @@ def user_has_permissions(current_user, route, server_id=None):
 
     # No flash for api routes. They return json.
     if route == "update-console":
-        if 'console' not in user_perms["controls"]:
+        if "console" not in user_perms["controls"]:
             return False
 
     if route == "server-statuses" or route == "cmd-output":
@@ -1136,7 +1136,7 @@ def generate_ecdsa_ssh_keypair(key_name):
         "",
     ]
 
-    cmd_id = 'generate_ecdsa_ssh_keypair'
+    cmd_id = "generate_ecdsa_ssh_keypair"
     run_cmd_popen(cmd, cmd_id)
 
     proc_info = get_process(cmd_id)
@@ -1198,7 +1198,7 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
-    hostname = server.install_host 
+    hostname = server.install_host
     username = server.username
     cmd_id = server.id
     if opt_id:
@@ -1455,7 +1455,7 @@ def read_changelog():
         str: Contents of CHANGELOG.md file or err str.
     """
     try:
-        with open('CHANGELOG.md', "r") as file:
+        with open("CHANGELOG.md", "r") as file:
             contents = file.read()
         return contents
 
@@ -1659,7 +1659,7 @@ def validation_errors(form):
         for field, errors in form.errors.items():
             for error in errors:
                 current_app.logger.debug(f"{field}: {error}")
-                flash(f"{field}: {error}", 'error')
+                flash(f"{field}: {error}", "error")
 
 
 def read_cfg_file(server, cfg_path):
@@ -1690,7 +1690,6 @@ def read_cfg_file(server, cfg_path):
         return None
 
     return file_contents
-
 
 
 def download_cfg(server, cfg_path):
@@ -1743,7 +1742,7 @@ def write_cfg(server, cfg_path, new_file_contents):
         )
         if written:
             return True
-        
+
         return False
 
     # Check that file exists before allowing writes to it. Aka don't allow
@@ -1759,5 +1758,3 @@ def write_cfg(server, cfg_path, new_file_contents):
         return True
     except:
         return False
-
-

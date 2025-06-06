@@ -1,5 +1,6 @@
 import json
 
+
 class ProcInfoVessel:
     """
     Class used to create objects that hold information about processes launched

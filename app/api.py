@@ -2,7 +2,7 @@ import json
 
 from flask import Blueprint, Response
 from flask_login import login_required, current_user
-from flask_restful import Api, Resource, abort
+from flask_restful import Api, Resource
 
 from .utils import *
 from .models import *
@@ -11,12 +11,6 @@ from .processes_global import *
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
-
-
-def abort_if_id_none(server_id):
-    if server_id == None:
-        resp_dict = {"Error": "No id supplied"}
-        abort(404, message=resp_dict)
 
 
 ######### API Update Console #########
@@ -28,14 +22,6 @@ class UpdateConsole(Resource):
             resp_dict = {"Error": "Permission denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
-            )
-            return response
-
-        # Can't do needful without a server specified.
-        if server_id == None:
-            resp_dict = {"Error": "Required var: server"}
-            response = Response(
-                json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
             )
             return response
 
@@ -67,12 +53,12 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        proc_info = get_process(server_id, create=True)
-
         if should_use_ssh(server):
             run_cmd_ssh(cmd, server)
         else:
-            run_cmd_popen(cmd, server_id)
+            run_cmd_popen(cmd, server.id)
+
+        proc_info = get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}
@@ -96,8 +82,6 @@ api.add_resource(UpdateConsole, "/update-console/<string:server_id>")
 class ServerStatus(Resource):
     @login_required
     def get(self, server_id):
-        abort_if_id_none(server_id)
-
         server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Invalid id"}
@@ -146,8 +130,6 @@ api.add_resource(SystemUsage, "/system-usage")
 class CmdOutput(Resource):
     @login_required
     def get(self, server_id):
-        abort_if_id_none(server_id)
-
         # Can't do anything if we don't have proc info vessel stored.
         if server_id not in get_all_processes():
             resp_dict = {"Error": "eer never heard of em"}
@@ -178,8 +160,6 @@ api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 class GameServerDelete(Resource):
     @login_required
     def delete(self, server_id):
-        abort_if_id_none(server_id)
-
         server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Server not found!"}

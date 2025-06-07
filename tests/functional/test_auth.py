@@ -525,3 +525,21 @@ def test_login_as_new_user(db_session, client, add_second_user_no_perms):
         )
         assert response.status_code == 200  # 200 bc follow_redirects=True
         assert response.request.path == url_for("views.home")
+
+
+def test_require_auth(db_session, client, setup_client):
+    """
+    Test that pages require authentication.
+    """
+    with client:
+        page_requires_auth(client, '/home')
+        page_requires_auth(client, '/controls')
+        page_requires_auth(client, '/install')
+        page_requires_auth(client, '/settings')
+        page_requires_auth(client, '/about')
+        page_requires_auth(client, '/changelog')
+        page_requires_auth(client, '/add')
+        page_requires_auth(client, '/edit')
+        page_requires_auth(client, '/edit_users')
+        page_requires_auth(client, '/api/spec')
+

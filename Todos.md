@@ -171,16 +171,16 @@
     every little thing. Stay on task! Just update core functions to use new
     code.
 
-* [ ] **Use Pylint & Black for linting and formatting**
+* [x] **Use Pylint & Black for linting and formatting**
   - There's some dead code still and some unused modules etc.
   - Can also show errors with `pylint --load-plugins pylint_flask -E app/`
 
-* [ ] **Continue fixing up tests**
+* [~] **Continue fixing up tests**
   1. As much as I hate to admit it, the coverage reports are kinda useful for
     spotting things that I have little to no testing for.
     - A lot of this stuff is newer stuff, I added but never got around to
       testing, cause was going to do some overhaul on the tests anyways.
-    - [ ] Look at recent coverage reports to find things that lack tests and
+    - [x] Look at recent coverage reports to find things that lack tests and
       write some more tests!
   2. There are a number of existing tests that are pretty weak, kinda don't
     really test what they're supposed to test well. 
@@ -195,6 +195,9 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
+  4. [~] Add tests for:
+    - [~] Doesn't allow missing `csrf_token` on forms that require one.
+    - [x] Auth required on routes that require auth.
 
 
 ## Version 1.8.5 Todos

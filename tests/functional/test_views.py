@@ -96,7 +96,6 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         assert response.status_code == 200  # Return's 200 to GET requests.
 
         csrf_token = get_csrf_token(response)
-        print(csrf_token)
 
         ## Test empty parameters.
         resp_code = 200
@@ -702,12 +701,20 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         text_color = "#000000"
         data["text_color"] = text_color
-        print(data)
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf(f"text_color = {text_color}")
+
+        # Test missing csrf_token.
+        data = default_data.copy()
+        del data['csrf_token']
+        error_msg = b"The CSRF token is missing"
+
+        response = client.post("/settings", data=data, follow_redirects=True)
+        print(extract_alert_messages(response))
+        check_response(response, error_msg, resp_code, "views.settings")
 
         # Text color tests.
         error_msg = b"Invalid text color!"
@@ -946,6 +953,20 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         csrf_token = get_csrf_token(response)
 
         ## Edit testing.
+
+        # Test no csrf_token.
+        response = client.post(
+            "/edit",
+            data={
+                "server_id": server_id,
+                "cfg_path": cfg_path,
+                "file_contents": "#### Testing...",
+            },
+            follow_redirects=True
+        )
+        alerts = extract_alert_messages(response, 'danger')
+        assert 'csrf_token: The CSRF token is missing.' in alerts
+
         # Test if edits are saved.
         response = client.post(
             "/edit",
@@ -1246,12 +1267,14 @@ def test_delete_new_user(add_second_user_no_perms, client, authed_client, test_v
         response = client.get(
             f"/edit_users?username={username}&delete=true", follow_redirects=True
         )
+        alerts = extract_alert_messages(response, 'danger')
         check_response(response, error_msg, resp_code, "auth.edit_users")
+        assert 'Cannot delete currently logged in user!' in alerts
 
-        # TODO: Make test for this. Rn, this test doesn't work because above case block it.
-        #        error_msg = b"Cannot delete main admin user"
-        #        response = client.get(f'/edit_users?username={username}&delete=true', follow_redirects=True)
-        #        check_response(response, error_msg, resp_code, 'auth.edit_users')
+        error_msg = 'Cannot delete currently logged in user!'
+        response = client.get(f'/edit_users?username={username}&delete=true', follow_redirects=True)
+        alerts = extract_alert_messages(response, 'danger')
+        assert error_msg in alerts
 
         # Do a legit user delete.
         response = client.get(
@@ -1336,35 +1359,11 @@ def game_server_start_stop(client, server_id):
     assert response.status_code == 200
     print(response.get_data(as_text=True))
 
-    # TODO: Fix this, almost certainly this test does nothing atm.
-    ## Check that the output lines are not empty.
-    #empty_resp = '{"stdout": [""], "pid": false, "process_lock": false}'
-    #json_data = json.loads(response.data.decode("utf8"))
-    #assert empty_resp != json.dumps(json_data)
-
-#    print("######################## START MINECRAFT SERVER\n")
-    # Sleep until process is finished.
     while (b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data):
-#        print(client.get(f"/api/cmd-output/{server_id}").data)
         time.sleep(5)
 
     # Cant win the race if you're asleep.
     time.sleep(10)
-
-# Things have changed, disabling for now.
-#    assert b'"process_lock": false' in client.get(f"/api/cmd-output/{server_id}").data
-#    print(client.get("/api/cmd-output?server=Minecraft").data.decode("utf8"))
-
-    #    print("######################## Minecraft Start Log\n")
-    #    os.system("cat Minecraft/logs/script/mcserver-script.log")
-    #    os.system("cat Minecraft/log/server/latest.log")
-    #    os.system("cat Minecraft/log/console/mcserver-console.log")
-
-    # Check status indicator api json.
-#    resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
-#    print(resp)
-#    resp_dict = json.loads(resp)
-#    assert resp_dict['status'] == True
 
     # Enable the send_cmd setting.
     toggle_send_cmd(True)
@@ -1381,7 +1380,6 @@ def game_server_start_stop(client, server_id):
             "send_form": 'true',
         },
         follow_redirects=True
-#        f"/controls?server_id={server_id}&command=sd&cmd=test", follow_redirects=True
     )
     assert response.status_code == 200
     # From flashed message

@@ -1,6 +1,7 @@
 import re
 from flask import url_for, request
 import configparser
+from bs4 import BeautifulSoup
 
 from app.models import User, GameServer
 
@@ -91,4 +92,55 @@ def check_for_error(response, error_msg, url, code=200):
     # Check redirect by seeing if path changed.
     assert response.request.path == url_for(url)
     assert error_msg in response.data
+
+
+def page_requires_auth(client, page=''):
+    """
+    Tests that supplied page requires authentication. All unauthed reqs should
+    return to login.
+    """
+    response = client.get(page)
+    assert response.status_code == 302
+
+    response = client.get(page, follow_redirects=True)
+    assert response.status_code == 200  # 200 bc follow_redirects=True
+    debug_response(response)
+    assert response.request.path == url_for("auth.login")
+
+
+def extract_alert_messages(response, alert_type=None):
+    """
+    Extracts messages from alert divs (both error and success).
+    
+    Args:
+        response: Response object from test request.
+        alert_type: Optional filter - 'danger', 'success', or None for both
+        
+    Returns:
+        List of message strings
+    """
+    html_text = response.data.decode('utf-8')
+    soup = BeautifulSoup(html_text, 'html.parser')
+    messages = []
+
+    # Find all alert divs (both danger and success)
+    alert_divs = soup.find_all('div', class_='alert')
+
+    for div in alert_divs:
+        # Check if it's a dismissable alert.
+        if 'alert-dismissable' not in div.get('class', []):
+            continue
+
+        # Filter by type if specified.
+        if alert_type and f'alert-{alert_type}' not in div.get('class', []):
+            continue
+
+        # Extract text and clean it.
+        text = div.get_text()
+        # Remove button text and extra whitespace
+        message = ' '.join(text.split()).replace('×', '').strip()
+        if message:  # Only add non-empty messages
+            messages.append(message)
+
+    return messages
 

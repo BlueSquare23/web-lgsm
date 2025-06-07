@@ -243,3 +243,4 @@ def user_authed_client_all_perms(client, add_second_user_all_perms, test_vars):
     )
     assert response.status_code == 200
     return client
+

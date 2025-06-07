@@ -47,3 +47,4 @@ def test_print_help():
     result = subprocess.run([SCRIPT, "--help"], capture_output=True, text=True)
     assert "Usage: web-lgsm.py [options]" in result.stdout
 
+

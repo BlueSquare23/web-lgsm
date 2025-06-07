@@ -166,3 +166,4 @@ def test_delete_server_success(authed_client, add_mock_server, test_vars):
         # Verify server was actually deleted
         server = GameServer.query.filter_by(id=server_id).first()
         assert server is None
+

@@ -32,3 +32,4 @@ class ProcInfoVessel:
 
     def __repr__(self):
         return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+

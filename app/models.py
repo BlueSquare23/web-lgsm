@@ -63,3 +63,4 @@ class GameServer(db.Model):
         """Removes the GameServer entry from the database."""
         db.session.delete(self)
         db.session.commit()
+

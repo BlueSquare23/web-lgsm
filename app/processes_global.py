@@ -65,3 +65,4 @@ def remove_process(server_id):
     """
     if server_id in processes:
         del processes[server_id]
+

@@ -37,3 +37,4 @@ def test_new_game_server(new_game_server, test_vars):
     assert new_game_server.install_name == test_server
     assert new_game_server.install_path == test_server_path
     assert new_game_server.script_name == test_server_name
+

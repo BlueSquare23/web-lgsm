@@ -346,3 +346,4 @@ def edit_users():
     db.session.commit()
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))
+

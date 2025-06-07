@@ -136,3 +136,4 @@ def test_get_server_stats():
     # Ensure the result can be serialized to JSON
     json_string = json.dumps(stats)
     assert isinstance(json_string, str)
+

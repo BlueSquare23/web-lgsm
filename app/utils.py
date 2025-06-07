@@ -1758,3 +1758,4 @@ def write_cfg(server, cfg_path, new_file_contents):
         return True
     except:
         return False
+

@@ -543,3 +543,4 @@ def test_require_auth(db_session, client, setup_client):
         page_requires_auth(client, '/edit_users')
         page_requires_auth(client, '/api/spec')
 
+

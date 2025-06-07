@@ -213,3 +213,4 @@ class GameServerDelete(Resource):
 
 
 api.add_resource(GameServerDelete, "/delete/<string:server_id>")
+

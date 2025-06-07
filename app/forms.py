@@ -575,3 +575,4 @@ class EditUsersForm(FlaskForm):
     # Controls and servers (using SelectMultipleField for multiple checkboxes)
     controls = SelectMultipleField("Allowed Controls", choices=[], coerce=str)
     server_ids = SelectMultipleField("Allowed Game Servers", choices=[], coerce=str)
+

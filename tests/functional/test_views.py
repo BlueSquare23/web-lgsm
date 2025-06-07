@@ -1666,3 +1666,4 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         assert response.status_code == 204
 
 
+

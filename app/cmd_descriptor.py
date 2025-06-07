@@ -19,3 +19,4 @@ class CmdDescriptor:
 
     def __repr__(self):
         return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
+

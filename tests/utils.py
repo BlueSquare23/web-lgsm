@@ -144,3 +144,4 @@ def extract_alert_messages(response, alert_type=None):
 
     return messages
 
+

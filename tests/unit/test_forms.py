@@ -192,3 +192,4 @@ def test_valid_config_file_validator(app):
 
         # Should not raise an exception
         validator(form, field)
+

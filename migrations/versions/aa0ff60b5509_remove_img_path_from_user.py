@@ -30,3 +30,4 @@ def downgrade():
         batch_op.add_column(sa.Column('img_path', sa.VARCHAR(length=150), nullable=True))
 
     # ### end Alembic commands ###
+

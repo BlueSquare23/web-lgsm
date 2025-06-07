@@ -20,3 +20,4 @@ paramiko==3.5.1
 markdown==3.6.0
 coverage==7.8.0
 genbadge[coverage]==1.1.2
+beautifulsoup4==4.13.4

@@ -2,7 +2,6 @@
 
 ### v1.8.0 Pt 6. Post Release PR / Tutorials
 
-
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
@@ -95,10 +94,10 @@
   - I want to transition the app to use web sockets for this communication
     instead.
 
-* [ ] **Overhaul & Redesign test code**
-  - [ ] Every single test should be idempotent (they're not rn).
-  - [ ] No test should depend on any other test (they all depend on each other rn).
-  - [ ] I need to learn more about how to actually fucking properly use pytest (rtfm).
+* [x] **Overhaul & Redesign test code**
+  - [x] Every single test should be idempotent (they're not rn).
+  - [x] No test should depend on any other test (they all depend on each other rn).
+  - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
 * [ ] **Improve overall design & documentation for project**
@@ -111,104 +110,95 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-## Version 1.8.3 Todos
-
-* [x] **Fix whatever test(s) I just broke**
-  - This commit e4f649805d99bdc6a76e001e46974ed348221e46 broke some tests.
-  - Apparently, moving a bunch of install stuff to system level dirs is
-    disruptive, whoda guessed it?
-
-* [x] **Make App work via server_id's instead of server_name's**
-  - Decided to make this a pre-req before getting into API routes, cause why
-    keep writing new code that uses names instead of IDs.
-  - But wow yeah this really turned into the metaphorical thread that unravels
-    the whole sweater.
-  - Several things in the install route need re-designed and I'm wonder if it
-    might be better to dig even deeper and pull out even more of the rot at the
-    core.
-  - Still processing...
-
-* [x] **Move API Routes into own file**
-  - Unfortunately, this is not as trivial as copying and pasting the api route
-    code into its own file because api routes use a shared global with view
-    routes.
-  - I know bad design. Time to repay some technical debt. Will position app to
-    be way more betterer moving forward.
-
-* [x] **Use real flask_restful module for spinning up api endpoints**
-  - Allows me to use class based approach to define API endpoints.
-  - Just gives me more tools to work with for properly handling data via api
-    endpoints.
-  - [x] Will require tweaking existing api endpoints to get them into classes,
-    but shouldn't be too hard.
-
-* [x] **Add builtin swagger docs for API**
-  - API not incredibly useful yet on its own, but laying the groundwork.
-  - As this projects more and more will be moved into the API and so this
-    documentation will become more and more important so good to get a jump on
-    it now.
-
-* [x] **Turn Delete into its own API route**
-  - Yeah this "page" doesn't render a template. Is basically already an api
-    endpoint. Just needs formally converted into one.
-
-* [x] **Fix multi game server delete to work via new api route**
-
-* [x] **Make game server start just purge socket file name cache for that game server**
-  - Right now its just a global cache purge which means all servers tmux socket
-    name cache needs rebuilt after any one game server start.
-    - This is slow.
-  - If I write a function to just purge the socket name cache for that game
-    server should speed things up a bit for other game servers.
-
-* [x] **Add controls redirect for game server name to new uuid for backward compat**
-  - Basically, controls page used to work via names. I think there's a chance
-    people still have links in their browsers and might still want to be able
-    to go to `/controls?server=Minecraft` for example.
-    - So going to just make that try to do a lookup & redirect to controls by
-      UUID page for server.
-    - Or something like that. Still thinking about it...
-
-* [x] **On first time loading server post install clear the install text.**
-    - Aka when server install is marked finish, clear its entry from global
-      servers dict. Then when someone enters the game server controls page for
-      the first time they don't still see all the install blah output.
-    - This is going to be difficult, because currently the ansible connector
-      script is the thing that updates the `install_finished` field in the game
-      server. However, the app state is what stores the ProcInfoVessel objects
-      for installed game servers. So can't get the external script to update
-      the apps state directly. Have to somehow trigger on that DB field being
-      updated from within the app.
 
 ## Version 1.8.4 Todos
 
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
+* [x] **Fix core update mechanism... again**
+  - Still needs thoroughly tested but think I mostly got it.
+  - Big key to updates moving forward is the Flask-Migrate (Alembic) database change system.
 
-* [ ] **Fix update mechanism... again**
-  - I need to just mv existing to .bak and install fresh,
-    - If fresh install goes awry move og back into place.
-  - Install steps
-    - Change to binary needs update or no needs update check.
-    - Backup existing
-    - Export DB to flat csv or json or something 
-    - Install fresh
-    - Import db and add any new fields
+* [x] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
+  - Yeah the update mechanism
 
-* [ ] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
-  - Might need to just put a little sudo chown back to the user line for those
-    before running git pull or backing up etc.
-
-* [ ] **Redesign test code!**
-  - [ ] Make auto backup and git restore main.conf file.
-  - [ ] Make each test idempotent, and make sure no tests are dependant on
+* [x] **Redesign test code!**
+  - [x] Refactor big test and conftest.py functions.
+  - [x] Make auto backup and git restore main.conf file.
+  - [x] Make each test idempotent, and make sure no tests are dependant on
     other tests. 
       - This is going to be quite the task because currently a lotta tests are
         dependant on the ones run before them. I'm bad at programming.
       - There's no real design being these tests, just lots of code piled up on
         itself & really needs cleaned up.
+
+* [x] **Fix install.sh --docker for Debian**
+  - User noticed the issue:
+    https://github.com/BlueSquare23/web-lgsm/issues/41
+  - Just need to make docker install case on debian vs ubuntu.
+
+* [x] **Add CSRF protection using Flask-WTF**
+  - I did not realize until today that flask doesn't do anything to prevent
+    CSRF natively.
+    - Same Site is set to None and its totally possible to trick someone into
+      making POSTs to forms.
+  - Forms to do:
+    - [x] Add
+    - [x] Settings
+    - [x] Login
+    - [x] Setup
+    - [x] Controls
+    - [x] Edit
+    - [x] Home: Doesn't really need one, not a real form that gets submitted to the backend. Just a button that triggers js to make fetch reqs to api /delete.
+    - [x] Install
+    - [x] Edit Users
+  - Resources:
+    - https://flask-wtf.readthedocs.io/en/1.0.x/quickstart/
+    - https://wtforms.readthedocs.io/en/2.3.x/fields/
+    - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
+    - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
+    - I might want to use this to handle file uploads one day too.
+
+* [x] **Spend some time fleshing out new singleton code & integrating into app**
+  - I added this, I got it working, I somewhat tested it. However, I have not
+    gotten around to refactoring fundamental parts of the app to use it yet.
+    - Now seems like a good time to do that because old tests have been brought
+      into the present and updated, however new tests for this have not been
+      added yet.
+    - I was so busy with adjusting from server name -> id that it kinda ate up
+      most of the last releases time. 
+  - Make utils functions work via IDs and access objects from global dict,
+    instead of being passed the whole object directly as arg. 
+  - Note to self, not an excuse to run wild and get distracted refactoring
+    every little thing. Stay on task! Just update core functions to use new
+    code.
+
+* [x] **Use Pylint & Black for linting and formatting**
+  - There's some dead code still and some unused modules etc.
+  - Can also show errors with `pylint --load-plugins pylint_flask -E app/`
+
+* [x] **Continue fixing up tests** (always a work in progress, goodenuff4now)
+  1. As much as I hate to admit it, the coverage reports are kinda useful for
+    spotting things that I have little to no testing for.
+    - A lot of this stuff is newer stuff, I added but never got around to
+      testing, cause was going to do some overhaul on the tests anyways.
+    - [x] Look at recent coverage reports to find things that lack tests and
+      write some more tests!
+  2. There are a number of existing tests that are pretty weak, kinda don't
+    really test what they're supposed to test well. 
+    - I left myself a bunch of TODOs in comments.
+    - [x] Refactor existing _"weak"_ tests to improve tactility (aka better
+      grip on subject matter being tested) & robustness (aka no race
+      conditionss, cheats & other hacks to fudge it so tests pass).
+  3. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
+    - I really need to be taking an action, then checking the DB.
+    - I'm checking a lot of responses from the outside to make sure they're as
+      expected. However I'm not really checking directly in the DB itself to
+      make sure things are all good.
+    - But I can do that, so I should be doing that. Oh well always more things
+      to do than time to do them.
+  4. [~] Add tests for:
+    - [~] Doesn't allow missing `csrf_token` on forms that require one.
+    - [x] Auth required on routes that require auth.
+
 
 ## Version 1.8.5 Todos
 
@@ -244,6 +234,11 @@
 
 ## Version 1.8.x Todos
 
+
+* [ ] **Make work for python 3.13**
+  - I was silly and tried to put 3.13 in the tests at the end of this release
+    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
+    make it work soon.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just

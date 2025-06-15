@@ -1,10 +1,8 @@
-import os
 import json
 from . import db
-from pathlib import Path
 from datetime import timedelta
 from .models import User, GameServer
-from .utils import check_require_auth_setup_fields, valid_password
+from .utils import validation_errors, log_wrap
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import (
     login_user,
@@ -20,9 +18,9 @@ from flask import (
     url_for,
     request,
     flash,
-    abort,
     current_app,
 )
+from .forms import LoginForm, SetupForm, EditUsersForm
 
 auth = Blueprint("auth", __name__)
 
@@ -31,50 +29,44 @@ auth = Blueprint("auth", __name__)
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
-    # Set default return code.
-    response_code = 200
+    # Create LoginForm.
+    form = LoginForm()
 
     if User.query.first() == None:
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
-    # Post route code for login form submission.
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+    if request.method == "GET":
+        return render_template("login.html", user=current_user, form=form), 200
 
-        # Make sure required form items are supplied.
-        for form_item in (username, password):
-            if form_item == None or form_item == "":
-                flash("Missing required form field(s)!", category="error")
-                return redirect(url_for("auth.login"))
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        validation_errors(form)
+        return redirect(url_for("auth.login"))
 
-            # Check input lengths.
-            if len(form_item) > 150:
-                flash("Form field too long!", category="error")
-                return redirect(url_for("auth.login"))
+    username = form.username.data
+    password = form.password.data
 
-        # Check login info.
-        user = User.query.filter_by(username=username).first()
-        if user:
-            current_app.logger.info(user)
+    # Check login info.
+    user = User.query.filter_by(username=username).first()
+    if user == None:
+        flash("Incorrect Username or Password!", category="error")
+        return render_template("login.html", user=current_user, form=form), 403
 
-            if check_password_hash(user.password, password):
-                if current_user.is_authenticated:
-                    logout_user()
-                flash("Logged in!", category="success")
-                four_weeks_delta = timedelta(days=28)
-                login_user(user, remember=True, duration=four_weeks_delta)
-                confirm_login()
-                return redirect(url_for("views.home"))
-            else:
-                flash("Incorrect Username or Password!", category="error")
-                response_code = 403
-        else:
-            flash("Incorrect Username or Password!", category="error")
-            response_code = 403
+    current_app.logger.info(user)
 
-    return render_template("login.html", user=current_user), response_code
+    if not check_password_hash(user.password, password):
+        flash("Incorrect Username or Password!", category="error")
+        return render_template("login.html", user=current_user, form=form), 403
+
+    if current_user.is_authenticated:
+        logout_user()
+
+    flash("Logged in!", category="success")
+    four_weeks_delta = timedelta(days=28)
+    login_user(user, remember=True, duration=four_weeks_delta)
+    confirm_login()
+    return redirect(url_for("views.home"))
 
 
 ######### Setup Route #########
@@ -82,49 +74,39 @@ def login():
 
 @auth.route("/setup", methods=["GET", "POST"])
 def setup():
-    # Set default response code.
-    response_code = 200
-
-    if request.method == "POST":
-        # Collect form data
-        username = request.form.get("username")
-        password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-
-        # Make sure required form items are supplied.
-        if not check_require_auth_setup_fields(username, password1, password2):
-            return redirect(url_for("auth.setup"))
-
-        # Check if a user already exists and if so don't allow another user to
-        # be created. Only allow authenticated admin users to create new users
-        # after initial setup.
-        if User.query.first() != None:
-            flash("User already added. Please sign in!", category="error")
-            return redirect(url_for("auth.login"))
-
-        if not valid_password(password1, password2):
-            return redirect(url_for("auth.setup"))
-
-        # Add the new_user to the database, then redirect home.
-        new_user = User(
-            username=username,
-            password=generate_password_hash(password1, method="pbkdf2:sha256"),
-            role="admin",
-            permissions=json.dumps({"admin": True}),
-        )
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash("User created!")
-        login_user(new_user, remember=True)
-        return redirect(url_for("views.home"))
-
     # If already a user added, disable the setup route.
     if User.query.first() != None:
         flash("User already added. Please sign in!", category="error")
         return redirect(url_for("auth.login"))
 
-    return render_template("setup.html", user=current_user), response_code
+    # Create SetupForm.
+    form = SetupForm()
+
+    if request.method == "GET":
+        return render_template("setup.html", form=form, user=current_user), 200
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        validation_errors(form)
+        return redirect(url_for("auth.login"))
+
+    # Collect form data
+    username = form.username.data
+    password = form.password1.data
+
+    # Add the new_user to the database, then redirect home.
+    new_user = User(
+        username=username,
+        password=generate_password_hash(password, method="pbkdf2:sha256"),
+        role="admin",
+        permissions=json.dumps({"admin": True}),
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    flash("User created!")
+    login_user(new_user, remember=True)
+    return redirect(url_for("views.home"))
 
 
 ######### Logout Route #########
@@ -166,9 +148,18 @@ def edit_users():
     ]
 
     all_users = User.query.all()
+    form = EditUsersForm()
+
+    # Dynamically set the choices for the SelectMultipleFields.
+    form.controls.choices = [(control, control) for control in all_controls]
+    form.server_ids.choices = [
+        (server.id, server.install_name) for server in installed_servers
+    ]
 
     if request.method == "GET":
         selected_user = request.args.get("username")
+        # TODO (eventually): Make delete user work same way as delete server;
+        # api route for delete user, button triggers js fetch req DELETE to API.
         delete = request.args.get("delete")
 
         user_ident = User.query.filter_by(username=selected_user).first()
@@ -212,128 +203,147 @@ def edit_users():
             selected_user=selected_user,
             user_role=user_role,
             user_permissions=user_permissions,
+            form=form,
         )
+
+    # Handle POSTs.
 
     # TODO v1.9: Fix change username! Make user lookup work via ID instead of
     # username. That way we can accept a new username for a given ID and do
     # lookup with ID instead of username, then update that users info with
     # newly supplied instead.
-    if request.method == "POST":
-        selected_user = request.form.get("selected_user")
-        change_user_pass = request.form.get("change_username_password")
-        username = request.form.get("username")
-        password1 = request.form.get("password1")
-        password2 = request.form.get("password2")
-        is_admin = request.form.get("is_admin")
-        install_servers = request.form.get("install_servers")
-        add_servers = request.form.get("add_servers")
-        mod_settings = request.form.get("mod_settings")
-        edit_cfgs = request.form.get("edit_cfgs")
-        delete_server = request.form.get("delete_server")
-        controls = request.form.getlist("controls")
-        server_ids = request.form.getlist("server_ids")
 
-        if selected_user == "newuser" or change_user_pass == "true":
-            if not check_require_auth_setup_fields(username, password1, password2):
-                return redirect(url_for("auth.edit_users"))
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        validation_errors(form)
+        return redirect(url_for("auth.edit_users"))
 
-            if not valid_password(password1, password2):
-                return redirect(url_for("auth.edit_users"))
+    selected_user = form.selected_user.data
+    change_user_pass = form.change_username_password.data
+    username = form.username.data
+    password1 = form.password1.data
+    password2 = form.password2.data
+    is_admin = form.is_admin.data
+    install_servers = form.install_servers.data
+    add_servers = form.add_servers.data
+    mod_settings = form.mod_settings.data
+    edit_cfgs = form.edit_cfgs.data
+    delete_server = form.delete_server.data
+    controls = form.controls.data
+    server_ids = form.server_ids.data
 
-        if selected_user == "newuser":
-            for user in all_users:
-                if user.username == username:
-                    flash("Cannot add new user with existing username!",
-                        category="error",
-                    )
-                    return redirect(url_for("auth.edit_users"))
+    # Debug logging for post args.
+    current_app.logger.debug(log_wrap("selected_user", selected_user))
+    current_app.logger.debug(log_wrap("change_user_pass", change_user_pass))
+    current_app.logger.debug(log_wrap("username", username))
+    current_app.logger.debug(log_wrap("password1", password1))
+    current_app.logger.debug(log_wrap("password2", password2))
+    current_app.logger.debug(log_wrap("is_admin", is_admin))
+    current_app.logger.debug(log_wrap("install_servers", install_servers))
+    current_app.logger.debug(log_wrap("add_servers", add_servers))
+    current_app.logger.debug(log_wrap("mod_settings", mod_settings))
+    current_app.logger.debug(log_wrap("edit_cfgs", edit_cfgs))
+    current_app.logger.debug(log_wrap("delete_server", delete_server))
+    current_app.logger.debug(log_wrap("controls", controls))
+    current_app.logger.debug(log_wrap("server_ids", server_ids))
 
-        user_ident = None
-        if selected_user != "newuser":
-            user_ident = User.query.filter_by(username=username).first()
-            if user_ident == None:
-                flash("Invalid user selected!", category="error")
-                return redirect(url_for("auth.edit_users"))
-
-            if user_ident.id == 1:
+    # TODO: Eventually this should probably be in FlaskForm validator.
+    if selected_user == "newuser":
+        for user in all_users:
+            if user.username == username:
                 flash(
-                    "Cannot modify main admin user's permissions! Anti-lockout protection!",
+                    "Cannot add new user with existing username!",
                     category="error",
                 )
                 return redirect(url_for("auth.edit_users"))
 
-        permissions = dict()
-        role = "user"  # Default to user role.
+    user_ident = None
+    if selected_user != "newuser":
+        user_ident = User.query.filter_by(username=username).first()
+        if user_ident == None:
+            flash("Invalid user selected!", category="error")
+            return redirect(url_for("auth.edit_users"))
 
-        permissions["install_servers"] = False
-        if install_servers == "true":
-            permissions["install_servers"] = True
-
-        permissions["add_servers"] = False
-        if add_servers == "true":
-            permissions["add_servers"] = True
-
-        permissions["mod_settings"] = False
-        if mod_settings == "true":
-            permissions["mod_settings"] = True
-
-        permissions["edit_cfgs"] = False
-        if edit_cfgs == "true":
-            permissions["edit_cfgs"] = True
-
-        permissions["delete_server"] = False
-        if delete_server == "true":
-            permissions["delete_server"] = True
-
-        permissions["controls"] = []
-        if controls:
-            # Validate supplied control(s) are in allowed list.
-            for control in controls:
-                if control not in all_controls:
-                    flash("Invalid Control Supplied!", category="error")
-                    return redirect(url_for("auth.edit_users"))
-            permissions["controls"] = controls
-
-        permissions["server_ids"] = []
-        if server_ids:
-            # Validate supplied server_id(s) are in installed list.
-            for server_id in server_ids:
-                if server_id not in all_server_ids:
-                    flash("Invalid Server Supplied!", category="error")
-                    return redirect(url_for("auth.edit_users"))
-            permissions["server_ids"] = server_ids
-
-        # Only explicitly set admin if supplied.
-        if is_admin != None:
-            if is_admin == "true":
-                role = "admin"
-
-        if selected_user == "newuser":
-            # Add the new_user to the database, then redirect home.
-            new_user = User(
-                username=username,
-                password=generate_password_hash(password1, method="pbkdf2:sha256"),
-                role=role,
-                permissions=json.dumps(permissions),
+        if user_ident.id == 1:
+            flash(
+                "Cannot modify main admin user's permissions! Anti-lockout protection!",
+                category="error",
             )
-            db.session.add(new_user)
-            db.session.commit()
-            flash("New User Added!")
-            return redirect(url_for("views.home"))
+            return redirect(url_for("auth.edit_users"))
 
-        if change_user_pass == "true":
-            user_ident.username = username
-            user_ident.password = generate_password_hash(
-                password1, method="pbkdf2:sha256"
-            )
-            user_ident.role = role
-            user_ident.permissions = json.dumps(permissions)
-            db.session.commit()
-            flash(f"User {username} Updated!")
-            return redirect(url_for("auth.edit_users", username=username))
+    permissions = dict()
+    role = "user"  # Default to user role.
 
+    permissions["install_servers"] = False
+    if install_servers:
+        permissions["install_servers"] = True
+
+    permissions["add_servers"] = False
+    if add_servers:
+        permissions["add_servers"] = True
+
+    permissions["mod_settings"] = False
+    if mod_settings:
+        permissions["mod_settings"] = True
+
+    permissions["edit_cfgs"] = False
+    if edit_cfgs:
+        permissions["edit_cfgs"] = True
+
+    permissions["delete_server"] = False
+    if delete_server:
+        permissions["delete_server"] = True
+
+    permissions["controls"] = []
+    if controls:
+        # Validate supplied control(s) are in allowed list.
+        for control in controls:
+            if control not in all_controls:
+                flash("Invalid Control Supplied!", category="error")
+                return redirect(url_for("auth.edit_users"))
+        permissions["controls"] = controls
+
+    permissions["server_ids"] = []
+    if server_ids:
+        # Validate supplied server_id(s) are in installed list.
+        for server_id in server_ids:
+            if server_id not in all_server_ids:
+                flash("Invalid Server Supplied!", category="error")
+                return redirect(url_for("auth.edit_users"))
+        permissions["server_ids"] = server_ids
+
+    # Only explicitly set admin if supplied.
+    if is_admin == "true":
+        role = "admin"
+
+    if selected_user == "newuser":
+        # Add the new_user to the database, then redirect home.
+        new_user = User(
+            username=username,
+            password=generate_password_hash(password1, method="pbkdf2:sha256"),
+            role=role,
+            permissions=json.dumps(permissions),
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash("New User Added!")
+        return redirect(url_for("views.home"))
+
+    # This is a bool because it comes from a toggle, whereas above inputs are
+    # from radios, so are str "true/false". Confusing I know, sorry. Will get my
+    # shit 2g3th3r 2m0rr0w.
+    if change_user_pass:
+        user_ident.username = username
+        user_ident.password = generate_password_hash(password1, method="pbkdf2:sha256")
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
         db.session.commit()
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
+
+    user_ident.role = role
+    user_ident.permissions = json.dumps(permissions)
+    db.session.commit()
+    flash(f"User {username} Updated!")
+    return redirect(url_for("auth.edit_users", username=username))
+

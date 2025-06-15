@@ -6,18 +6,19 @@
 
       <div class="container bg-dark border border-secondary rounded-3 p-2">
         <form method="POST">
+          {{ form.hidden_tag() }}
           <h3 align="enter" style="color: white;">
             Web LGSM Setup
           </h3>
           <div class="form-group" style="color: white;">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="Enter Username" required/>
+            {{ form.username.label() }}
+            {{ form.username() }}
 
-            <label for="password1" style="color: white;">Password</label>
-            <input type="password" id="password1" name="password1" class="form-control" placeholder="Enter Password" required/>
+            {{ form.password1.label() }}
+            {{ form.password1() }}
 
-            <label for="password2" style="color: white;">Confirm Password</label>
-            <input type="password" id="password2" name="password2" class="form-control" placeholder="Retype Password" required/>
+            {{ form.password2.label() }}
+            {{ form.password2() }}
 
             <i>Note: Passwords must be at least 12 characters long and contain at least 1 uppercase letter, 1 lowercase letter, & 1 special character!</i>
 
@@ -25,7 +26,7 @@
             <br />
 
             <center>
-              <button class="btn btn-outline-primary" type="submit">Submit</button>
+              {{ form.submit() }}
             </center>
           </div>
         </form>

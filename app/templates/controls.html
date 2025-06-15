@@ -17,13 +17,15 @@
         <!-- Send game server cmd form hidden until openForm onclick -->
         <div class="container bg-dark border border-secondary p-2 form-group form-popup rounded-3" id="send_cmd_form" style="color: white;">
           <button type="button" class="btn-close p-2 btn-close-white position-absolute top-0 end-0" aria-label="Close" onclick="document.getElementById('send_cmd_form').style.display = 'none'"></button>
-          <form method="GET" class="form-group" id="send_cmd_form" action="/controls">
-            <input type="hidden" id="server" name="server" value="" class="form-control" />
-            <input type="hidden" id="command" name="command" value="" class="form-control" />
-            <label for="send_cmd" class="pb-2" style="color: white;">Send Command</label>
-            <input type="text" id="cmd" name="cmd" class="form-control" title="Send cmd to running game server." placeholder="Please Enter Command" required />
+          <form method="POST" class="form-group" id="send_cmd_form" action="/controls">
+            {{ send_cmd_form.csrf_token }}
+            {{ send_cmd_form.send_form(value='true') }}
+            {{ send_cmd_form.server_id(value=server_id) }}
+            {{ send_cmd_form.command(value='sd') }}
+            <label for="cmd" class="pb-2" style="color: white;">Send Command</label>
+            {{ send_cmd_form.send_cmd(class="form-control", title="Send cmd to running game server.", placeholder="Please Enter Command") }}
 
-            <input onclick="window.scrollTo(0,0);closeForm('send_cmd_form');" id="send_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="" />
+            <input onclick="window.scrollTo(0,0);closeForm('send_cmd_form');" id="send_btn" class="mt-3 mb-2 btn btn-outline-primary" type="submit" value="Send" />
           </form>
         </div>
 
@@ -36,12 +38,8 @@
 
               {% for cfg_path in cfg_paths %}
                 <div class="col">
-                  <form method="POST" id="edit-form" action="/edit">
-                    <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
-                    <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_path}}" class="form-control" />
-                    {% set cfg_file = cfg_path.split('/')[-1] %}
-                    <input class="btn btn-outline-primary" type="submit" title="{{cfg_path}}" value="Edit: {{cfg_file}}" />
-                  </form>
+                  {% set cfg_file = cfg_path.split('/')[-1] %}
+                  <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" role="button" class="btn btn-outline-primary">Edit: {{cfg_file}}</a>
                 </div>
                 <br />
               {% endfor %}
@@ -63,9 +61,11 @@
           {% else %}
           <div class="row">
             <div class="col">
-              <form method="GET" id="ctrls-form" action="/controls">
-                <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
-                <input type="hidden" id="command" name="command" value="{{command.short_cmd}}" class="form-control" />
+              <form method="POST" id="ctrls-form" action="/controls">
+                {{ controls_form.csrf_token }}
+                {{ controls_form.ctrl_form(value='true') }}
+                {{ controls_form.server_id(value=server_id) }}
+                {{ controls_form.command(value=command.short_cmd) }}
 
                 <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
               </form>

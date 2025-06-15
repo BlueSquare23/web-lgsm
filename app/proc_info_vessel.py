@@ -1,5 +1,6 @@
 import json
 
+
 class ProcInfoVessel:
     """
     Class used to create objects that hold information about processes launched
@@ -31,3 +32,4 @@ class ProcInfoVessel:
 
     def __repr__(self):
         return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+

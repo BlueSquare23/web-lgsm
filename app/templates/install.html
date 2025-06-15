@@ -49,11 +49,10 @@
           <div class="row" id="row-{{script_name}}">
             <div class="col">
               <form method="POST" class="form-group" id="install-form" action="/install">
-                <input type="hidden" id="server_name" name="server_name" value="{{script_name}}" class="form-control" />
-                <input type="hidden" id="full_name" name="full_name" value="{{full_name}}" class="form-control" />
-
+                {{ form.csrf_token }}
+                {{ form.script_name(value=script_name) }}
+                {{ form.full_name(value=full_name) }}
                                                                                                               <!-- NOTE! updateTerminal() Currently Broken!!! Needs to Use ID instead somehow... -->
-<!--                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?'); updateTerminal('{{full_name}}');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button> -->
                 <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
               </form>
             </div>
@@ -84,7 +83,7 @@
       {% else %}
         let sConsole = false;
       {% endif %}
-        if (serverId) {
+        if (serverId != "None") {
           updateTerminal(serverId);
         }
       </script>

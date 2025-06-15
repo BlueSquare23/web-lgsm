@@ -11,20 +11,6 @@ class ModCurrentUser:
         self.permissions = permissions
 
 
-def test_valid_cfg_name():
-    gs_cfgs = open("json/accepted_cfgs.json", "r")
-    json_data = json.load(gs_cfgs)
-    gs_cfgs.close()
-
-    valid_gs_cfgs = json_data["accepted_cfgs"]
-    for cfg in valid_gs_cfgs:
-        assert valid_cfg_name(cfg) == True
-
-    invalid_gs_cfgs = ["fart", "blah", 777777, None, "---------"]
-    for cfg in invalid_gs_cfgs:
-        assert valid_cfg_name(cfg) == False
-
-
 # For now just test that the cmds in commands.json make it through. Will write
 # tests for cmd exemptions another time.
 def test_get_commands():
@@ -95,72 +81,6 @@ def test_valid_command():
         assert valid_command(cmd, "mcserver", "no", current_user2) == True
 
 
-def test_valid_install_options():
-    servers_json = open("json/game_servers.json", "r")
-    json_data = json.load(servers_json)
-    servers_json.close()
-
-    # Valid install options.
-    for script_name, full_name in zip(json_data["servers"], json_data["server_names"]):
-        assert valid_install_options(script_name, full_name) == True
-
-    # Invalid install options.
-    servers = ["fart", "blah", 777777, None, "---------"]
-    server_names = ["fart", "blah", 777777, None, "---------"]
-    for script_name, full_name in zip(servers, server_names):
-        assert valid_install_options(script_name, full_name) == False
-
-
-def valid_script_name():
-    servers_json = open("json/game_servers.json", "r")
-    json_data = json.load(servers_json)
-    servers_json.close()
-
-    # Valid servers.
-    for script_name in json_data["servers"]:
-        assert valid_script_name(script_name) == True
-
-    garbage = ["fart", "blah", 777777, None, "---------"]
-    for script_name in garbage:
-        assert valid_script_name(script_name) == False
-
-
-def test_contains_bad_chars():
-    bad_chars = {
-        " ",
-        "$",
-        "'",
-        '"',
-        "\\",
-        "#",
-        "=",
-        "[",
-        "]",
-        "!",
-        "<",
-        ">",
-        "|",
-        ";",
-        "{",
-        "}",
-        "(",
-        ")",
-        "*",
-        ",",
-        "?",
-        "~",
-        "&",
-    }
-
-    # Actual bad char.
-    for char in bad_chars:
-        assert contains_bad_chars(char) == True
-
-    # Perfectly fine chars.
-    for char in ["a", "5", "q", ".", "/", None]:
-        assert contains_bad_chars(char) == False
-
-
 def test_get_network_stats():
     stats = get_network_stats()
 
@@ -216,3 +136,4 @@ def test_get_server_stats():
     # Ensure the result can be serialized to JSON
     json_string = json.dumps(stats)
     assert isinstance(json_string, str)
+

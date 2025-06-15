@@ -1,22 +1,16 @@
 import json
 
-from flask import Blueprint, request, Response, redirect
+from flask import Blueprint, Response
 from flask_login import login_required, current_user
-from flask_restful import Api, Resource, reqparse, abort
+from flask_restful import Api, Resource
 
-from . import db
 from .utils import *
 from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
-
-def abort_if_id_none(server_id):
-    if server_id == None:
-        resp_dict = {"Error": "No id supplied"}
-        abort(404, message=resp_dict)
 
 
 ######### API Update Console #########
@@ -28,14 +22,6 @@ class UpdateConsole(Resource):
             resp_dict = {"Error": "Permission denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
-            )
-            return response
-
-        # Can't do needful without a server specified.
-        if server_id == None:
-            resp_dict = {"Error": "Required var: server"}
-            response = Response(
-                json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
             )
             return response
 
@@ -67,24 +53,12 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        if server.id in get_all_processes():
-            proc_info = get_process(server_id)
-        else:
-            proc_info = add_process(server.id)
-
         if should_use_ssh(server):
-            pub_key_file = get_ssh_key_file(server.username, server.install_host)
-            run_cmd_ssh(
-                cmd,
-                server.install_host,
-                server.username,
-                pub_key_file,
-                proc_info,
-                None,
-                None,
-            )
+            run_cmd_ssh(cmd, server)
         else:
-            run_cmd_popen(cmd, proc_info)
+            run_cmd_popen(cmd, server.id)
+
+        proc_info = get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}
@@ -99,16 +73,16 @@ class UpdateConsole(Resource):
         )
         return response
 
+
 api.add_resource(UpdateConsole, "/update-console/<string:server_id>")
+
 
 ######### API Server Statuses #########
 
 class ServerStatus(Resource):
     @login_required
     def get(self, server_id):
-        abort_if_id_none(server_id)
-        
-        server = GameServer.query.get(server_id)
+        server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Invalid id"}
             response = Response(
@@ -132,6 +106,7 @@ class ServerStatus(Resource):
         )
         return response
 
+
 api.add_resource(ServerStatus, "/server-status/<string:server_id>")
 
 
@@ -146,6 +121,7 @@ class SystemUsage(Resource):
         )
         return response
 
+
 api.add_resource(SystemUsage, "/system-usage")
 
 
@@ -154,8 +130,6 @@ api.add_resource(SystemUsage, "/system-usage")
 class CmdOutput(Resource):
     @login_required
     def get(self, server_id):
-        abort_if_id_none(server_id)
-
         # Can't do anything if we don't have proc info vessel stored.
         if server_id not in get_all_processes():
             resp_dict = {"Error": "eer never heard of em"}
@@ -171,13 +145,12 @@ class CmdOutput(Resource):
             )
             return response
 
-        output = get_process(server_id)
-        if output == None:
-            output = add_process(server_id)
+        output = get_process(server_id, create=True)
 
         # Returns json for used by ajax code on /controls route.
         response = Response(output.toJSON(), status=200, mimetype="application/json")
         return response
+
 
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 
@@ -187,8 +160,6 @@ api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 class GameServerDelete(Resource):
     @login_required
     def delete(self, server_id):
-        abort_if_id_none(server_id)
-
         server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Server not found!"}
@@ -208,7 +179,9 @@ class GameServerDelete(Resource):
 
         # Check if user has permissions to delete route & server.
         if not user_has_permissions(current_user, "delete", server_id):
-            resp_dict = {"Error": f"Insufficient permission to delete {server.install_name}"}
+            resp_dict = {
+                "Error": f"Insufficient permission to delete {server.install_name}"
+            }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
             )
@@ -225,16 +198,19 @@ class GameServerDelete(Resource):
         current_app.logger.info(log_wrap("All processes", get_all_processes()))
 
         if not delete_server(server, config["remove_files"], config["delete_user"]):
-            resp_dict = {"Error": "Problem deleting server, see error logs for more details."}
+            resp_dict = {
+                "Error": "Problem deleting server, see error logs for more details."
+            }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
             )
             return response
-            
+
         # We don't want to keep deleted servers in the cache.
         update_tmux_socket_name_cache(server_id, None, True)
 
         return "", 204
+
 
 api.add_resource(GameServerDelete, "/delete/<string:server_id>")
 

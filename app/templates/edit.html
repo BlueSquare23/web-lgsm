@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Web LGSM Config Editor{% endblock %}
+{% block title %}Web-LGSM Config Editor{% endblock %}
 
 {% block content %}
       <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
@@ -21,23 +21,25 @@
         </div>
         <br />
 
+
         <div class="row">
+
           <div class="col">
             <form method="POST" id="save-edit" action="/edit">
-              <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
-              <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
-
-              <input class="btn btn-outline-primary" type="submit" value="Save File 💾 " />
+              {{ upload_form.csrf_token }}
+              {{ upload_form.server_id(value=server_id) }}
+              {{ upload_form.cfg_path(value=cfg_file) }}
+              {{ upload_form.save_submit(class="btn btn-outline-primary") }}
             </form>
           </div>
 
           <div class="col">
-            <form method="POST" id="download-cfg" action="/edit">
-              <input type="hidden" id="server_id" name="server_id" value="{{server_id}}" class="form-control" />
-              <input type="hidden" id="cfg_path" name="cfg_path" value="{{cfg_file}}" class="form-control" />
-              <input type="hidden" id="download" name="download" value="yes" class="form-control" />
-
-              <input class="btn btn-outline-primary" type="submit" value="Download Config File ⏬ " />
+            <!-- Download form -->
+            <form method="GET" id="download-cfg" action="/edit">
+              {{ download_form.csrf_token }}
+              {{ download_form.server_id(value=server_id) }}
+              {{ download_form.cfg_path(value=cfg_file) }}
+              {{ download_form.download_submit(class="btn btn-outline-primary") }}
             </form>
 
           </div>

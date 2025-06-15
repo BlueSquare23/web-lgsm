@@ -9,6 +9,19 @@
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
   </a>
   <img src="https://github.com/BlueSquare23/web-lgsm/actions/workflows/test.yml/badge.svg">
+  <img src="./docs/images/coverage-badge.svg">
+  <a href="https://github.com/BlueSquare23/web-lgsm/releases">
+    <img src="https://img.shields.io/github/v/release/BlueSquare23/web-lgsm?include_prereleases">
+  </a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/github/last-commit/BlueSquare23/web-lgsm">
+  <a href="https://github.com/BlueSquare23/web-lgsm/issues">
+    <img src="https://img.shields.io/github/issues/BlueSquare23/web-lgsm">
+  </a>
+  <a href="https://github.com/BlueSquare23/web-lgsm/pulls">
+    <img src="https://img.shields.io/github/issues-pr/BlueSquare23/web-lgsm">
+  </a>
   <a href="https://github.com/BlueSquare23/web-lgsm/stargazers">
     <img src="https://img.shields.io/github/stars/BlueSquare23/web-lgsm">
   </a>
@@ -16,6 +29,7 @@
     <img src="https://img.shields.io/github/forks/BlueSquare23/web-lgsm">
   </a>
 </p>
+
 
 ![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
 

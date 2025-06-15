@@ -7,28 +7,44 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
 from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_migrate import Migrate
+from flask_caching import Cache
 
-# Prevent creation of __pycache__. Cache messes up auth.
+
+# Prevent creation of __pycache__. Pycache messes up auth.
 sys.dont_write_bytecode = True
 
-db = SQLAlchemy()
 DB_NAME = "database.db"
+
+# Naming conventions for Flask-Migrate.
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+metadata = MetaData(naming_convention=convention)
+db = SQLAlchemy(metadata=metadata)
 
 env_path = Path(".") / ".secret"
 load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ["SECRET_KEY"]
-SWAGGER_URL = '/docs'
-API_URL = '/api/spec'
+SWAGGER_URL = "/docs"
+API_URL = "/api/spec"
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+
 
 def main():
     # Setup logging.
     log_level_map = {
-        "info": logging.INFO,        # General operational info.
+        "info": logging.INFO,  # General operational info.
         "warning": logging.WARNING,  # Warnings and above.
-        "debug": logging.DEBUG,      # Most verbose, debug info.
+        "debug": logging.DEBUG,  # Most verbose, debug info.
     }
 
     if "DEBUG" in os.environ:
@@ -64,19 +80,32 @@ def main():
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.init_app(app)
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
     app.logger.removeHandler(default_handler)
+    migrate = Migrate(app, db, render_as_batch=True)
+    cache.init_app(app)
+
+    # Initialize DB.
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    # Load models.
+    from .models import User
 
     # Pull in our views route(s).
     from .views import views
+
     app.register_blueprint(views, url_prefix="/")
 
     # Pull in our auth route(s).
     from .auth import auth
+
     app.register_blueprint(auth, url_prefix="/")
 
     # Pull in our api route(s).
     from .api import api_bp
+
     app.register_blueprint(api_bp, url_prefix="/api")
 
     # Create Swagger UI blueprint.
@@ -84,32 +113,25 @@ def main():
         SWAGGER_URL,
         API_URL,
         config={
-            'app_name': "Web-LGSM API",
-            'validatorUrl': None,
-            'displayRequestDuration': True,
-            'docExpansion': 'none',
-            'persistAuthorization': True,
-            'supportedSubmitMethods': ['get', 'post', 'put', 'delete', 'patch'],
-            'securityDefinitions': {
-                'cookieAuth': {
-                    'type': 'apiKey',
-                    'name': 'session',
-                    'in': 'cookie',
-                    'description': 'Session cookie for authentication'
+            "app_name": "Web-LGSM API",
+            "validatorUrl": None,
+            "displayRequestDuration": True,
+            "docExpansion": "none",
+            "persistAuthorization": True,
+            "supportedSubmitMethods": ["get", "post", "put", "delete", "patch"],
+            "securityDefinitions": {
+                "cookieAuth": {
+                    "type": "apiKey",
+                    "name": "session",
+                    "in": "cookie",
+                    "description": "Session cookie for authentication",
                 }
-            }
-        }
+            },
+        },
     )
 
     # Register Swagger UI blueprint
     app.register_blueprint(swagger_ui)
-
-    # Initialize DB.
-    from .models import User, GameServer
-
-    with app.app_context():
-        db.create_all()
-        print(" * Database Loaded!")
 
     # Setup LoginManager.
     login_manager = LoginManager()
@@ -130,3 +152,4 @@ def main():
         return json.loads(s)
 
     return app
+

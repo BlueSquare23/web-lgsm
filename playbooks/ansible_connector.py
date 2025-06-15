@@ -299,7 +299,7 @@ def cancel_install(pid):
         pid (int): pid to kill.
     """
     pid_cmd = get_script_cmd_from_pid(pid)
-    self_path = os.path.join(SCRIPTPATH, __file__)
+    self_path = os.path.join(os.getcwd(), __file__)
     self_venv = os.path.join(VENV, 'bin/python')
     self_cmd = f"/usr/bin/sudo -n {self_venv} {self_path}"
 
@@ -379,3 +379,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+

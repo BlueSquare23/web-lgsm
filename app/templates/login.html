@@ -6,20 +6,22 @@
 
       <div class="container bg-dark border border-secondary rounded-3 p-2">
         <form method="POST">
+          {{ form.hidden_tag() }}
           <h3 align="enter" style="color: white;">
             Login
           </h3>
           <div class="form-group">
-            <label for="username" style="color: white;">Username</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="Enter Username" />
 
-            <label for="password" style="color: white;">Password</label>
-            <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
+            {{ form.username.label(class="text-white") }}
+            {{ form.username() }}
+
+            {{ form.password.label(class="text-white") }}
+            {{ form.password() }}
 
             <br />
 
             <center>
-              <button class="btn btn-outline-primary" type="submit">Login</button>
+              {{ form.submit() }}
             </center>
           </div>
         </form>

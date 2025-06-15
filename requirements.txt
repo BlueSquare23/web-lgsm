@@ -1,5 +1,8 @@
 Flask==3.1.0
 Flask_Login==0.6.3
+Flask-Migrate==4.1.0
+Flask-WTF==1.2.2 
+Flask-Caching==2.3.1
 flask_restful==0.3.10
 flask_sqlalchemy==3.1.1
 flask_swagger_ui==4.11.1
@@ -16,3 +19,6 @@ ansible-runner>=2.3.1
 PyYAML==6.0.2
 paramiko==3.5.1
 markdown==3.6.0
+coverage==7.8.0
+genbadge[coverage]==1.1.2
+beautifulsoup4==4.13.4

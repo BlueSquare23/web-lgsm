@@ -1,13 +1,11 @@
 import os
+import io
 import re
-import sys
 import pwd
 import json
-import glob
 import time
+import uuid
 import shlex
-import string
-import logging
 import psutil
 import shutil
 import socket
@@ -19,12 +17,9 @@ import threading
 import configparser
 
 from datetime import datetime, timedelta
-from threading import Thread
-from flask import flash, current_app
+from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 
-from . import db
 from .models import GameServer
-from .proc_info_vessel import ProcInfoVessel
 from .cmd_descriptor import CmdDescriptor
 from .processes_global import *
 
@@ -68,93 +63,6 @@ def log_wrap(item_name, item):
     """
     log_msg = f"{item_name} {str(type(item))}: {item}"
     return log_msg
-
-
-def check_require_auth_setup_fields(username, password1, password2):
-    """
-    Ensure supplied auth fields for creating a new user are supplied.
-    Returns True if they're all good, False if there's a problem with them.
-
-    Args:
-        username (str): Supplied username
-        password1 (str): Password enter in field one
-        password2 (str): Password enter in field two
-
-    Returns:
-        bool: True if no problems with supplied auth fields, False otherwise.
-    """
-    # Make sure required form items are supplied.
-    for form_item in (username, password1, password2):
-        if form_item == None or form_item == "":
-            flash("Missing required form field(s)!", category="error")
-            return False
-
-        if len(form_item) > 150:
-            flash("Form field too long!", category="error")
-            return False
-
-    # To try to nip sql, xss, template injections in the bud.
-    if contains_bad_chars(username):
-        flash("Username Contains Illegal Character(s)", category="error")
-        flash(
-            r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &""",
-            category="error",
-        )
-        return False
-
-    return True
-
-
-def valid_password(password1, password2):
-    """
-    Runs supplied auth route passwords against some basic checks. Returns
-    False if passwords bad, True if all good.
-
-    Args:
-        password1 (str): Password enter in field one
-        password2 (str): Password enter in field two
-
-    Returns:
-        bool: True if passwords match and are valid (aka are basically strong),
-              False otherwise
-    """
-    # Setup rudimentary password strength counter.
-    lower_alpha_count = 0
-    upper_alpha_count = 0
-    number_count = 0
-    special_char_count = 0
-
-    # Adjust password strength values.
-    for char in list(password1):
-        if char in string.ascii_lowercase:
-            lower_alpha_count += 1
-        elif char in string.ascii_uppercase:
-            upper_alpha_count += 1
-        elif char in string.digits:
-            number_count += 1
-        else:
-            special_char_count += 1
-
-    ## Check if submitted form data for issues.
-    # Verify password passes basic strength tests.
-    if upper_alpha_count < 1 and number_count < 1 and special_char_count < 1:
-        flash("Passwords doesn't meet criteria!", category="error")
-        flash(
-            "Must contain: an upper case character, a number, and a \
-                                special character",
-            category="error",
-        )
-        return False
-
-    elif password1 != password2:
-        flash("Passwords don't match!", category="error")
-        return False
-
-    elif len(password1) < 12:
-        flash("Password is too short!", category="error")
-        return False
-
-    return True
 
 
 def process_popen_output(proc, proc_info, output_type):
@@ -217,21 +125,22 @@ def process_popen_output(proc, proc_info, output_type):
                     current_app.logger.debug(log_msg)
 
 
-def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
+def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
     """
     General purpose subprocess.Popen wrapper function. Keeps track of processes
     stdout, stderr, pid, and other info via ProcInfo object.
 
     Args:
         cmd (list): Command to be run via subprocess.Popen.
-        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
-                                    process information.
+        cmd_id (str): Optional cmd_id to associate proc_info obj w/.
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
 
     Returns:
         None: Doesn't return anything, just updates ProcInfoVessel object.
     """
+    proc_info = get_process(cmd_id, create=True)
+
     config = configparser.ConfigParser()
     config.read("main.conf")
     clear_output_on_reload = get_config_value(
@@ -267,25 +176,28 @@ def run_cmd_popen(cmd, proc_info=ProcInfoVessel(), app_context=False):
     proc_info.process_lock = False
 
 
-def cancel_install(proc_info):
+def cancel_install(pid):
     """
     Calls the ansible playbook connector to kill running installs upon request.
 
     Args:
-        proc_info (ProcInfoVessel): ProcInfoVessel object holding process
-                                    information.
+        pid (int): Process ID or running install to cancel.
 
     Returns:
         bool: True if install canceled successfully, False otherwise.
     """
     # NOTE: For the --cancel option on the ansible connector script we pass in
-    # the pid of the running install, instead of the game server's ID.
-    cmd = CONNECTOR_CMD + ["--cancel", str(proc_info.pid)]
-    cancel_proc_info = ProcInfoVessel()
+    # the pid of the running install, instead of a game server's ID.
+    cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
-    run_cmd_popen(cmd, cancel_proc_info)
+    cmd_id = 'cancel_install'
+    run_cmd_popen(cmd, cmd_id)
+    proc_info = get_process(cmd_id)
 
-    if cancel_proc_info.exit_status > 0:
+    if proc_info == None:
+        return False
+
+    if proc_info.exit_status > 0:
         return False
 
     return True
@@ -370,10 +282,11 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
-    proc_info = ProcInfoVessel()
     cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
-    run_cmd_popen(cmd, proc_info)
+    cmd_id = "get_tmux_socket_name_docker"
+    run_cmd_popen(cmd, cmd_id)
+    proc_info = get_process(cmd_id)
 
     if proc_info.exit_status > 0:
         current_app.logger.info(proc_info)
@@ -399,11 +312,12 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
-    proc_info = ProcInfoVessel()
     cmd = [PATHS["cat"], gs_id_file_path]
-    keyfile = get_ssh_key_file(server.username, server.install_host)
 
-    success = run_cmd_ssh(cmd, server.install_host, server.username, keyfile, proc_info)
+    success = run_cmd_ssh(cmd, server)
+    proc_info = get_process(server.id)
+    if proc_info == None:
+        return None
 
     # If the ssh connection itself fails return None.
     if not success:
@@ -558,26 +472,19 @@ def get_server_status(server):
         bool|None: True if game server is active, False if inactive, None if
                    indeterminate.
     """
-    proc_info = ProcInfoVessel()
-
     socket = get_tmux_socket_name(server)
     if socket == None:
         return None
 
     cmd = [PATHS["tmux"], "-L", socket, "list-session"]
 
+    cmd_id = "get_server_status:" + server.install_name
+
     if should_use_ssh(server):
-        gs_id_file_path = os.path.join(
-            server.install_path, f"lgsm/data/{server.script_name}.uid"
-        )
-        keyfile = get_ssh_key_file(server.username, server.install_host)
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server, False, 5.0, cmd_id)
 
         # If the ssh connection itself fails return None.
         if not success:
-            current_app.logger.info(proc_info)
             return None
 
     elif server.install_type == "docker":
@@ -590,13 +497,18 @@ def get_server_status(server):
             server.username,
             server.script_name,
         ] + cmd
-        run_cmd_popen(cmd, proc_info)
+        run_cmd_popen(cmd, cmd_id)
 
     # Else type local same user.
     else:
-        run_cmd_popen(cmd, proc_info)
+        run_cmd_popen(cmd, cmd_id)
 
-    current_app.logger.info(proc_info)
+    proc_info = get_process(cmd_id)
+    current_app.logger.info(log_wrap("proc_info", proc_info))
+
+    if proc_info == None:
+        return None
+
     if proc_info.exit_status > 0:
         return False
 
@@ -644,7 +556,7 @@ def get_running_installs():
 
             # Check game server exists.
             if server:
-                running_install_threads[server_id] =  server.install_name
+                running_install_threads[server_id] = server.install_name
 
     return running_install_threads
 
@@ -662,6 +574,7 @@ def find_cfg_paths(server):
         cfg_paths (list): List of found valid config files.
     """
     cfg_paths = []
+    cmd_id = "find_cfg_paths"
 
     # Try except in case problem with json files.
     try:
@@ -674,8 +587,6 @@ def find_cfg_paths(server):
     valid_gs_cfgs = json_data["accepted_cfgs"]
 
     if should_use_ssh(server):
-        proc_info = ProcInfoVessel()
-        keyfile = get_ssh_key_file(server.username, server.install_host)
         wanted = []
         for cfg in valid_gs_cfgs:
             wanted += ["-name", cfg, "-o"]
@@ -689,9 +600,8 @@ def find_cfg_paths(server):
             "f",
         ] + wanted[:-1]
 
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server, False, 5.0, cmd_id)
+        proc_info = get_process(cmd_id)
 
         # If the ssh connection itself fails return False.
         if not success:
@@ -799,17 +709,14 @@ def delete_server(server, remove_files, delete_user):
             flash("Will not delete remote users home directories!", category="error")
             return False
 
-        proc_info = ProcInfoVessel()
-        keyfile = get_ssh_key_file(server.username, server.install_host)
         cmd = [PATHS["rm"], "-rf", server.install_path]
 
-        success = run_cmd_ssh(
-            cmd, server.install_host, server.username, keyfile, proc_info
-        )
+        success = run_cmd_ssh(cmd, server)
+        proc_info = get_process(server.id)
 
         # If the ssh connection itself fails return False.
-        if not success:
-            current_app.logger.info(proc_info)
+        if not success or proc_info == None:
+            current_app.logger.info(log_wrap("proc_info", proc_info))
             flash("Problem connecting to remote host!", category="error")
             return False
 
@@ -821,30 +728,6 @@ def delete_server(server, remove_files, delete_user):
     flash(f"Game server, {server.install_name} deleted!")
     server.delete()
     return True
-
-
-def valid_cfg_name(cfg_file):
-    """
-    Validates submitted cfg_file for edit route by checking name against
-    accepted name list in json file. Used to ensure cfg editor can only be used
-    to edit files from accepted cfg name list.
-
-    Args:
-        cfg_file (str): Name of cfg file to validate.
-
-    Returns:
-        bool: True if valid cfg file name, False otherwise.
-    """
-    gs_cfgs = open("json/accepted_cfgs.json", "r")
-    json_data = json.load(gs_cfgs)
-    gs_cfgs.close()
-
-    valid_gs_cfgs = json_data["accepted_cfgs"]
-
-    if cfg_file in valid_gs_cfgs:
-        return True
-
-    return False
 
 
 def get_commands(server, send_cmd, current_user):
@@ -935,6 +818,9 @@ def get_servers():
         return {}
 
 
+# TODO/NOTE: This can stay for now, but its on the chopping block. This
+# validation should now be handled by flask-wtf/wtforms classes. Once I get
+# this fixed up in the controls route, this can go.
 def valid_command(cmd, server, send_cmd, current_user):
     """
     Validates short commands from controls route form for game server. Some
@@ -958,66 +844,6 @@ def valid_command(cmd, server, send_cmd, current_user):
         if cmd == command.short_cmd:
             return True
 
-    return False
-
-
-def valid_install_options(script_name, full_name):
-    """
-    Validates form submitted server_script_name and server_full_name options
-    for install route. Basically just checks if supplied args are in list of
-    accepted servers from get_servers().
-
-    Args:
-        script_name (str): Short name of game server (aka script name).
-        full_name (str): Full name of game server.
-
-    Returns:
-        bool: True if short and long names are both valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, server_name in servers.items():
-        if server == script_name and server_name == full_name:
-            return True
-    return False
-
-
-def valid_script_name(script_name):
-    """
-    Validates supplied script_name for install route. Basically just checks if
-    supplied script_name is in list of accepted servers from get_servers().
-
-    Args:
-        script_name (str): Short name of game server to check (aka script name).
-
-    Returns:
-        bool: True if short name is valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, server_name in servers.items():
-        if server == script_name:
-            return True
-    return False
-
-
-def valid_server_name(server_name):
-    """
-    Validates supplied server_name for install route. Basically just checks if
-    supplied server_name is in list of accepted servers from get_servers().
-
-    Args:
-        server_name (str): Long name of game server to check.
-
-    Returns:
-        bool: True if long name is valid, False otherwise.
-    """
-    servers = get_servers()
-    for server, s_name in servers.items():
-        # Convert s_name to a unix friendly directory name.
-        s_name = s_name.replace(" ", "_")
-        s_name = s_name.replace(":", "")
-
-        if s_name == server_name:
-            return True
     return False
 
 
@@ -1065,55 +891,6 @@ def check_and_get_lgsmsh(lgsmsh):
         get_lgsmsh(lgsmsh)
 
 
-def contains_bad_chars(input_item):
-    """
-    Checks for the presence of bad chars in supplied user input.
-
-    Args:
-        input_item (str): Supplied input item to check for bad chars.
-
-    Returns:
-        bool: True if item does contain one of the bad chars below, False
-              otherwise.
-    """
-    bad_chars = {
-        " ",
-        "$",
-        "'",
-        '"',
-        "\\",
-        "#",
-        "=",
-        "[",
-        "]",
-        "!",
-        "<",
-        ">",
-        "|",
-        ";",
-        "{",
-        "}",
-        "(",
-        ")",
-        "*",
-        ",",
-        "?",
-        "~",
-        "&",
-    }
-
-    # Its okay to skip None cause should be caught by earlier checks. Also
-    # technically, None does not contain any bad chars...
-    if input_item is None:
-        return False
-
-    for char in bad_chars:
-        if char in input_item:
-            return True
-
-    return False
-
-
 def update_self():
     """
     Runs the web-lgsm self updates. Just wraps invocation of web-lgsm.py --auto
@@ -1125,8 +902,12 @@ def update_self():
     """
     update_cmd = ["./web-lgsm.py", "--auto"]
 
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(update_cmd, proc_info)
+    cmd_id = "update_self"
+    run_cmd_popen(update_cmd, cmd_id)
+    proc_info = get_process(cmd_id)
+    if proc_info == None:
+        return "Error: Something went wrong checking update status"
+
     if proc_info.exit_status > 0:
         return f"Error: {proc_info.stderr}"
 
@@ -1287,7 +1068,7 @@ def user_has_permissions(current_user, route, server_id=None):
 
     # No flash for api routes. They return json.
     if route == "update-console":
-        if 'console' not in user_perms["controls"]:
+        if "console" not in user_perms["controls"]:
             return False
 
     if route == "server-statuses" or route == "cmd-output":
@@ -1295,24 +1076,6 @@ def user_has_permissions(current_user, route, server_id=None):
             return False
 
     return True
-
-
-def valid_install_type(install_type):
-    """
-    Check's install type is one of the allowed three types.
-
-    Args:
-        install_type (str): User supplied install_type
-
-    Returns:
-        bool: True if valid install_type, False otherwise.
-    """
-    valid_install_types = ["local", "remote", "docker"]
-
-    if install_type in valid_install_types:
-        return True
-
-    return False
 
 
 def is_ssh_accessible(hostname):
@@ -1373,8 +1136,13 @@ def generate_ecdsa_ssh_keypair(key_name):
         "",
     ]
 
-    proc_info = ProcInfoVessel()
-    run_cmd_popen(cmd, proc_info)
+    cmd_id = "generate_ecdsa_ssh_keypair"
+    run_cmd_popen(cmd, cmd_id)
+
+    proc_info = get_process(cmd_id)
+    if proc_info == None:
+        return False
+
     if proc_info.exit_status > 0:
         return False
 
@@ -1406,7 +1174,7 @@ def get_ssh_key_file(user, host):
     if key_name + ".pub" not in all_pub_keys:
         # Log keygen failures.
         if not generate_ecdsa_ssh_keypair(key_name):
-            log_msg = f"Failed to generate new key pair for {user}:{server}!"
+            log_msg = f"Failed to generate new key pair for {user}:{host}!"
             current_app.logger.info(log_msg)
             return
 
@@ -1414,32 +1182,32 @@ def get_ssh_key_file(user, host):
     return keyfile
 
 
-def run_cmd_ssh(
-    cmd,
-    hostname,
-    username,
-    key_filename,
-    proc_info=ProcInfoVessel(),
-    app_context=False,
-    timeout=5.0,
-):
+def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     """
     Runs remote commands over ssh to admin game servers.
 
     Args:
         cmd (list): Command to run over SSH.
-        hostname (str): The hostname or IP address of the server.
-        username (str): The username to use for the SSH connection.
-        key_filename (str): The path to the private key file.
-        proc_info (ProcInfoVessel): Optional ProcInfoVessel object to capture
-                                    process information.
+        server (GameServer): Game server associated with machine to ssh into.
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
         timeout (float): Timeout in seconds for ssh command. None = no timeout.
+        opt_id (str): Optional alternative ID to use for storing process info.
+                      Will be used instead of server.id.
 
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+    hostname = server.install_host
+    username = server.username
+    cmd_id = server.id
+    if opt_id:
+        cmd_id = opt_id
+
+    proc_info = get_process(cmd_id, create=True)
+
+    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+
     config = configparser.ConfigParser()
     config.read("main.conf")
     end_in_newlines = get_config_value(
@@ -1460,11 +1228,12 @@ def run_cmd_ssh(
     safe_cmd = shlex.join(cmd)
 
     # Log info.
+    current_app.logger.debug(log_wrap("proc_info pre ssh cmd:", proc_info))
     current_app.logger.info(cmd)
     current_app.logger.info(safe_cmd)
     current_app.logger.info(hostname)
     current_app.logger.info(username)
-    current_app.logger.info(key_filename)
+    current_app.logger.info(pub_key_file)
     current_app.logger.info("pre stdout: " + str(proc_info.stdout))
     current_app.logger.info("pre stderr: " + str(proc_info.stderr))
 
@@ -1475,14 +1244,13 @@ def run_cmd_ssh(
 
     try:
         client.connect(
-            hostname, username=username, key_filename=key_filename, timeout=3
+            hostname, username=username, key_filename=pub_key_file, timeout=3
         )
         current_app.logger.debug(cmd)
 
         proc_info.process_lock = True
         # Open a new session and request a PTY.
         channel = client.get_transport().open_session()
-        #        channel.get_pty()  # This shut's off the stderr stream for some reason... Not sure if pty still needed.
         channel.set_combine_stderr(False)
         channel.exec_command(safe_cmd)
 
@@ -1687,7 +1455,7 @@ def read_changelog():
         str: Contents of CHANGELOG.md file or err str.
     """
     try:
-        with open('CHANGELOG.md', "r") as file:
+        with open("CHANGELOG.md", "r") as file:
             contents = file.read()
         return contents
 
@@ -1762,8 +1530,8 @@ def read_config(route):
         config_options["text_color"] = get_config_value(
             config, "aesthetic", "text_color", "#09ff00"
         )
-        config_options["create_new_user"] = get_config_value(
-            config, "settings", "install_create_new_user", True
+        config_options["install_create_new_user"] = get_config_value(
+            config, "settings", "install_create_new_user", True, True
         )
         return config_options
 
@@ -1873,3 +1641,121 @@ def clear_proc_info_post_install(server_id, app_context):
 
         time.sleep(5)
         runtime += 5
+
+
+def validation_errors(form):
+    """
+    Flashes messages for validation errors if there are any.
+
+    Args:
+        form (FlaskForm): Flask form object to check.
+
+    Returns:
+        dict: Returns dictionary of errors and fields.
+    """
+    form_name = type(form).__name__
+    current_app.logger.info(f"{form_name} submission invalid!")
+    if form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                current_app.logger.debug(f"{field}: {error}")
+                flash(f"{field}: {error}", "error")
+
+
+def read_cfg_file(server, cfg_path):
+    """
+    Wraps up reading in file contents for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file
+
+    Returns:
+        str: String of file contents if can read it, None otherwise.
+    """
+    file_contents = ""
+
+    if should_use_ssh(server):
+        # Read in file contents over ssh.
+        file_contents = read_file_over_ssh(server, cfg_path)
+
+        return file_contents
+
+    # Read in file contents from cfg file.
+    # Try except in case problem with file.
+    try:
+        with open(cfg_path) as f:
+            file_contents = f.read()
+    except:
+        return None
+
+    return file_contents
+
+
+def download_cfg(server, cfg_path):
+    """
+    Wraps up cfg file download logic for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file
+    """
+
+    file_contents = read_cfg_file(server, cfg_path)
+    if file_contents == None:
+        flash("Problem retrieving file contents", category="error")
+        return redirect(url_for("views.home"))
+
+    cfg_file = os.path.basename(cfg_path)
+
+    if should_use_ssh(server):
+        file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
+        return send_file(
+            file_like_thingy,
+            as_attachment=True,
+            download_name=cfg_file,
+            mimetype="text/plain",
+        )
+
+    basedir, basename = os.path.split(cfg_path)
+    current_app.logger.info(log_wrap("basedir", basedir))
+    current_app.logger.info(log_wrap("basename", basename))
+    return send_from_directory(basedir, basename, as_attachment=True)
+
+
+def write_cfg(server, cfg_path, new_file_contents):
+    """
+    Wraps up cfg file write logic for edit page.
+
+    Args:
+        server (GameServer): Game server object cfg file's related to.
+        cfg_path (str): Path to cfg file.
+        new_file_contents (str): New stuff to be written.
+
+    Returns:
+        bool: True if written successfully, false otherwise.
+    """
+
+    if should_use_ssh(server):
+        written = write_file_over_ssh(
+            server, cfg_path, new_file_contents.replace("\r", "")
+        )
+        if written:
+            return True
+
+        return False
+
+    # Check that file exists before allowing writes to it. Aka don't allow
+    # arbitrary file creation. Even though the above should block creating
+    # files with arbitrary names, we still don't want to allow arbitrary file
+    # creation anywhere on the file system the app has write perms to.
+    if not os.path.isfile(cfg_path):
+        return False
+
+    try:
+        with open(cfg_path, "w") as f:
+            f.write(new_file_contents.replace("\r", ""))
+        return True
+    except:
+        return False
+

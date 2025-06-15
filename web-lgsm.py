@@ -30,7 +30,7 @@ def run_command_popen(command):
             command,
             shell=True,
             executable="/bin/bash",
-            stdin=subprocess.PIPE,
+            stdin=None,   # Connect input to the terminal.
             stdout=None,  # Direct output to the terminal.
             stderr=None,  # Direct error output to the terminal.
             text=True,
@@ -87,12 +87,13 @@ import getopt
 import shutil
 import string
 import getpass
+import tarfile
 import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, main as appmain
 from app.models import User
-from app.utils import contains_bad_chars, check_and_get_lgsmsh
+from app.utils import check_and_get_lgsmsh
 
 # Import config data.
 CONFIG_FILE = "main.conf"
@@ -116,7 +117,7 @@ except KeyError as e:
 os.environ["LOG_LEVEL"] = LOG_LEVEL
 
 # Global options hash.
-O = {"verbose": False, "check": False, "auto": False, "test_full": False}
+O = {"verbose": False, "check": False, "auto": False, "test_full": False, "noback": False}
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -262,6 +263,55 @@ def start_debug():
     signal.signal(signal.SIGINT, signalint_handler)
     app = main()
     app.run(debug=True, host=HOST, port=PORT)
+
+
+def contains_bad_chars(input_item):
+    """
+    Checks for the presence of bad chars in supplied user input.
+
+    Args:
+        input_item (str): Supplied input item to check for bad chars.
+
+    Returns:
+        bool: True if item does contain one of the bad chars below, False
+              otherwise.
+    """
+    bad_chars = {
+        " ",
+        "$",
+        "'",
+        '"',
+        "\\",
+        "#",
+        "=",
+        "[",
+        "]",
+        "!",
+        "<",
+        ">",
+        "|",
+        ";",
+        "{",
+        "}",
+        "(",
+        ")",
+        "*",
+        ",",
+        "?",
+        "~",
+        "&",
+    }
+
+    # Its okay to skip None cause should be caught by earlier checks. Also
+    # technically, None does not contain any bad chars...
+    if input_item is None:
+        return False
+
+    for char in bad_chars:
+        if char in input_item:
+            return True
+
+    return False
 
 
 # TODO: Just import this from utils.py script. A copy of it is fine for now,
@@ -419,14 +469,6 @@ def run_command(command):
     return result.stdout.strip()
 
 
-def get_git_info():
-    upstream = "@{u}"
-    local = run_command("git rev-parse @")
-    remote = run_command(f"git rev-parse {upstream}")
-    base = run_command(f"git merge-base @ {upstream}")
-    return local, remote, base
-
-
 def backup_file(filename):
     if not os.path.isfile(filename):
         print(f" [!] Warning: The file '{filename}' does not exist. No backup created!")
@@ -439,7 +481,7 @@ def backup_file(filename):
     return backup_filename
 
 
-def backup_dir(dirname, tar=None):
+def backup_dir(dirname, tar=False):
     """Back's up directories using shutil.copydirtree, optionally tar's them too"""
     if not os.path.isdir(dirname):
         print(
@@ -449,149 +491,110 @@ def backup_dir(dirname, tar=None):
 
     epoc = int(time.time())
     backup_dirname = f"{dirname}.{epoc}.bak"
-    shutil.copytree(dirname, backup_dirname)
     print(f" [*] Backing up {dirname} to {backup_dirname}")
+    shutil.copytree(dirname, backup_dirname)
 
     if tar:
         tar_filename = f"{backup_dirname}.tar.gz"
+        print(f" [*] Creating tar file {tar_filename}")
         with tarfile.open(tar_filename, "w:gz") as tar_handle:
             tar_handle.add(backup_dirname, arcname=os.path.basename(backup_dirname))
-        print(f" [*] Creating tar file {tar_filename}")
         shutil.rmtree(backup_dirname)
         return tar_filename
 
     return backup_dirname
 
 
+def is_up_to_date():
+    """
+    Check's if web-lgsm already up-to-date or not.
+    """
+    run_command('git fetch --quiet')
+    output = run_command('git status -sb')
+    if 'ahead' in output or 'behind' in output:
+        return False
+
+    return True
+
+
 def update_weblgsm():
-    # Updates broken right now cause I suck a programming. Already have a todo
-    # to fix it. Marking this broken for the meantime.
-    print("Sorry, update is broken right now :( Will fix soon. In the meantime just git pull or clone the newest version and reinstall.")
-    return
-
-    local, remote, base = get_git_info()
-
-    if local == remote:
+    """
+    Update's the web-lgsm itself.
+    """
+    if is_up_to_date():
         print(" [*] Web LGSM already up to date!")
         return
 
-    elif local == base:
-        print(" [!] Update Required!")
-        if O["check"]:
-            return
-
-        if not O["auto"]:
-            resp = input(" [*] Would you like to update now? (y/n): ")
-            if resp.lower() != "y":
-                exit()
-
-        # Backup whole web-lgsm folder.
-        backup_dir(SCRIPTPATH, True)
-        backup_file("main.conf")
-
-        print(" [*] Pulling update from github...")
-        run_command("git clean -f")
-        run_command("git pull")
-
-        epoc = int(time.time())
-        print(f" [*] Backing up venv to venv.{epoc}.bak...")
-        backup_dir("venv")
-
-        print(" [*] Reinstalling newest web-lgsm...")
-        install_script = os.path.join(SCRIPTPATH, 'install.sh')
-        run_command(f"{install_script} -d")
-
-        print(" [*] Checking/Updating database fields...")
-        update_db = os.path.join(SCRIPTPATH, 'scripts/update-db.sh')
-        run_command(f"{update_db} -d")
-
-        print(" [*] Update Complete!")
+    print(" [!] Update Available!")
+    if O["check"]:
         return
 
-    elif remote == base:
-        print(" [!] Local ahead of remote, need push?", file=sys.stderr)
-        print(" [-] Note: Normal users should not see this.", file=sys.stderr)
-        sys.exit(1)
+    if not O["auto"]:
+        resp = input(" [*] Would you like to update now? (y/n): ")
+        if resp.lower() != "y":
+            exit()
 
-    print(" [!] Something has gone horribly wrong!", file=sys.stderr)
-    print(" [-] It's possible your local repo has diverged.", file=sys.stderr)
-    sys.exit(2)
+    # Backup whole web-lgsm folder.
+    if not O["noback"]:
+        print(" [*] Backing up and tarring, this may take a while...")
+        backup_dir(SCRIPTPATH, tar=True)
+        backup_file("main.conf")
 
+    print(" [*] Pulling update from github...")
+    run_command("git fetch --all")
+    run_command("git reset --hard origin/master")
 
-def check_sudo():
-    try:
-        # Run the sudo command with the -v option to validate the current timestamp.
-        result = subprocess.run(
-            ["sudo", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        if result.returncode != 0:
-            print(
-                " [*] No active sudo tty ticket. Please run the script with an active sudo session."
-            )
-            sys.exit(1)
-    except Exception as e:
-        print(f" [!] An error occurred while checking sudo status: {e}")
-        sys.exit(1)
+    print(" [*] Uninstalling old web-lgsm...")
+    install_script = os.path.join(SCRIPTPATH, 'uninstall.sh')
+    run_command(f"{uninstall_script} -d")
+
+    print(" [*] Reinstalling newest web-lgsm...")
+    install_script = os.path.join(SCRIPTPATH, 'install.sh')
+    run_command(f"{install_script} -d")
+
+    # Green check!
+    print(f" [\033[32m✓\033[0m] Update Complete!")
+    return
 
 
 def run_tests():
-    # Source env vars.
-    env_path = os.path.join(SCRIPTPATH, "tests/test.vars")
-    load_dotenv(dotenv_path=env_path)
-    os.environ["APP_PATH"] = SCRIPTPATH
-
-    if O["verbose"]:
-        for key, value in os.environ.items():
-            print(f"{key}={value}")
-
     # If in container don't backup db.
     if "CONTAINER" not in os.environ:
         # Backup Database.
         db_file = os.path.join(SCRIPTPATH, "app/database.db")
         db_backup = backup_file(db_file)
 
-    # Setup Mockcraft testdir.
-    mockcraft_dir = os.path.join(SCRIPTPATH, "tests/test_data/Mockcraft")
-    cfg_dir = os.path.join(mockcraft_dir, "lgsm/config-lgsm/mcserver/")
-    if not os.path.isdir(mockcraft_dir):
-        # will make mockcraft dir in the process.
-        os.makedirs(cfg_dir)
-
-        os.chdir(mockcraft_dir)
-        run_command("wget -O linuxgsm.sh https://linuxgsm.sh")
-        run_command("chmod +x linuxgsm.sh")
-        run_command("./linuxgsm.sh mcserver")
-        os.chdir(SCRIPTPATH)
-
-    # Reset test server cfg.
-    common_cfg = os.path.join(SCRIPTPATH, "tests/test_data/common.cfg")
-    shutil.copy(common_cfg, cfg_dir)
+    local_conf = 'main.conf.local'
+    if os.path.exists(local_conf):
+        local_conf_bak = backup_file(local_conf)
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:
         O["verbose"] = True
 
-    if O["test_full"]:
-        # Need to get a sudo tty ticket for full game server install.
-#        check_sudo()
-        # Backup Existing MC install, if one exists.
-        mcdir = os.path.join(SCRIPTPATH, "Minecraft")
-        if os.path.isdir(mcdir):
-            backup_dir(mcdir)
+    try:
+        if O["test_full"]:
+            # Backup Existing MC install, if one exists.
+            mcdir = os.path.join(SCRIPTPATH, "Minecraft")
+            if os.path.isdir(mcdir):
+                backup_dir(mcdir)
 
-            # Then torch dir.
-            shutil.rmtree(mcdir)
+                # Then torch dir.
+                shutil.rmtree(mcdir)
 
-        run_command_popen("python -m pytest -v --maxfail=1")
+            cmd = "coverage run -m pytest -v tests/"
+            run_command_popen(cmd)
 
-    else:
-        run_command_popen(
-            "python -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser' --maxfail=1"
-        )
+        else:
+            cmd = "coverage run -m pytest -vvv tests/ -m 'not integration'"
+            run_command_popen(cmd)
 
-    # Restore Database.
-    if db_backup:
-        shutil.move(db_backup, db_file)
+    finally:
+        if db_backup:
+            shutil.move(db_backup, db_file)
+
+        shutil.move(local_conf_bak, local_conf)
+        print("Restored database and main.conf.local")
 
 
 def add_valid_gs_user(gs_user):
@@ -618,6 +621,7 @@ def print_help():
   ║   -p, --passwd        Change web user password           ║
   ║   -u, --update        Update web-lgsm version            ║
   ║   -c, --check         Check if an update is available    ║
+  ║   -n, --noback        Don't backup web-lgsm for updates  ║
   ║   -a, --auto          Run an auto update                 ║
   ║   -f, --fetch_json    Fetch latest game servers json     ║
   ║   -t, --test          Run project's pytest tests (short) ║
@@ -642,13 +646,14 @@ def main(argv):
             "passwd",
             "update",
             "check",
+            "noback",
             "auto",
             "fetch_json",
             "test",
             "test_full",
             "valid=",
         ]
-        opts, args = getopt.getopt(argv, "hsmrqdvpucaftxj:", longopts)
+        opts, args = getopt.getopt(argv, "hsmrqdvpucnaftxj:", longopts)
     except getopt.GetoptError as e:
         print(e)
         print_help()
@@ -668,6 +673,8 @@ def main(argv):
             O["auto"] = True
         if opt in ("-x", "--test_full"):
             O["test_full"] = True
+        if opt in ("-n", "--noback"):
+            O["noback"] = True
 
     # Do the needful based on opts.
     for opt, arg in opts:
@@ -718,3 +725,5 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
+

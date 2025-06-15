@@ -190,7 +190,7 @@ def cancel_install(pid):
     # the pid of the running install, instead of a game server's ID.
     cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
-    cmd_id = str(uuid.uuid4())
+    cmd_id = 'cancel_install'
     run_cmd_popen(cmd, cmd_id)
     proc_info = get_process(cmd_id)
 

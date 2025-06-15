@@ -23,6 +23,7 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms import *
+from . import cache
 
 # Constants.
 CWD = os.getcwd()
@@ -129,15 +130,22 @@ def controls():
             flash("No game server installation directory found!", category="error")
             return redirect(url_for("views.home"))
 
-        # If cfg editor is disabled in the main.conf.
+        # Cfg editor buttons stuff.
+        cache_key = f"cfg_paths_{server_id}"
+        cfg_paths = cache.get(cache_key)
+
         if not config_options["cfg_editor"]:
             cfg_paths = []
-        else:
+
+        elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
             cfg_paths = find_cfg_paths(server)
+
             if cfg_paths == "failed":
                 flash("Error reading accepted_cfgs.json!", category="error")
                 cfg_paths = []
+
+            cache.set(cache_key, cfg_paths, timeout=1800)
 
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
@@ -375,7 +383,7 @@ def install():
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
             if proc_info.pid:
-                success = cancel_install(proc_info)
+                success = cancel_install(proc_info.pid)
                 if success:
                     flash("Installation Canceled!")
                 else:

@@ -1,4 +1,5 @@
 import re
+import pwd
 from flask import url_for, request
 import configparser
 from bs4 import BeautifulSoup
@@ -144,4 +145,11 @@ def extract_alert_messages(response, alert_type=None):
 
     return messages
 
+
+def user_exists(username):
+    try:
+        pwd.getpwnam(username)
+        return True
+    except KeyError:
+        return False
 

@@ -12,9 +12,10 @@ from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
 from flask_migrate import Migrate
+from flask_caching import Cache
 
 
-# Prevent creation of __pycache__. Cache messes up auth.
+# Prevent creation of __pycache__. Pycache messes up auth.
 sys.dont_write_bytecode = True
 
 DB_NAME = "database.db"
@@ -35,6 +36,7 @@ load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ["SECRET_KEY"]
 SWAGGER_URL = "/docs"
 API_URL = "/api/spec"
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 
 
 def main():
@@ -82,6 +84,7 @@ def main():
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
     app.logger.removeHandler(default_handler)
     migrate = Migrate(app, db, render_as_batch=True)
+    cache.init_app(app)
 
     # Initialize DB.
     db.init_app(app)

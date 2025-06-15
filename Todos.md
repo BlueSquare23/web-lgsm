@@ -175,7 +175,7 @@
   - There's some dead code still and some unused modules etc.
   - Can also show errors with `pylint --load-plugins pylint_flask -E app/`
 
-* [~] **Continue fixing up tests**
+* [x] **Continue fixing up tests** (always a work in progress, goodenuff4now)
   1. As much as I hate to admit it, the coverage reports are kinda useful for
     spotting things that I have little to no testing for.
     - A lot of this stuff is newer stuff, I added but never got around to
@@ -185,7 +185,7 @@
   2. There are a number of existing tests that are pretty weak, kinda don't
     really test what they're supposed to test well. 
     - I left myself a bunch of TODOs in comments.
-    - [ ] Refactor existing _"weak"_ tests to improve tactility (aka better
+    - [x] Refactor existing _"weak"_ tests to improve tactility (aka better
       grip on subject matter being tested) & robustness (aka no race
       conditionss, cheats & other hacks to fudge it so tests pass).
   3. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!

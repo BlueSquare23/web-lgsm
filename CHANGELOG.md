@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add Flask-Cache caching for cfg buttons on controls page.
 - Add fully fleshed-out [DESIGN.md](https://github.com/BlueSquare23/web-lgsm/blob/master/docs/DESIGN.md) doc.
 - Add Flask-Migrate (Alembic) for handling database migrations between versions.
 - Add code coverage report as CI/CD artifact for later perusing.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Improved testing infrastructure to level ground for continued growth.
 - Change auth cookies from `SameSite: None` to `SameSite: Lax` for sec reasons.
 - Change edit page to accept `cfg_path` & `server_id` via GET args.
 - Change form handling to use Flask-WTF & WTForms for validation.

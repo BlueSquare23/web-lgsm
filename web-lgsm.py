@@ -582,11 +582,11 @@ def run_tests():
                 # Then torch dir.
                 shutil.rmtree(mcdir)
 
-            cmd = "coverage run -m pytest -v"
+            cmd = "coverage run -m pytest -v tests/"
             run_command_popen(cmd)
 
         else:
-            cmd = "coverage run -m pytest -vvv -k 'not test_install_newuser and not test_install_sameuser'"
+            cmd = "coverage run -m pytest -vvv tests/ -m 'not integration'"
             run_command_popen(cmd)
 
     finally:

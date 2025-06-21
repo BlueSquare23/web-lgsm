@@ -23,6 +23,7 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms import *
+from .jobs import Jobs
 from . import cache
 
 # Constants.
@@ -916,6 +917,48 @@ def edit():
         flash("Error writing to cfg file!", category="error")
 
     return redirect(url_for("views.edit", server_id=server_id, cfg_path=cfg_path))
+
+
+######### Jobs Route #########
+
+@views.route("/jobs", methods=["GET", "POST"])
+@login_required
+def jobs():
+    # TODO: Add this route to user_has_permissions()
+    # Check if user has permissions to jobs route.
+#    if not user_has_permissions(current_user, "jobs"):
+#        return redirect(url_for("views.home"))
+
+    # Create JobsForm.
+#    form = JobsForm()
+
+    
+    if request.method == "GET":
+        server_id = None
+        jobs_list = []
+        game_servers = GameServer.query.all()
+
+        if request.args:
+            # Checking id is valid.
+            id_form = ValidateID(request.args)
+            if not id_form.validate():
+                validation_errors(id_form)
+                return redirect(url_for("views.home"))
+
+            server_id = request.args.get("server_id")
+            server = GameServer.query.filter_by(id=server_id).first()
+            jobs = Jobs(server_id)
+            jobs_list = jobs.list_jobs()
+
+        current_app.logger.debug(log_wrap("jobs_list", jobs_list))
+
+        return render_template(
+            "jobs.html",
+            user=current_user,
+            game_servers=game_servers,
+            selected_server=server_id,
+            jobs_list=jobs_list,
+        )
 
 
 ######### Swagger API Docs #########

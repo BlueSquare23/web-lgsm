@@ -1,16 +1,72 @@
 import json
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, jsonify
 from flask_login import login_required, current_user
 from flask_restful import Api, Resource
 
 from .utils import *
 from .models import *
+from .jobs import Jobs
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
+
+######### API Cron Manager #########
+
+def validate_cron(expression):
+    """Basic cron expression validation"""
+    parts = expression.split()
+    if len(parts) != 5:
+        return False
+
+    # Very basic validation - you might want to enhance this
+    for part in parts:
+        if not re.match(r'^(\*|\d+(-\d+)?(,\d+(-\d+)?)*)(/\d+)?$', part):
+            return False
+    return True
+
+class ManageCron(Resource):
+
+    @login_required
+    def get(self, server_id, job_id=None):
+        jobs = Jobs(server_id)
+        jobs_list = jobs.list_jobs()
+        if job_id == None:
+            job = next((j for j in jobs_list if j['server_id'] == server_id), None)
+            return jsonify(job) if job else ('Not found', 404)
+
+        for job in jobs_list:
+            if job['server_id'] == server_id and job['job_id'] == job_id:
+                return jsonify(job)
+        return ('Not found', 404)
+
+    @login_required
+    def post(self, server_id):
+        data = request.json
+        jobs = Jobs(server_id)
+        jobs_list = jobs.list_jobs()
+
+        if not data.get('command') or not data.get('schedule'):
+            return 'Missing command or schedule', 400
+
+        if not validate_cron(data['schedule']):
+            return 'Invalid cron expression', 400
+
+        new_job = {
+            'uuid': str(uuid.uuid4()),
+            'command': data['command'],
+            'schedule': data['schedule']
+        }
+        jobs_list.append(new_job)
+        return jsonify(new_job), 201
+
+    def delete(self, server_id):
+        jobs_list = [j for j in jobs_list if j['uuid'] != server_id]
+        return '', 204
+
+api.add_resource(ManageCron, "/cron/<string:server_id>/<string:job_id>")
 
 
 ######### API Update Console #########

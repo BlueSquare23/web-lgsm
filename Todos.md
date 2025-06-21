@@ -163,6 +163,12 @@
   - [ ] Make both API and Route code use this new neutral service class to
     actually do the needful.
 
+* [ ] **Fix, test, and robustify docker stuff more**
+  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
+  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
+  - I really need to do more manual qa testing on debian before release. My dev
+    env is ubuntu.
+
 * [ ] **Continue fixing up tests**
   1. [ ] Add new tests for new features:
     - backup planner page

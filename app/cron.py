@@ -5,19 +5,98 @@ from cron_converter import Cron
 
 from .models import *
 from .utils import *
+from .paths import PATHS
+from . import db
+from .models import *
 
-class Jobs:
+CONNECTOR_CMD = [
+    PATHS["sudo"],
+    "-n",
+    "/opt/web-lgsm/bin/python",
+    PATHS["ansible_connector"],
+]
+
+class CronService:
 
     def __init__(self, server_id):
         self.server_id = server_id 
 
 
-    def add_job(self):
-        pass
+    def edit_job(self, job):
+        """
+        Updates / Create job in database and wraps invocation of ansible
+        connector for cron job edits.
+
+        Args:
+            job (dict): Job to create.
+
+        Returns:
+            bool: True if job created successfully, False otherwise.
+        """
+        cronjob = Job.query.filter_by(id=job["job_id"]).first()
+        newjob = False
+
+        # First, add/update job in database.
+        if cronjob == None:
+            newjob = True
+            cronjob = Job()
+
+        cronjob.server_id = job["server_id"]
+        cronjob.command = job["command"]
+        cronjob.comment = job["comment"]
+        cronjob.expression = job["expression"]
+
+        if newjob:
+            db.session.add(cronjob)
+        db.session.commit()
+
+        # Then, add job to system crontab for user via connector.
+        cmd = CONNECTOR_CMD + ["--cron", cronjob.id]
+
+        cmd_id = f'add_job_{cronjob.id}'
+        run_cmd_popen(cmd, cmd_id)
+        proc_info = get_process(cmd_id)
+
+        if proc_info == None:
+            return False
+
+        if proc_info.exit_status > 0:
+            return False
+
+        return True
 
 
-    def delete_job(self):
-        pass
+    def delete_job(self, job_id):
+        """
+        Delete cronjob entries from DB & system crontab.
+
+        Args:
+            job_id (str(shortuuid)): Id of job to delete.
+
+        Returns:
+            bool: True if job removed successfully, False otherwise.
+        """
+        cronjob = Job.query.filter_by(id=job_id).first()
+        if cronjob == None:
+            return False
+
+        # Remove job from system crontab.
+        cmd = CONNECTOR_CMD + ["--cron", cronjob.id, "--delete", self.server_id]
+
+        cmd_id = f'delete_job_{cronjob.id}'
+        run_cmd_popen(cmd, cmd_id)
+        proc_info = get_process(cmd_id)
+
+        if proc_info == None:
+            return False
+
+        if proc_info.exit_status > 0:
+            return False
+
+        # Remove job from DB.
+        db.session.delete(cronjob)
+        db.session.commit()
+        return True
 
 
     def list_jobs(self):

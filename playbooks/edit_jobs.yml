@@ -1,0 +1,27 @@
+---
+## Playbook required vars.
+# comment
+# user
+# job
+# schedule
+# state 
+
+- name: Adds and Edits Cronjob Entries
+  hosts: localhost
+  become: true
+  connection: local
+  vars:
+    state: "present"
+
+  tasks:
+    - name: Add cron job via connector
+      ansible.builtin.cron:
+        name: "{{ comment }}"
+        user: "{{ user }}"
+        job: "{{ job }}"
+        minute: "{{ schedule.split()[0] }}"
+        hour: "{{ schedule.split()[1] }}"
+        day: "{{ schedule.split()[2] }}"
+        month: "{{ schedule.split()[3] }}"
+        weekday: "{{ schedule.split()[4] }}"
+        state: "{{ state }}"

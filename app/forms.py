@@ -2,8 +2,11 @@ import re
 import os
 import json
 import getpass
+
+from cron_converter import Cron
 from flask_wtf import FlaskForm
 from wtforms.widgets import ColorInput
+
 from wtforms.validators import (
     InputRequired,
     AnyOf,
@@ -18,6 +21,7 @@ from wtforms import (
     PasswordField,
     RadioField,
     SubmitField,
+    SelectField,
     TextAreaField,
     StringField,
     IntegerField,
@@ -29,7 +33,10 @@ from wtforms import (
 from .utils import get_servers
 from .models import *
 
+
 USERNAME = getpass.getuser()
+
+VALID_HEX_COLOR = r"^#(?:[0-9a-fA-F]{1,2}){3}$"
 
 # Input bad char regex stuff.
 BAD_CHARS = r'^[^ \$\'"\\#=\[\]!<>|;{}()*,?~&]*$'
@@ -217,12 +224,8 @@ class AddForm(FlaskForm):
     )
 
 
-VALID_HEX_COLOR = r"^#(?:[0-9a-fA-F]{1,2}){3}$"
-
-
 class ColorField(StringField):
     """Custom color field using HTML5 color input"""
-
     widget = ColorInput()
 
 
@@ -576,3 +579,72 @@ class EditUsersForm(FlaskForm):
     controls = SelectMultipleField("Allowed Controls", choices=[], coerce=str)
     server_ids = SelectMultipleField("Allowed Game Servers", choices=[], coerce=str)
 
+
+class ValidCronExpr:
+    """Validator checks cron expression is valid"""
+
+    def __init__(self, message="Invalid cron expression!"):
+        self.message = message
+
+    def __call__(self, form, field):
+        """This should raise a ValueError if invalid."""
+        try:
+            Cron(field.data)
+        except ValueError:
+            raise ValidationError(self.message)
+
+
+class JobsForm(FlaskForm):
+    command = SelectField(
+        "Command",
+        validators=[InputRequired()],
+        # Just for setting defaults as good practice. Will get overwritten by
+        # route logic for game server specific options.
+        choices=[
+            ('st', 'start'),
+            ('sp', 'stop'),
+            ('r', 'restart'),
+            ('m', 'monitor'),
+            ('ta', 'test-alert'),
+            ('dt', 'details'),
+            ('ul', 'update-lgsm'),
+            ('u', 'update'),
+            ('b', 'backup'),
+            ('sd', 'send')
+        ],
+        render_kw={
+            "class": "form-select bg-dark text-light border-secondary"
+        }
+    )
+
+    cron_expression = StringField(
+        "Cron Expression",
+        validators=[
+            InputRequired(),
+            ValidCronExpr(),
+        ],
+        render_kw={
+            "class": "form-control bg-dark text-light border-secondary",
+            "readonly": True
+        }
+    )
+
+    comment = StringField(
+        "Comment",
+        validators=[
+            Length(max=150),
+            # Spaces are allowed in comments, so remove form BAD_CHARS str.
+            Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG),
+        ],
+        render_kw={"placeholder": "Some comment here", "class": "form-control bg-dark text-light border-secondary"},
+    )
+
+    server_id = HiddenField(
+        "Server ID",
+        validators=[
+            InputRequired(),
+            ServerExists(),
+        ],
+    )
+
+    job_id = HiddenField("Job ID")

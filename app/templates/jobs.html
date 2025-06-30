@@ -4,6 +4,8 @@
 {% block content %}
 
         {% set parsed_json = user.permissions|from_json %}
+        <br>
+        {% include 'spinners.html' %}
 
         <br />
         <h2>Web-LGSM Job Scheduler</h2>
@@ -19,8 +21,6 @@
               </a>
             </div>
           </div>
-
-
         {% endfor %}
 
         {% if selected_server %}
@@ -41,7 +41,7 @@
           </div>
           <div class="list-group">
             {% for job in jobs_list %}
-            <div class="list-group-item rounded border-secondary">
+            <div class="job-item list-group-item rounded border-secondary">
               <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1">{{ job.command }}</h5>
                 <small class="text-muted">Job ID: {{ job.job_id }}</small>
@@ -74,31 +74,24 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body bg-dark">
-                <form id="cronForm">
-                  <input type="hidden" name="server_id" id="server_id" value="">
-                  <input type="hidden" name="job_id" id="job_id" value="">
-                  <input type="hidden" name="comment" id="job_id" value="">
+                <form id="cronForm" method="POST" action="/jobs">
+                  {{ form.csrf_token }}
+                  {{ form.server_id(value=selected_server) }}
+                  {{ form.job_id() }}
+
                   <div class="mb-3">
                     <div class="row">
                       <div class="col">
                         <label class="form-label">Command</label>
-                        <select class="form-select bg-dark text-light border-secondary" name="command" id="command">
-                          <option value="st">stop</option>
-                          <option value="sp">start</option>
-                          <option value="r">restart</option>
-                        </select>
+                        {{ form.command(class="form-select bg-dark text-light border-secondary") }}
                       </div>
                     </div>
                     <div class="row mt-2">
                       <div class="col">
                         <label class="form-label">Comment</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary" id="comment" name="comment" placeholder="Some comment here">
+                        {{ form.comment(class="form-control bg-dark text-light border-secondary") }}
                       </div>
                     </div>
-<!--
-                    <label for="command" class="form-label">Command</label>
-                    <input type="text" class="form-control" id="command" name="command" required>
--->
                   </div>
 
                   <div class="card mb-3 bg-dark border-secondary">
@@ -157,7 +150,7 @@
                       </div>
                       <div class="mt-3">
                         <label class="form-label">Cron Expression (readonly)</label>
-                        <input type="text" class="form-control bg-dark text-light border-secondary" id="cronExpression" readonly>
+                        {{ form.cron_expression(class="form-control bg-dark text-light border-secondary", id="cronExpression") }}
                       </div>
                       <div class="mt-2">
                         <small class="text-muted" id="cronDescription"></small>
@@ -168,13 +161,14 @@
               </div>
               <div class="modal-footer bg-dark border-secondary">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-outline-primary" id="saveCron">Save Changes</button>
+                <button type="submit" form="cronForm" class="btn btn-outline-primary" id="saveCron">Save Changes</button>
               </div>
             </div>
           </div>
         </div>
         {% endif %}
 
+        <script src="/static/js/show-spinners.js"></script>
         <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Update cron expression when any field changes
@@ -211,37 +205,48 @@ document.addEventListener('DOMContentLoaded', function() {
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('addCronModal'));
           modal.show();
-        });
+      });
     });
   });
 
-/*
-  // Save button handler
-  document.getElementById('saveCron').addEventListener('click', function() {
-    const formData = {
-      uuid: document.getElementById('uuid').value,
-      command: document.getElementById('command').value,
-      schedule: document.getElementById('cronExpression').value
-    };
+  // Delete button handlers
+  document.querySelectorAll('.delete-cron').forEach(btn => {
+    btn.addEventListener('click', handleDeleteCron);
+  });
+});
 
-    const method = formData.uuid ? 'PUT' : 'POST';
-    const url = formData.uuid ? `/api/cron/${formData.uuid}` : '/api/cron';
+function handleDeleteCron() {
+  const serverId = this.getAttribute('data-uuid');
+  const jobId = this.getAttribute('data-uid');
+  
+  if (confirm('Are you sure you want to delete this cron job?')) {
+    showSpinners();
+    window.scrollTo(0,0); 
 
-    fetch(url, {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
+    fetch(`/api/cron/${serverId}/${jobId}`, {
+      method: 'DELETE'
     })
     .then(response => {
-      if (response.ok) {
-        window.location.reload();
+      if (response.status === 204) {
+        this.closest('.job-item').remove();
+        
+        showAlert('Cron job deleted successfully', 'success');
+        hideSpinners();
+      } 
+      else if (response.status === 500) {
+        throw new Error('Server error while deleting cron job');
       }
+      else {
+        throw new Error(`Unexpected response status: ${response.status}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting cron job:', error);
+      showAlert('Failed to delete cron job', 'danger');
+      hideSpinners();
     });
-  });
-*/
-});
+  }
+}
 
 function updateCronExpression() {
   const minutes = document.getElementById('minutes').value;
@@ -310,43 +315,5 @@ function describeCron(cronExpression) {
   return description;
 }
         </script>
-
-        {#
-          {% for job in jobs_list %}
-            {{job.uuid}}
-            {{job.schedule}}
-            {{job.command}}
-          {% endfor %}
-        {% endif %}
-
-        {% for command in server_commands %}
-          {% if command.short_cmd == 'sd' %}
-          <div class="row">
-            <div class="col">
-              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_id}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
-            </div>
-          {% else %}
-          <div class="row">
-            <div class="col">
-              <form method="POST" id="ctrls-form" action="/controls">
-                {{ controls_form.csrf_token }}
-                {{ controls_form.ctrl_form(value='true') }}
-                {{ controls_form.server_id(value=server_id) }}
-                {{ controls_form.command(value=command.short_cmd) }}
-
-                <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
-              </form>
-            </div>
-          {% endif %}
-            <div class="col text-primary">
-              {{command.description}}
-            </div>
-          </div>
-          <br />
-        {% endfor %}
-      </div>
-      <br />
-
-      #}
 
 {% endblock %}

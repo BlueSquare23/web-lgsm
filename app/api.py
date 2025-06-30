@@ -6,7 +6,7 @@ from flask_restful import Api, Resource
 
 from .utils import *
 from .models import *
-from .jobs import Jobs
+from .cron import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 
@@ -15,24 +15,11 @@ api = Api(api_bp)
 
 ######### API Cron Manager #########
 
-def validate_cron(expression):
-    """Basic cron expression validation"""
-    parts = expression.split()
-    if len(parts) != 5:
-        return False
-
-    # Very basic validation - you might want to enhance this
-    for part in parts:
-        if not re.match(r'^(\*|\d+(-\d+)?(,\d+(-\d+)?)*)(/\d+)?$', part):
-            return False
-    return True
-
 class ManageCron(Resource):
-
     @login_required
     def get(self, server_id, job_id=None):
-        jobs = Jobs(server_id)
-        jobs_list = jobs.list_jobs()
+        cron = CronService(server_id)
+        jobs_list = cron.list_jobs()
         if job_id == None:
             job = next((j for j in jobs_list if j['server_id'] == server_id), None)
             return jsonify(job) if job else ('Not found', 404)
@@ -45,8 +32,8 @@ class ManageCron(Resource):
     @login_required
     def post(self, server_id):
         data = request.json
-        jobs = Jobs(server_id)
-        jobs_list = jobs.list_jobs()
+        cron = CronService(server_id)
+        jobs_list = cron.list_jobs()
 
         if not data.get('command') or not data.get('schedule'):
             return 'Missing command or schedule', 400
@@ -62,9 +49,12 @@ class ManageCron(Resource):
         jobs_list.append(new_job)
         return jsonify(new_job), 201
 
-    def delete(self, server_id):
-        jobs_list = [j for j in jobs_list if j['uuid'] != server_id]
-        return '', 204
+    def delete(self, server_id, job_id):
+        cron = CronService(server_id)
+        if cron.delete_job(job_id):
+            return '', 204
+
+        return 500
 
 api.add_resource(ManageCron, "/cron/<string:server_id>/<string:job_id>")
 

@@ -26,22 +26,12 @@ from .processes_global import *
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
-PATHS = {
-    "docker": "/usr/bin/docker",
-    "sudo": "/usr/bin/sudo",
-    "tmux": "/usr/bin/tmux",
-    "cat": "/usr/bin/cat",
-    "kill": "/usr/bin/kill",
-    "find": "/usr/bin/find",
-    "ssh-keygen": "/usr/bin/ssh-keygen",
-    "rm": "/usr/bin/rm",
-}
+from .paths import PATHS
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
     "/opt/web-lgsm/bin/python",
-    ANSIBLE_CONNECTOR,
+    PATHS["ansible_connector"],
 ]
 
 # Network stats globals.

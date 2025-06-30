@@ -4,6 +4,7 @@ import yaml
 import getpass
 import configparser
 import markdown
+import shortuuid
 
 from threading import Thread
 from flask_login import login_required, current_user
@@ -15,6 +16,7 @@ from flask import (
     url_for,
     redirect,
     current_app,
+    jsonify,
 )
 
 from . import db
@@ -23,19 +25,14 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms import *
-from .jobs import Jobs
+from .cron import CronService
 from . import cache
 
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
 VENV = "/opt/web-lgsm/"
-ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
-PATHS = {
-    "docker": "/usr/bin/docker",
-    "sudo": "/usr/bin/sudo",
-    "tmux": "/usr/bin/tmux",
-}
+from .paths import PATHS
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -485,7 +482,7 @@ def install():
         PATHS["sudo"],
         "-n",
         os.path.join(VENV, "bin/python"),
-        ANSIBLE_CONNECTOR,
+        PATHS["ansible_connector"],
         "--install",
         str(server_id),
     ]
@@ -929,13 +926,16 @@ def jobs():
 #    if not user_has_permissions(current_user, "jobs"):
 #        return redirect(url_for("views.home"))
 
-    # Create JobsForm.
-#    form = JobsForm()
+    # TODO: Make this its own read_config section.
+    config_options = read_config("controls")
 
-    
+    # Create JobsForm.
+    form = JobsForm()
+
     if request.method == "GET":
         server_id = None
         jobs_list = []
+        cmds_list = []
         game_servers = GameServer.query.all()
 
         if request.args:
@@ -943,12 +943,18 @@ def jobs():
             id_form = ValidateID(request.args)
             if not id_form.validate():
                 validation_errors(id_form)
-                return redirect(url_for("views.home"))
+                return redirect(url_for("views.jobs"))
 
             server_id = request.args.get("server_id")
             server = GameServer.query.filter_by(id=server_id).first()
-            jobs = Jobs(server_id)
-            jobs_list = jobs.list_jobs()
+            cron = CronService(server_id)
+            jobs_list = cron.list_jobs()
+
+            # Pull in commands list from commands.json file.
+            cmds_list = get_commands(
+                server.script_name, config_options["send_cmd"], current_user
+            )
+            form.command.choices = [(cmd.short_cmd, cmd.long_cmd) for cmd in cmds_list if cmd.long_cmd != 'console']
 
         current_app.logger.debug(log_wrap("jobs_list", jobs_list))
 
@@ -958,7 +964,35 @@ def jobs():
             game_servers=game_servers,
             selected_server=server_id,
             jobs_list=jobs_list,
+            form=form,
         )
+
+    if request.method == "POST":
+        if not form.validate_on_submit():
+            validation_errors(form)
+            # Redirect back to the previous page.
+            return redirect(request.referrer)
+
+        job = {
+            'expression': form.cron_expression.data,
+            'command': form.command.data,
+            'server_id': form.server_id.data,
+            'job_id': form.job_id.data,
+            'comment': form.comment.data,
+        }
+        current_app.logger.debug(log_wrap("job", job))
+
+        cron = CronService(form.server_id.data)
+        if cron.edit_job(job):
+            flash("Cronjob updated successfully!", category="success")
+            current_app.logger.info(log_wrap("request.form", request.form))
+
+            # For debugging.
+            #return jsonify(dict(request.form))
+            return redirect(url_for("views.jobs", server_id=form.server_id.data))
+
+        flash("Error adding job", category="error")
+        return redirect(request.referrer)
 
 
 ######### Swagger API Docs #########

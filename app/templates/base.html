@@ -67,6 +67,7 @@
       </div>
     </nav>
 
+    <!-- Handle Alerts from Backend (Jinja2) -->
     <div id="alert-container" style="position: fixed; width: 100%; z-index: 1000;"></div>
     {%- with messages = get_flashed_messages(with_categories=True) -%}
         {% if messages %}
@@ -85,6 +86,33 @@
             {% endfor %}
         {% endif %}
     {%- endwith %}
+
+    <!-- Handle Alerts from Frontend (JavaScript) -->
+    <script>
+function showAlert(message, type = 'success') {
+  const alertContainer = document.getElementById('alert-container');
+  
+  // Create the alert HTML and append it
+  alertContainer.insertAdjacentHTML('beforeend', `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `);
+  
+  // Get the newly created alert
+  const alerts = alertContainer.getElementsByClassName('alert');
+  const newAlert = alerts[alerts.length - 1];
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (newAlert.parentNode) {
+      const bsAlert = new bootstrap.Alert(newAlert);
+      bsAlert.close();
+    }
+  }, 5000);
+}
+    </script>
 
     <div class="container pb-5">
       {%- block content -%}

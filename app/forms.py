@@ -601,20 +601,37 @@ class JobsForm(FlaskForm):
         # Just for setting defaults as good practice. Will get overwritten by
         # route logic for game server specific options.
         choices=[
-            ('st', 'start'),
-            ('sp', 'stop'),
-            ('r', 'restart'),
-            ('m', 'monitor'),
-            ('ta', 'test-alert'),
-            ('dt', 'details'),
-            ('ul', 'update-lgsm'),
-            ('u', 'update'),
-            ('b', 'backup'),
-            ('sd', 'send')
+            'start',
+            'stop',
+            'restart',
+            'monitor',
+            'test-alert',
+            'details',
+            'update-lgsm',
+            'update',
+            'backup',
         ],
         render_kw={
             "class": "form-select bg-dark text-light border-secondary"
         }
+    )
+
+    custom = StringField(
+        "Custom Command",
+        validators=[
+            Length(max=150),
+        ],
+        render_kw={"placeholder": "Your cmd here", "class": "form-control bg-dark text-light border-secondary"},
+    )
+
+    comment = StringField(
+        "Comment",
+        validators=[
+            Length(max=150),
+            # Spaces are allowed in comments, so remove form BAD_CHARS str.
+            Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG),
+        ],
+        render_kw={"placeholder": "Some comment here", "class": "form-control bg-dark text-light border-secondary"},
     )
 
     cron_expression = StringField(
@@ -627,16 +644,6 @@ class JobsForm(FlaskForm):
             "class": "form-control bg-dark text-light border-secondary",
             "readonly": True
         }
-    )
-
-    comment = StringField(
-        "Comment",
-        validators=[
-            Length(max=150),
-            # Spaces are allowed in comments, so remove form BAD_CHARS str.
-            Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG),
-        ],
-        render_kw={"placeholder": "Some comment here", "class": "form-control bg-dark text-light border-secondary"},
     )
 
     server_id = HiddenField(

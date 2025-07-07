@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.8.5 Unreleased]
+
+### Added
+
+- Add jinja2 extension for loop controls to enable `continue` & `break` in templates.
+- Add caching for authed ssh client objects to cut down ssh response times.
+- Add new cronjob manager interface for manipulating system's crontab.
+
+### Changed
+
+- Upgrade project to use Bootstrap 5.3.7.
+
+### Fixed
+
+- Fix alert bootstrap / html to make backend alerts dismissible.
+
 ## [v1.8.4] - 2025-06-15
 
 ### Added

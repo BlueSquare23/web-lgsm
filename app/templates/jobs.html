@@ -11,22 +11,9 @@
         <h2>Web-LGSM Job Scheduler</h2>
         <hr />
 
-        <h3>Game Servers:</h3>
-        <hr />
-        {% for server in game_servers %}
-          <div class="list-group-item rounded">
-            <div class="d-flex align-items-center">
-              <a href="/jobs?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
-                  <span>{{server.install_name}}</span>
-              </a>
-            </div>
-          </div>
-        {% endfor %}
-
-        {% if selected_server %}
+        {% if server_name %}
           <div class="container mt-4">
-          <br />
-          <h3>Cron Jobs:</h3>
+              <h3>Cron Jobs for {{ server_name }}:</h3>
           <hr />
           <div class="card mb-4 rounded border-secondary">
             <div class="card-body bg-dark d-flex justify-content-center">
@@ -44,6 +31,7 @@
             <div class="job-item list-group-item rounded border-secondary">
               <div class="d-flex w-100 justify-content-between">
                 <h5 class="mb-1">{{ job.command }}</h5>
+                <h6 class="mb-1">{{ job.comment }}</h6>
                 <small class="text-muted">Job ID: {{ job.job_id }}</small>
               </div>
 
@@ -76,20 +64,26 @@
               <div class="modal-body bg-dark">
                 <form id="cronForm" method="POST" action="/jobs">
                   {{ form.csrf_token }}
-                  {{ form.server_id(value=selected_server) }}
+                  {{ form.server_id(value=server_id) }}
                   {{ form.job_id() }}
 
                   <div class="mb-3">
                     <div class="row">
                       <div class="col">
                         <label class="form-label">Command</label>
-                        {{ form.command(class="form-select bg-dark text-light border-secondary") }}
+                        {{ form.command(class="form-select bg-dark text-light border-secondary", id="command") }}
+                      </div>
+                    </div>
+                    <div class="row mt-2" id="custom-cmd" style="display:none">
+                      <div class="col">
+                        <label class="form-label">Custom Command</label>
+                        {{ form.custom(class="form-control bg-dark text-light border-secondary", id="custom") }}
                       </div>
                     </div>
                     <div class="row mt-2">
                       <div class="col">
                         <label class="form-label">Comment</label>
-                        {{ form.comment(class="form-control bg-dark text-light border-secondary") }}
+                        {{ form.comment(class="form-control bg-dark text-light border-secondary", id="comment") }}
                       </div>
                     </div>
                   </div>
@@ -178,6 +172,16 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   updateCronExpression();
 
+  // Event handler for showing custom-cmd field.
+  document.getElementById('command').addEventListener('change', function() {
+    const customCmdDiv = document.getElementById('custom-cmd');
+    if (this.value === 'custom' || this.value === 'send') {
+      customCmdDiv.style.display = 'block';
+    } else {
+      customCmdDiv.style.display = 'none';
+    }
+  });
+
   // Edit button handlers
   document.querySelectorAll('.edit-cron').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -190,7 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
           document.getElementById('server_id').value = job.server_id;
           document.getElementById('job_id').value = job.job_id;
           document.getElementById('comment').value = job.comment;
-          document.getElementById('command').value = job.command;
+          document.getElementById('command').value = job.command.split(" ")[1];
+          document.getElementById('custom').value = job.custom;
           
           // Parse cron expression
           const parts = job.schedule.split(' ');
@@ -209,7 +214,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Delete button handlers
+  // Save button handler
+  document.getElementById('saveCron').addEventListener('click', function() {
+    const cronModal = document.getElementById('addCronModal');
+    const bootstrapModal = bootstrap.Modal.getInstance(cronModal);
+    if (bootstrapModal) {
+      bootstrapModal.hide();
+    }
+    showSpinners();
+    window.scrollTo(0,0); 
+  });
+
+  // Delete button handler
   document.querySelectorAll('.delete-cron').forEach(btn => {
     btn.addEventListener('click', handleDeleteCron);
   });
@@ -315,5 +331,21 @@ function describeCron(cronExpression) {
   return description;
 }
         </script>
+
+        <br>
+        <h3>Game Servers:</h3>
+        <hr />
+        {% for server in game_servers %}
+          {% if server.install_type == 'remote' %}
+            {% continue %}
+          {% endif %}
+          <div class="list-group-item rounded">
+            <div class="d-flex align-items-center">
+              <a href="/jobs?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                  <span>{{server.install_name}}</span>
+              </a>
+            </div>
+          </div>
+        {% endfor %}
 
 {% endblock %}

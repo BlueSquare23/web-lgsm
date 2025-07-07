@@ -85,6 +85,7 @@ def main():
     app.logger.removeHandler(default_handler)
     migrate = Migrate(app, db, render_as_batch=True)
     cache.init_app(app)
+    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
     # Initialize DB.
     db.init_app(app)

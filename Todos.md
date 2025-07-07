@@ -129,11 +129,24 @@
     crontab entries. Then the actual restarts or backups will just be handled
     by the lgsm game server cli script itself.
   - [ ] Add api routes for:
-    - `/api/add_job`
-    - `/api/delete_job`
-    - `/api/list_jobs`
-  - [ ] Add new neutral service layer class for handling actual needful doing.
-  - [ ] Add new route and form for `/jobs`.
+    - [ ] `/api/add_job`
+    - [x] `/api/delete_job`
+    - [x] `/api/list_jobs`
+  - [ ] Add docs for new api routes
+  - [x] Add new neutral service layer class for handling actual needful doing.
+  - [x] Add new route and form for `/jobs`.
+
+* [x] **Cache connected ssh client objects**
+  - I want to cache the connection objects after initial connection is make
+    subsequent ssh requests super speedy. 
+  - Looks like I can use functools `lru_cache` to do it.
+
+* [ ] **Add user action audit log feature + route for viewing**
+  - Now that I have multiple users, when some user takes an action, I want to
+    record who did what when to an audit log for later viewing by
+    administrators in the web interface.
+  - [ ] Need new database model to store audit log info.
+  - [ ] Need new api routes to add info and remove info from audit log.
 
 * [ ] **Add new Edit Game Server Info**
   - So far the only option for users to change game server information has been
@@ -148,13 +161,6 @@
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something
     for backup / manual update / migration purposes.
-
-* [ ] **Add user action audit log feature + route for viewing**
-  - Now that I have multiple users, when some user takes an action, I want to
-    record who did what when to an audit log for later viewing by
-    administrators in the web interface.
-  - [ ] Need new database model to store audit log info.
-  - [ ] Need new api routes to add info and remove info from audit log.
 
 * [ ] **Create service layer class for controls page & add api route**
   - [ ] Basically build out api routes for buttons on controls page.

@@ -9,6 +9,11 @@ from .paths import PATHS
 from . import db
 from .models import *
 
+"""
+Service class interface for interacting with system cron from API and jobs
+route.
+"""
+
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
@@ -40,6 +45,10 @@ class CronService:
         if cronjob == None:
             newjob = True
             cronjob = Job()
+        else:
+            # If existing job, del old job first. Inefficient, but keeps state
+            # clean. 
+            self.delete_job(cronjob.id, del_db_entry=False)
 
         cronjob.server_id = job["server_id"]
         cronjob.command = job["command"]
@@ -66,13 +75,14 @@ class CronService:
         return True
 
 
-    def delete_job(self, job_id):
+    def delete_job(self, job_id, del_db_entry=True):
         """
         Delete cronjob entries from DB & system crontab.
 
         Args:
             job_id (str(shortuuid)): Id of job to delete.
-
+            del_db_entry (bool): Should delete or keep database entry for job.
+                                 Used for edit_job to purge old job from crontab first. 
         Returns:
             bool: True if job removed successfully, False otherwise.
         """
@@ -93,6 +103,9 @@ class CronService:
         if proc_info.exit_status > 0:
             return False
 
+        if not del_db_entry:
+            return True
+
         # Remove job from DB.
         db.session.delete(cronjob)
         db.session.commit()
@@ -112,9 +125,10 @@ class CronService:
         cmd = ['crontab', '-l']
 
         if should_use_ssh(server):
-            pass
+            run_cmd_ssh(cmd, server, False, 5.0, cmd_id) 
+        else:
+            run_cmd_popen(cmd, cmd_id)
 
-        run_cmd_popen(cmd, cmd_id)
         proc_info = get_process(cmd_id)
 
         return self.parse_cron_jobs("".join(proc_info.stdout), server.id)

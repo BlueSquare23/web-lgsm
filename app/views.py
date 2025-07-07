@@ -105,6 +105,7 @@ def controls():
         server_id = request.args.get("server_id")
         server = GameServer.query.filter_by(id=server_id).first()
         current_app.logger.info(log_wrap("server_id", server_id))
+        jobs_edit = True if server.install_type == 'local' else False
 
         # Check if user has permissions to game server for controls route.
         if not user_has_permissions(current_user, "controls", server_id):
@@ -152,6 +153,7 @@ def controls():
             user=current_user,
             server_id=server_id,
             server_name=server.install_name,
+            show_jobs_edit=jobs_edit,
             server_commands=cmds_list,
             config_options=config_options,
             cfg_paths=cfg_paths,
@@ -927,13 +929,15 @@ def jobs():
 #        return redirect(url_for("views.home"))
 
     # TODO: Make this its own read_config section.
-    config_options = read_config("controls")
+    config_options = read_config("jobs")
 
     # Create JobsForm.
     form = JobsForm()
 
     if request.method == "GET":
+        server = None
         server_id = None
+        server_name = None
         jobs_list = []
         cmds_list = []
         game_servers = GameServer.query.all()
@@ -947,6 +951,7 @@ def jobs():
 
             server_id = request.args.get("server_id")
             server = GameServer.query.filter_by(id=server_id).first()
+            server_name = server.install_name
             cron = CronService(server_id)
             jobs_list = cron.list_jobs()
 
@@ -954,7 +959,15 @@ def jobs():
             cmds_list = get_commands(
                 server.script_name, config_options["send_cmd"], current_user
             )
-            form.command.choices = [(cmd.short_cmd, cmd.long_cmd) for cmd in cmds_list if cmd.long_cmd != 'console']
+            # No console for automated jobs. Don't even give the user the option to be stupid.
+            form.command.choices = [cmd.long_cmd for cmd in cmds_list]
+            form.command.choices.remove('console')
+
+            if not config_options['send_cmd']:
+                form.command.choices.remove('send')
+
+            if config_options['allow_custom_jobs']:
+                form.command.choices.append('custom')
 
         current_app.logger.debug(log_wrap("jobs_list", jobs_list))
 
@@ -962,9 +975,11 @@ def jobs():
             "jobs.html",
             user=current_user,
             game_servers=game_servers,
-            selected_server=server_id,
+            server_name=server_name,
+            server_id=server_id,
             jobs_list=jobs_list,
             form=form,
+            spinner_context="Updating Crontab",
         )
 
     if request.method == "POST":
@@ -973,9 +988,23 @@ def jobs():
             # Redirect back to the previous page.
             return redirect(request.referrer)
 
+        # Setup custom command if send and custom.
+        command = form.command.data
+        if form.command.data == 'send' or form.command.data == 'custom':
+            if form.custom.data == None:
+                flash(f"Custom cmd required for {custom_job_type}", category="error")
+                return redirect(url_for("views.jobs", server_id=form.server_id.data))
+
+            if form.command.data == 'send':
+                command = f"send {form.custom.data}"
+
+            # TODO: Build this into main.conf options!!!
+            if form.command.data == 'custom':
+                command = f"custom: {form.custom.data}"
+
         job = {
             'expression': form.cron_expression.data,
-            'command': form.command.data,
+            'command': command,
             'server_id': form.server_id.data,
             'job_id': form.job_id.data,
             'comment': form.comment.data,

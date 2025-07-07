@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- jQuery CDN -->
+    <!-- jQuery Lib -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 
     <!-- Bootstrap CSS Only -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='js/node_modules/@xterm/xterm/css/xterm.css') }}" />
@@ -68,30 +68,31 @@
     </nav>
 
     <!-- Handle Alerts from Backend (Jinja2) -->
-    <div id="alert-container" style="position: fixed; width: 100%; z-index: 1000;"></div>
+    <div id="alert-container" style="position: fixed; width: 100%; z-index: 1000;">
     {%- with messages = get_flashed_messages(with_categories=True) -%}
         {% if messages %}
             {% for category, message in messages %}
                 {% if category == "error" %}
-                  <div class="alert alert-danger alert-dismissable fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message + "\n" }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
                 {% else %}
-                  <div class="alert alert-success alert-dismissable fade show" role="alert">
+                  <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"> </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                   </div>
                 {% endif %}
             {% endfor %}
         {% endif %}
     {%- endwith %}
+    </div>
 
     <!-- Handle Alerts from Frontend (JavaScript) -->
     <script>
 function showAlert(message, type = 'success') {
   const alertContainer = document.getElementById('alert-container');
-  
+
   // Create the alert HTML and append it
   alertContainer.insertAdjacentHTML('beforeend', `
     <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -99,11 +100,18 @@ function showAlert(message, type = 'success') {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   `);
-  
-  // Get the newly created alert
-  const alerts = alertContainer.getElementsByClassName('alert');
-  const newAlert = alerts[alerts.length - 1];
-  
+  dismissAlert();
+}
+
+function dismissAlert(newAlert = null) {
+  const alertContainer = document.getElementById('alert-container');
+
+  // Get the newly created alert if non supplied
+  if (newAlert == null) {
+    const alerts = alertContainer.getElementsByClassName('alert');
+    newAlert = alerts[alerts.length - 1];
+  }
+
   // Auto-remove after 5 seconds
   setTimeout(() => {
     if (newAlert.parentNode) {
@@ -112,6 +120,16 @@ function showAlert(message, type = 'success') {
     }
   }, 5000);
 }
+
+// Dismiss all alerts from backend
+function dismissAll() {
+  const alertContainer = document.getElementById('alert-container');
+  const alerts = alertContainer.getElementsByClassName('alert');
+  Array.from(alerts).forEach(alertElement => {
+    dismissAlert(alertElement);
+  });
+}
+dismissAll();
     </script>
 
     <div class="container pb-5">
@@ -120,10 +138,10 @@ function showAlert(message, type = 'success') {
       <br/>
 
     <!-- Bootstrap JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 
     <div id="footer-container" class="container-fluid fixed-bottom bg-dark pt-2">
-      <a style="text-decoration: none;" href="/about"><p class="text-center text-muted">Web LGSM - Version: 1.8.4</p></a>
+      <a style="text-decoration: none;" href="/about"><p class="text-center text-muted">Web LGSM - Version: 1.8.5</p></a>
     </div>
   </body>
 </html>

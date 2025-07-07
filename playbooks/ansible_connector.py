@@ -21,7 +21,7 @@ PS = '/usr/bin/ps'
 PKILL = '/usr/bin/pkill'
 PLAYBOOKS = '/usr/local/share/web-lgsm'  # Playbook dir path.
 VENV = '/opt/web-lgsm'  # System venv path.
-APP_PATH = '/home/blue/Projects/web-lgsm'  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT GET'S UPDATED!
+APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT GET'S UPDATED!
 
 # Import db classes from app.
 sys.path.append(APP_PATH)

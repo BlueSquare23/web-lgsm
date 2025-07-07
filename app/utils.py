@@ -20,9 +20,10 @@ from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 from functools import lru_cache
 
-from .models import GameServer
+from .models import GameServer, Audit
 from .cmd_descriptor import CmdDescriptor
 from .processes_global import *
+from . import db
 from . import cache
 
 # Constants.
@@ -1763,4 +1764,19 @@ def write_cfg(server, cfg_path, new_file_contents):
         return True
     except:
         return False
+
+
+def audit_log_event(user_id, message):
+    """
+    Helper function to create new audit log entries. Adds new messages to
+    database and logs them using custom audit_logger.
+    """
+    audit_entry = Audit(
+        user_id=user_id,
+        message=message
+    )
+    db.session.add(audit_entry)
+    db.session.commit()
+
+    current_app.audit_logger.info(message)
 

@@ -57,6 +57,9 @@ def main():
                 "formatters": {
                     "default": {
                         "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+                    },
+                    "audit": {
+                        "format": "[%(asctime)s] AUDIT: %(message)s",
                     }
                 },
                 "handlers": {
@@ -64,9 +67,24 @@ def main():
                         "class": "logging.StreamHandler",
                         "stream": "ext://flask.logging.wsgi_errors_stream",
                         "formatter": "default",
+                    },
+                    "audit_file": {
+                        "class": "logging.FileHandler",
+                        "filename": "logs/audit.log",
+                        "formatter": "audit",
                     }
                 },
-                "root": {"level": log_level, "handlers": ["wsgi"]},
+                "loggers": {
+                    "audit": {
+                        "level": "INFO",
+                        "handlers": ["audit_file"],
+                        "propagate": False,
+                    }
+                },
+                "root": {
+                    "level": log_level,
+                    "handlers": ["wsgi"]
+                },
             }
         )
 
@@ -83,6 +101,7 @@ def main():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
     app.logger.removeHandler(default_handler)
+    app.audit_logger = logging.getLogger('audit')
     migrate = Migrate(app, db, render_as_batch=True)
     cache.init_app(app)
     app.jinja_env.add_extension('jinja2.ext.loopcontrols')

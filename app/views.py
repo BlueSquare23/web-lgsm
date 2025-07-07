@@ -262,6 +262,7 @@ def controls():
         cmd = [script_path, short_cmd, send_cmd]
 
         flash("Sending command to console")
+        audit_log_event(current_user.id, f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
         if should_use_ssh(server):
             daemon = Thread(
                 target=run_cmd_ssh,
@@ -300,6 +301,14 @@ def controls():
                 update_tmux_socket_name_cache(server.id, None, True)
 
         cmd = [script_path, short_cmd]
+
+        # Get long_cmd for matching short_cmd for audit logging. 
+        long_cmd = short_cmd  # To at least long something in case fail to find long_cmd.
+        for c in cmds_list:
+            if c.short_cmd == short_cmd:
+                long_cmd = c.long_cmd
+
+        audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_cmd}' on '{server.install_name}'")
 
         if should_use_ssh(server):
             daemon = Thread(
@@ -465,12 +474,7 @@ def install():
 
     server_id = GameServer.query.filter_by(install_name=server_install_name).first().id
 
-    # Add new proc_info object for install process and associate with new
-    # game server ID.
-    #    proc_info = add_process(server_id, ProcInfoVessel())
-
     current_app.logger.info(log_wrap("server_id", server_id))
-    #    current_app.logger.info(log_wrap("proc_info", proc_info))
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
@@ -507,6 +511,8 @@ def install():
         name=f"clear_install_{server_id}",
     )
     clear_daemon.start()
+
+    audit_log_event(current_user.id, f"User '{current_user.username}', installed game server '{server.install_name}'")
 
     return render_template(
         "install.html",
@@ -687,6 +693,7 @@ def settings():
         return redirect(url_for("views.settings"))
 
     flash("Settings Updated!")
+    audit_log_event(current_user.id, f"User '{current_user.username}', change settings on settings page")
     return redirect(url_for("views.settings"))
 
 
@@ -831,6 +838,7 @@ def add():
         db.session.commit()
 
     flash("Game server added!")
+    audit_log_event(current_user.id, f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")
     return redirect(url_for("views.home"))
 
 
@@ -865,6 +873,7 @@ def edit():
             cfg_path = download_form.cfg_path.data
             server = GameServer.query.filter_by(id=server_id).first()
 
+            audit_log_event(current_user.id, f"User '{current_user.username}', downloaded config '{cfg_path}'")
             return download_cfg(server, cfg_path)
 
         # Convert raw get args into select_form args.
@@ -912,6 +921,7 @@ def edit():
 
     if write_cfg(server, cfg_path, new_file_contents):
         flash("Cfg file updated!", category="success")
+        audit_log_event(current_user.id, f"User '{current_user.username}', edited '{cfg_path}'")
     else:
         flash("Error writing to cfg file!", category="error")
 
@@ -1014,10 +1024,10 @@ def jobs():
         cron = CronService(form.server_id.data)
         if cron.edit_job(job):
             flash("Cronjob updated successfully!", category="success")
+            server = GameServer.query.filter_by(id=form.server_id.data).first()
+            audit_log_event(current_user.id, f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
             current_app.logger.info(log_wrap("request.form", request.form))
 
-            # For debugging.
-            #return jsonify(dict(request.form))
             return redirect(url_for("views.jobs", server_id=form.server_id.data))
 
         flash("Error adding job", category="error")

@@ -128,11 +128,12 @@
   - The idea here would be to create a simple web interface to wrap up adding
     crontab entries. Then the actual restarts or backups will just be handled
     by the lgsm game server cli script itself.
+  - [ ] Add permissions controls for new /jobs route.
   - [ ] Add api routes for:
     - [ ] `/api/add_job`
     - [x] `/api/delete_job`
     - [x] `/api/list_jobs`
-  - [ ] Add docs for new api routes
+  - [ ] Add docs for new api routes.
   - [x] Add new neutral service layer class for handling actual needful doing.
   - [x] Add new route and form for `/jobs`.
 
@@ -141,12 +142,11 @@
     subsequent ssh requests super speedy. 
   - Looks like I can use functools `lru_cache` to do it.
 
-* [ ] **Add user action audit log feature + route for viewing**
+* [x] **Add user action audit log feature + route for viewing**
   - Now that I have multiple users, when some user takes an action, I want to
     record who did what when to an audit log for later viewing by
     administrators in the web interface.
-  - [ ] Need new database model to store audit log info.
-  - [ ] Need new api routes to add info and remove info from audit log.
+  - [x] Need new database model to store audit log info.
 
 * [ ] **Add new Edit Game Server Info**
   - So far the only option for users to change game server information has been

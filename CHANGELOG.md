@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add new audit log file and interface for searching recent log entries.
 - Add jinja2 extension for loop controls to enable `continue` & `break` in templates.
 - Add caching for authed ssh client objects to cut down ssh response times.
 - Add new cronjob manager interface for manipulating system's crontab.

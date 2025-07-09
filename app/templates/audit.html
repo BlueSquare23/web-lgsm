@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Web-LGSM Audit Log{% endblock %}
+
+{% block content %}
+      <br />
+
+        <h2 style="color: white;">Audit Log</h2>
+        <hr />
+
+        <div class="card mb-4">
+          <div class="card-body bg-dark border border-white rounded">
+            <form method="GET" action="{{ url_for('views.audit') }}">
+              <div class="row g-3">
+                <!-- Per Page -->
+                <div class="text-white bg-dark col-md-4">
+                  <label for="perPage" class="form-label">Results Per Page</label>
+                  <select class="form-select" id="perPage" name="per_page">
+                    <option value="10" >10 (default)</option>
+                    <option value="50" {% if request.args.get('per_page')|string == '50'|string %}selected{% endif %}>50</option>
+                    <option value="100" {% if request.args.get('per_page')|string == '100'|string %}selected{% endif %}>100</option>
+                    <option value="1000" {% if request.args.get('per_page')|string == '1000'|string %}selected{% endif %}>1000 (max)</option>
+                  </select>
+                </div>
+
+                <!-- User Filter -->
+                <div class="text-white bg-dark col-md-4">
+                  <label for="userFilter" class="form-label">Filter by User</label>
+                  <select class="form-select" id="userFilter" name="user_id">
+                    <option value="">All Users</option>
+                    {% for user in all_users %}
+                    <option value="{{ user.id }}" {% if request.args.get('user_id')|string == user.id|string %}selected{% endif %}>
+                      {{ user.username }} (ID: {{ user.id }})
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <!-- Message Search -->
+                <div class="col-md-4">
+                  <label for="messageSearch" class="text-white bg-dark form-label">Search Messages</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="messageSearch" name="search" 
+                         placeholder="Search event messages..." value="{{ request.args.get('search', '') }}">
+                  </div>
+                </div>
+                
+                <div class="col-12">
+                <button class="btn btn-outline-primary" type="submit">
+                  <i class="bi bi-search"></i> Search
+                </button>
+                <!-- Reset Button -->
+                    <a href="{{ url_for('views.audit') }}" class="btn btn-outline-danger">Reset Filters</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="table-responsive border border-white rounded">
+          <table class="table table-striped table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                  <th scope="col">Event ID</th>
+                  <th scope="col">User ID</th>
+                  <th scope="col">Username</th>
+                  <th scope="col">Event Message</th>
+                  <th scope="col">Date/Time</th>
+              </tr>
+            </thead>
+            <tbody class="table-dark">
+              {% for event in all_audit_events %}
+              <tr>
+                  <td title="{{event.id}}">{{event.id[:5]}}...</td>
+                  <td>{{event.user_id}}</td>
+                  <td>{{event.user.username}}</td>
+                  <td>{{event.message}}</td>
+                  <td>{{event.date_created}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        </br>
+
+        <!-- Pagination Controls -->
+        {% set query_params = request.args.to_dict() %}
+        <nav aria-label="Audit events pagination">
+          <ul class="pagination justify-content-center">
+            <!-- Previous Page -->
+            {% set query_params = query_params.update({'page': pagination.prev_num}) or query_params %}
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('views.audit', **query_params) if pagination.has_prev else '#' }}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+
+            <!-- Page Numbers -->
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=3) %}
+              {% if page_num %}
+                {% set query_params = query_params.update({'page': page_num}) or query_params %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('views.audit', **query_params) }}">{{ page_num }}</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+              {% endif %}
+            {% endfor %}
+
+            <!-- Next Page -->
+            {% set query_params = query_params.update({'page': pagination.next_num}) or query_params %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('views.audit', **query_params) if pagination.has_next else '#' }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="text-center text-white">
+            Showing page {{ pagination.page }} of {{ pagination.pages }}
+        </div>
+
+{% endblock %}

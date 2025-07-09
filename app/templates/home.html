@@ -90,6 +90,9 @@
         {% if user.role == 'admin' or parsed_json.jobs %}
         <a href="/jobs" class="list-group-item list-group-item-action">Edit Web-LGSM Jobs</a>
         {% endif %}
+        {% if user.role == 'admin' or parsed_json.audit %}
+        <a href="/audit" class="list-group-item list-group-item-action">View Audit Log</a>
+        {% endif %}
       </div>
       {% endif %}
 

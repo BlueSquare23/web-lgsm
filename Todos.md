@@ -122,18 +122,18 @@
 
 ## Version 1.8.5 Todos
 
-* [ ] **Add new Restart/Backup Scheduler (Cron Wrapper)**
+* [x] **Add new Restart/Backup Scheduler (Cron Wrapper)**
   - User suggested this feature and I think its a good one.
     - https://github.com/BlueSquare23/web-lgsm/issues/20
   - The idea here would be to create a simple web interface to wrap up adding
     crontab entries. Then the actual restarts or backups will just be handled
     by the lgsm game server cli script itself.
-  - [ ] Add permissions controls for new /jobs route.
-  - [ ] Add api routes for:
-    - [ ] `/api/add_job`
+  - [x] Add permissions controls for new /jobs route.
+  - [x] Add api routes for:
+    - [x] `/api/add_job`
     - [x] `/api/delete_job`
     - [x] `/api/list_jobs`
-  - [ ] Add docs for new api routes.
+  - [x] Add docs for new api routes.
   - [x] Add new neutral service layer class for handling actual needful doing.
   - [x] Add new route and form for `/jobs`.
 

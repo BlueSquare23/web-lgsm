@@ -933,12 +933,10 @@ def edit():
 @views.route("/jobs", methods=["GET", "POST"])
 @login_required
 def jobs():
-    # TODO: Add this route to user_has_permissions()
     # Check if user has permissions to jobs route.
-#    if not user_has_permissions(current_user, "jobs"):
-#        return redirect(url_for("views.home"))
+    if not user_has_permissions(current_user, "jobs"):
+        return redirect(url_for("views.home"))
 
-    # TODO: Make this its own read_config section.
     config_options = read_config("jobs")
 
     # Create JobsForm.
@@ -1008,7 +1006,6 @@ def jobs():
             if form.command.data == 'send':
                 command = f"send {form.custom.data}"
 
-            # TODO: Build this into main.conf options!!!
             if form.command.data == 'custom':
                 command = f"custom: {form.custom.data}"
 

@@ -19,6 +19,8 @@ externalDocs:
 servers:
   - url: https://your-web-lgsm-domain/api/
 tags:
+  - name: cron 
+    description: View and modify system crontab
   - name: update-console
     description: Send request to refresh console data
   - name: server-status
@@ -29,7 +31,321 @@ tags:
     description: Get recent command output for GameServer
   - name: delete
     description: Delete GameServer entries from app
+consumes:
+  - application/json
+produces:
+  - application/json
 paths:
+  /cron/{server_id}:
+    get:
+      tags: ['cron']
+      summary: Get list of cronjobs for specified server
+      description: Retrieves list of all cronjobs associated with specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Server status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Server ID
+                  status:
+                    type: string
+                    description: Current server status
+        '400':
+          description: Bad request (missing or invalid server ID)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Invalid id"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission Denied!"
+    post:
+      tags: ['cron']
+      summary: Create new cronjobs via the api
+      description: Interfaces with app's cron service class to modify jobs
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      requestBody:
+        description: Create new cronjob
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  description: Command to execute (either 'send', 'custom', or the actual command)
+                custom:
+                  type: string
+                  description: Custom command part (when command is 'send' or 'custom')
+                comment:
+                  type: string
+                  description: Optional comment about the job
+                cron_expression:
+                  type: string
+                  description: Cron expression for scheduling
+      responses:
+        '200':
+          description: Cronjob updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Success:
+                    type: string
+                    example: "job updated"
+        '400':
+          description: Bad request (missing or invalid server ID or malformed cron expression)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Supplied server does not exist!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission denied!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "problem updating job"
+
+  /cron/{server_id}/{job_id}:
+    get:
+      tags: ['cron']
+      summary: Get specified cronjob by job_id
+      description: Retrieves json containing all info for specified job
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+        - name: job_id 
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Server status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Server ID
+                  status:
+                    type: string
+                    description: Current server status
+        '400':
+          description: Bad request (missing or invalid server ID)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Invalid id"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission Denied!"
+    post:
+      tags: ['cron']
+      summary: Update existing cronjobs via the api
+      description: Interfaces with app's cron service class to modify jobs
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+        - name: job_id
+          in: path
+          required: true
+          description: ID of the cron job
+          schema:
+            type: string
+      requestBody:
+        description: Update existing cronjob
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  description: Command to execute (either 'send', 'custom', or the actual command)
+                custom:
+                  type: string
+                  description: Custom command part (when command is 'send' or 'custom')
+                comment:
+                  type: string
+                  description: Optional comment about the job
+                cron_expression:
+                  type: string
+                  description: Cron expression for scheduling
+      responses:
+        '200':
+          description: Cronjob updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Success:
+                    type: string
+                    example: "job updated"
+        '400':
+          description: Bad request (missing or invalid server ID or malformed cron expression)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Supplied server does not exist!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Permission denied!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "problem updating job"
+    delete:
+      tags: ['cron']
+      summary: Delete a cronjob by job_id
+      description: Deletes the specified cronjob for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server to delete
+          schema:
+            type: string
+        - name: job_id
+          in: path
+          required: true
+          description: ID of the game server to delete
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Job deleted successfully (no content)
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Server not found!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Insufficient permission"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Problem deleting server, see error logs for more details."
+
   /update-console/{server_id}:
     post:
       tags: ['update-console']

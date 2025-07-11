@@ -1,8 +1,9 @@
 import json
 
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response, jsonify, request
 from flask_login import login_required, current_user
 from flask_restful import Api, Resource
+from cron_converter import Cron
 
 from .utils import *
 from .models import *
@@ -16,40 +17,76 @@ api = Api(api_bp)
 ######### API Cron Manager #########
 
 class ManageCron(Resource):
+    def check_perms(self):
+        if not user_has_permissions(current_user, "jobs"):
+            resp_dict = { "Error": f"Insufficient permission" }
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
+            )
+            return (False, response)
+        return (True, None)
+
     @login_required
     def get(self, server_id, job_id=None):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
         cron = CronService(server_id)
         jobs_list = cron.list_jobs()
-        if job_id == None:
-            job = next((j for j in jobs_list if j['server_id'] == server_id), None)
-            return jsonify(job) if job else ('Not found', 404)
 
-        for job in jobs_list:
-            if job['server_id'] == server_id and job['job_id'] == job_id:
-                return jsonify(job)
-        return ('Not found', 404)
+        if job_id:
+            for job in jobs_list:
+                if job['server_id'] == server_id and job['job_id'] == job_id:
+                    return jsonify(job)
+            return ('Not found', 404)
+
+        return jsonify(jobs_list)
 
     @login_required
-    def post(self, server_id):
+    def post(self, server_id, job_id=None):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
         data = request.json
         cron = CronService(server_id)
-        jobs_list = cron.list_jobs()
 
-        if not data.get('command') or not data.get('schedule'):
-            return 'Missing command or schedule', 400
+        command = data.get('command')
+        custom = data.get('custom')
+        comment = data.get('comment')
+        cron_expression = data.get('cron_expression')
 
-        if not validate_cron(data['schedule']):
-            return 'Invalid cron expression', 400
+        try:
+            Cron(cron_expression)
+        except ValueError:
+            return {'Error':'Invalid cron expression'}, 400
 
-        new_job = {
-            'uuid': str(uuid.uuid4()),
-            'command': data['command'],
-            'schedule': data['schedule']
+        if command == 'send':
+            command = f"send {custom}"
+
+        if command == 'custom':
+            command = f"custom: {custom}"
+
+        job = {
+            'expression': cron_expression,
+            'command': command,
+            'server_id': server_id,
+            'job_id': job_id,
+            'comment': comment,
         }
-        jobs_list.append(new_job)
-        return jsonify(new_job), 201
 
+        if cron.edit_job(job):
+            return {'success':'job updated'}, 201
+        else:
+            return {'error':'problem updating job'}, 500
+
+    @login_required
     def delete(self, server_id, job_id):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
         cron = CronService(server_id)
         if cron.delete_job(job_id):
             audit_log_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
@@ -57,8 +94,11 @@ class ManageCron(Resource):
 
         return 500
 
-api.add_resource(ManageCron, "/cron/<string:server_id>/<string:job_id>")
-
+api.add_resource(
+    ManageCron,
+    "/cron/<string:server_id>",
+    "/cron/<string:server_id>/<string:job_id>"
+)
 
 ######### API Update Console #########
 
@@ -120,7 +160,6 @@ class UpdateConsole(Resource):
         )
         return response
 
-
 api.add_resource(UpdateConsole, "/update-console/<string:server_id>")
 
 
@@ -153,7 +192,6 @@ class ServerStatus(Resource):
         )
         return response
 
-
 api.add_resource(ServerStatus, "/server-status/<string:server_id>")
 
 
@@ -167,7 +205,6 @@ class SystemUsage(Resource):
             json.dumps(server_stats, indent=4), status=200, mimetype="application/json"
         )
         return response
-
 
 api.add_resource(SystemUsage, "/system-usage")
 
@@ -197,7 +234,6 @@ class CmdOutput(Resource):
         # Returns json for used by ajax code on /controls route.
         response = Response(output.toJSON(), status=200, mimetype="application/json")
         return response
-
 
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 
@@ -262,7 +298,6 @@ class GameServerDelete(Resource):
         audit_log_event(current_user.id, f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
 
         return "", 204
-
 
 api.add_resource(GameServerDelete, "/delete/<string:server_id>")
 

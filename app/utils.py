@@ -1068,6 +1068,14 @@ def user_has_permissions(current_user, route, server_id=None):
         if server_id not in user_perms["server_ids"]:
             return False
 
+    if route == "jobs":
+        if not user_perms["edit_jobs"]:
+            flash(
+                "Your user does NOT have permission access the jobs page!",
+                category="error",
+            )
+            return False
+
     return True
 
 

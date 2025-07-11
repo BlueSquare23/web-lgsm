@@ -573,6 +573,7 @@ class EditUsersForm(FlaskForm):
     add_servers = BooleanField("Can Add Existing Game Servers")
     mod_settings = BooleanField("Can Modify Web-LGSM Settings Page")
     edit_cfgs = BooleanField("Can Edit Game Server Configs")
+    edit_jobs = BooleanField("Can Edit Game Server Jobs")
     delete_server = BooleanField("Can Delete Game Servers")
 
     # Controls and servers (using SelectMultipleField for multiple checkboxes)

@@ -15,16 +15,16 @@
         </h4>
         <ul class="list-group">
           {% if selected_user == 'newuser' %}
-          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none active" aria-current="true">New User</a>
+          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none border border-white active" aria-current="true">New User</a>
           {% else %}
-          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none">New User</a>
+          <a href="/edit_users?username=newuser" class="list-group-item list-group-item-action text-decoration-none border border-white">New User</a>
           {% endif %}
 
           {% for user in all_users if user.id != 1 %}
             {% if user.username == selected_user %}
-          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none active" aria-current="true">{{user.username}}</a>
+          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none border border-white active" aria-current="true">{{user.username}}</a>
             {% else %}
-          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none">{{user.username}}</a>
+          <a href="/edit_users?username={{user.username}}" class="list-group-item list-group-item-action text-decoration-none border border-white">{{user.username}}</a>
             {% endif %}
           {% endfor %}
         </ul>
@@ -148,7 +148,6 @@
         Delete {{selected_user}}
       </a>
       {% endif %}
-
 
       <script>
         const userRole = '{{user_role}}';

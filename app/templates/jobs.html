@@ -11,47 +11,51 @@
         <h2>Web-LGSM Job Scheduler</h2>
         <hr />
 
+        <div class="container mt-4">
+          {% include 'game_servers.html' %}
+        </div>
+
         {% if server_name %}
           <div class="container mt-4">
-              <h3>Cron Jobs for {{ server_name }}:</h3>
-          <hr />
-          <div class="card mb-4 rounded border-secondary">
-            <div class="card-body bg-dark d-flex justify-content-center">
-              <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCronModal">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                </svg>
-                Add New Cron Job
-              </button>
-            </div>
-          </div>
-          <div class="list-group">
-            {% for job in jobs_list %}
-            <div class="job-item list-group-item rounded border-secondary">
-              <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">{{ job.command }}</h5>
-                <h6 class="mb-1">{{ job.comment }}</h6>
-                <small class="text-light">Job ID: {{ job.job_id }}</small>
-              </div>
-
-              <p class="mb-1">
-                <span class="badge bg-info text-dark">{{ job.schedule }}</span>
-                <span class="cron-human-readable ms-2" data-cron="{{ job.schedule }}"></span>
-              </p>
-
-              <div class="mt-2">
-                <button class="btn btn-sm btn-outline-secondary edit-cron" data-uuid="{{ job.server_id }}" data-uid="{{ job.job_id}}">
-                  <i class="bi bi-pencil"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-outline-danger delete-cron" data-uuid="{{ job.server_id }}" data-uid="{{ job.job_id }}">
-                  <i class="bi bi-trash"></i> Delete
+            <h3>Cron Jobs for {{ server_name }}:</h3>
+            <hr />
+            <div class="card mb-4 rounded border-secondary">
+              <div class="card-body bg-dark d-flex justify-content-center">
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCronModal">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                  </svg>
+                  Add New Cron Job
                 </button>
               </div>
             </div>
-            {% endfor %}
+            <div class="list-group">
+              {% for job in jobs_list %}
+              <div class="job-item list-group-item rounded border-secondary">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1">{{ job.command }}</h5>
+                  <h6 class="mb-1">{{ job.comment }}</h6>
+                  <small class="text-light">Job ID: {{ job.job_id }}</small>
+                </div>
+
+                <p class="mb-1">
+                  <span class="badge bg-info text-dark">{{ job.schedule }}</span>
+                  <span class="cron-human-readable ms-2" data-cron="{{ job.schedule }}"></span>
+                </p>
+
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-secondary edit-cron" data-uuid="{{ job.server_id }}" data-uid="{{ job.job_id}}">
+                    <i class="bi bi-pencil"></i> Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-cron" data-uuid="{{ job.server_id }}" data-uid="{{ job.job_id }}">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
-        </div>
 
         <!-- Add Cron Modal -->
         <div class="modal fade" id="addCronModal" tabindex="-1" aria-labelledby="addCronModalLabel" aria-hidden="true">
@@ -332,20 +336,5 @@ function describeCron(cronExpression) {
 }
         </script>
 
-        <br>
-        <h3>Game Servers:</h3>
-        <hr />
-        {% for server in game_servers %}
-          {% if server.install_type == 'remote' %}
-            {% continue %}
-          {% endif %}
-          <div class="list-group-item rounded">
-            <div class="d-flex align-items-center">
-              <a href="/jobs?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
-                  <span>{{server.install_name}}</span>
-              </a>
-            </div>
-          </div>
-        {% endfor %}
 
 {% endblock %}

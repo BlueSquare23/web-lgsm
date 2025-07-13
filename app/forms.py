@@ -15,6 +15,7 @@ from wtforms.validators import (
     NumberRange,
     ValidationError,
     EqualTo,
+    Optional,
 )
 from wtforms import (
     Form,
@@ -49,6 +50,33 @@ BAD_CHARS_MSG = (
 with open("json/accepted_cfgs.json", "r") as gs_cfgs:
     VALID_CONFIGS = json.load(gs_cfgs)["accepted_cfgs"]
 
+## Helper Classes
+
+class ServerExists:
+    """Validator that checks if a server ID exists in the database"""
+
+    def __init__(self, message="Invalid game server ID!"):
+        self.message = message
+
+    def __call__(self, form, field):
+        server = GameServer.query.filter_by(id=field.data).first()
+        if server is None:
+            raise ValidationError(self.message)
+
+
+class ValidConfigFile:
+    """Validator that checks if a config path is in the accepted list"""
+
+    def __init__(self, message="Invalid config file name!"):
+        self.message = message
+
+    def __call__(self, form, field):
+        cfg_file = os.path.basename(field.data)
+        if cfg_file not in VALID_CONFIGS:
+            raise ValidationError(self.message)
+
+
+## Main Forms
 
 class LoginForm(FlaskForm):
     username = StringField(
@@ -126,6 +154,14 @@ class SetupForm(FlaskForm):
 
 
 class AddForm(FlaskForm):
+    server_id = HiddenField(
+        "Server ID",
+        validators=[
+            Optional(),
+            ServerExists(),
+        ],
+    )
+
     install_type = RadioField(
         "Installation Type",
         choices=[
@@ -156,7 +192,7 @@ class AddForm(FlaskForm):
                 max=150,
                 message="Invalid input! Installation Title too long. Max 150 characters.",
             ),
-            Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
+            Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG),
         ],
     )
 
@@ -359,29 +395,6 @@ class SettingsForm(FlaskForm):
     submit = SubmitField("Apply", render_kw={"class": "btn btn-outline-primary"})
 
 
-class ServerExists:
-    """Validator that checks if a server ID exists in the database"""
-
-    def __init__(self, message="Invalid game server ID!"):
-        self.message = message
-
-    def __call__(self, form, field):
-        server = GameServer.query.filter_by(id=field.data).first()
-        if server is None:
-            raise ValidationError(self.message)
-
-
-class ValidConfigFile:
-    """Validator that checks if a config path is in the accepted list"""
-
-    def __init__(self, message="Invalid config file name!"):
-        self.message = message
-
-    def __call__(self, form, field):
-        cfg_file = os.path.basename(field.data)
-        if cfg_file not in VALID_CONFIGS:
-            raise ValidationError(self.message)
-
 
 # TODO: The below three classes for the edit page are very similar and could
 # probably be more cleverly combined into one. I don't have the time to do that
@@ -570,7 +583,7 @@ class EditUsersForm(FlaskForm):
 
     # Permissions
     install_servers = BooleanField("Can Install New Game Servers")
-    add_servers = BooleanField("Can Add Existing Game Servers")
+    add_servers = BooleanField("Can Add/Edit Existing Game Servers")
     mod_settings = BooleanField("Can Modify Web-LGSM Settings Page")
     edit_cfgs = BooleanField("Can Edit Game Server Configs")
     edit_jobs = BooleanField("Can Edit Game Server Jobs")

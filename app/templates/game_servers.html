@@ -1,0 +1,22 @@
+        <div class="container bg-dark border border-secondary rounded-3 p-2">
+          <h3>Select Game Server</h3>
+          {% for server in game_servers %}
+            {% if server.install_type == 'remote' and request.path.split('/')[-1] == 'jobs' %}
+              {% continue %}
+            {% endif %}
+            <ul class="list-group">
+            {% if server_json is not none and (server_json|from_json).install_name == server.install_name %}
+              <div class="list-group-item active border border-white rounded-3" aria-current="true">
+            {% else %}
+              <div class="list-group-item">
+            {% endif %}
+                <div class="d-flex align-items-center">
+                  <a href="/{{ request.path.split('/')[-1] }}?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                      <span>{{server.install_name}}</span>
+                  </a>
+                </div>
+              </div>
+            </ul>
+          {% endfor %}
+        </div>
+

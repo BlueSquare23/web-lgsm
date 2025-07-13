@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add ability to edit GameServer info via existing `/add` page / route.
 - Add new audit log file and interface for searching recent log entries.
 - Add jinja2 extension for loop controls to enable `continue` & `break` in templates.
 - Add caching for authed ssh client objects to cut down ssh response times.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Remove unique constraint on GameServer names.
 - Upgrade project to use Bootstrap 5.3.7.
 
 ### Fixed

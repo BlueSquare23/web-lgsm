@@ -103,7 +103,7 @@ class GameServer(db.Model):
         nullable=False,  # Ensure not null
     )
     # Unique name.
-    install_name = db.Column(db.String(150), unique=True)
+    install_name = db.Column(db.String(150))
     # Install path.
     install_path = db.Column(db.String(150))
     # The name of the lgsm game server script. For example, 'gmodserver'.

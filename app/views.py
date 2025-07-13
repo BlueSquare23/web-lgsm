@@ -693,7 +693,7 @@ def settings():
         return redirect(url_for("views.settings"))
 
     flash("Settings Updated!")
-    audit_log_event(current_user.id, f"User '{current_user.username}', change settings on settings page")
+    audit_log_event(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
     return redirect(url_for("views.settings"))
 
 
@@ -736,7 +736,30 @@ def add():
     form = AddForm()
 
     if request.method == "GET":
-        return render_template("add.html", user=current_user, form=form), status_code
+        server_json = None
+        game_servers = GameServer.query.all()
+
+        if request.args:
+            # Checking server id is valid.
+            id_form = ValidateID(request.args)
+            if not id_form.validate():
+                validation_errors(id_form)
+                return redirect(url_for("views.home"))
+
+            server_id = request.args.get("server_id")
+            server = GameServer.query.filter_by(id=server_id).first()
+            server = server.__dict__
+            del(server["_sa_instance_state"])
+            server_json = json.dumps(server)
+            current_app.logger.info(log_wrap("server_json", server_json))
+
+        return render_template(
+            "add.html",
+            user=current_user,
+            server_json=server_json,
+            game_servers=game_servers,
+            form=form
+        ), status_code
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
@@ -744,6 +767,7 @@ def add():
         return redirect(url_for("views.add"))
 
     # Process form submissions.
+    server_id = form.server_id.data
     install_name = form.install_name.data
     install_path = form.install_path.data
     script_name = form.script_name.data
@@ -751,17 +775,18 @@ def add():
     install_type = form.install_type.data
     install_host = form.install_host.data
 
-    server = GameServer()
-    server.install_finished = True  # All server adds are auto marked finished.
+    if server_id == '':
+        new_server = True
+        server = GameServer()
+    else:
+        new_server = False
+        server = GameServer.query.filter_by(id=server_id).first()
+
+    server.install_finished = True  # All server adds/edits are auto marked finished.
 
     # Set default user if none provided.
     if username == None or username == "":
         username = USER
-
-    # Make install name unix friendly for dir creation.
-    install_name = install_name.replace(" ", "_")
-    install_name = install_name.replace(".", "_")
-    install_name = install_name.replace(":", "")
 
     # Log & set GameServer obj vars after most of the validation is done.
     current_app.logger.info(log_wrap("install_name", install_name))
@@ -797,13 +822,7 @@ def add():
             flash("User not found on system!", category="error")
             return redirect(url_for("views.add"))
 
-    install_exists = GameServer.query.filter_by(install_name=install_name).first()
-
-    if install_exists:
-        flash("An installation by that name already exits.", category="error")
-        return redirect(url_for("views.add"))
-
-    if install_type == "docker":
+    if install_type == "docker" and new_server:
         flash(
             f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
         )
@@ -811,7 +830,7 @@ def add():
             f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
         )
 
-    if should_use_ssh(server):
+    if should_use_ssh(server) and new_server:
         keyfile = get_ssh_key_file(username, server.install_host)
         if keyfile == None:
             flash(f"Problem generating new ssh keys!", category="error")
@@ -821,7 +840,9 @@ def add():
             f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
         )
 
-    db.session.add(server)
+    if new_server:
+        db.session.add(server)
+
     db.session.commit()
 
     server = GameServer.query.filter_by(install_name=install_name).first()
@@ -946,6 +967,7 @@ def jobs():
         server = None
         server_id = None
         server_name = None
+        server_json = None
         jobs_list = []
         cmds_list = []
         game_servers = GameServer.query.all()
@@ -962,6 +984,11 @@ def jobs():
             server_name = server.install_name
             cron = CronService(server_id)
             jobs_list = cron.list_jobs()
+
+            server_dict = server.__dict__
+            del(server_dict["_sa_instance_state"])
+            server_json = json.dumps(server_dict)
+            current_app.logger.info(log_wrap("server_json", server_json))
 
             # Pull in commands list from commands.json file.
             cmds_list = get_commands(
@@ -984,6 +1011,7 @@ def jobs():
             user=current_user,
             game_servers=game_servers,
             server_name=server_name,
+            server_json=server_json,
             server_id=server_id,
             jobs_list=jobs_list,
             form=form,
@@ -1036,6 +1064,9 @@ def jobs():
 @views.route("/audit", methods=["GET"])
 @login_required
 def audit():
+    # NOTE: We don't care about CSRF protection for this page since its
+    # readonly. 
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     user_id = request.args.get('user_id')

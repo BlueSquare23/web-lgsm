@@ -136,6 +136,7 @@
   - [x] Add docs for new api routes.
   - [x] Add new neutral service layer class for handling actual needful doing.
   - [x] Add new route and form for `/jobs`.
+  - [ ] Add more security validation around playbooks for adding cronjobs.
 
 * [x] **Cache connected ssh client objects**
   - I want to cache the connection objects after initial connection is make
@@ -148,7 +149,7 @@
     administrators in the web interface.
   - [x] Need new database model to store audit log info.
 
-* [ ] **Add new Edit Game Server Info**
+* [x] **Add new Edit Game Server Info**
   - So far the only option for users to change game server information has been
     to delete the install and manually re-add it. Not a great solution.
   - I need to allow users to change their game server name, path, username,
@@ -163,6 +164,7 @@
     for backup / manual update / migration purposes.
 
 * [ ] **Create service layer class for controls page & add api route**
+  - This might not make it in 1.8.5...
   - [ ] Basically build out api routes for buttons on controls page.
     - `/api/controls/<server_id>`
   - [ ] Also build out new class for controls service layer.

@@ -1,13 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Add Existing Server{% endblock %}
+{% block title %}Add or Edit Existing Server{% endblock %}
 
 {% block content %}
       <br />
+      {% include 'game_servers.html' %}
+      <br />
+
       <div class="container bg-dark border border-secondary rounded-3 p-2">
         <form method="POST">
-          <h3 align="enter" style="color: white;">
-            Add an Existing LGSM Installation
+          <h3 class="text-white">
+            Add New or Edit Existing LGSM Installation Details
           </h3>
+          {% if server_json is not none %}
+          <h4 class="text-white"> 
+              Currently Editing {{ (server_json|from_json).install_name }}
+          </h4>
+          {% endif %}
           <div class="form-group" style="color: white;">
             <!-- Hidden includes CSRF token -->
             {{ form.hidden_tag() }}
@@ -62,4 +70,11 @@
           }
         }
       </script>
+      {% if server_json is not none %}
+        <script>
+          const jsonData = JSON.parse({{server_json | tojson}});
+        </script>
+        <script src="/static/js/edit_server.js"></script>
+      {% endif %}
+
 {% endblock %}

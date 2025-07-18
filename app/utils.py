@@ -793,19 +793,20 @@ def get_servers():
     Returns:
         dict: Dictionary mapping short server names to long server names.
     """
-    # TODO v1.9: Eventually I need to change the structure of the underlying
-    # json file and just make it a freaking associated array in there. Then I
-    # can just read in the json and return it, instead of doing zip. Don't
-    # remember why I originally made the underlying json two arrays. Probably
-    # was just being silly. Oh well not too important rn, problem for next
-    # release...
 
     # Try except in case problem with json files.
     try:
         with open("json/game_servers.json", "r") as file:
             json_data = json.load(file)
 
-        return dict(zip(json_data["servers"], json_data["server_names"]))
+        return {
+            key: (value1, value2)
+            for key, value1, value2 in zip(
+                json_data["servers"],
+                json_data["server_names"],
+                json_data["app_imgs"]
+            )
+        }
     except:
         # Return empty dict triggers error. In python empty dict == False.
         return {}

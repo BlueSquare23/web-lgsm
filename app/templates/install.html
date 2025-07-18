@@ -41,30 +41,39 @@
         </div>
 
         <br />
-        <h2 style="color: white;">Install a New LGSM Server</h2>
+        <h2 class="text-white">Install a New LGSM Server</h2>
         <hr />
-
-        {% for script_name, full_name in servers.items() %}
-        <div id="form-{{script_name}}">
-          <div class="row" id="row-{{script_name}}">
-            <div class="col">
-              <form method="POST" class="form-group" id="install-form" action="/install">
-                {{ form.csrf_token }}
-                {{ form.script_name(value=script_name) }}
-                {{ form.full_name(value=full_name) }}
-                                                                                                              <!-- NOTE! updateTerminal() Currently Broken!!! Needs to Use ID instead somehow... -->
-                <button type="submit" onclick="return confirm('Are you sure you want to install {{full_name}}?');" id="ai_button" class="btn btn-outline-primary" type="submit" value="" />Install {{script_name}}</button>
-              </form>
-            </div>
-            <div class="col text-primary">
-              {{full_name}}
+        
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+          {% for script_name, (full_name, app_img) in servers.items() %}
+          <div id="form-{{script_name}}" class="col">
+            <div class="card bg-dark h-100 overflow-hidden">
+              <div class="ratio ratio-16x9">  {# Maintains a consistent aspect ratio #}
+                  <img src="{{app_img}}" 
+                     class="card-img-top object-fit-cover" 
+                     alt="{{full_name}}"
+                     loading="lazy"
+                     decoding="async"
+                     style="object-position: center;">
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-white">{{full_name}}</h5>
+                <form method="POST" class="form-group mt-auto" action="/install">
+                  {{ form.csrf_token }}
+                  {{ form.script_name(value=script_name) }}
+                  {{ form.full_name(value=full_name) }}
+                  <button type="submit" 
+                          onclick="return confirm('Are you sure you want to install {{full_name}}?');" 
+                          class="btn btn-outline-primary w-100">
+                    Install {{script_name}}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
-          <br />
+          {% endfor %}
         </div>
-        {% endfor %}
-      </div>
-      <br />
+        <br />
 
       <!-- Set global vars for update-xterm.js -->
       {# TODO v1.9 Put this in its own template file, used here and on controls #}

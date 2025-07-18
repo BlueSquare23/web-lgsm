@@ -6,7 +6,6 @@ searchForm.addEventListener('input', (event) =>  {
   const inputValue = event.target.value;
 
   hideNonMatching(inputValue);
-//  console.log(inputValue);
 })
 
 function hideNonMatching(searchStr) {
@@ -20,9 +19,6 @@ function hideNonMatching(searchStr) {
     const lLongName = longName.toLowerCase();
     const lSearchStr = searchStr.toLowerCase();
 
-//    console.log(lShortName);
-//    console.log(lLongName);
-
     if (lShortName.includes(lSearchStr) || lLongName.includes(lSearchStr)) {
       installFormDiv.style.display = null;
       installFormDiv.style.height = null;
@@ -33,3 +29,5 @@ function hideNonMatching(searchStr) {
     }
   });
 }
+
+

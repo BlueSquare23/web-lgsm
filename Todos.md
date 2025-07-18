@@ -159,17 +159,11 @@
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`
 
+* [x] **Add pictures to install page**
+
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something
     for backup / manual update / migration purposes.
-
-* [ ] **Create service layer class for controls page & add api route**
-  - This might not make it in 1.8.5...
-  - [ ] Basically build out api routes for buttons on controls page.
-    - `/api/controls/<server_id>`
-  - [ ] Also build out new class for controls service layer.
-  - [ ] Make both API and Route code use this new neutral service class to
-    actually do the needful.
 
 * [ ] **Fix, test, and robustify docker stuff more**
   - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
@@ -201,6 +195,12 @@
 
 ## Version 1.8.x Todos
 
+* [ ] **Create service layer class for controls page & add api route**
+  - [ ] Basically build out api routes for buttons on controls page.
+    - `/api/controls/<server_id>`
+  - [ ] Also build out new class for controls service layer.
+  - [ ] Make both API and Route code use this new neutral service class to
+    actually do the needful.
 
 * [ ] **Make work for python 3.13**
   - I was silly and tried to put 3.13 in the tests at the end of this release
@@ -211,7 +211,6 @@
   - Makes sense and I've seen other web apps do this sorta thing before. Just
     pipe that info right to page if debug is true.
     - Not a big priority for v1.8 release.
-
 
 * [ ] **Make install_path an optional main.conf parameter.**
   - By default I want to set this to just `/home/<user>/<server_name>`.

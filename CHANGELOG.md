@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change install page layout and add pictures for game servers!
 - Remove unique constraint on GameServer names.
 - Upgrade project to use Bootstrap 5.3.7.
 

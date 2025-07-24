@@ -4,12 +4,14 @@ from flask import Blueprint, Response, jsonify, request
 from flask_login import login_required, current_user
 from flask_restful import Api, Resource
 from cron_converter import Cron
+from werkzeug.datastructures import MultiDict
 
 from .utils import *
 from .models import *
 from .cron import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
+from .forms import ValidateID
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
@@ -26,10 +28,21 @@ class ManageCron(Resource):
             return (False, response)
         return (True, None)
 
+    def validate_server_id(self, server_id):
+        id_form = ValidateID( MultiDict([('server_id', server_id)]) )
+        if not id_form.validate():
+            return (False, ('Not found', 404))
+
+        return (True, None)
+
     @login_required
     def get(self, server_id, job_id=None):
         allowed, resp = self.check_perms()
         if not allowed:
+            return resp
+
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
             return resp
 
         cron = CronService(server_id)
@@ -47,6 +60,10 @@ class ManageCron(Resource):
     def post(self, server_id, job_id=None):
         allowed, resp = self.check_perms()
         if not allowed:
+            return resp
+
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
             return resp
 
         data = request.json
@@ -87,12 +104,16 @@ class ManageCron(Resource):
         if not allowed:
             return resp
 
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
+            return resp
+
         cron = CronService(server_id)
         if cron.delete_job(job_id):
             audit_log_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
             return '', 204
 
-        return 500
+        return {'error':'unable to remove job'}, 500
 
 api.add_resource(
     ManageCron,

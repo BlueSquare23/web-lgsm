@@ -10,7 +10,9 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-from app.models import User, GameServer
+from app.models import User, GameServer, Job, Audit
+from app.cron import CronService
+from app.models import db
 from utils import *
 
 ### Home Page tests.
@@ -299,8 +301,6 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             )
             contains_bad_chars(response2)
 
-# Will fail bc script_name validation happens first. Keeping for now bc
-# refactor of main routes may see validation reordered so this is useful again.
             response3 = ''
             response3 = client.post(
                 "/add",
@@ -319,7 +319,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         ## Test install details edit.
         server_id = get_server_id(test_server)
 
-        # Do a legit server add.
+        # Change server name.
         response4 = client.post(
             "/add",
             data={
@@ -399,6 +399,30 @@ def test_audit_content(db_session, client, authed_client, test_vars):
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
+# Check responses are expected.
+def test_audit_responses(db_session, client, authed_client, add_mock_server, test_vars):
+    version = test_vars["version"]
+    test_server = test_vars["test_server"]
+
+    server_id = get_server_id(test_server)
+
+    with client:
+        # Setup fake db entries.
+        for i in range(100):
+            db.session.add(Audit(
+                user_id='1',
+                message=f"Test entry {i+1}"
+            ))
+        db.session.commit()
+
+        response = client.get(f"/audit")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        assert b'logged in' in response.data
+
+        response = client.get(f"/audit?per_page=50&page=2&user_id=1&search=test+entry")
+        assert response.data.count(b'Test entry') == 50
+
+
 ### Jobs page tests.
 # Check basic content matches.
 def test_jobs_content(db_session, client, authed_client, add_mock_server, test_vars):
@@ -445,26 +469,64 @@ def test_jobs_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Save Changes" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
-## Check responses are expected.
-#def test_jobs_responses(db_session, client, authed_client, add_mock_server, test_vars):
-#    version = test_vars["version"]
-#    test_server = test_vars["test_server"]
-#
-#    with client:
-#
-#        server_id = get_server_id(test_server)
-#        response = client.get(f"/jobs?server_id={server_id}")
-#        assert response.status_code == 200  # Return's 200 to GET requests.
-#        # Check strings on page match.
-#        assert b"Home" in response.data
-#        assert b"Settings" in response.data
-#        assert b"Logout" in response.data
-#        assert b"Web-LGSM Job Scheduler" in response.data
-#        assert b"Select Game Server" in response.data
-#        assert b"Mockcraft" in response.data
-#        assert b"Cron Jobs for Minecraft Local" in response.data
-#        assert b"Add New Cron Job" in response.data
-#        assert f"Web LGSM - Version: {version}".encode() in response.data
+
+# Check responses are expected.
+def test_jobs_responses(db_session, client, authed_client, add_mock_server, test_vars):
+    version = test_vars["version"]
+    test_server = test_vars["test_server"]
+
+    server_id = get_server_id(test_server)
+    cron_service = CronService(server_id=server_id)
+
+    with client:
+
+        response = client.get(f"/jobs?server_id={server_id}")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        csrf_token = get_csrf_token(response)
+
+        assert Job.query.first() is None
+
+        # Test add job via POST.
+        data = {
+            "csrf_token": csrf_token,
+            "job_id": "",
+            "server_id": server_id,
+            "command": "start",
+            "comment": "Test job",
+            "custom": "",
+            "cron_expression": "30 1 * * *"
+        }
+
+        response = client.post("/jobs", data=data, follow_redirects=True)
+        assert response.status_code == 200
+        alert_msgs = extract_alert_messages(response, 'success')
+        assert 'Cronjob updated successfully!' in alert_msgs
+
+        assert Job.query.first() is not None
+
+        jobs_list = cron_service.list_jobs()
+        job_id = jobs_list[0]["job_id"]
+
+        # Test update job via POST.
+        data = {
+            "csrf_token": csrf_token,
+            "job_id": job_id, 
+            "server_id": server_id,
+            "command": "stop",
+            "comment": "Test job comment updated",
+            "custom": "",
+            "cron_expression": "30 2 * * *"
+        }
+        response = client.post("/jobs", data=data, follow_redirects=True)
+        assert response.status_code == 200
+        alert_msgs = extract_alert_messages(response, 'success')
+        assert 'Cronjob updated successfully!' in alert_msgs
+
+        newjob = Job.query.first()
+        assert newjob.id == job_id  # Aka job_id didn't change when updating job.
+        assert newjob.command == "stop"
+        assert newjob.comment == "Test job comment updated"
+        assert newjob.expression == "30 2 * * *"
 
 
 ### Controls page tests.

@@ -164,22 +164,15 @@
     LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
     Wanted to see what it would look like mostly.
 
-* [ ] **Continue fixing up tests**
-  1. [ ] Add new tests for new features:
+* [x] **Continue fixing up tests**
+  1. [x] Add new tests for new features:
     - [x] cron page contents
-    - [ ] cron page responses
-    - [ ] cron api routes
-    - [ ] cron service class unit
+    - [x] cron page responses
+    - [x] cron api routes
+    - [x] cron service class unit
     - [x] edit servers tests
-    - [ ] audit page content
-    - [ ] audit page responses
-  2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
-    - I really need to be taking an action, then checking the DB.
-    - I'm checking a lot of responses from the outside to make sure they're as
-      expected. However I'm not really checking directly in the DB itself to
-      make sure things are all good.
-    - But I can do that, so I should be doing that. Oh well always more things
-      to do than time to do them.
+    - [x] audit page content
+    - [x] audit page responses
 
 * [ ] **Fix, test, and robustify docker stuff more**
   - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
@@ -188,6 +181,15 @@
     env is ubuntu.
 
 ## Version 1.8.x Todos
+
+* [ ] **Continue fixing up tests**
+  2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
+    - I really need to be taking an action, then checking the DB.
+    - I'm checking a lot of responses from the outside to make sure they're as
+      expected. However I'm not really checking directly in the DB itself to
+      make sure things are all good.
+    - But I can do that, so I should be doing that. Oh well always more things
+      to do than time to do them.
 
 * [ ] **Fully integrated file explorer for managing files and mods**
   - Idea here is to clean up the existing edit page and add in a file manager.

@@ -14,7 +14,6 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from flask_migrate import Migrate
 from flask_caching import Cache
 
-
 # Prevent creation of __pycache__. Pycache messes up auth.
 sys.dont_write_bytecode = True
 
@@ -37,7 +36,6 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 SWAGGER_URL = "/docs"
 API_URL = "/api/spec"
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
-
 
 def main():
     # Setup logging.

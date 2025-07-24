@@ -128,8 +128,8 @@ def extract_alert_messages(response, alert_type=None):
     alert_divs = soup.find_all('div', class_='alert')
 
     for div in alert_divs:
-        # Check if it's a dismissable alert.
-        if 'alert-dismissable' not in div.get('class', []):
+        # Check if it's a alert-dismissible alert.
+        if 'alert-dismissible' not in div.get('class', []):
             continue
 
         # Filter by type if specified.

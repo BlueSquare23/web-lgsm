@@ -212,7 +212,8 @@ class AddForm(FlaskForm):
         ],
     )
 
-    servers = get_servers()
+    servers = [script for script, tup in get_servers().items()]
+
     script_name = StringField(
         "LGSM script name",
         render_kw={
@@ -492,12 +493,18 @@ class ServerControlForm(FlaskForm):
 
 class InstallForm(FlaskForm):
     servers = get_servers()
+    short_names = []
+    long_names = []
+    for short, (long, img) in servers.items():
+        short_names.append(short)
+        long_names.append(long)
+
     script_name = HiddenField(
         "Script Name",
         validators=[
             InputRequired(),
             Length(min=0, max=150),
-            AnyOf(servers, message="Invalid script name."),
+            AnyOf(short_names, message="Invalid script name."),
         ],
     )
 
@@ -506,7 +513,7 @@ class InstallForm(FlaskForm):
         validators=[
             InputRequired(),
             Length(min=0, max=150),
-            AnyOf(list(servers.values()), message="Invalid full name."),
+            AnyOf(long_names, message="Invalid full name."),
         ],
     )
 

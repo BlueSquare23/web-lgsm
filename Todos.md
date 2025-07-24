@@ -159,32 +159,20 @@
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`
 
-* [x] **Add pictures to install page**
-
-* [ ] **Add new export database information**
-  - I want to allow users to export their database to csv or json or something
-    for backup / manual update / migration purposes.
-
-* [ ] **Fix, test, and robustify docker stuff more**
-  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
-  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
-  - I really need to do more manual qa testing on debian before release. My dev
-    env is ubuntu.
+* [ ] **Add pictures to install page**
+  - [ ] Need to download and serve images locally or via my own cdn link. The
+    LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
+    Wanted to see what it would look like mostly.
 
 * [ ] **Continue fixing up tests**
   1. [ ] Add new tests for new features:
-    - backup planner page
-    - backup planner api routes
-    - backup planner service class 
-    - edit servers page
-    - edit servers api routes
-    - edit servers service class
-    - controls api route
-    - audit log page
-    - audit log api routes
-    - audit log service class
-    - export database api route
-    - export database service class
+    - [x] cron page contents
+    - [ ] cron page responses
+    - [ ] cron api routes
+    - [ ] cron service class unit
+    - [x] edit servers tests
+    - [ ] audit page content
+    - [ ] audit page responses
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
     - I really need to be taking an action, then checking the DB.
     - I'm checking a lot of responses from the outside to make sure they're as
@@ -193,7 +181,37 @@
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
 
+* [ ] **Fix, test, and robustify docker stuff more**
+  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
+  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
+  - I really need to do more manual qa testing on debian before release. My dev
+    env is ubuntu.
+
 ## Version 1.8.x Todos
+
+* [ ] **Fully integrated file explorer for managing files and mods**
+  - Idea here is to clean up the existing edit page and add in a file manager.
+    - So right now file manager takes as input the full path to files. This is
+      dumb as hell. It should only take in relative path to game server's base
+      dir. Keeps url looking cleaner + implicitly limits to game server dir.
+  - I'm not super thrilled with the idea of doing a full file manager by
+    wrapping shell commands. But designwise I've sorta backed myself into that
+    corner. How else do I do it over ssh, most of the app works over ssh.
+  - There are hacky ways to run native python over ssh, but that's really not
+    much better than just using shell commands.
+  - I think it'll be okay if I just do these operations:
+    - list
+    - edit
+    - delete
+    - create
+    - upload
+  - Just like the file editor it'll be disabled by default and users will have
+    to opt-in to enable it. And won't be accessable from setting page.
+  - This will take some work to do properly and safely. But we'll figure it out.
+
+* [ ] **Add new export database information**
+  - I want to allow users to export their database to csv or json or something
+    for backup / manual update / migration purposes.
 
 * [ ] **Create service layer class for controls page & add api route**
   - [ ] Basically build out api routes for buttons on controls page.

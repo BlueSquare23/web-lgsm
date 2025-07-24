@@ -413,6 +413,9 @@ def install():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
+        # Debug
+#        for field, value in request.form.items():
+#            current_app.logger.debug(f"Field: {field}, Value: {value}")
         validation_errors(form)
         return redirect(url_for("views.install"))
 
@@ -775,7 +778,7 @@ def add():
     install_type = form.install_type.data
     install_host = form.install_host.data
 
-    if server_id == '':
+    if server_id == '' or server_id == None:
         new_server = True
         server = GameServer()
     else:
@@ -997,9 +1000,6 @@ def jobs():
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [cmd.long_cmd for cmd in cmds_list]
             form.command.choices.remove('console')
-
-            if not config_options['send_cmd']:
-                form.command.choices.remove('send')
 
             if config_options['allow_custom_jobs']:
                 form.command.choices.append('custom')

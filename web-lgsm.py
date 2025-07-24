@@ -704,7 +704,8 @@ def main(argv):
                 change_password()
             return
         elif opt in ("-f", "--fetch_json"):
-            update_gs_list()
+            print("Disabled till can fix to also update imgs")
+#            update_gs_list()
             return
         elif opt in ("-t", "--test", "-x", "--test_full"):
             run_tests()

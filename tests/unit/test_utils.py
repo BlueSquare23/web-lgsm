@@ -35,15 +35,15 @@ def test_get_servers():
     servers_json.close()
 
     servers = get_servers()
-    for key in servers:
-        assert key in json_data["servers"]
-        assert len(key.split()) == 1
+    for short, (long, img) in servers.items():
+        assert short in json_data["servers"]
+        assert len(short.split()) == 1
         # Short server names should NOT contain upppercase letters.
-        assert any(x.isupper() for x in key) == False
+        assert any(x.isupper() for x in short) == False
 
-        assert servers[key] in json_data["server_names"]
+        assert servers[short][0] in json_data["server_names"]
         # Long server names should contain upppercase letters.
-        assert any(x.isupper() for x in servers[key]) == True
+        assert any(x.isupper() for x in servers[short][0]) == True
 
 
 def test_valid_command():

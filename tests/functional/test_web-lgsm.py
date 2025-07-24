@@ -35,12 +35,14 @@ def test_check_status_not_running():
     assert "Server Not Running." in result.stdout
 
 
-def test_update_gs_list():
-    result = subprocess.run([SCRIPT, "--fetch_json"], capture_output=True, text=True)
-    assert (
-        "File game_servers.json JSON updated!" in result.stdout
-        or "File game_servers.json JSON already up to date." in result.stdout
-    )
+# TODO: Flag disabled till I can fix it to add images too. Think I might just
+# need to restructure the whole json file tbh.
+#def test_update_gs_list():
+#    result = subprocess.run([SCRIPT, "--fetch_json"], capture_output=True, text=True)
+#    assert (
+#        "File game_servers.json JSON updated!" in result.stdout
+#        or "File game_servers.json JSON already up to date." in result.stdout
+#    )
 
 
 def test_print_help():

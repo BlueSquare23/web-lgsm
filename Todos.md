@@ -159,8 +159,8 @@
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`
 
-* [ ] **Add pictures to install page**
-  - [ ] Need to download and serve images locally or via my own cdn link. The
+* [x] **Add pictures to install page**
+  - [x] Need to download and serve images locally or via my own cdn link. The
     LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
     Wanted to see what it would look like mostly.
 

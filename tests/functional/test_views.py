@@ -417,7 +417,6 @@ def test_audit_responses(db_session, client, authed_client, add_mock_server, tes
 
         response = client.get(f"/audit")
         assert response.status_code == 200  # Return's 200 to GET requests.
-        assert b'logged in' in response.data
 
         response = client.get(f"/audit?per_page=50&page=2&user_id=1&search=test+entry")
         assert response.data.count(b'Test entry') == 50

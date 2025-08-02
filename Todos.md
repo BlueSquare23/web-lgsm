@@ -174,6 +174,9 @@
     - [x] audit page content
     - [x] audit page responses
 
+* [ ] **Fix auto update to allow run headlessly**
+  - [Related Issue](https://github.com/bluesquare23/web-lgsm/issues/45)
+
 * [ ] **Fix, test, and robustify docker stuff more**
   - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
   - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44

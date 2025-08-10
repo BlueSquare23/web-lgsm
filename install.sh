@@ -24,6 +24,7 @@ PLAYBOOKS_PATH="$SHARE_PATH/playbooks"
 # Options.
 declare -A OPT=(
     [skiproot]=false
+    [debug]=false
 )
 
 # Preflight checks.
@@ -79,8 +80,10 @@ function run_install() {
   "APP_PATH": "$SCRIPTPATH"
 }
 EOF
+        [[ "${OPT[debug]}" == true ]] && debug="-d"
+
         sudo cp scripts/root_install.sh "$SHARE_PATH/"
-        sudo $SHARE_PATH/root_install.sh -d
+        sudo $SHARE_PATH/root_install.sh "$debug"
     fi
 
     echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"
@@ -158,17 +161,21 @@ function main() {
                 ;;
             -c|--docker)
                 install_docker
+                break
                 ;;
             -d|--debug)
                 set -x
                 echo $EUID
                 ls -lah
                 printenv
+                OPT[debug]=true
                 run_install
+                break
                 ;;
             -s|--skiproot)
                 OPT[skiproot]=true
                 run_install
+                break
                 ;;
             --)
                 shift

@@ -84,8 +84,7 @@ EOF
         [[ "${OPT[debug]}" == true ]] && debug="-d"
 
         sudo mkdir -p "$VENV_PATH/bin/"
-        sudo cp scripts/root_install.sh "$VENV_PATH/bin/"
-        sudo cp uninstall.sh "$VENV_PATH/bin/"
+        sudo cp scripts/root_install.sh scripts/update.py uninstall.sh "$VENV_PATH/bin/"
         sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
 

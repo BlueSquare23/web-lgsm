@@ -166,10 +166,15 @@ def update_weblgsm():
         print(" [*] Uninstalling old web-lgsm...")
         uninst_opt = '-d'  # Debug
 
-    # Fetch and run new uninstall.sh.
+
+    # Run uninstall.sh.
     uninst_script = '/opt/web-lgsm/bin/uninstall.sh'
-    run_command(['/usr/bin/wget', '-O', uninst_script, UNINSTALL_URL])
     run_command([uninst_script, uninst_opt])
+
+    # Fetch new uninstall.sh for future updates / uninstalls.
+    os.makedirs('/opt/web-lgsm/bin')
+    run_command(['/usr/bin/wget', '-O', uninst_script, UNINSTALL_URL])
+    os.chmod(uninst_script, 0o750)
 
     if not O["quiet"]:
         print(" [*] Reinstalling newest web-lgsm...")
@@ -177,11 +182,13 @@ def update_weblgsm():
     # Fetch and run new root_install.sh.
     root_inst_script = '/opt/web-lgsm/bin/root_install.sh'
     run_command(['/usr/bin/wget', '-O', root_inst_script, ROOT_INSTALL_URL])
+    os.chmod(root_inst_script, 0o750)
     run_command([root_inst_script, '-d'])
 
     # Fetch new update.py.
     update_py = '/opt/web-lgsm/bin/update.py'
     run_command(['/usr/bin/wget', '-O', update_py, UPDATE_PY_URL])
+    os.chmod(update_py, 0o750)
 
     if not O["quiet"]:
         print(" [*] Pulling update from github...")
@@ -252,6 +259,8 @@ def main(argv):
         elif opt in ("-u", "--update", "-c", "--check", "-a", "--auto"):
             update_weblgsm()
             return
+        else:
+            print_help()
 
 
 if __name__ == "__main__":

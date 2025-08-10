@@ -85,6 +85,7 @@ EOF
 
         sudo mkdir -p "$VENV_PATH/bin/"
         sudo cp scripts/root_install.sh scripts/update.py uninstall.sh "$VENV_PATH/bin/"
+        sudo chmod 750 "$VENV_PATH/bin/root_install.sh" "$VENV_PATH/bin/uninstall.sh"  "$VENV_PATH/bin/update.py"
         sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
 
@@ -180,7 +181,7 @@ function main() {
                 break
                 ;;
             --)
-                shift
+                run_install
                 break
                 ;;
             *)

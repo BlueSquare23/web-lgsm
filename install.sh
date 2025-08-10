@@ -80,10 +80,13 @@ function run_install() {
   "APP_PATH": "$SCRIPTPATH"
 }
 EOF
+        # Enable debug on root_install.sh
         [[ "${OPT[debug]}" == true ]] && debug="-d"
 
-        sudo cp scripts/root_install.sh "$SHARE_PATH/"
-        sudo $SHARE_PATH/root_install.sh "$debug"
+        sudo mkdir -p "$VENV_PATH/bin/"
+        sudo cp scripts/root_install.sh "$VENV_PATH/bin/"
+        sudo cp uninstall.sh "$VENV_PATH/bin/"
+        sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
 
     echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"

@@ -112,7 +112,7 @@ def is_up_to_date():
     Check's if web-lgsm already up-to-date or not.
     """
     run_command(['git', 'fetch', '--quiet'])
-    output = run_command('git', 'status', '-sb')
+    output = run_command(['git', 'status', '-sb'])
     if 'ahead' in output or 'behind' in output:
         return False
 
@@ -168,7 +168,7 @@ def update_weblgsm():
 
     # Fetch and run new uninstall.sh.
     uninst_script = '/opt/web-lgsm/bin/uninstall.sh'
-    run_command('/usr/bin/wget', '-O', uninst_script, UNINSTALL_URL)
+    run_command(['/usr/bin/wget', '-O', uninst_script, UNINSTALL_URL])
     run_command([uninst_script, uninst_opt])
 
     if not O["quiet"]:
@@ -176,12 +176,12 @@ def update_weblgsm():
 
     # Fetch and run new root_install.sh.
     root_inst_script = '/opt/web-lgsm/bin/root_install.sh'
-    run_command('/usr/bin/wget', '-O', root_inst_script, ROOT_INSTALL_URL)
+    run_command(['/usr/bin/wget', '-O', root_inst_script, ROOT_INSTALL_URL])
     run_command([root_inst_script, '-d'])
 
     # Fetch new update.py.
     update_py = '/opt/web-lgsm/bin/update.py'
-    run_command('/usr/bin/wget', '-O', update_py, UPDATE_PY_URL)
+    run_command(['/usr/bin/wget', '-O', update_py, UPDATE_PY_URL])
 
     if not O["quiet"]:
         print(" [*] Pulling update from github...")

@@ -80,7 +80,7 @@ function run_install() {
 }
 EOF
         sudo cp scripts/root_install.sh "$SHARE_PATH/"
-        sudo $SHARE_PATH/root_install.sh
+        sudo $SHARE_PATH/root_install.sh -d
     fi
 
     echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"

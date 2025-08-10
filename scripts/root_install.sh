@@ -27,13 +27,18 @@ SHARE_PATH="/usr/local/share/web-lgsm"
 PLAYBOOKS_PATH="$SHARE_PATH/playbooks"
 SCRIPTPATH=$(cat "$SHARE_PATH/install_conf.json" | jq '.APP_PATH')
 USERNAME=$(cat "$SHARE_PATH/install_conf.json" | jq '.USERNAME')
+APT_REQS="$SCRIPTPATH/apt-reqs.txt"
 
 if [[ -z $SCRIPTPATH ]] || [[ -z $USERNAME ]]; then
     echo -e "${RED}Problem parsing $SHARE_PATH/install_conf.json!${RESET}" >&2
     exit 9
 fi
 
-cd $SCRIPTPATH
+if [[ -d $SCRIPTPATH ]]; then
+    echo -e "${RED}No such directory: $SCRIPTPATH ${RESET}" >&2
+    exit 10
+fi
+
 mkdir -p $PLAYBOOKS_PATH
 
 # Could break system python if pip is run as root.
@@ -134,10 +139,10 @@ all_reqs_csv=$(grep 'all,' <<< "$apt_csv")
 all_reqs=$(tr ',' "\n" <<< "$all_reqs_csv")
 
 # Append lgsm requirements to web-lgsm apt reqs.
-echo "$all_reqs" >> 'apt-reqs.txt'
+echo "$all_reqs" >> "$APT_REQS"
 
 # Install apt requirements!
-for req in $(cat 'apt-reqs.txt'); do
+for req in $(cat "$APT_REQS"); do
     if ! dpkg -l | grep -w "$req" &>/dev/null; then
         echo -e "${GREEN}####### Installing \`$req\`...${RESET}"
         echo $req >> installed.log

@@ -25,8 +25,8 @@ VENV_PATH="/opt/web-lgsm"
 CONNECTOR_PATH="/usr/local/bin"
 SHARE_PATH="/usr/local/share/web-lgsm"
 PLAYBOOKS_PATH="$SHARE_PATH/playbooks"
-SCRIPTPATH=$(cat "$SHARE_PATH/install_conf.json" | jq '.APP_PATH')
-USERNAME=$(cat "$SHARE_PATH/install_conf.json" | jq '.USERNAME')
+SCRIPTPATH=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.APP_PATH')
+USERNAME=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.USERNAME')
 APT_REQS="$SCRIPTPATH/apt-reqs.txt"
 
 if [[ -z $SCRIPTPATH ]] || [[ -z $USERNAME ]]; then
@@ -34,11 +34,7 @@ if [[ -z $SCRIPTPATH ]] || [[ -z $USERNAME ]]; then
     exit 9
 fi
 
-if [[ -d $SCRIPTPATH ]]; then
-    echo -e "${RED}No such directory: $SCRIPTPATH ${RESET}" >&2
-    exit 10
-fi
-
+cd $SCRIPTPATH
 mkdir -p $PLAYBOOKS_PATH
 
 # Could break system python if pip is run as root.

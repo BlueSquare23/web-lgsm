@@ -139,6 +139,13 @@ function install_docker() {
     sudo apt-get update
     sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+    # Python venv required for Jinja templating.
+    which python3  &>/dev/null || sudo apt-get install -y python3
+    which pip3 &>/dev/null || sudo apt-get install -y python3-pip
+    sudo python3 -m venv $VENV_PATH
+    sudo $VENV_PATH/bin/python3 -m pip install --upgrade pip
+    sudo $VENV_PATH/bin/python3 -m pip install Jinja2
+
     echo -e "${GREEN}####### Docker install completed successfully!${RESET}"
     printf "Run: ./docker-setup.py --add\n  to add your game server port and build docker confs\n"
     exit

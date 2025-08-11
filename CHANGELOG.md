@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix web-lgsm docker start race condition [Issue #44](https://github.com/bluesquare23/web-lgsm/issues/44)
+- Fix headless auto updates by coming up with new update mechanism.
 - Fix alert bootstrap / html to make backend alerts dismissible.
 
 ## [v1.8.4] - 2025-06-15

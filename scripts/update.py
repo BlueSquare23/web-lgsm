@@ -15,12 +15,20 @@ RAW_URL = 'https://raw.githubusercontent.com/BlueSquare23/web-lgsm'
 UNINSTALL_URL =  RAW_URL + '/refs/heads/dev-1.8.5/uninstall.sh'
 ROOT_INSTALL_URL =  RAW_URL + '/refs/heads/dev-1.8.5/scripts/root_install.sh'
 UPDATE_PY_URL =  RAW_URL + '/refs/heads/dev-1.8.5/scripts/update.py'
-INSTALL_CONF ='/usr/local/share/web-lgsm/install_conf.json'
+INSTALL_CONF = '/usr/local/share/web-lgsm/install_conf.json'
 
 # Global options hash.
 O = {"quiet": False, "check": False, "auto": False, "noback": False}
 
-def run_command(command, user=None):
+def run_command(command, user=None, strict=True):
+    """
+    Subproces.run wrapper function. For running shell cmds.
+
+    Args:
+        command (list): Command to be run
+        user (str): User to run as, default None (aka root)
+        strict (bool): Raise exceptions on command failures
+    """
     if user:
         command = ['sudo', '-u', user] + command
 
@@ -31,6 +39,18 @@ def run_command(command, user=None):
     result = subprocess.run(
         command, capture_output=True, text=True, env=os.environ
     )
+
+    # Error handling, raise exception on non-zero exits when strict.
+    if result.returncode != 0:
+        if not O["quiet"] or result.stderr:
+            print(f" [x] Command failed (exit {result.returncode}):", file=sys.stderr)
+            if result.stderr.strip():
+                print(result.stderr.strip(), file=sys.stderr)
+        if strict:
+            raise subprocess.CalledProcessError(
+                result.returncode, command, result.stdout, result.stderr
+            )
+        return None
 
     if not O["quiet"]:
         print(result.stdout.strip())
@@ -166,10 +186,14 @@ def update_weblgsm():
         print(" [*] Uninstalling old web-lgsm...")
         uninst_opt = '-d'  # Debug
 
-
     # Run uninstall.sh.
     uninst_script = '/opt/web-lgsm/bin/uninstall.sh'
     run_command([uninst_script, uninst_opt])
+
+    # Have to write install_conf back to disk.
+    os.makedirs('/usr/local/share/web-lgsm')
+    with open(INSTALL_CONF, 'w') as json_file:
+        json.dump(conf, json_file, indent=4)
 
     # Fetch new uninstall.sh for future updates / uninstalls.
     os.makedirs('/opt/web-lgsm/bin')
@@ -177,7 +201,7 @@ def update_weblgsm():
     os.chmod(uninst_script, 0o750)
 
     if not O["quiet"]:
-        print(" [*] Reinstalling newest web-lgsm...")
+        print(" [*] Installing root components...")
 
     # Fetch and run new root_install.sh.
     root_inst_script = '/opt/web-lgsm/bin/root_install.sh'
@@ -195,7 +219,9 @@ def update_weblgsm():
     run_command(['git', 'fetch', '--all'], username)
     run_command(['git', 'reset', '--hard', 'origin/master'], username)
 
-    # User install
+    if not O["quiet"]:
+        print(" [*] Installing user components...")
+
     install_script = os.path.join(app_path, 'install.sh')
     run_command([install_script, '--skiproot'], username)
 

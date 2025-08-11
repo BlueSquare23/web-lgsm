@@ -115,27 +115,29 @@ function install_docker() {
     sudo apt-get install ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
 
+    arch=$(dpkg --print-architecture)
     codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+    pkg_url=''
 
     if [[ ! $SYS_NAME =~ Ubuntu ]]; then
         # Add Docker's official GPG key:
         sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
         sudo chmod a+r /etc/apt/keyrings/docker.asc
         
-        # Add the repository to Apt sources:
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $codename stable" | \
-            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        pkg_url='https://download.docker.com/linux/ubuntu'
     else
         # Else do Debian install.
         sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
         sudo chmod a+r /etc/apt/keyrings/docker.asc
-        
-        # Add the repository to Apt sources:
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $codename stable" | \
-            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        pkg_url="https://download.docker.com/linux/debian"
     fi
 
+    # Add the repository to Apt sources:
+    echo "deb [arch=$arch signed-by=/etc/apt/keyrings/docker.asc] $pkg_url $codename stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
     sudo apt-get update
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
     echo -e "${GREEN}####### Docker install completed successfully!${RESET}"
     printf "Run: ./docker-setup.py --add\n  to add your game server port and build confs\n"

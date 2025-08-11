@@ -233,6 +233,13 @@ def start_server():
         exit(99)
     finally:
         if "CONTAINER" in os.environ:
+
+            # Touch the log, so tail doesn't die if it wins race.
+            # Should fix: https://github.com/bluesquare23/web-lgsm/issues/44
+            log = 'logs/access.log'
+            with open(log, 'a'):
+                os.utime(log, None)
+
             command = ["/usr/bin/tail", "-f", "logs/access.log"]
             
             try:

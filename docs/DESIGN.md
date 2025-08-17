@@ -16,12 +16,13 @@
 7. [Configuration](#7-configuration)
 8. [Deployment](#8-deployment)
 9. [Testing](#9-testing)
-10. [Database Upgrades](#10-database-upgrades)
-11. [Form Handling & Validation](#11-form-handling--validation)
-12. [Formatting & Linting](#12-formatting--linting)
-13. [Future Work](#13-future-work)
-14. [Contributing](#14-contributing)
-15. [References](#15-references)
+10. [Automatic Updates](#10-automatic-updates)
+11. [Database Upgrades](#11-database-upgrades)
+12. [Form Handling & Validation](#12-form-handling--validation)
+13. [Formatting & Linting](#13-formatting--linting)
+14. [Future Work](#14-future-work)
+15. [Contributing](#15-contributing)
+16. [References](#16-references)
 
 ---
 
@@ -293,7 +294,25 @@ TOTAL                                2910    484    83%
 ```
 ---
 
-## 10. Database Upgrades
+## 10. Automatic Updates
+
+Updates for the web-lgsm can be initiated either interactively by the user
+running `./web-lgsm.py --update` or headlessly via a root crontab entry running
+the `update.py` script.
+
+[More info on enabling auto updates can be found here](how_to_enable_auto_updates.md).
+
+![Update Mechanism](images/update-diagram.png)
+
+The `update.py` script needs to be a root cronjob because its not possible to
+install the apt packages and other system level components of this project
+non-interactively, unless its running as root.
+
+Obviously, this has security implication. To help remedy these, I've made it so
+the code run as root is pulled in via hardcoded urls and installed directly,
+rather than being pulled via user editable git origin urls.
+
+## 11. Database Upgrades
 
 - **Flask-Migrate (Aka Alembic)**: Alembic is a lightweight database migration
   tool for usage with the SQLAlchemy Database Toolkit for Python.
@@ -459,7 +478,7 @@ Root logger level: WARNING
 
 ---
 
-## 11. Form Handling & Validation
+## 12. Form Handling & Validation
 
 - **Flask-WTF (Aka WTForms)**: Flask-wtf is extension for Wtforms, which is a
   form validation and handling library.
@@ -585,7 +604,7 @@ for our form.
 
 ---
 
-## 12. Formatting & Linting
+## 13. Formatting & Linting
 
 - **Formatting**: [black](https://pypi.org/project/black/) 
 
@@ -617,19 +636,19 @@ pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 
 ---
 
-## 13. Future Work
+## 14. Future Work
 - **Planned Features**: See [`Todos.md`](../Todos.md) for planned features and maintenance.
 - **Known Issues**: You can find known issues and suggested features for the project under [its github issues page](https://github.com/bluesquare23/web-lgsm/issues).
 
 ---
 
-## 14. Contributing
+## 15. Contributing
 - **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 ---
 
-## 15. References
+## 16. References
 - **Links**:
   - [Docs](.)
   - [Youtube Tutorials](NOT FINISHED YET...)

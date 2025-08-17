@@ -146,6 +146,9 @@ function install_docker() {
     sudo $VENV_PATH/bin/python3 -m pip install --upgrade pip
     sudo $VENV_PATH/bin/python3 -m pip install Jinja2
 
+    # Update main.conf b/c inside container needs to be all interfaces.
+    sed -i 's/host = 127\.0\.0\.1/host = 0\.0\.0\.0/g' main.conf
+
     echo -e "${GREEN}####### Docker install completed successfully!${RESET}"
     printf "Run: $VENV_PATH/bin/python3 ./docker-setup.py --add\n  to add your game server port and build docker confs\n"
     exit

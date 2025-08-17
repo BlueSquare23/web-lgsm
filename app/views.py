@@ -4,6 +4,7 @@ import yaml
 import getpass
 import configparser
 import markdown
+import shortuuid
 
 from threading import Thread
 from flask_login import login_required, current_user
@@ -15,6 +16,7 @@ from flask import (
     url_for,
     redirect,
     current_app,
+    jsonify,
 )
 
 from . import db
@@ -23,18 +25,14 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms import *
+from .cron import CronService
 from . import cache
 
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
 VENV = "/opt/web-lgsm/"
-ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
-PATHS = {
-    "docker": "/usr/bin/docker",
-    "sudo": "/usr/bin/sudo",
-    "tmux": "/usr/bin/tmux",
-}
+from .paths import PATHS
 
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
@@ -107,6 +105,7 @@ def controls():
         server_id = request.args.get("server_id")
         server = GameServer.query.filter_by(id=server_id).first()
         current_app.logger.info(log_wrap("server_id", server_id))
+        jobs_edit = True if server.install_type == 'local' else False
 
         # Check if user has permissions to game server for controls route.
         if not user_has_permissions(current_user, "controls", server_id):
@@ -154,6 +153,7 @@ def controls():
             user=current_user,
             server_id=server_id,
             server_name=server.install_name,
+            show_jobs_edit=jobs_edit,
             server_commands=cmds_list,
             config_options=config_options,
             cfg_paths=cfg_paths,
@@ -262,6 +262,7 @@ def controls():
         cmd = [script_path, short_cmd, send_cmd]
 
         flash("Sending command to console")
+        audit_log_event(current_user.id, f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
         if should_use_ssh(server):
             daemon = Thread(
                 target=run_cmd_ssh,
@@ -300,6 +301,14 @@ def controls():
                 update_tmux_socket_name_cache(server.id, None, True)
 
         cmd = [script_path, short_cmd]
+
+        # Get long_cmd for matching short_cmd for audit logging. 
+        long_cmd = short_cmd  # To at least long something in case fail to find long_cmd.
+        for c in cmds_list:
+            if c.short_cmd == short_cmd:
+                long_cmd = c.long_cmd
+
+        audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_cmd}' on '{server.install_name}'")
 
         if should_use_ssh(server):
             daemon = Thread(
@@ -404,6 +413,9 @@ def install():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
+        # Debug
+#        for field, value in request.form.items():
+#            current_app.logger.debug(f"Field: {field}, Value: {value}")
         validation_errors(form)
         return redirect(url_for("views.install"))
 
@@ -465,12 +477,7 @@ def install():
 
     server_id = GameServer.query.filter_by(install_name=server_install_name).first().id
 
-    # Add new proc_info object for install process and associate with new
-    # game server ID.
-    #    proc_info = add_process(server_id, ProcInfoVessel())
-
     current_app.logger.info(log_wrap("server_id", server_id))
-    #    current_app.logger.info(log_wrap("proc_info", proc_info))
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
@@ -484,7 +491,7 @@ def install():
         PATHS["sudo"],
         "-n",
         os.path.join(VENV, "bin/python"),
-        ANSIBLE_CONNECTOR,
+        PATHS["ansible_connector"],
         "--install",
         str(server_id),
     ]
@@ -507,6 +514,8 @@ def install():
         name=f"clear_install_{server_id}",
     )
     clear_daemon.start()
+
+    audit_log_event(current_user.id, f"User '{current_user.username}', installed game server '{server.install_name}'")
 
     return render_template(
         "install.html",
@@ -687,6 +696,7 @@ def settings():
         return redirect(url_for("views.settings"))
 
     flash("Settings Updated!")
+    audit_log_event(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
     return redirect(url_for("views.settings"))
 
 
@@ -729,7 +739,30 @@ def add():
     form = AddForm()
 
     if request.method == "GET":
-        return render_template("add.html", user=current_user, form=form), status_code
+        server_json = None
+        game_servers = GameServer.query.all()
+
+        if request.args:
+            # Checking server id is valid.
+            id_form = ValidateID(request.args)
+            if not id_form.validate():
+                validation_errors(id_form)
+                return redirect(url_for("views.home"))
+
+            server_id = request.args.get("server_id")
+            server = GameServer.query.filter_by(id=server_id).first()
+            server = server.__dict__
+            del(server["_sa_instance_state"])
+            server_json = json.dumps(server)
+            current_app.logger.info(log_wrap("server_json", server_json))
+
+        return render_template(
+            "add.html",
+            user=current_user,
+            server_json=server_json,
+            game_servers=game_servers,
+            form=form
+        ), status_code
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
@@ -737,6 +770,7 @@ def add():
         return redirect(url_for("views.add"))
 
     # Process form submissions.
+    server_id = form.server_id.data
     install_name = form.install_name.data
     install_path = form.install_path.data
     script_name = form.script_name.data
@@ -744,17 +778,18 @@ def add():
     install_type = form.install_type.data
     install_host = form.install_host.data
 
-    server = GameServer()
-    server.install_finished = True  # All server adds are auto marked finished.
+    if server_id == '' or server_id == None:
+        new_server = True
+        server = GameServer()
+    else:
+        new_server = False
+        server = GameServer.query.filter_by(id=server_id).first()
+
+    server.install_finished = True  # All server adds/edits are auto marked finished.
 
     # Set default user if none provided.
     if username == None or username == "":
         username = USER
-
-    # Make install name unix friendly for dir creation.
-    install_name = install_name.replace(" ", "_")
-    install_name = install_name.replace(".", "_")
-    install_name = install_name.replace(":", "")
 
     # Log & set GameServer obj vars after most of the validation is done.
     current_app.logger.info(log_wrap("install_name", install_name))
@@ -790,13 +825,7 @@ def add():
             flash("User not found on system!", category="error")
             return redirect(url_for("views.add"))
 
-    install_exists = GameServer.query.filter_by(install_name=install_name).first()
-
-    if install_exists:
-        flash("An installation by that name already exits.", category="error")
-        return redirect(url_for("views.add"))
-
-    if install_type == "docker":
+    if install_type == "docker" and new_server:
         flash(
             f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
         )
@@ -804,7 +833,7 @@ def add():
             f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
         )
 
-    if should_use_ssh(server):
+    if should_use_ssh(server) and new_server:
         keyfile = get_ssh_key_file(username, server.install_host)
         if keyfile == None:
             flash(f"Problem generating new ssh keys!", category="error")
@@ -814,7 +843,9 @@ def add():
             f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
         )
 
-    db.session.add(server)
+    if new_server:
+        db.session.add(server)
+
     db.session.commit()
 
     server = GameServer.query.filter_by(install_name=install_name).first()
@@ -831,6 +862,7 @@ def add():
         db.session.commit()
 
     flash("Game server added!")
+    audit_log_event(current_user.id, f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")
     return redirect(url_for("views.home"))
 
 
@@ -865,6 +897,7 @@ def edit():
             cfg_path = download_form.cfg_path.data
             server = GameServer.query.filter_by(id=server_id).first()
 
+            audit_log_event(current_user.id, f"User '{current_user.username}', downloaded config '{cfg_path}'")
             return download_cfg(server, cfg_path)
 
         # Convert raw get args into select_form args.
@@ -912,10 +945,154 @@ def edit():
 
     if write_cfg(server, cfg_path, new_file_contents):
         flash("Cfg file updated!", category="success")
+        audit_log_event(current_user.id, f"User '{current_user.username}', edited '{cfg_path}'")
     else:
         flash("Error writing to cfg file!", category="error")
 
     return redirect(url_for("views.edit", server_id=server_id, cfg_path=cfg_path))
+
+
+######### Jobs Route #########
+
+@views.route("/jobs", methods=["GET", "POST"])
+@login_required
+def jobs():
+    # Check if user has permissions to jobs route.
+    if not user_has_permissions(current_user, "jobs"):
+        return redirect(url_for("views.home"))
+
+    config_options = read_config("jobs")
+
+    # Create JobsForm.
+    form = JobsForm()
+
+    if request.method == "GET":
+        server = None
+        server_id = None
+        server_name = None
+        server_json = None
+        jobs_list = []
+        cmds_list = []
+        game_servers = GameServer.query.all()
+
+        if request.args:
+            # Checking id is valid.
+            id_form = ValidateID(request.args)
+            if not id_form.validate():
+                validation_errors(id_form)
+                return redirect(url_for("views.jobs"))
+
+            server_id = request.args.get("server_id")
+            server = GameServer.query.filter_by(id=server_id).first()
+            server_name = server.install_name
+            cron = CronService(server_id)
+            jobs_list = cron.list_jobs()
+
+            server_dict = server.__dict__
+            del(server_dict["_sa_instance_state"])
+            server_json = json.dumps(server_dict)
+            current_app.logger.info(log_wrap("server_json", server_json))
+
+            # Pull in commands list from commands.json file.
+            cmds_list = get_commands(
+                server.script_name, config_options["send_cmd"], current_user
+            )
+            # No console for automated jobs. Don't even give the user the option to be stupid.
+            form.command.choices = [cmd.long_cmd for cmd in cmds_list]
+            form.command.choices.remove('console')
+
+            if config_options['allow_custom_jobs']:
+                form.command.choices.append('custom')
+
+        current_app.logger.debug(log_wrap("jobs_list", jobs_list))
+
+        return render_template(
+            "jobs.html",
+            user=current_user,
+            game_servers=game_servers,
+            server_name=server_name,
+            server_json=server_json,
+            server_id=server_id,
+            jobs_list=jobs_list,
+            form=form,
+            spinner_context="Updating Crontab",
+        )
+
+    if request.method == "POST":
+        if not form.validate_on_submit():
+            validation_errors(form)
+            # Redirect back to the previous page.
+            return redirect(request.referrer)
+
+        # Setup custom command if send and custom.
+        command = form.command.data
+        if form.command.data == 'send' or form.command.data == 'custom':
+            if form.custom.data == None:
+                flash(f"Custom cmd required for {custom_job_type}", category="error")
+                return redirect(url_for("views.jobs", server_id=form.server_id.data))
+
+            if form.command.data == 'send':
+                command = f"send {form.custom.data}"
+
+            if form.command.data == 'custom':
+                command = f"custom: {form.custom.data}"
+
+        job = {
+            'expression': form.cron_expression.data,
+            'command': command,
+            'server_id': form.server_id.data,
+            'job_id': form.job_id.data,
+            'comment': form.comment.data,
+        }
+        current_app.logger.debug(log_wrap("job", job))
+
+        cron = CronService(form.server_id.data)
+        if cron.edit_job(job):
+            flash("Cronjob updated successfully!", category="success")
+            server = GameServer.query.filter_by(id=form.server_id.data).first()
+            audit_log_event(current_user.id, f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
+            current_app.logger.info(log_wrap("request.form", request.form))
+
+            return redirect(url_for("views.jobs", server_id=form.server_id.data))
+
+        flash("Error adding job", category="error")
+        return redirect(request.referrer)
+
+
+######### Audit Route #########
+
+@views.route("/audit", methods=["GET"])
+@login_required
+def audit():
+    # NOTE: We don't care about CSRF protection for this page since its
+    # readonly. 
+
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    user_id = request.args.get('user_id')
+    search = request.args.get('search')
+
+    query = Audit.query.order_by(Audit.date_created.desc())
+
+    if user_id:
+        query = query.filter(Audit.user_id == user_id)
+
+    if search:
+        query = query.filter(Audit.message.ilike(f'%{search}%'))
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    all_audit_events = pagination.items
+
+    # Get all users for the dropdown.
+    all_users = User.query.order_by(User.username).all()
+
+    return render_template(
+        'audit.html', 
+        user=current_user,
+        pagination=pagination,
+        all_audit_events=all_audit_events,
+        all_users=all_users
+    )
 
 
 ######### Swagger API Docs #########

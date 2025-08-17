@@ -63,6 +63,7 @@
         "Rcon.cfg",
         "RemoteAdminListHosts.cfg",
         "RemoteBanListHosts.cfg",
+        "sdtdserver.xml",
         "server.cfg",
         "Server.cfg",
         "server_cfg.ini",

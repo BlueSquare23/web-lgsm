@@ -8,7 +8,8 @@ import configparser
 from werkzeug.security import generate_password_hash
 
 from app import main
-from app.models import User, GameServer
+from app.models import User, GameServer, Job
+from app.cron import CronService
 from utils import *
 
 
@@ -163,6 +164,7 @@ def add_second_user_no_perms(db_session, setup_client, test_vars):
             "add_servers": False, 
             "mod_settings": False, 
             "edit_cfgs": False, 
+            "edit_jobs": False, 
             "delete_server": False, 
             "controls": [], 
             "server_ids": []
@@ -205,6 +207,7 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
             "add_servers": True,
             "mod_settings": True,
             "edit_cfgs": True,
+            "edit_jobs": True,
             "delete_server": True,
             "controls": [
                 "start",
@@ -242,5 +245,30 @@ def user_authed_client_all_perms(client, add_second_user_all_perms, test_vars):
         follow_redirects=True
     )
     assert response.status_code == 200
+    return client
+
+
+@pytest.fixture()
+def add_mock_cron_job(client, test_vars):
+    test_server = test_vars["test_server"]
+    server_id = get_server_id(test_server)
+    cron_service = CronService(server_id=server_id)
+
+    # Create a test job first
+    job_data = {
+        "job_id": None,
+        "server_id": server_id,
+        "command": "echo 'delete me'",
+        "comment": "Delete test",
+        "expression": "* * * * *"
+    }
+    cron_service.edit_job(job_data)
+    jobs_list = cron_service.list_jobs()
+    job_id = jobs_list[0]["job_id"]
+
+    # Verify job exists
+    assert Job.query.filter_by(id=job_id).first() is not None
+    test_vars["job_id"] = job_id
+
     return client
 

@@ -14,7 +14,6 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from flask_migrate import Migrate
 from flask_caching import Cache
 
-
 # Prevent creation of __pycache__. Pycache messes up auth.
 sys.dont_write_bytecode = True
 
@@ -38,7 +37,6 @@ SWAGGER_URL = "/docs"
 API_URL = "/api/spec"
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 
-
 def main():
     # Setup logging.
     log_level_map = {
@@ -57,6 +55,9 @@ def main():
                 "formatters": {
                     "default": {
                         "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+                    },
+                    "audit": {
+                        "format": "[%(asctime)s] AUDIT: %(message)s",
                     }
                 },
                 "handlers": {
@@ -64,9 +65,24 @@ def main():
                         "class": "logging.StreamHandler",
                         "stream": "ext://flask.logging.wsgi_errors_stream",
                         "formatter": "default",
+                    },
+                    "audit_file": {
+                        "class": "logging.FileHandler",
+                        "filename": "logs/audit.log",
+                        "formatter": "audit",
                     }
                 },
-                "root": {"level": log_level, "handlers": ["wsgi"]},
+                "loggers": {
+                    "audit": {
+                        "level": "INFO",
+                        "handlers": ["audit_file"],
+                        "propagate": False,
+                    }
+                },
+                "root": {
+                    "level": log_level,
+                    "handlers": ["wsgi"]
+                },
             }
         )
 
@@ -83,8 +99,10 @@ def main():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
     app.logger.removeHandler(default_handler)
+    app.audit_logger = logging.getLogger('audit')
     migrate = Migrate(app, db, render_as_batch=True)
     cache.init_app(app)
+    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
 
     # Initialize DB.
     db.init_app(app)

@@ -72,24 +72,6 @@
         </ul>
       {% endif %}
 
-      <br />
-
-      {% if user.role != 'admin' and not parsed_json.install_servers and not parsed_json.add_servers %}
-      {% else %}
-      <h2 style="color: white;">Other Options</h2>
-      <div class="list-group border border-secondary">
-        {% if user.role == 'admin' or parsed_json.install_servers %}
-        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
-        {% endif %}
-        {% if user.role == 'admin' or parsed_json.add_servers %}
-        <a href="/add" class="list-group-item list-group-item-action">Add an Existing LGSM Installation</a>
-        {% endif %}
-        {% if user.is_authenticated and user.role == 'admin' %}
-          <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
-        {% endif %}
-      </div>
-      {% endif %}
-
       {% if config_options.show_stats %}
         <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
         <div class="container bg-dark border border-secondary rounded-3" id="game-server-stats">
@@ -136,6 +118,30 @@
           <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
         {% endif %}
 
+      {% endif %}
+
+      <br>
+
+      {% if user.role != 'admin' and not parsed_json.install_servers and not parsed_json.add_servers %}
+      {% else %}
+      <h2 style="color: white;">Other Options</h2>
+      <div class="list-group border border-secondary">
+        {% if user.role == 'admin' or parsed_json.install_servers %}
+        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
+        {% endif %}
+        {% if user.role == 'admin' or parsed_json.add_servers %}
+        <a href="/add" class="list-group-item list-group-item-action">Add or Edit Existing LGSM Installation Details</a>
+        {% endif %}
+        {% if user.is_authenticated and user.role == 'admin' %}
+          <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
+        {% endif %}
+        {% if user.role == 'admin' or parsed_json.edit_jobs %}
+        <a href="/jobs" class="list-group-item list-group-item-action">Create or Edit Web-LGSM Jobs</a>
+        {% endif %}
+        {% if user.role == 'admin' or parsed_json.audit %}
+        <a href="/audit" class="list-group-item list-group-item-action">View Audit Log</a>
+        {% endif %}
+      </div>
       {% endif %}
 
       <!-- Import JavaScript -->

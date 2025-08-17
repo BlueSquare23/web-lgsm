@@ -1,17 +1,125 @@
 import json
 
-from flask import Blueprint, Response
+from flask import Blueprint, Response, jsonify, request
 from flask_login import login_required, current_user
 from flask_restful import Api, Resource
+from cron_converter import Cron
+from werkzeug.datastructures import MultiDict
 
 from .utils import *
 from .models import *
+from .cron import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
+from .forms import ValidateID
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
 
+######### API Cron Manager #########
+
+class ManageCron(Resource):
+    def check_perms(self):
+        if not user_has_permissions(current_user, "jobs"):
+            resp_dict = { "Error": f"Insufficient permission" }
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
+            )
+            return (False, response)
+        return (True, None)
+
+    def validate_server_id(self, server_id):
+        id_form = ValidateID( MultiDict([('server_id', server_id)]) )
+        if not id_form.validate():
+            return (False, ('Not found', 404))
+
+        return (True, None)
+
+    @login_required
+    def get(self, server_id, job_id=None):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
+            return resp
+
+        cron = CronService(server_id)
+        jobs_list = cron.list_jobs()
+
+        if job_id:
+            for job in jobs_list:
+                if job['server_id'] == server_id and job['job_id'] == job_id:
+                    return jsonify(job)
+            return ('Not found', 404)
+
+        return jsonify(jobs_list)
+
+    @login_required
+    def post(self, server_id, job_id=None):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
+            return resp
+
+        data = request.json
+        cron = CronService(server_id)
+
+        command = data.get('command')
+        custom = data.get('custom')
+        comment = data.get('comment')
+        cron_expression = data.get('cron_expression')
+
+        try:
+            Cron(cron_expression)
+        except ValueError:
+            return {'Error':'Invalid cron expression'}, 400
+
+        if command == 'send':
+            command = f"send {custom}"
+
+        if command == 'custom':
+            command = f"custom: {custom}"
+
+        job = {
+            'expression': cron_expression,
+            'command': command,
+            'server_id': server_id,
+            'job_id': job_id,
+            'comment': comment,
+        }
+
+        if cron.edit_job(job):
+            return {'success':'job updated'}, 201
+        else:
+            return {'error':'problem updating job'}, 500
+
+    @login_required
+    def delete(self, server_id, job_id):
+        allowed, resp = self.check_perms()
+        if not allowed:
+            return resp
+
+        valid, resp = self.validate_server_id(server_id)
+        if not valid:
+            return resp
+
+        cron = CronService(server_id)
+        if cron.delete_job(job_id):
+            audit_log_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
+            return '', 204
+
+        return {'error':'unable to remove job'}, 500
+
+api.add_resource(
+    ManageCron,
+    "/cron/<string:server_id>",
+    "/cron/<string:server_id>/<string:job_id>"
+)
 
 ######### API Update Console #########
 
@@ -73,7 +181,6 @@ class UpdateConsole(Resource):
         )
         return response
 
-
 api.add_resource(UpdateConsole, "/update-console/<string:server_id>")
 
 
@@ -106,7 +213,6 @@ class ServerStatus(Resource):
         )
         return response
 
-
 api.add_resource(ServerStatus, "/server-status/<string:server_id>")
 
 
@@ -120,7 +226,6 @@ class SystemUsage(Resource):
             json.dumps(server_stats, indent=4), status=200, mimetype="application/json"
         )
         return response
-
 
 api.add_resource(SystemUsage, "/system-usage")
 
@@ -151,7 +256,6 @@ class CmdOutput(Resource):
         response = Response(output.toJSON(), status=200, mimetype="application/json")
         return response
 
-
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 
 
@@ -167,6 +271,8 @@ class GameServerDelete(Resource):
                 json.dumps(resp_dict, indent=4), status=404, mimetype="application/json"
             )
             return response
+
+        server_name = server.install_name
 
         config = read_config("delete")
         current_app.logger.info(log_wrap("config", config))
@@ -208,9 +314,11 @@ class GameServerDelete(Resource):
 
         # We don't want to keep deleted servers in the cache.
         update_tmux_socket_name_cache(server_id, None, True)
+        delete_user = str(config["delete_user"])
+        remove_files = str(config["remove_files"])
+        audit_log_event(current_user.id, f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
 
         return "", 204
-
 
 api.add_resource(GameServerDelete, "/delete/<string:server_id>")
 

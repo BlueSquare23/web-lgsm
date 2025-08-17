@@ -37,7 +37,7 @@
                             {{ subfield.label(class="form-check-label") }}
                         </div>
                     {% endfor %}
-                    <p class="text-muted mt-2">
+                    <p class="text-light mt-2">
                         📍 <i><u>Note: When the system users are deleted, game server files owned by them are automatically deleted as well.</u></i>
                     </p>
                 </div>
@@ -105,7 +105,7 @@
                     <div class="form-check form-switch">
                         {{ form.purge_tmux_cache(class="form-check-input") }}
                         {{ form.purge_tmux_cache.label(class="form-check-label") }}
-                        <small class="text-muted d-block mt-1">
+                        <small class="text-light d-block mt-1">
                             <i>Helps fix broken status indicators after game server reinstallation / upgrades.</i>
                         </small>
                     </div>
@@ -115,7 +115,7 @@
                     <div class="form-check form-switch">
                         {{ form.update_weblgsm(class="form-check-input") }}
                         {{ form.update_weblgsm.label(class="form-check-label") }}
-                        <small class="text-muted d-block mt-1">
+                        <small class="text-light d-block mt-1">
                             <i>📍 Note: Checking this box will restart your Web LGSM instance if an update is available!</i>
                         </small>
                     </div>

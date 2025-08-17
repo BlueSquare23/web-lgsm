@@ -49,7 +49,31 @@
         {% endif %}
 
         <br />
-        <h2>Server Controls for: {{server_name|capitalize}}</h2>
+        <div class="container text-center">
+          <div class="row align-items-start">
+            <div class="col">
+              <div class="text-center">
+                <a href="{{ url_for('views.add', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                  Edit {{server_name|capitalize}} Settings
+                </a>
+              </div>
+            </div>
+          {% if show_jobs_edit %}
+            <div class="col">
+              <div class="text-center">
+                <a href="{{ url_for('views.jobs', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                  Edit {{server_name|capitalize}} Jobs
+                </a>
+              </div>
+            </div>
+          {% endif %}
+          </div>
+        </div>
+
+        <br />
+
+        <br />
+        <h2>Server Controls for {{server_name|capitalize}}</h2>
         <hr />
 
         {% for command in server_commands %}
@@ -77,6 +101,7 @@
           </div>
           <br />
         {% endfor %}
+
       </div>
       <br />
 

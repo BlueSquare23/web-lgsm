@@ -26,10 +26,10 @@ APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT
 # Import db classes from app.
 sys.path.append(APP_PATH)
 from app import db
-from app.models import User, GameServer
+from app.models import GameServer, Job
 
 # Global options hash.
-O = {"dry": False, "keep": False}
+O = {"dry": False, "delete": False}
 
 ## Subroutines.
 
@@ -38,37 +38,44 @@ def print_help(msg=None):
         print(msg)
     """Help menu"""
     print(
-        f"""Usage: {os.path.basename(__file__)} -i|-c|-d <id> [-h] [-n] 
+        f"""Usage: {os.path.basename(__file__)} -i|-x|-d|-c <id> [-h] [-n] 
     Options:
       -h, --help            Show this help message and exit
       -n, --dry             Dry run mode, print only don't run cmd
       -i, --install <id>    Install new game server
-      -c, --cancel <id>     Cancel an ongoing installation
-      -d, --delete <id>     Delete an installation & its user
+      -x, --cancel <id>     Cancel an ongoing installation
+      -d, --delete <id>     Delete an installation & its user or a cronjob
+      -c, --cron <id>       Cronjob to create or edit
     """
     )
     exit()
 
 
-def db_get(server_id):
+def db_fetch(item_id, item_type='GameServer'):
     """
-    Connects to app's DB and returns GameServer object macthing ID.
+    Connects to app's DB and returns either GameServer or Job object that
+    matches item_id.
 
     Args:
-        server_id (int): Id of GameServer obj to fetch.
+        item_id (str): Id of GameServer|Job obj to fetch.
+        item_type (str): Type of object to fetch. Either GameServer or Job.
     Returns:
-        GameServer: GameServer object matching ID.
+        GameServer|Job: GameServer or Job object matching ID.
     """
     engine = create_engine('sqlite:///app/database.db')
     
     # Use new db session context.
     # Can't use app context in ansible connector.
     with Session(engine) as session:
-        server = session.get(GameServer, server_id)
-        if server == None:
+        if item_type == 'Job':
+            item = session.get(Job, item_id)
+        else:
+            item = session.get(GameServer, item_id)
+
+        if item == None:
             print("Error: No server with ID found.")
             exit(69)
-        return server
+        return item
 
 
 def validate_username(username):
@@ -185,7 +192,7 @@ def run_install_new_game_server(server_id):
     Args:
         server_id (int): Id of GameServer to install.
     """
-    server = db_get(server_id)
+    server = db_fetch(server_id)
 
     if server.install_finished:
         print("Installation for server already completed!")
@@ -313,14 +320,60 @@ def cancel_install(pid):
     exit()
 
 
+def run_cron_edit(job_id):
+    """
+    Handles invocation of cronjob edit playbook.
+
+    Args:
+        job_id (str(shortuuid)): Id of job to edit.
+    """
+    job = db_fetch(job_id, 'Job')
+    server = db_fetch(job.server_id)
+
+    ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
+    edit_jobs_path = os.path.join(PLAYBOOKS, "playbooks/edit_jobs.yml")
+
+    comment = f"{job.server_id}, {job.id}, {job.comment}"
+    job_str = f"{server.install_path}/{server.script_name} {job.command}"
+    state = 'absent' if O["delete"] else 'present'
+
+    custom_job_prefix = 'custom: '
+    if job.command.startswith(custom_job_prefix):
+        job_str = job.command.replace(custom_job_prefix, '')
+
+    cmd = [
+        "/usr/bin/sudo",
+        "-n",
+        ansible_cmd_path,
+        edit_jobs_path,
+        "-e",
+        f"comment='{comment}'",
+        "-e",
+        f"username={server.username}",
+        "-e",
+        f"job='{job_str}'",
+        "-e",
+        f"schedule='{job.expression}'",
+        "-e",
+        f"state='{state}'",
+    ]
+
+    if O["dry"]:
+        print(cmd)
+        exit()
+
+    run_cmd(cmd)
+    exit()
+
+
 def run_delete_user(server_id):
     """
     Wraps the invocation of the delete_user.yml playbook.
 
     Args:
-       server_id (int): Id of server to delete. 
+       server_id (uuid): Id of server to delete. 
     """
-    server = db_get(server_id)
+    server = db_fetch(server_id)
 
     validate_username(server.username)
 
@@ -347,7 +400,7 @@ def run_delete_user(server_id):
 def main(argv):
     """Process getopts, loads json vars, runs appropriate playbook"""
     try:
-        opts, args = getopt.getopt(argv, "hnki:c:d:", ["help", "dry", "install=", "cancel=", "delete="])
+        opts, args = getopt.getopt(argv, "hni:x:c:d:", ["help", "dry", "install=", "cancel=", "cron=", "delete="])
     except getopt.GetoptError:
         print_help("Invalid option!")
 
@@ -355,23 +408,27 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print_help()
-        if opt in ("-d", "--dry"):
+        if opt in ("-n", "--dry"):
             O["dry"] = True
+        if opt in ("-d", "--delete"):
+            O["delete"] = True
 
     # Then parse opts to determine action.
     for opt, arg in opts:
-        if opt in ("-h", "--help", "-d", "--dry"):
+        if opt in ("-h", "--help", "-n", "--dry"):
             continue
 
-        server_id = arg
         if opt in ("-i", "--install"):
-            run_install_new_game_server(server_id)
+            run_install_new_game_server(arg)
 
-        if opt in ("-c", "--cancel"):
-            cancel_install(server_id)
+        if opt in ("-x", "--cancel"):
+            cancel_install(arg)
 
-        if opt in ("-x", "--delete"):
-            run_delete_user(server_id)
+        if opt in ("-c", "--cron"):
+            run_cron_edit(arg)
+
+        if opt in ("-d", "--delete"):
+            run_delete_user(arg)
 
 
     print(" [!] No action taken!")

@@ -6,7 +6,7 @@ services:
       context: .
     container_name: web-lgsm
     ports:
-      - "5000:5000"
+      - "12357:12357"
 {% for server in servers %}      - "{{server.port}}:{{server.port}}"{% endfor %}
     volumes:
       - ./{{config_file}}:/home/web-lgsm/{{config_file}}:rw

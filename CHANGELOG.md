@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.8.5 Unreleased]
+
+### Added
+
+- Add ability to edit GameServer info via existing `/add` page / route.
+- Add new audit log file and interface for searching recent log entries.
+- Add jinja2 extension for loop controls to enable `continue` & `break` in templates.
+- Add caching for authed ssh client objects to cut down ssh response times.
+- Add new cronjob manager interface for manipulating system's crontab.
+
+### Changed
+
+- Change install page layout and add pictures for game servers!
+- Remove unique constraint on GameServer names.
+- Upgrade project to use Bootstrap 5.3.7.
+
+### Fixed
+
+- Fix web-lgsm docker start race condition [Issue #44](https://github.com/bluesquare23/web-lgsm/issues/44)
+- Fix headless auto updates by coming up with new update mechanism.
+- Fix alert bootstrap / html to make backend alerts dismissible.
+
 ## [v1.8.4] - 2025-06-15
 
 ### Added

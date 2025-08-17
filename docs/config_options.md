@@ -70,6 +70,13 @@ These settings control basic app behaviors.
     feature just be sure to have a strong password, have SSL, and trust who you
     give web-lgsm access too!
 
+* `allow_custom_jobs`: Allows the creation of arbitrary cronjobs via the app's
+  builtin jobs editor.
+  - Default: No (aka custom cronjobs disabled)
+  - Warning: THIS FEATURE ENABLES ARBITRARY REMOTE CODE EXECUTION FOR
+    AUTHENTICATED USERS! By enabling custom jobs, you are giving users the
+    ability to run any shell commands they want on your system!
+
 
 ### Server Settings
 

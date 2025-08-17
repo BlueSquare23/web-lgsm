@@ -110,99 +110,46 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-
-## Version 1.8.4 Todos
-
-* [x] **Fix core update mechanism... again**
-  - Still needs thoroughly tested but think I mostly got it.
-  - Big key to updates moving forward is the Flask-Migrate (Alembic) database change system.
-
-* [x] **Make sure `web-lgsm.py --update` can deal with new folders owned as root.**
-  - Yeah the update mechanism
-
-* [x] **Redesign test code!**
-  - [x] Refactor big test and conftest.py functions.
-  - [x] Make auto backup and git restore main.conf file.
-  - [x] Make each test idempotent, and make sure no tests are dependant on
-    other tests. 
-      - This is going to be quite the task because currently a lotta tests are
-        dependant on the ones run before them. I'm bad at programming.
-      - There's no real design being these tests, just lots of code piled up on
-        itself & really needs cleaned up.
-
-* [x] **Fix install.sh --docker for Debian**
-  - User noticed the issue:
-    https://github.com/BlueSquare23/web-lgsm/issues/41
-  - Just need to make docker install case on debian vs ubuntu.
-
-* [x] **Add CSRF protection using Flask-WTF**
-  - I did not realize until today that flask doesn't do anything to prevent
-    CSRF natively.
-    - Same Site is set to None and its totally possible to trick someone into
-      making POSTs to forms.
-  - Forms to do:
-    - [x] Add
-    - [x] Settings
-    - [x] Login
-    - [x] Setup
-    - [x] Controls
-    - [x] Edit
-    - [x] Home: Doesn't really need one, not a real form that gets submitted to the backend. Just a button that triggers js to make fetch reqs to api /delete.
-    - [x] Install
-    - [x] Edit Users
-  - Resources:
-    - https://flask-wtf.readthedocs.io/en/1.0.x/quickstart/
-    - https://wtforms.readthedocs.io/en/2.3.x/fields/
-    - https://flask-wtf.readthedocs.io/en/0.15.x/form/#secure-form
-    - https://www.geeksforgeeks.org/flask-wtf-explained-how-to-use-it/
-    - I might want to use this to handle file uploads one day too.
-
-* [x] **Spend some time fleshing out new singleton code & integrating into app**
-  - I added this, I got it working, I somewhat tested it. However, I have not
-    gotten around to refactoring fundamental parts of the app to use it yet.
-    - Now seems like a good time to do that because old tests have been brought
-      into the present and updated, however new tests for this have not been
-      added yet.
-    - I was so busy with adjusting from server name -> id that it kinda ate up
-      most of the last releases time. 
-  - Make utils functions work via IDs and access objects from global dict,
-    instead of being passed the whole object directly as arg. 
-  - Note to self, not an excuse to run wild and get distracted refactoring
-    every little thing. Stay on task! Just update core functions to use new
-    code.
-
-* [x] **Use Pylint & Black for linting and formatting**
-  - There's some dead code still and some unused modules etc.
-  - Can also show errors with `pylint --load-plugins pylint_flask -E app/`
-
-* [x] **Continue fixing up tests** (always a work in progress, goodenuff4now)
-  1. As much as I hate to admit it, the coverage reports are kinda useful for
-    spotting things that I have little to no testing for.
-    - A lot of this stuff is newer stuff, I added but never got around to
-      testing, cause was going to do some overhaul on the tests anyways.
-    - [x] Look at recent coverage reports to find things that lack tests and
-      write some more tests!
-  2. There are a number of existing tests that are pretty weak, kinda don't
-    really test what they're supposed to test well. 
-    - I left myself a bunch of TODOs in comments.
-    - [x] Refactor existing _"weak"_ tests to improve tactility (aka better
-      grip on subject matter being tested) & robustness (aka no race
-      conditionss, cheats & other hacks to fudge it so tests pass).
-  3. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
-    - I really need to be taking an action, then checking the DB.
-    - I'm checking a lot of responses from the outside to make sure they're as
-      expected. However I'm not really checking directly in the DB itself to
-      make sure things are all good.
-    - But I can do that, so I should be doing that. Oh well always more things
-      to do than time to do them.
-  4. [~] Add tests for:
-    - [~] Doesn't allow missing `csrf_token` on forms that require one.
-    - [x] Auth required on routes that require auth.
+* [ ] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
+  - The idea here is twofold:
+    1. I want the app to have a mature api, where basically anything you can do
+       through the web, you can also do through a curl cmd.
+    2. I also want the app's route logic to still use things like Flask-WTF/WTForms validation.
+  - To accomplish this, I'm going to slowly transition existing routes to use
+    new service layer classes. New features will just be built this way from
+    the start. Old features will be transitioned over time.
 
 
 ## Version 1.8.5 Todos
 
-* [ ] **Add new page & API route(s) for Edit Game Server Info**
+* [x] **Add new Restart/Backup Scheduler (Cron Wrapper)**
+  - User suggested this feature and I think its a good one.
+    - https://github.com/BlueSquare23/web-lgsm/issues/20
+  - The idea here would be to create a simple web interface to wrap up adding
+    crontab entries. Then the actual restarts or backups will just be handled
+    by the lgsm game server cli script itself.
+  - [x] Add permissions controls for new /jobs route.
+  - [x] Add api routes for:
+    - [x] `/api/add_job`
+    - [x] `/api/delete_job`
+    - [x] `/api/list_jobs`
+  - [x] Add docs for new api routes.
+  - [x] Add new neutral service layer class for handling actual needful doing.
+  - [x] Add new route and form for `/jobs`.
+  - [ ] Add more security validation around playbooks for adding cronjobs.
+
+* [x] **Cache connected ssh client objects**
+  - I want to cache the connection objects after initial connection is make
+    subsequent ssh requests super speedy. 
+  - Looks like I can use functools `lru_cache` to do it.
+
+* [x] **Add user action audit log feature + route for viewing**
+  - Now that I have multiple users, when some user takes an action, I want to
+    record who did what when to an audit log for later viewing by
+    administrators in the web interface.
+  - [x] Need new database model to store audit log info.
+
+* [x] **Add new Edit Game Server Info**
   - So far the only option for users to change game server information has been
     to delete the install and manually re-add it. Not a great solution.
   - I need to allow users to change their game server name, path, username,
@@ -212,28 +159,71 @@
   - This DB Model line set's install name to be unique:
     `install_name = db.Column(db.String(150), unique=True)`
 
-* [ ] **Add new page & API route(s) for Restart/backup Scheduler.**
-  - User suggested this feature and I think its a good one.
-    - https://github.com/BlueSquare23/web-lgsm/issues/20
-  - The idea here would be to create a simple web interface to wrap up adding
-    crontab entries. Then the actual restarts or backups will just be handled
-    by the lgsm game server cli script itself.
-  - I've got all of the above to work through first but I do like this idea and
-    want to add it in.
+* [x] **Add pictures to install page**
+  - [x] Need to download and serve images locally or via my own cdn link. The
+    LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
+    Wanted to see what it would look like mostly.
 
-* [ ] **Add new page & API route(s) for export database information**
-  - I want to allow users to export their database to csv or json or something
-    for backup / manual update / migration purposes.
+* [x] **Continue fixing up tests**
+  1. [x] Add new tests for new features:
+    - [x] cron page contents
+    - [x] cron page responses
+    - [x] cron api routes
+    - [x] cron service class unit
+    - [x] edit servers tests
+    - [x] audit page content
+    - [x] audit page responses
 
-* [ ] **Add user action audit log feature + route for viewing**
-  - Now that I have multiple users, when some user takes an action, I want to
-    record who did what when to an audit log for later viewing by
-    administrators in the web interface.
-  - [ ] Need new database model to store audit log info.
-  - [ ] Need new api routes to add info and remove info from audit log.
+* [x] **Fix auto update to allow run headlessly**
+  - [Related Issue](https://github.com/bluesquare23/web-lgsm/issues/45)
+
+* [x] **Fix, test, and robustify docker stuff more**
+  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
+  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
+  - I really need to do more manual qa testing on debian before release. My dev
+    env is ubuntu.
 
 ## Version 1.8.x Todos
 
+* [ ] **Continue fixing up tests**
+  2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
+    - I really need to be taking an action, then checking the DB.
+    - I'm checking a lot of responses from the outside to make sure they're as
+      expected. However I'm not really checking directly in the DB itself to
+      make sure things are all good.
+    - But I can do that, so I should be doing that. Oh well always more things
+      to do than time to do them.
+
+* [ ] **Fully integrated file explorer for managing files and mods**
+  - Idea here is to clean up the existing edit page and add in a file manager.
+    - So right now file manager takes as input the full path to files. This is
+      dumb as hell. It should only take in relative path to game server's base
+      dir. Keeps url looking cleaner + implicitly limits to game server dir.
+  - I'm not super thrilled with the idea of doing a full file manager by
+    wrapping shell commands. But designwise I've sorta backed myself into that
+    corner. How else do I do it over ssh, most of the app works over ssh.
+  - There are hacky ways to run native python over ssh, but that's really not
+    much better than just using shell commands.
+  - I think it'll be okay if I just do these operations:
+    - list
+    - edit
+    - delete
+    - create
+    - upload
+  - Just like the file editor it'll be disabled by default and users will have
+    to opt-in to enable it. And won't be accessable from setting page.
+  - This will take some work to do properly and safely. But we'll figure it out.
+
+* [ ] **Add new export database information**
+  - I want to allow users to export their database to csv or json or something
+    for backup / manual update / migration purposes.
+
+* [ ] **Create service layer class for controls page & add api route**
+  - [ ] Basically build out api routes for buttons on controls page.
+    - `/api/controls/<server_id>`
+  - [ ] Also build out new class for controls service layer.
+  - [ ] Make both API and Route code use this new neutral service class to
+    actually do the needful.
 
 * [ ] **Make work for python 3.13**
   - I was silly and tried to put 3.13 in the tests at the end of this release
@@ -244,7 +234,6 @@
   - Makes sense and I've seen other web apps do this sorta thing before. Just
     pipe that info right to page if debug is true.
     - Not a big priority for v1.8 release.
-
 
 * [ ] **Make install_path an optional main.conf parameter.**
   - By default I want to set this to just `/home/<user>/<server_name>`.

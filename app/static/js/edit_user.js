@@ -10,6 +10,7 @@ function applyUserPermissions() {
   document.getElementById('add_servers').checked = userPerms.add_servers;
   document.getElementById('mod_settings').checked = userPerms.mod_settings;
   document.getElementById('edit_cfgs').checked = userPerms.edit_cfgs;
+  document.getElementById('edit_jobs').checked = userPerms.edit_jobs;
   document.getElementById('delete_server').checked = userPerms.delete_server;
 
   // Check the controls checkboxes.

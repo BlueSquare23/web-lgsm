@@ -10,7 +10,9 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-from app.models import User, GameServer
+from app.models import User, GameServer, Job, Audit
+from app.cron import CronService
+from app.models import db
 from utils import *
 
 ### Home Page tests.
@@ -30,7 +32,7 @@ def test_home_content(db_session, client, authed_client, test_vars):
         assert b"Installed Servers" in response.data
         assert b"Other Options" in response.data
         assert b"Install a New Game Server" in response.data
-        assert b"Add an Existing LGSM Installation" in response.data
+        assert b"Add or Edit Existing LGSM Installation" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -66,7 +68,7 @@ def test_add_content(db_session, client, authed_client, test_vars):
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b" Add an Existing LGSM Installation" in response.data
+        assert b"Add or Edit Existing LGSM Installation" in response.data
         assert b"Game server is installed locally" in response.data
         assert b"Game server is installed on a remote machine" in response.data
         assert b"Game server is in a docker container" in response.data
@@ -238,9 +240,6 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         ## Bad char tests.
         # Checks response to see if it contains bad chars msg.
         def contains_bad_chars(response):
-            # DEBUG!
-#            print(response.data.decode('utf-8'))
-#            print('----------------------------------------')
 
             # Check redirect by seeing if path changed.
             assert response.request.path == url_for("views.add")
@@ -302,8 +301,6 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             )
             contains_bad_chars(response2)
 
-# Will fail bc script_name validation happens first. Keeping for now bc
-# refactor of main routes may see validation reordered so this is useful again.
             response3 = ''
             response3 = client.post(
                 "/add",
@@ -319,14 +316,17 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             contains_bad_chars(response3)
 
 
-        ## Test install already exists.
-        # Do a legit server add.
+        ## Test install details edit.
+        server_id = get_server_id(test_server)
+
+        # Change server name.
         response4 = client.post(
             "/add",
             data={
+                "server_id": server_id,
                 "csrf_token": csrf_token,
                 "install_type": "local",
-                "install_name": test_server,
+                "install_name": test_server + '1',
                 "install_path": test_server_path,
                 "script_name": test_server_name,
             },
@@ -334,7 +334,8 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         )
 
         assert response4.status_code == 200
-        assert b"An installation by that name already exits." in response4.data
+        alert_msgs = extract_alert_messages(response4, 'success')
+        assert 'Game server added!' in alert_msgs
 
         ## Test legit remote server add with mock server details.
         response = client.post(
@@ -370,6 +371,163 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         assert b'Game server added' in response.data
 
 
+### Audit page tests.
+# Check basic content matches.
+def test_audit_content(db_session, client, authed_client, test_vars):
+    version = test_vars["version"]
+
+    with client:
+
+        response = client.get("/audit")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        # Check strings on page match.
+        assert b"Home" in response.data
+        assert b"Settings" in response.data
+        assert b"Logout" in response.data
+        assert b"Audit Log" in response.data
+        assert b"Results Per Page" in response.data
+        assert b"Filter by User" in response.data
+        assert b"Search Messages" in response.data
+        assert b"Search" in response.data
+        assert b"Reset Filters" in response.data
+        assert b"Event ID" in response.data
+        assert b"User ID" in response.data
+        assert b"Username" in response.data
+        assert b"Event Message" in response.data
+        assert b"Date/Time" in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
+
+
+# Check responses are expected.
+def test_audit_responses(db_session, client, authed_client, add_mock_server, test_vars):
+    version = test_vars["version"]
+    test_server = test_vars["test_server"]
+
+    server_id = get_server_id(test_server)
+
+    with client:
+        # Setup fake db entries.
+        for i in range(100):
+            db.session.add(Audit(
+                user_id='1',
+                message=f"Test entry {i+1}"
+            ))
+        db.session.commit()
+
+        response = client.get(f"/audit")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        response = client.get(f"/audit?per_page=50&page=2&user_id=1&search=test+entry")
+        assert response.data.count(b'Test entry') == 50
+
+
+### Jobs page tests.
+# Check basic content matches.
+def test_jobs_content(db_session, client, authed_client, add_mock_server, test_vars):
+    version = test_vars["version"]
+    test_server = test_vars["test_server"]
+
+    with client:
+
+        response = client.get("/jobs")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+
+        # Check strings on page match.
+        assert b"Home" in response.data
+        assert b"Settings" in response.data
+        assert b"Logout" in response.data
+        assert b"Web-LGSM Job Scheduler" in response.data
+        assert b"Select Game Server" in response.data
+        assert b"Mockcraft" in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
+
+        server_id = get_server_id(test_server)
+        response = client.get(f"/jobs?server_id={server_id}")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        # Check strings on page match.
+        assert b"Home" in response.data
+        assert b"Settings" in response.data
+        assert b"Logout" in response.data
+        assert b"Web-LGSM Job Scheduler" in response.data
+        assert b"Select Game Server" in response.data
+        assert b"Mockcraft" in response.data
+        assert b"Cron Jobs for Mockcraft" in response.data
+        assert b"Add New Cron Job" in response.data
+        assert b"Cron Job Editor" in response.data
+        assert b"Command" in response.data
+        assert b"Comment" in response.data
+        assert b"Schedule" in response.data
+        assert b"Minutes" in response.data
+        assert b"Hours" in response.data
+        assert b"Day of Month" in response.data
+        assert b"Month" in response.data
+        assert b"Day of Week" in response.data
+        assert b"Cron Expression" in response.data
+        assert b"Close" in response.data
+        assert b"Save Changes" in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
+
+
+# Check responses are expected.
+def test_jobs_responses(db_session, client, authed_client, add_mock_server, test_vars):
+    version = test_vars["version"]
+    test_server = test_vars["test_server"]
+
+    server_id = get_server_id(test_server)
+    cron_service = CronService(server_id=server_id)
+
+    with client:
+
+        response = client.get(f"/jobs?server_id={server_id}")
+        assert response.status_code == 200  # Return's 200 to GET requests.
+        csrf_token = get_csrf_token(response)
+
+        assert Job.query.first() is None
+
+        # Test add job via POST.
+        data = {
+            "csrf_token": csrf_token,
+            "job_id": "",
+            "server_id": server_id,
+            "command": "start",
+            "comment": "Test job",
+            "custom": "",
+            "cron_expression": "30 1 * * *"
+        }
+
+        response = client.post("/jobs", data=data, follow_redirects=True)
+        assert response.status_code == 200
+        alert_msgs = extract_alert_messages(response, 'success')
+        assert 'Cronjob updated successfully!' in alert_msgs
+
+        assert Job.query.first() is not None
+
+        jobs_list = cron_service.list_jobs()
+        job_id = jobs_list[0]["job_id"]
+
+        # Test update job via POST.
+        data = {
+            "csrf_token": csrf_token,
+            "job_id": job_id, 
+            "server_id": server_id,
+            "command": "stop",
+            "comment": "Test job comment updated",
+            "custom": "",
+            "cron_expression": "30 2 * * *"
+        }
+        response = client.post("/jobs", data=data, follow_redirects=True)
+        assert response.status_code == 200
+        alert_msgs = extract_alert_messages(response, 'success')
+        assert 'Cronjob updated successfully!' in alert_msgs
+
+        newjob = Job.query.first()
+        assert newjob.id == job_id  # Aka job_id didn't change when updating job.
+        assert newjob.command == "stop"
+        assert newjob.comment == "Test job comment updated"
+        assert newjob.expression == "30 2 * * *"
+
+
 ### Controls page tests.
 # Check basic content matches.
 def test_controls_content(db_session, client, authed_client, add_mock_server, test_vars):
@@ -389,7 +547,7 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
         assert b"Settings" in response.data
         assert b"Logout" in response.data
         assert b"Output:" in response.data
-        assert f"Server Controls for: {test_server}".encode() in response.data
+        assert f"Server Controls for {test_server}".encode() in response.data
         assert b"Top" in response.data
         assert b"Delete Server" in response.data
 
@@ -1196,7 +1354,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         # Test add page.
         response = client.get("/add", follow_redirects=True)
         csrf_token = get_csrf_token(response)
-        msg = b"Add an Existing LGSM Installation"
+        msg = b"Add or Edit Existing LGSM Installation Details"
         check_response(response, msg, resp_code, "views.add")
 
         ## Test legit server add.
@@ -1225,7 +1383,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
 
         # Test game server controls page.
         response = client.get(f"/controls?server_id={server_id}", follow_redirects=True)
-        msg = b"Server Controls for: Mockcraft"
+        msg = b"Server Controls for Mockcraft"
         check_response(response, msg, resp_code, "views.controls")
 
         # Test settings page.

@@ -4,7 +4,7 @@ ENV UID=1000
 ENV GID=1000
 
 # Install apt deps.
-RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2
+RUN dpkg --add-architecture i386 && apt-get update && apt-get upgrade -y && apt-get install -y sudo apt-utils iproute2 jq curl
 
 # First add the web-lgsm group.
 RUN groupadd -g $GID web-lgsm

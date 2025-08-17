@@ -18,30 +18,23 @@ import configparser
 
 from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
+from functools import lru_cache
 
-from .models import GameServer
+from .models import GameServer, Audit
 from .cmd_descriptor import CmdDescriptor
 from .processes_global import *
+from . import db
+from . import cache
 
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-ANSIBLE_CONNECTOR = "/usr/local/bin/ansible_connector.py"
-PATHS = {
-    "docker": "/usr/bin/docker",
-    "sudo": "/usr/bin/sudo",
-    "tmux": "/usr/bin/tmux",
-    "cat": "/usr/bin/cat",
-    "kill": "/usr/bin/kill",
-    "find": "/usr/bin/find",
-    "ssh-keygen": "/usr/bin/ssh-keygen",
-    "rm": "/usr/bin/rm",
-}
+from .paths import PATHS
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
     "/opt/web-lgsm/bin/python",
-    ANSIBLE_CONNECTOR,
+    PATHS["ansible_connector"],
 ]
 
 # Network stats globals.
@@ -800,19 +793,20 @@ def get_servers():
     Returns:
         dict: Dictionary mapping short server names to long server names.
     """
-    # TODO v1.9: Eventually I need to change the structure of the underlying
-    # json file and just make it a freaking associated array in there. Then I
-    # can just read in the json and return it, instead of doing zip. Don't
-    # remember why I originally made the underlying json two arrays. Probably
-    # was just being silly. Oh well not too important rn, problem for next
-    # release...
 
     # Try except in case problem with json files.
     try:
         with open("json/game_servers.json", "r") as file:
             json_data = json.load(file)
 
-        return dict(zip(json_data["servers"], json_data["server_names"]))
+        return {
+            key: (value1, value2)
+            for key, value1, value2 in zip(
+                json_data["servers"],
+                json_data["server_names"],
+                json_data["app_imgs"]
+            )
+        }
     except:
         # Return empty dict triggers error. In python empty dict == False.
         return {}
@@ -1075,6 +1069,14 @@ def user_has_permissions(current_user, route, server_id=None):
         if server_id not in user_perms["server_ids"]:
             return False
 
+    if route == "jobs":
+        if not user_perms["edit_jobs"]:
+            flash(
+                "Your user does NOT have permission access the jobs page!",
+                category="error",
+            )
+            return False
+
     return True
 
 
@@ -1182,6 +1184,30 @@ def get_ssh_key_file(user, host):
     return keyfile
 
 
+@lru_cache(maxsize=32)
+def _get_ssh_client(hostname, username, key_filename):
+    """
+    Cache ssh connection objects using lru_cache from functools. 
+    """
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(hostname, 
+        username=username,
+        key_filename=key_filename,
+        timeout=3,
+        look_for_keys=False, 
+        allow_agent=False
+    )
+
+    # Verify connection is alive.
+    try:
+        client.exec_command("echo 'healthcheck'", timeout=2)
+        return client
+    except:
+        client.close()
+        raise
+
+
 def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     """
     Runs remote commands over ssh to admin game servers.
@@ -1237,16 +1263,8 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     current_app.logger.info("pre stdout: " + str(proc_info.stdout))
     current_app.logger.info("pre stderr: " + str(proc_info.stderr))
 
-    # Initialize SSH client.
-    client = paramiko.SSHClient()
-    # Automatically add the host key.
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
     try:
-        client.connect(
-            hostname, username=username, key_filename=pub_key_file, timeout=3
-        )
-        current_app.logger.debug(cmd)
+        client = _get_ssh_client(hostname, username, pub_key_file)
 
         proc_info.process_lock = True
         # Open a new session and request a PTY.
@@ -1326,7 +1344,7 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
         ret_status = False
 
     finally:
-        client.close()
+#        client.close()
         return ret_status
 
 
@@ -1345,26 +1363,19 @@ def read_file_over_ssh(server, file_path):
     """
     current_app.logger.info(log_wrap("file_path", file_path))
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
+    hostname = server.install_host
+    username = server.username
 
     try:
-        # Open ssh client conn.
-        with paramiko.SSHClient() as ssh:
-            # Automatically add the host key.
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(
-                server.install_host,
-                username=server.username,
-                key_filename=pub_key_file,
-                timeout=3,
-            )
+        client = _get_ssh_client(hostname, username, pub_key_file)
 
-            # Open sftp session.
-            with ssh.open_sftp() as sftp:
-                # Open file over sftp.
-                with sftp.open(file_path, "r") as file:
-                    content = file.read()
+        # Open sftp session.
+        with client.open_sftp() as sftp:
+            # Open file over sftp.
+            with sftp.open(file_path, "r") as file:
+                content = file.read()
 
-            return content.decode()
+        return content.decode()
 
     except Exception as e:
         current_app.logger.debug(e)
@@ -1388,21 +1399,15 @@ def write_file_over_ssh(server, file_path, content):
     """
     current_app.logger.info(log_wrap("file_path", file_path))
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
+    hostname = server.install_host
+    username = server.username
 
     try:
-        with paramiko.SSHClient() as ssh:
-            # Automatically add the host key.
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(
-                server.install_host,
-                username=server.username,
-                key_filename=pub_key_file,
-                timeout=3,
-            )
+        client = _get_ssh_client(hostname, username, pub_key_file)
 
-            with ssh.open_sftp() as sftp:
-                with sftp.open(file_path, "w") as file:
-                    file.write(content)
+        with client.open_sftp() as sftp:
+            with sftp.open(file_path, "w") as file:
+                file.write(content)
 
         return True
 
@@ -1420,7 +1425,7 @@ def get_config_value(config, section, option, default, is_bool=False):
         config (ConfigParser): Config object to read & get options from.
         section (str): Section of config to fetch option from.
         option (str): The option to fetch value of.
-        default (str): Default value if can't find option in config.
+        default (str|bool): Default value if can't find option in config.
         is_bool (bool): Option type is a boolean (different option fetch method).
 
     Returns:
@@ -1598,6 +1603,16 @@ def read_config(route):
         )
         return config_options
 
+    if route == "jobs":
+        config_options["send_cmd"] = get_config_value(
+            config, "settings", "send_cmd", False, True
+        )
+
+        config_options["allow_custom_jobs"] = get_config_value(
+            config, "settings", "allow_custom_jobs", False, True
+        )
+        return config_options
+
 
 def clear_proc_info_post_install(server_id, app_context):
     """
@@ -1758,4 +1773,19 @@ def write_cfg(server, cfg_path, new_file_contents):
         return True
     except:
         return False
+
+
+def audit_log_event(user_id, message):
+    """
+    Helper function to create new audit log entries. Adds new messages to
+    database and logs them using custom audit_logger.
+    """
+    audit_entry = Audit(
+        user_id=user_id,
+        message=message
+    )
+    db.session.add(audit_entry)
+    db.session.commit()
+
+    current_app.audit_logger.info(message)
 

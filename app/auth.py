@@ -2,7 +2,7 @@ import json
 from . import db
 from datetime import timedelta
 from .models import User, GameServer
-from .utils import validation_errors, log_wrap
+from .utils import validation_errors, log_wrap, audit_log_event
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import (
     login_user,
@@ -25,7 +25,6 @@ from .forms import LoginForm, SetupForm, EditUsersForm
 auth = Blueprint("auth", __name__)
 
 ######### Login Route #########
-
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
@@ -66,11 +65,11 @@ def login():
     four_weeks_delta = timedelta(days=28)
     login_user(user, remember=True, duration=four_weeks_delta)
     confirm_login()
+    audit_log_event(user.id, f"User '{username}' logged in")
     return redirect(url_for("views.home"))
 
 
 ######### Setup Route #########
-
 
 @auth.route("/setup", methods=["GET", "POST"])
 def setup():
@@ -103,25 +102,26 @@ def setup():
     )
     db.session.add(new_user)
     db.session.commit()
+    db.session.refresh(new_user)
 
     flash("User created!")
     login_user(new_user, remember=True)
+    audit_log_event(new_user.id, f"New user '{username}' created")
     return redirect(url_for("views.home"))
 
 
 ######### Logout Route #########
 
-
 @auth.route("/logout")
 @login_required
 def logout():
+    audit_log_event(current_user.id, f"User '{current_user.username}' logged out")
     logout_user()
     flash("Logged out!", category="success")
     return redirect(url_for("auth.login"))
 
 
 ######### Create / Edit User(s) Route #########
-
 
 @auth.route("/edit_users", methods=["GET", "POST"])
 @login_required
@@ -184,6 +184,7 @@ def edit_users():
 
             db.session.delete(user_ident)
             db.session.commit()
+            audit_log_event(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
             flash(f"User {selected_user} deleted!")
             return redirect(url_for("auth.edit_users"))
 
@@ -228,6 +229,7 @@ def edit_users():
     add_servers = form.add_servers.data
     mod_settings = form.mod_settings.data
     edit_cfgs = form.edit_cfgs.data
+    edit_jobs = form.edit_jobs.data
     delete_server = form.delete_server.data
     controls = form.controls.data
     server_ids = form.server_ids.data
@@ -243,6 +245,7 @@ def edit_users():
     current_app.logger.debug(log_wrap("add_servers", add_servers))
     current_app.logger.debug(log_wrap("mod_settings", mod_settings))
     current_app.logger.debug(log_wrap("edit_cfgs", edit_cfgs))
+    current_app.logger.debug(log_wrap("edit_jobs", edit_jobs))
     current_app.logger.debug(log_wrap("delete_server", delete_server))
     current_app.logger.debug(log_wrap("controls", controls))
     current_app.logger.debug(log_wrap("server_ids", server_ids))
@@ -290,6 +293,10 @@ def edit_users():
     if edit_cfgs:
         permissions["edit_cfgs"] = True
 
+    permissions["edit_jobs"] = False
+    if edit_jobs:
+        permissions["edit_jobs"] = True
+
     permissions["delete_server"] = False
     if delete_server:
         permissions["delete_server"] = True
@@ -326,6 +333,7 @@ def edit_users():
         )
         db.session.add(new_user)
         db.session.commit()
+        audit_log_event(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
         return redirect(url_for("views.home"))
 
@@ -338,12 +346,14 @@ def edit_users():
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
         db.session.commit()
+        audit_log_event(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
 
     user_ident.role = role
     user_ident.permissions = json.dumps(permissions)
     db.session.commit()
+    audit_log_event(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))
 

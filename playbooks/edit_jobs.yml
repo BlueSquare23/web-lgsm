@@ -1,0 +1,35 @@
+---
+## Playbook required vars.
+# comment
+# username
+# job
+# schedule
+# state 
+
+- name: Adds and Edits Cronjob Entries
+  hosts: localhost
+  become: true
+  connection: local
+  gather_facts: false
+  vars:
+    state: "present"
+  vars_files:
+    - vars/accepted_usernames.yml
+
+  tasks:
+    - name: Validate Username
+      include_tasks: "{{ item }}"
+      loop:
+        - tasks/validate_username.yml
+
+    - name: Add cron job via connector
+      ansible.builtin.cron:
+        name: "{{ comment }}"
+        user: "{{ username }}"
+        job: "{{ job }}"
+        minute: "{{ schedule.split()[0] }}"
+        hour: "{{ schedule.split()[1] }}"
+        day: "{{ schedule.split()[2] }}"
+        month: "{{ schedule.split()[3] }}"
+        weekday: "{{ schedule.split()[4] }}"
+        state: "{{ state }}"

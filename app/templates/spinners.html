@@ -3,6 +3,11 @@
             <h2 style='color:#00ff11'>Installing {{install_name|capitalize}}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
           {% endif %}
 
+          {# Used to show ... messages on different pages #}
+          {% if spinner_context is defined and spinner_context is not none %}
+            <h2 style='color:#00ff11'>{{ spinner_context }}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
+          {% endif %}
+
           {% set spinner_colors = ["primary", "secondary", "success", "danger", "warning", "info", "light"] %}
           {% for bs_color in spinner_colors %}
             <div class="spinner-border text-{{bs_color}}" role="status">

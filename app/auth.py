@@ -1,8 +1,11 @@
+import os
 import json
-from . import db
+import base64
+import onetimepass
+import pyqrcode
 from datetime import timedelta
-from .models import User, GameServer
-from .utils import validation_errors, log_wrap, audit_log_event
+from io import BytesIO
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import (
     login_user,
@@ -20,7 +23,11 @@ from flask import (
     flash,
     current_app,
 )
-from .forms import LoginForm, SetupForm, EditUsersForm
+
+from . import db
+from .forms import LoginForm, SetupForm, EditUsersForm, OTPSetupForm
+from .models import User, GameServer
+from .utils import validation_errors, log_wrap, audit_log_event
 
 auth = Blueprint("auth", __name__)
 
@@ -357,3 +364,63 @@ def edit_users():
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))
 
+
+######### 2fa Setup Route #########
+
+@auth.route("/2fa_setup", methods=["GET", "POST"])
+@login_required
+def two_factor_setup():
+    user = User.query.filter_by(username=current_user.username).first()
+    if user is None:
+        return redirect(url_for("logout"))
+
+    # Setup otp_secret if doesn't already exist (for legacy user compat).
+    if user.otp_secret is None:
+        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+        db.session.commit()
+
+    form = OTPSetupForm()
+    form.user_id = user.id
+
+    if request.method == "GET":
+
+        # Format the secret for easier manual entry (add spaces every 4 characters).
+        formatted_secret = ' '.join([user.otp_secret[i:i+4] for i in range(0, len(user.otp_secret), 4)])
+
+        # Don't cache qrcode!
+        return render_template('2fa_setup.html', user=current_user, form=form, fsecret=formatted_secret), 200, {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        validation_errors(form)
+        return redirect(url_for("auth.two_factor_setup"))
+    
+    flash("Two factor enabled successfully!", category="success")
+    user.otp_enabled = True
+    db.session.commit()
+    return redirect(url_for("views.home"))
+
+
+######### 2fa QRCode Route #########
+
+@auth.route('/qrcode')
+@login_required
+def qrcode():
+    user = User.query.filter_by(username=current_user.username).first()
+    if user is None:
+        return redirect(url_for("logout"))
+
+    # Render qrcode, no caching.
+    url = pyqrcode.create(user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=3)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }

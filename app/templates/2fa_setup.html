@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}2FA Setup{% endblock %}
+
+{% block content %}
+      <br />
+
+      <div class="container bg-dark border border-white rounded-3 p-4">
+        <h1 class='text-white text-center mb-4'>Two Factor Auth Setup</h1>
+
+        <p class="text-center text-light mb-4">You are almost done! Please scan the QR code below with your OTP authenticator app of choice.</p>
+        
+        <div class="text-center mb-4">
+          <img id="qrcode" style="background-color:white" class="img-fluid rounded p-2 border border-light" src="{{ url_for('auth.qrcode') }}">
+        </div>
+
+        <p class="text-center text-light mb-4">Or try entering the secret manually:</p>
+        <p class="text-center text-light mb-4"><b>{{fsecret}}</b></p>
+
+        </hr>
+
+        <form method="POST" class="mx-auto" style="max-width: 400px;">
+          {{ form.hidden_tag() }}
+          
+          <h4 class="text-white text-center mb-3">
+            Enter OTP Code
+          </h4>
+          
+          <div class="form-group mb-3">
+            {{ form.otp_code.label(class="form-label text-white") }}
+            {{ form.otp_code(class="form-control bg-secondary text-white border-dark") }}
+          </div>
+
+          <div class="text-center">
+            {{ form.submit(class="btn btn-primary px-4") }}
+          </div>
+        </form>
+
+      </div>
+{% endblock %}

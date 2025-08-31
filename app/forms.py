@@ -76,6 +76,26 @@ class ValidConfigFile:
             raise ValidationError(self.message)
 
 
+class ValidateOTPCode:
+    """Validator that checks if 2fa otp code in form is valid"""
+
+    def __init__(self, user_id=None, message="Invalid otp code!"):
+        self.message = message
+        self.user_id = user_id
+
+    def __call__(self, form, field):
+        if not hasattr(form, 'user_id') or not form.user_id:
+            raise ValidationError("User ID is required for OTP validation")
+
+        user = User.query.filter_by(id=form.user_id).first()
+
+        if not user:
+            raise ValidationError("User not found")
+
+        if not user.verify_totp(field.data):
+            raise ValidationError(self.message)
+
+
 ## Main Forms
 
 class LoginForm(FlaskForm):
@@ -151,6 +171,20 @@ class SetupForm(FlaskForm):
     def validate_password2(self, field):
         if self.password1.data != field.data:
             raise ValidationError("Passwords do not match")
+
+
+class OTPSetupForm(FlaskForm):
+    user_id = None
+
+    otp_code = IntegerField(
+        "OTP Code",
+        validators=[
+            InputRequired(),
+            ValidateOTPCode(),
+        ],
+    )
+
+    submit = SubmitField("Submit", render_kw={"class": "btn btn-outline-primary"})
 
 
 class AddForm(FlaskForm):

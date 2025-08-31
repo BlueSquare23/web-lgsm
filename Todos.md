@@ -119,69 +119,35 @@
     new service layer classes. New features will just be built this way from
     the start. Old features will be transitioned over time.
 
+## Version 1.8.6 Todos
 
-## Version 1.8.5 Todos
-
-* [x] **Add new Restart/Backup Scheduler (Cron Wrapper)**
-  - User suggested this feature and I think its a good one.
-    - https://github.com/BlueSquare23/web-lgsm/issues/20
-  - The idea here would be to create a simple web interface to wrap up adding
-    crontab entries. Then the actual restarts or backups will just be handled
-    by the lgsm game server cli script itself.
-  - [x] Add permissions controls for new /jobs route.
-  - [x] Add api routes for:
-    - [x] `/api/add_job`
-    - [x] `/api/delete_job`
-    - [x] `/api/list_jobs`
-  - [x] Add docs for new api routes.
-  - [x] Add new neutral service layer class for handling actual needful doing.
-  - [x] Add new route and form for `/jobs`.
-  - [ ] Add more security validation around playbooks for adding cronjobs.
-
-* [x] **Cache connected ssh client objects**
-  - I want to cache the connection objects after initial connection is make
-    subsequent ssh requests super speedy. 
-  - Looks like I can use functools `lru_cache` to do it.
-
-* [x] **Add user action audit log feature + route for viewing**
-  - Now that I have multiple users, when some user takes an action, I want to
-    record who did what when to an audit log for later viewing by
-    administrators in the web interface.
-  - [x] Need new database model to store audit log info.
-
-* [x] **Add new Edit Game Server Info**
-  - So far the only option for users to change game server information has been
-    to delete the install and manually re-add it. Not a great solution.
-  - I need to allow users to change their game server name, path, username,
-    ssh-key, etc.
-  - So there's need to be a new page and backend logic to enable this new
-    feature.
-  - This DB Model line set's install name to be unique:
-    `install_name = db.Column(db.String(150), unique=True)`
-
-* [x] **Add pictures to install page**
-  - [x] Need to download and serve images locally or via my own cdn link. The
-    LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
-    Wanted to see what it would look like mostly.
-
-* [x] **Continue fixing up tests**
-  1. [x] Add new tests for new features:
-    - [x] cron page contents
-    - [x] cron page responses
-    - [x] cron api routes
-    - [x] cron service class unit
-    - [x] edit servers tests
-    - [x] audit page content
-    - [x] audit page responses
-
-* [x] **Fix auto update to allow run headlessly**
-  - [Related Issue](https://github.com/bluesquare23/web-lgsm/issues/45)
-
-* [x] **Fix, test, and robustify docker stuff more**
-  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
-  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
-  - I really need to do more manual qa testing on debian before release. My dev
-    env is ubuntu.
+* [ ] **Add optional TOTP 2fa for login page**
+  - This will be a toggle in the main.conf.
+    - Users can enable it but it wont be on by default.
+    - In the tug of war between security and liberty, liberty must prevail.
+      Otherwise, security has no purpose.
+  - How it should work, High Level:
+    - If enabled in main.conf, is mandatory. All users must set it up.
+    - If not already setup, on successful login will force user to set it up
+      before allowing them to login.
+    - Once setup for a user otp field on login page becomes required.
+    - After setup the only way to change otp settings is to login with otp, or
+      to have an admin reset it for you from users settings page.
+  - What we need:
+    - Database:
+      - Add `otp_secret` (bin string, 10 chars, base32 encoded) to User model
+        - `base64.b32encode(os.urandom(10)).decode('utf-8')`
+      - Add `otp_enabled` bool to track if users otp has been setup yet
+      - Add `backup_codes` list of hashed 2fa 1 time use backup codes.
+    - Routes:
+      - Tweak login, add otp field
+    - Forms:
+      - Tweak login form add otp code field
+  - Sources:
+    - https://github.com/miguelgrinberg/two-factor-auth-flask/blob/master/app.py
+    - https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask
+    - https://pypi.org/project/onetimepass/
+    - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
 
 ## Version 1.8.x Todos
 

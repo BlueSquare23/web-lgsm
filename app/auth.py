@@ -52,6 +52,7 @@ def login():
 
     username = form.username.data
     password = form.password.data
+    otp_code = form.otp_code.data
 
     # Check login info.
     user = User.query.filter_by(username=username).first()
@@ -68,8 +69,21 @@ def login():
     if current_user.is_authenticated:
         logout_user()
 
-    flash("Logged in!", category="success")
     four_weeks_delta = timedelta(days=28)
+
+    # For case where user is setting up otp for first time.
+    if not user.otp_enabled:
+        login_user(user, remember=True, duration=four_weeks_delta)
+        confirm_login()
+        audit_log_event(user.id, f"User '{username}' logged in")
+        flash("Please setup two factor authentication!", category="success")
+        return redirect(url_for("auth.two_factor_setup"))
+
+    if not user.verify_totp(otp_code):
+        flash("Invalid otp 2fa code!", category="error")
+        return render_template("login.html", user=current_user, form=form), 403
+
+    flash("Logged in!", category="success")
     login_user(user, remember=True, duration=four_weeks_delta)
     confirm_login()
     audit_log_event(user.id, f"User '{username}' logged in")

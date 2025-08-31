@@ -18,6 +18,17 @@
             {{ form.password.label(class="text-white") }}
             {{ form.password() }}
 
+            <div class="form-group mt-3">
+              {{ form.otp_code.label(class="form-label text-white") }}
+              <div class="input-group">
+                <span class="input-group-text bg-dark text-white border-white">
+                  <i class="bi bi-lock"></i>
+                </span>
+                {{ form.otp_code(class="white-placeholder form-control bg-dark border-white text-white", 
+                                placeholder="Enter 6-digit code") }}
+              </div>
+            </div>
+
             <br />
 
             <center>

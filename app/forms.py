@@ -117,6 +117,13 @@ class LoginForm(FlaskForm):
         render_kw={"placeholder": "Enter Password", "class": "form-control"},
     )
 
+    otp_code = IntegerField(
+        "OTP Code",
+        validators=[
+            Optional(),  # We validate in route code for login totp validation
+        ],
+    )
+
     submit = SubmitField("Login", render_kw={"class": "btn btn-outline-primary"})
 
 

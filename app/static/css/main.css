@@ -120,3 +120,8 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     -moz-appearance:textfield; /* Firefox */
 }
+
+.white-placeholder::placeholder {
+    color: white;
+    opacity: 1; /* Ensures full opacity in Firefox */
+}

@@ -89,7 +89,7 @@ class User(db.Model, UserMixin):
     permissions = db.Column(db.String(600))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     otp_secret = db.Column(db.String(16))
-    otp_enabled = db.Column(db.Boolean(), default=True) 
+    otp_enabled = db.Column(db.Boolean(), default=False) 
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}', date_created='{self.date_created}')>"

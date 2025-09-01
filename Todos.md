@@ -121,7 +121,7 @@
 
 ## Version 1.8.6 Todos
 
-* [ ] **Add optional TOTP 2fa for login page**
+* [x] **Add optional TOTP 2fa for login page**
   - This will be a toggle in the main.conf.
     - Users can enable it but it wont be on by default.
     - In the tug of war between security and liberty, liberty must prevail.
@@ -148,6 +148,30 @@
     - https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask
     - https://pypi.org/project/onetimepass/
     - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
+
+* [ ] **Add proper password strength indicator to setup & user edit pages**
+  - I think this will be fun to make. It should just be mostly JS and won't
+    really have anything to do with the minimum pass requirements.
+  - It should also do some frontend validation to check if it meets the min
+    reqs. just as a helpful tip to user to not even let them submit an invalid
+    pass.
+
+* [ ] **Add option for anonymous usage statistics.**
+  - This is not technically difficult, as in setting this up from a software
+    perspective would be relatively simple.
+  - Thing is I don't know about the regulatory side and how that applies to me
+    as a single creator of a simple web app...
+  - Pretty sure all of these regulations mean I need to get user consent first:
+    - GDPR (General Data Protection Regulation)
+    - CCPA (California Consumer Privacy Act)
+    - COPPA (Children's Online Privacy Protection Act)
+  - So thinking maybe after initial install & login form pops up that says "do
+    you want to send anonymous usage stats?"
+
+* [ ] **For install list do sort by alpha two columns header**
+  - At the top of the install page, add some buttons to sort by alphabetical
+    order for both columns.
+  - Right now order is ascending by server short name.
 
 ## Version 1.8.x Todos
 
@@ -275,11 +299,6 @@
 * [ ] **Setup github pages to host Swagger docs for project w/ github actions**
   - https://github.com/peter-evans/swagger-github-pages
 
-* [ ] **Write some database tests that use the sqlite3 cli to test that data is
-  actually making it into the db file.**
-  - So just anywhere the app add stuff to the db, just verify with sqlite3
-    commands that its in there.
-
 * [ ] **Add Python Selenium end-to-end tests to actually login and do a bunch of
   stuff in the web interface.**
   - Try to thoroughly test site functionality, basically redo all of the same
@@ -298,18 +317,6 @@
 
 Maybe I'll do these things but really they're all just kinda dreams for now.
 
-* [ ] **Add option for anonymous usage statistics.**
-  - This is not technically difficult, as in setting this up from a software
-    perspective would be relatively simple.
-  - Thing is I don't know about the regulatory side and how that applies to me
-    as a single creator of a simple web app...
-  - Pretty sure all of these regulations mean I need to get user consent first:
-    - GDPR (General Data Protection Regulation)
-    - CCPA (California Consumer Privacy Act)
-    - COPPA (Children's Online Privacy Protection Act)
-  - So thinking maybe after initial install & login form pops up that says "do
-    you want to send anonymous usage stats?"
-
 * [ ] **Add more thorough tests over SSH.**
   - Setup a remote host with Minecraft on it.
   - Add flag to web-lgsm.py to do `--test_ssh`.
@@ -317,12 +324,6 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - Can't add a priv key so can't connect the ci tests to a remote host.
     - This would just be for me to run manually every so often to check
       everything over remote ssh is all good.
-
-
-* [ ] **For install list do sort by alpha two columns header**
-  - At the top of the install page, add some buttons to sort by alphabetical
-    order for both columns.
-  - Right now order is ascending by server short name.
 
 ## Disclaimer
 

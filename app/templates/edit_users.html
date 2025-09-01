@@ -61,10 +61,24 @@
                 {{ form.password2.label(style="color: white;") }}
                 {{ form.password2(class="form-control", placeholder="Retype New Password") }}
 
-                <i>Note: Passwords must be at least 12 characters long and contain at least 1 uppercase letter, 1 lowercase letter, & 1 special character!</i>
-                <br />
+                <small class="text-white-50">
+                  <i class="bi bi-info-circle"></i> 
+                   Passwords must be at least 12 characters long and contain at least 1 uppercase letter, 1 lowercase letter, and 1 special character!
+                </small>
               </div>
       
+              <div id="two_factor" class="mt-2">
+                {{ form.enable_otp(class="form-check-input", checked=user_otp_enabled) }}
+                {{ form.enable_otp.label }}<br />
+
+                <small class="text-white-50">
+                  <i class="bi bi-info-circle"></i> 
+                   User will be prompted to setup Two Factor Auth using OTP codes upon first login
+                </small>
+              </div>
+
+              <hr>
+
               <!-- Admin radio buttons -->
               {{ form.is_admin.label(class="form-label") }}
               {% for subfield in form.is_admin %}
@@ -75,7 +89,7 @@
               {% endfor %}
       
               <br />
-      
+
               <div class="container">
                   <div class="row">
                       <!-- Non-admin permissions, disabled if Admin is checked -->

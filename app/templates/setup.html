@@ -23,7 +23,12 @@
             <i>Note: Passwords must be at least 12 characters long and contain at least 1 uppercase letter, 1 lowercase letter, & 1 special character!</i>
 
             <br />
-            <br />
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    {{ form.enable_otp(class="form-check-input") }}
+                    {{ form.enable_otp.label(class="form-check-label") }}
+                </div>
+            </div>
 
             <center>
               {{ form.submit() }}

@@ -156,6 +156,8 @@ class SetupForm(FlaskForm):
         render_kw={"placeholder": "Retype Password", "class": "form-control"},
     )
 
+    enable_otp = BooleanField("Enable Two Factor Auth")
+
     submit = SubmitField("Submit", render_kw={"class": "btn btn-outline-primary"})
 
     def validate_password1(self, field):
@@ -629,7 +631,9 @@ class EditUsersForm(FlaskForm):
         default="false",
     )
 
+
     # Permissions
+    enable_otp = BooleanField("Enable Two Factor Auth")
     install_servers = BooleanField("Can Install New Game Servers")
     add_servers = BooleanField("Can Add/Edit Existing Game Servers")
     mod_settings = BooleanField("Can Modify Web-LGSM Settings Page")

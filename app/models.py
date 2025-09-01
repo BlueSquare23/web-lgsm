@@ -18,7 +18,7 @@ class Audit(db.Model):
         unique=True,  # Ensure uniqueness
         nullable=False,  # Ensure not null
     )
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=True)
     message = db.Column(db.String(150))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -90,6 +90,7 @@ class User(db.Model, UserMixin):
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     otp_secret = db.Column(db.String(16))
     otp_enabled = db.Column(db.Boolean(), default=False) 
+    otp_setup = db.Column(db.Boolean(), default=False) 
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}', date_created='{self.date_created}')>"

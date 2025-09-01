@@ -27,9 +27,11 @@
                 {{ form.otp_code(class="white-placeholder form-control bg-dark border-white text-white", 
                                 placeholder="Enter 6-digit code") }}
               </div>
+              <small class="text-white-50">
+                <i class="bi bi-info-circle"></i> 
+                If 2fa is enabled for your user.
+              </small>
             </div>
-
-            <br />
 
             <center>
               {{ form.submit() }}

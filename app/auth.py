@@ -71,17 +71,19 @@ def login():
 
     four_weeks_delta = timedelta(days=28)
 
-    # For case where user is setting up otp for first time.
-    if not user.otp_enabled:
-        login_user(user, remember=True, duration=four_weeks_delta)
-        confirm_login()
-        audit_log_event(user.id, f"User '{username}' logged in")
-        flash("Please setup two factor authentication!", category="success")
-        return redirect(url_for("auth.two_factor_setup"))
+    # Handle 2fa Logins.
+    if user.otp_enabled:
+        # For case where user is setting up otp for first time.
+        if not user.otp_setup:
+            login_user(user, remember=True, duration=four_weeks_delta)
+            confirm_login()
+            audit_log_event(user.id, f"User '{username}' logged in")
+            flash("Please setup two factor authentication!", category="success")
+            return redirect(url_for("auth.two_factor_setup"))
 
-    if not user.verify_totp(otp_code):
-        flash("Invalid otp 2fa code!", category="error")
-        return render_template("login.html", user=current_user, form=form), 403
+        if not user.verify_totp(otp_code):
+            flash("Invalid otp 2fa code!", category="error")
+            return render_template("login.html", user=current_user, form=form), 403
 
     flash("Logged in!", category="success")
     login_user(user, remember=True, duration=four_weeks_delta)
@@ -113,6 +115,7 @@ def setup():
     # Collect form data
     username = form.username.data
     password = form.password1.data
+    enable_otp = form.enable_otp.data
 
     # Add the new_user to the database, then redirect home.
     new_user = User(
@@ -120,6 +123,7 @@ def setup():
         password=generate_password_hash(password, method="pbkdf2:sha256"),
         role="admin",
         permissions=json.dumps({"admin": True}),
+        otp_enabled=enable_otp,
     )
     db.session.add(new_user)
     db.session.commit()
@@ -128,6 +132,10 @@ def setup():
     flash("User created!")
     login_user(new_user, remember=True)
     audit_log_event(new_user.id, f"New user '{username}' created")
+
+    if enable_otp:
+        return redirect(url_for("auth.two_factor_setup"))
+
     return redirect(url_for("views.home"))
 
 
@@ -177,6 +185,10 @@ def edit_users():
         (server.id, server.install_name) for server in installed_servers
     ]
 
+    # TODO: Tweak this GET logic and Jinja2 template code. Make it pass
+    # user_ident object to template instead of passing derivatives of that
+    # object.
+
     if request.method == "GET":
         selected_user = request.args.get("username")
         # TODO (eventually): Make delete user work same way as delete server;
@@ -212,9 +224,11 @@ def edit_users():
         if user_ident == None:
             user_role = None
             user_permissions = None
+            user_otp_enabled = None
         else:
             user_role = user_ident.role
             user_permissions = user_ident.permissions
+            user_otp_enabled = user_ident.otp_enabled
 
         return render_template(
             "edit_users.html",
@@ -224,6 +238,7 @@ def edit_users():
             all_users=all_users,
             selected_user=selected_user,
             user_role=user_role,
+            user_otp_enabled=user_otp_enabled,
             user_permissions=user_permissions,
             form=form,
         )
@@ -245,6 +260,7 @@ def edit_users():
     username = form.username.data
     password1 = form.password1.data
     password2 = form.password2.data
+    enable_otp = form.enable_otp.data
     is_admin = form.is_admin.data
     install_servers = form.install_servers.data
     add_servers = form.add_servers.data
@@ -261,6 +277,7 @@ def edit_users():
     current_app.logger.debug(log_wrap("username", username))
     current_app.logger.debug(log_wrap("password1", password1))
     current_app.logger.debug(log_wrap("password2", password2))
+    current_app.logger.debug(log_wrap("enable_otp", enable_otp))
     current_app.logger.debug(log_wrap("is_admin", is_admin))
     current_app.logger.debug(log_wrap("install_servers", install_servers))
     current_app.logger.debug(log_wrap("add_servers", add_servers))
@@ -351,7 +368,13 @@ def edit_users():
             password=generate_password_hash(password1, method="pbkdf2:sha256"),
             role=role,
             permissions=json.dumps(permissions),
+            otp_enabled=enable_otp,
         )
+
+        # Reset otp setup
+        if not enable_otp:
+            new_user.otp_setup = False
+
         db.session.add(new_user)
         db.session.commit()
         audit_log_event(current_user.id, f"User '{current_user.username}', created new user '{username}'")
@@ -371,7 +394,12 @@ def edit_users():
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
 
+    # Reset otp setup
+    if not enable_otp:
+        user_ident.otp_setup = False
+
     user_ident.role = role
+    user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
     db.session.commit()
     audit_log_event(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
@@ -397,7 +425,6 @@ def two_factor_setup():
     form.user_id = user.id
 
     if request.method == "GET":
-
         # Format the secret for easier manual entry (add spaces every 4 characters).
         formatted_secret = ' '.join([user.otp_secret[i:i+4] for i in range(0, len(user.otp_secret), 4)])
 
@@ -414,7 +441,7 @@ def two_factor_setup():
         return redirect(url_for("auth.two_factor_setup"))
     
     flash("Two factor enabled successfully!", category="success")
-    user.otp_enabled = True
+    user.otp_setup = True
     db.session.commit()
     return redirect(url_for("views.home"))
 

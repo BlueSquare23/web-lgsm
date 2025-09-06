@@ -15,8 +15,15 @@
             {{ form.username.label(class="text-white") }}
             {{ form.username() }}
 
-            {{ form.password.label(class="text-white") }}
-            {{ form.password() }}
+            <div class="form-group mb-1">
+              {{ form.password.label(class="text-white") }}
+              <div class="password-container">
+                {{ form.password() }}
+                <span class="password-toggle" id="togglePassword">
+                  <i class="bi bi-eye text-white"></i>
+                </span>
+              </div>
+            </div>
 
             <div class="form-group mt-3">
               {{ form.otp_code.label(class="form-label text-white") }}
@@ -39,4 +46,19 @@
           </div>
         </form>
       </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const passwordInput = document.getElementById('password');
+  const togglePassword = document.getElementById('togglePassword');
+
+  // Password visibility toggles
+  togglePassword.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.querySelector('i').classList.toggle('bi-eye');
+      this.querySelector('i').classList.toggle('bi-eye-slash');
+  });
+});
+</script>
+
 {% endblock %}

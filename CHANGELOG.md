@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add ability to toggle password visibility to all password forms.
 - Add ability to reset TOTP 2fa secret via web-lgsm.py script.
 - Add TOTP Two Factor Auth option for web panel login!
 - Add Password Strength indicator to password setup fields.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix alert messages to push down rest of page.
 
 ## [v1.8.5 - 2025-08-17]
 

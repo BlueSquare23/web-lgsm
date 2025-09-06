@@ -609,16 +609,19 @@ class EditUsersForm(FlaskForm):
             Length(min=4, max=150),
             Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
         ],
+        render_kw={"placeholder": "Enter Username", "class": "form-control"},
     )
     password1 = PasswordField(
         "Password",
         validators=[
             ConditionalPasswordRequired(),
         ],
+        render_kw={"placeholder": "Enter Password", "class": "form-control"},
     )
     password2 = PasswordField(
         "Confirm Password",
         validators=[EqualTo("password1", message="Passwords must match")],
+        render_kw={"placeholder": "Retype Password", "class": "form-control"},
     )
 
     # Admin toggle

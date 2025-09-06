@@ -83,6 +83,7 @@ if os.getenv("VIRTUAL_ENV") is None:
 # Continue imports once we know we're in a venv.
 import json
 import time
+import base64
 import getopt
 import shutil
 import string
@@ -609,41 +610,80 @@ def add_valid_gs_user(gs_user):
     run_command(cmd)
 
 
+def reset_totp():
+    username = input("Enter username: ")
+
+    # Find the user in the database
+    user = User.query.filter_by(username=username).first()
+
+    if user is None:
+        print("Error: User not found!")
+        return
+
+    print(f"WARNING: You are about to reset TOTP two factor auth for user: {username}")
+    print(f"This will invalidate any currently configured 2fa codes for {username}!!!")
+    answer = input("Are you sure? (y/N): ")
+    if answer != 'y':
+        print("Aborting...")
+        exit()
+
+    # Update the user's totp secret.
+    user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+    user.otp_setup = False
+    formatted_secret = ' '.join([user.otp_secret[i:i+4] for i in range(0, len(user.otp_secret), 4)])
+    db.session.commit()
+
+    print("TOTP Secret reset for user!")
+    print(f"New Shared Secret: {formatted_secret}")
+
+
 def print_help():
     """Prints help menu"""
     print(
         """
-  ╔══════════════════════════════════════════════════════════╗  
-  ║ Usage: web-lgsm.py [options]                             ║
-  ║                                                          ║
-  ║   Options:                                               ║
-  ║                                                          ║
-  ║   -h, --help          Prints this help menu              ║
-  ║   -s, --start         Starts the server (default no args)║
-  ║   -q, --stop          Stop the server                    ║
-  ║   -r, --restart       Restart the server                 ║
-  ║   -m, --status        Show server status                 ║
-  ║   -d, --debug         Start server in debug mode         ║
-  ║   -v, --verbose       More verbose output                ║
-  ║   -p, --passwd        Change web user password           ║
-  ║   -u, --update        Update web-lgsm version            ║
-  ║   -c, --check         Check if an update is available    ║
-  ║   -n, --noback        Don't backup web-lgsm for updates  ║
-  ║   -a, --auto          Run an auto update                 ║
-  ║   -f, --fetch_json    Fetch latest game servers json     ║
-  ║   -t, --test          Run project's pytest tests (short) ║
-  ║   -x, --test_full     Run ALL project's pytest tests     ║
-  ║   -j, --valid [user]  Add valid gs_user to allow list    ║
-  ╚══════════════════════════════════════════════════════════╝
+  ╔═══════════════════════════════════════════════════════════╗  
+  ║ Usage: web-lgsm.py [options]                              ║
+  ║                                                           ║
+  ║   Options:                                                ║
+  ║                                                           ║
+  ║   -h, --help          Prints this help menu               ║
+  ║   -V, --version       Prints web-lgsm version             ║
+  ║   -s, --start         Starts the server (default no args) ║
+  ║   -q, --stop          Stop the server                     ║
+  ║   -r, --restart       Restart the server                  ║
+  ║   -m, --status        Show server status                  ║
+  ║   -d, --debug         Start server in debug mode          ║
+  ║   -v, --verbose       More verbose output                 ║
+  ║   -p, --passwd        Change web user password            ║
+  ║   -u, --update        Update web-lgsm version             ║
+  ║   -c, --check         Check if an update is available     ║
+  ║   -n, --noback        Don't backup web-lgsm for updates   ║
+  ║   -a, --auto          Run an auto update                  ║
+  ║   -f, --fetch_json    Fetch latest game servers json      ║
+  ║   -t, --test          Run project's pytest tests (short)  ║
+  ║   -x, --test_full     Run ALL project's pytest tests      ║
+  ║   -j, --valid [user]  Add valid gs_user to allow list     ║
+  ║   -P, --reset_totp    Reset user's 2fa access             ║
+  ║                                                           ║
+  ╚═══════════════════════════════════════════════════════════╝
     """
     )
     exit()
+
+
+def print_version():
+    with open('tests/test_vars.json', 'r') as f:
+        data = json.load(f)
+
+    if data["version"]:
+        print('Version: ' + data["version"])
 
 
 def main(argv):
     try:
         longopts = [
             "help",
+            "version",
             "start",
             "stop",
             "status",
@@ -659,8 +699,9 @@ def main(argv):
             "test",
             "test_full",
             "valid=",
+            "reset_totp",
         ]
-        opts, args = getopt.getopt(argv, "hsmrqdvpucnaftxj:", longopts)
+        opts, args = getopt.getopt(argv, "hVsmrqdvpucnaftxj:P", longopts)
     except getopt.GetoptError as e:
         print(e)
         print_help()
@@ -687,6 +728,8 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             print_help()
+        if opt in ("-V", "--version"):
+            print_version()
         elif opt in ("-s", "--start"):
             start_server()
             return
@@ -718,9 +761,12 @@ def main(argv):
             run_tests()
             return
         elif opt in ("-j", "--valid"):
-            print(opt)
-            print(arg)
             add_valid_gs_user(arg)
+            return
+        elif opt in ("-P", "--reset_totp"):
+            app = appmain()
+            with app.app_context():
+                reset_totp()
             return
         elif opt in ("-d", "--debug") or DEBUG:
             # Put debug last because main.conf var.

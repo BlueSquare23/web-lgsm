@@ -9,10 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add ability to reset TOTP 2fa secret via web-lgsm.py script.
 - Add TOTP Two Factor Auth option for web panel login!
+- Add Password Strength indicator to password setup fields.
 
 ### Changed
 
+- Change style for Edit User page, integrate password strength indicator.
+- Change style for Setup page, integrate password strength indicator.
 
 ### Fixed
 

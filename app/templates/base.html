@@ -21,6 +21,30 @@
 
   <body>
 
+    <!-- Handle Alerts from Backend (Jinja2) -->
+    <div id="alert-container" style="position: fixed; width: 100%; z-index: 1000;">
+    {%- with messages = get_flashed_messages(with_categories=True) -%}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "error" %}
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message + "\n" }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% else %}
+                  <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {%- endwith %}
+    </div>
+
+    <!-- Handle Alerts from Frontend (JavaScript) -->
+    <script src="static/js/alerts.js"></script>
+
     <!-- Bootstrap Navbar https://getbootstrap.com/docs/5.1/components/navbar/ -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
@@ -67,71 +91,6 @@
         </div>
       </div>
     </nav>
-
-    <!-- Handle Alerts from Backend (Jinja2) -->
-    <div id="alert-container" style="position: fixed; width: 100%; z-index: 1000;">
-    {%- with messages = get_flashed_messages(with_categories=True) -%}
-        {% if messages %}
-            {% for category, message in messages %}
-                {% if category == "error" %}
-                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ message + "\n" }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-                {% else %}
-                  <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    {%- endwith %}
-    </div>
-
-    <!-- Handle Alerts from Frontend (JavaScript) -->
-    <script>
-function showAlert(message, type = 'success') {
-  const alertContainer = document.getElementById('alert-container');
-
-  // Create the alert HTML and append it
-  alertContainer.insertAdjacentHTML('beforeend', `
-    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  `);
-  dismissAlert();
-}
-
-function dismissAlert(newAlert = null) {
-  const alertContainer = document.getElementById('alert-container');
-
-  // Get the newly created alert if non supplied
-  if (newAlert == null) {
-    const alerts = alertContainer.getElementsByClassName('alert');
-    newAlert = alerts[alerts.length - 1];
-  }
-
-  // Auto-remove after 5 seconds
-  setTimeout(() => {
-    if (newAlert.parentNode) {
-      const bsAlert = new bootstrap.Alert(newAlert);
-      bsAlert.close();
-    }
-  }, 5000);
-}
-
-// Dismiss all alerts from backend
-function dismissAll() {
-  const alertContainer = document.getElementById('alert-container');
-  const alerts = alertContainer.getElementsByClassName('alert');
-  Array.from(alerts).forEach(alertElement => {
-    dismissAlert(alertElement);
-  });
-}
-dismissAll();
-    </script>
 
     <div class="container pb-5">
       {%- block content -%}

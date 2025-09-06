@@ -121,7 +121,48 @@ input[type=number] {
     -moz-appearance:textfield; /* Firefox */
 }
 
+hr {
+  background-color: white;;
+}
+
 .white-placeholder::placeholder {
     color: white;
     opacity: 1; /* Ensures full opacity in Firefox */
+}
+
+/* Password Strength CSS */
+.password-container {
+    position: relative;
+}
+.progress {
+    height: 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+}
+.password-feedback {
+    font-size: 0.85rem;
+    margin-top: 5px;
+    min-height: 20px;
+}
+.requirement-list {
+    font-size: 0.9rem;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+.requirement-list li {
+    margin-bottom: 5px;
+}
+.valid-requirement {
+    color: #198754;
+}
+.invalid-requirement {
+    color: #6c757d;
+}
+.bi-check-circle-fill {
+    color: #198754;
+    margin-right: 5px;
+}
+.bi-x-circle-fill {
+    color: #6c757d;
+    margin-right: 5px;
 }

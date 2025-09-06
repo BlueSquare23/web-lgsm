@@ -149,7 +149,14 @@
     - https://pypi.org/project/onetimepass/
     - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
 
-* [ ] **Add proper password strength indicator to setup & user edit pages**
+* [x] **Add user totp reset via web-lgsm.py**
+  - If user forgets or loses their 2fa secret and needs to reset it, they'll
+    have to ssh into the server and run web-lgsm.py to reset it.
+
+* [ ] **Add tests for new totp 2fa page and authflow**
+  - I'll have to add some new ones and tweak some existing tests.
+
+* [x] **Add proper password strength indicator to setup & user edit pages**
   - I think this will be fun to make. It should just be mostly JS and won't
     really have anything to do with the minimum pass requirements.
   - It should also do some frontend validation to check if it meets the min
@@ -172,6 +179,11 @@
   - At the top of the install page, add some buttons to sort by alphabetical
     order for both columns.
   - Right now order is ascending by server short name.
+
+* [ ] **Make work for python 3.13**
+  - I was silly and tried to put 3.13 in the tests at the end of this release
+    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
+    make it work soon.
 
 ## Version 1.8.x Todos
 
@@ -214,11 +226,6 @@
   - [ ] Also build out new class for controls service layer.
   - [ ] Make both API and Route code use this new neutral service class to
     actually do the needful.
-
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just

@@ -163,6 +163,13 @@
     reqs. just as a helpful tip to user to not even let them submit an invalid
     pass.
 
+* [x] **Build basic bruteforce login protection**
+  - I'm thinking a list of 10000 failed login IPs in memory that new get push
+    onto and old get shifted off from.
+  - Will need to fetch X-Forwarded-IP for revproxy setups.
+  - This is no replacement for fail2ban, users should still use fail2ban with a
+    403 -> real firewall ban rule in place.
+
 * [ ] **Add option for anonymous usage statistics.**
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.

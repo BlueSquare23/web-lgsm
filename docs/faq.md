@@ -81,3 +81,8 @@
       will completely invalidate any devices already setup with totp 2fa for
       the given user.
 
+11. Question: I failed my login a few times and now I just get "Access
+    denied" when I try to go to the login page. How do I fix?
+    - Answer: Restart the gunicorn server with `./web-lgsm.py --restart`, that
+      should clear the lockout blocked IP list.
+

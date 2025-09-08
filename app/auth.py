@@ -28,6 +28,8 @@ from . import db
 from .forms import LoginForm, SetupForm, EditUsersForm, OTPSetupForm
 from .models import User, GameServer
 from .utils import validation_errors, log_wrap, audit_log_event
+from .blocklist import is_blocked, add_failed, get_client_ip
+
 
 auth = Blueprint("auth", __name__)
 
@@ -41,6 +43,10 @@ def login():
     if User.query.first() == None:
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
+
+    ip = get_client_ip(request)
+    if is_blocked(ip):
+        return 'Access denied', 403
 
     if request.method == "GET":
         return render_template("login.html", user=current_user, form=form), 200
@@ -57,12 +63,14 @@ def login():
     # Check login info.
     user = User.query.filter_by(username=username).first()
     if user == None:
+        add_failed(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
     current_app.logger.info(user)
 
     if not check_password_hash(user.password, password):
+        add_failed(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
@@ -82,6 +90,7 @@ def login():
             return redirect(url_for("auth.two_factor_setup"))
 
         if not user.verify_totp(otp_code):
+            add_failed(ip)
             flash("Invalid otp 2fa code!", category="error")
             return render_template("login.html", user=current_user, form=form), 403
 

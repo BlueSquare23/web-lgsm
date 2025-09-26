@@ -21,7 +21,7 @@ def test_setup_contents(db_session, client, test_vars):
         # Check strings on page match.
         assert b"Home" in response.data
         assert b"Login" in response.data
-        assert b"Web LGSM Setup" in response.data
+        assert b"Create New User" in response.data
         assert b"Username" in response.data
         assert b"Enter Username" in response.data
         assert b"Password" in response.data
@@ -29,6 +29,13 @@ def test_setup_contents(db_session, client, test_vars):
         assert b"Confirm Password" in response.data
         assert b"Retype Password" in response.data
         assert b"Submit" in response.data
+        assert b"Passwords must meet the following requirements" in response.data
+        assert b"At least 12 characters long" in response.data
+        assert b"1 number [0-9]" in response.data
+        assert b"1 uppercase letter" in response.data
+        assert b"1 lowercase letter" in response.data
+        assert b"1 special character" in response.data
+        assert b"Enable Two Factor Auth" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 

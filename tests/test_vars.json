@@ -4,7 +4,7 @@
   "app_path": "",
   "test_server": "Mockcraft",
   "test_server_path": "tests/test_data/Mockcraft",
-  "test_remote_host": "jumpbox.thefamu.net",
+  "test_remote_host": "ssh.github.com",
   "cfg_dir": "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/",
   "cfg_path": "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg",
   "test_server_name": "mcserver",

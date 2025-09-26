@@ -735,12 +735,12 @@ def add():
     if not user_has_permissions(current_user, "add"):
         return redirect(url_for("views.home"))
 
+    server_json = None
     status_code = 200
+    game_servers = GameServer.query.all()
     form = AddForm()
 
     if request.method == "GET":
-        server_json = None
-        game_servers = GameServer.query.all()
 
         if request.args:
             # Checking server id is valid.
@@ -808,11 +808,21 @@ def add():
     if install_type == "remote":
         if install_host == None or install_host == "":
             flash("Missing required form field(s)!", category="error")
-            return render_template("add.html", user=current_user), 400
+            return render_template("add.html",
+                    user=current_user,
+                    server_json=server_json,
+                    game_servers=game_servers,
+                    form=form
+                ), 400
 
         if not is_ssh_accessible(install_host):
             flash("Server does not appear to be SSH accessible!", category="error")
-            return render_template("add.html", user=current_user), 400
+            return render_template("add.html",
+                    user=current_user,
+                    server_json=server_json,
+                    game_servers=game_servers,
+                    form=form
+                ), 400
 
         server.install_type = "remote"
         server.install_host = install_host

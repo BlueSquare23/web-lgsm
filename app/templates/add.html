@@ -11,7 +11,7 @@
           <h3 class="text-white">
             Add or Edit Existing LGSM Installation Details
           </h3>
-          {% if server_json is not none %}
+          {% if server_json is defined and server_json is not none %}
           <h4 class="text-white"> 
               Currently Editing {{ (server_json|from_json).install_name }}
           </h4>

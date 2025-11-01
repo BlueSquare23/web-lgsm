@@ -137,6 +137,8 @@ class GameServer(db.Model):
     install_host = db.Column(db.String(150))
     # Has the game server installation finished.
     install_finished = db.Column(db.Boolean())
+    # Did something go wrong and the install was aborted.
+    install_failed = db.Column(db.Boolean())
     # Private ssh keyfile path.
     keyfile_path = db.Column(db.String(150))
 

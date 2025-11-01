@@ -153,8 +153,6 @@
   - If user forgets or loses their 2fa secret and needs to reset it, they'll
     have to ssh into the server and run web-lgsm.py to reset it.
 
-* [ ] **Add tests for new totp 2fa page and authflow**
-  - I'll have to add some new ones and tweak some existing tests.
 
 * [x] **Add proper password strength indicator to setup & user edit pages**
   - I think this will be fun to make. It should just be mostly JS and won't
@@ -170,7 +168,22 @@
   - This is no replacement for fail2ban, users should still use fail2ban with a
     403 -> real firewall ban rule in place.
 
-* [ ] **Add option for anonymous usage statistics.**
+* [x] **Make work for python 3.13**
+  - Just had to update some pip reqs. 
+
+* [ ] **Make sure pass reqs not enforced if change pass disabled on edit users page**
+  - Noticed this is blocking submits while doing some manual qa.
+
+* [ ] **Add way to mark installs failed to front end**
+  - There are times where the install never gets marked finished because some
+    apt install fails or something. But the game server might still be totally
+    playable. So just make installed failed and still let users interact with
+    game server, cause it might actually be totally fine.
+
+* [ ] **Add tests for new totp 2fa page and authflow**
+  - I'll have to add some new ones and tweak some existing tests.
+
+* [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.
   - Thing is I don't know about the regulatory side and how that applies to me
@@ -187,12 +200,9 @@
     order for both columns.
   - Right now order is ascending by server short name.
 
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
 
 ## Version 1.8.x Todos
+
 
 * [ ] **Continue fixing up tests**
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
@@ -202,26 +212,6 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
-
-* [ ] **Fully integrated file explorer for managing files and mods**
-  - Idea here is to clean up the existing edit page and add in a file manager.
-    - So right now file manager takes as input the full path to files. This is
-      dumb as hell. It should only take in relative path to game server's base
-      dir. Keeps url looking cleaner + implicitly limits to game server dir.
-  - I'm not super thrilled with the idea of doing a full file manager by
-    wrapping shell commands. But designwise I've sorta backed myself into that
-    corner. How else do I do it over ssh, most of the app works over ssh.
-  - There are hacky ways to run native python over ssh, but that's really not
-    much better than just using shell commands.
-  - I think it'll be okay if I just do these operations:
-    - list
-    - edit
-    - delete
-    - create
-    - upload
-  - Just like the file editor it'll be disabled by default and users will have
-    to opt-in to enable it. And won't be accessable from setting page.
-  - This will take some work to do properly and safely. But we'll figure it out.
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something
@@ -330,6 +320,60 @@
 ## Pie in the Sky
 
 Maybe I'll do these things but really they're all just kinda dreams for now.
+
+* [ ] **Custom Commands on Control Panel**
+  - I don't really want to make this just another webshell/rce panel/linux web
+    gui. I think there's enough of those already out there in the world and
+    obviously would be a huge security hole.
+  - Instead, what I want to do is create a user extensible way to allow them to
+    create their own custom dashboards for managing game servers.
+  - I think the idea here would be users can define custom command objects
+    inside of a json conf file.
+    - Example:
+```json
+{
+  "uptime": {
+    "command": ["/usr/bin/uptime"],
+    "description": "Gets system uptime",
+    "type": "daemon",
+    "refresh": 5
+  },
+  "temp": {
+    "command": ["/usr/bin/sensors"],
+    "description": "Gets system cpu temperature",
+    "type": "daemon"
+    "refresh": 60
+  },
+  "custom": {
+    "command": ["/path/to/custom.sh", "arg1", "arg2"],
+    "description": "Custom button",
+    "type": "button"
+  }
+}
+```
+    - Those will then be parsed and loaded by the app.
+    - I think I want to limit these to showing up on the controls page.
+
+* [ ] **Fully integrated file explorer for managing files and mods**
+  - Idea here is to clean up the existing edit page and add in a file manager.
+    - So right now file manager takes as input the full path to files. This is
+      dumb as hell. It should only take in relative path to game server's base
+      dir. Keeps url looking cleaner + implicitly limits to game server dir.
+  - I'm not super thrilled with the idea of doing a full file manager by
+    wrapping shell commands. But designwise I've sorta backed myself into that
+    corner. How else do I do it over ssh, most of the app works over ssh.
+  - There are hacky ways to run native python over ssh, but that's really not
+    much better than just using shell commands.
+  - I think it'll be okay if I just do these operations:
+    - list
+    - edit
+    - delete
+    - create
+    - upload
+  - Just like the file editor it'll be disabled by default and users will have
+    to opt-in to enable it. And won't be accessable from setting page.
+  - This will take some work to do properly and safely. But we'll figure it out.
+
 
 * [ ] **Add more thorough tests over SSH.**
   - Setup a remote host with Minecraft on it.

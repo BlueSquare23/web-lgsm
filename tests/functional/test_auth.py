@@ -180,7 +180,6 @@ def test_setup_responses(db_session, client, test_vars):
             follow_redirects=True,
         )
         # No redirect on setup.
-        debug_response(response)
         error_msg = b"Field must be between 12 and 150 characters long."
         assert error_msg in response.data
 
@@ -195,14 +194,18 @@ def test_setup_responses(db_session, client, test_vars):
         response = client.post(
             "/setup",
             data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password, "enable_otp": True},
+            follow_redirects=True,
         )
-        assert response.status_code == 302
-        assert response.request.path == url_for("auth.2fa_setup")
+        assert response.status_code == 200  # Cause follow redirects, check redir via new path
+        assert response.request.path == url_for("auth.two_factor_setup")
+
+        # TODO: Add test where we create fresh user with otp Disabled too just
+        # to have tests proving that works fine as well.
 
         newuser = User.query.first()
         assert newuser is not None
         assert newuser.username == username
-        assert newuser.enable_otp == True
+        assert newuser.otp_enabled == True
 
         # Test user already added!
         error_msg = b"User already added. Please sign in!"
@@ -540,7 +543,6 @@ def test_edit_user_responses(db_session, client, authed_client, test_vars):
             data=invalid_server_user_data,
             follow_redirects=True,
         )
-        debug_response(response)
         assert response.request.path == url_for("auth.edit_users")
         assert b"server_ids:" in response.data 
         assert b"are not valid choices for this field." in response.data

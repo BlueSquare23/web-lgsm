@@ -86,3 +86,16 @@
     - Answer: Restart the gunicorn server with `./web-lgsm.py --restart`, that
       should clear the lockout blocked IP list.
 
+12. Question: I get a 500 when trying to start the server for the first time.
+      OR When I start the server with `web-lgsm.py --debug` I get this error:
+    `OperationalError sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: user`
+    - Answer: Something as probably gone wrong during your install and the 
+      sqlite database has not been setup properly. To fix this and finish initializing the database, run the following:
+```bash
+cd /path/to/web-lgsm
+source /opt/web-lgsm/bin/activate
+mv app/database.db app/database.db.bak
+touch app/database.db
+flask --app app:main db upgrade
+```
+

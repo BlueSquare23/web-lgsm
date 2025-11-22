@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.8.6 - unreleased]
+## [v1.8.6 - 2025-11-22]
 
 ### Added
 
@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix delete server with jobs to cleanup jobs first.
 - Fix alert messages to push down rest of page.
 
 ## [v1.8.5 - 2025-08-17]

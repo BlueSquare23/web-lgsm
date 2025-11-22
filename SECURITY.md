@@ -2,27 +2,23 @@
 
 ## Supported Versions
 
-These are the currently supported version of the project that will recieve
+These are the currently supported version of the project that will receive
 security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.8.6   | :white_check_mark: |
 | 1.8.5   | :white_check_mark: |
-| 1.8.4   | :white_check_mark: |
-| < 1.8.3 | :x:                |
+| < 1.8.4 | :x:                |
 
 ## Reporting a Vulnerability
 
-You can report a security vulnerability to me via [my site's contact
+You can report a security vulnerability via the [GitHub's private vulnerability reporting page for this project](https://github.com/BlueSquare23/web-lgsm/security/advisories/new)
+
+Or if you prefer to reach out directly, you can do so via [my site's contact
 form](https://johnlradford.io/contact.php).
 
-If you don't hear back from me for a few days feel free to open up a [github
-issue for this project](https://github.com/BlueSquare23/web-lgsm/issues/new).
-Just keep the details to a minimun. "I found a critical security bug" is good
-enough. Send any POC's to me in private first please and give me like a week or
-so to respond.
-
-Keep responsible disclosure standards in mind when reporting issues. Please
-just try to get in contact with me first before posting all the juicy deets to
-the github issues page.
+Please keep responsible disclosure standards in mind when reporting issues.
+All I ask is that you try to get in contact with me first before posting all
+the juicy deets to a public github issues page.
 

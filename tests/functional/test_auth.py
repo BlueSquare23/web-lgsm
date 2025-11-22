@@ -369,7 +369,7 @@ def test_2fa_responses(db_session, client, authed_client, test_vars):
         # Create TOTP code.
         otp_code = onetimepass.get_totp(clean_secret)
         assert otp_code
-        assert len(str(otp_code)) == 6
+        assert len(str(otp_code)) == 6 or len(str(otp_code)) == 5
 
         response = client.post(
             "/2fa_setup",

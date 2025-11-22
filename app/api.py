@@ -12,6 +12,7 @@ from .cron import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms import ValidateID
+from . import db
 
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
@@ -294,8 +295,20 @@ class GameServerDelete(Resource):
             return response
 
         current_app.logger.info(log_wrap(f"{current_user} deleting ID: ", server_id))
-
         current_app.logger.info(server)
+
+        # Delete cronjobs for server from DB.
+        cron = CronService(server.id)
+        jobs_list = cron.list_jobs()
+
+        current_app.logger.info(log_wrap("job_list", jobs_list))
+
+        if len(jobs_list) > 0:
+            for job in jobs_list:
+                cronjob = Job.query.filter_by(id=job["job_id"]).first()
+                # Remove job from DB.
+                db.session.delete(cronjob)
+            db.session.commit()
 
         # Drop any saved proc_info objects.
         remove_process(server_id)

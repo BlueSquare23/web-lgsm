@@ -553,7 +553,7 @@ def update_weblgsm():
     run_command("git reset --hard origin/master")
 
     print(" [*] Uninstalling old web-lgsm...")
-    install_script = os.path.join(SCRIPTPATH, 'uninstall.sh')
+    uninstall_script = os.path.join(SCRIPTPATH, 'uninstall.sh')
     run_command(f"{uninstall_script} -d")
 
     print(" [*] Reinstalling newest web-lgsm...")

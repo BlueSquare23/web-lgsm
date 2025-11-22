@@ -267,6 +267,7 @@ def run_install_new_game_server(server_id):
     with Session(engine) as session:
         server = session.get(GameServer, server_id)
         server.install_finished = True
+        server.install_failed = False
         session.commit()
 
     # Same neon green as default color scheme in ansi escape.

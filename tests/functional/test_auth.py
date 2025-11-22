@@ -192,7 +192,7 @@ def test_setup_responses(db_session, client, test_vars):
         # Finally, create real test user.
         response = client.post(
             "/setup",
-            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password, enable_otp: True},
         )
         assert response.status_code == 302
 

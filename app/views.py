@@ -1009,7 +1009,8 @@ def jobs():
             )
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [cmd.long_cmd for cmd in cmds_list]
-            form.command.choices.remove('console')
+            if 'console' in form.command.choices:
+                form.command.choices.remove('console')
 
             if config_options['allow_custom_jobs']:
                 form.command.choices.append('custom')

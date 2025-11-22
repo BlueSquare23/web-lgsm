@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const changeUsernamePass = document.getElementById('change_username_password');
     const passwordInput = document.getElementById('password1');
     const confirmPasswordInput = document.getElementById('password2');
     const strengthBar = document.querySelector('.progress-bar');
@@ -160,6 +161,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('userForm').addEventListener('submit', function(e) {
         const password = passwordInput.value;
         const result = checkPasswordStrength(password);
+
+        // On edit_user, don't block submissions when not changing pass.
+        if (!changeUsernamePass.checked) {
+            return;
+        }
         
         if (!result.isValid) {
             e.preventDefault();

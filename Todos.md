@@ -171,7 +171,7 @@
 * [x] **Make work for python 3.13**
   - Just had to update some pip reqs. 
 
-* [ ] **Make sure pass reqs not enforced if change pass disabled on edit users page**
+* [x] **Make sure pass reqs not enforced if change pass disabled on edit users page**
   - Noticed this is blocking submits while doing some manual qa.
 
 * [ ] **Add way to mark installs failed to front end**

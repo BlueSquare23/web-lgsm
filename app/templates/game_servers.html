@@ -1,6 +1,8 @@
-        <div class="container bg-dark border border-secondary rounded-3 p-2">
+        {% if game_servers|length > 0 %}
+        <div class="container bg-dark border border-white rounded-3 p-2">
           <h3>Select Game Server</h3>
           {% for server in game_servers %}
+            {# Don't show remote servers for jobs crontab editor page #}
             {% if server.install_type == 'remote' and request.path.split('/')[-1] == 'jobs' %}
               {% continue %}
             {% endif %}
@@ -19,4 +21,4 @@
             </ul>
           {% endfor %}
         </div>
-
+        {% endif %}

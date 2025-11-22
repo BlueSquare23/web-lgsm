@@ -1,9 +1,11 @@
 import os
 import json
 import pytest
+import onetimepass
 from flask import url_for, request
 from game_servers import game_servers
 from app.models import User, GameServer
+from bs4 import BeautifulSoup
 from utils import *
 
 
@@ -192,9 +194,15 @@ def test_setup_responses(db_session, client, test_vars):
         # Finally, create real test user.
         response = client.post(
             "/setup",
-            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password, enable_otp: True},
+            data={"csrf_token": csrf_token, "username": username, "password1": password, "password2": password, "enable_otp": True},
         )
         assert response.status_code == 302
+        assert response.request.path == url_for("auth.2fa_setup")
+
+        newuser = User.query.first()
+        assert newuser is not None
+        assert newuser.username == username
+        assert newuser.enable_otp == True
 
         # Test user already added!
         error_msg = b"User already added. Please sign in!"
@@ -309,6 +317,65 @@ def test_login_responses(db_session, client, setup_client, test_vars):
         error_msg = b"The CSRF token is missing."
         check_for_error(response, error_msg, "auth.login")
 
+### 2fa Page tests.
+
+def test_2fa_contents(db_session, client, authed_client, test_vars):
+    """
+    Test login page contents.
+    """
+    version = test_vars["version"]
+
+    with client:
+        response = client.get("/2fa_setup")
+        assert response.status_code == 200
+
+        # Check content matches.
+        assert b"Two-Factor Auth Setup" in response.data
+        assert b"You're almost done! Please scan the QR code below with your authenticator app" in response.data
+        assert b"Scan this QR code with your authenticator app" in response.data
+        assert b"Manual Entry Option" in response.data
+        assert b"If you can't scan the QR code, enter this secret key manually" in response.data
+        assert b"Make sure to set the time-based option in your authenticator app" in response.data
+        assert b"Enter Verification Code" in response.data
+        assert b"OTP Code" in response.data
+        assert b"Enter 6-digit code" in response.data
+        assert b"Need an authenticator app? Try 2FAS Auth, Authy, or Google Authenticator" in response.data
+        assert f"Web LGSM - Version: {version}".encode() in response.data
+
+
+def test_2fa_responses(db_session, client, authed_client, test_vars):
+    """
+    Test login page responses.
+    """
+    username = test_vars["username"]
+    password = test_vars["password"]
+
+    with client:
+
+        response = client.get("/2fa_setup")
+        csrf_token = get_csrf_token(response)
+
+        # Parse html to get otp secret key.
+        soup = BeautifulSoup(response.text, 'html.parser')
+        secret_key = soup.find('input', id='secretKey').get('value')
+        assert secret_key
+
+        # Convert secret key into 6 digit code.
+        clean_secret = re.sub(r'\s+', '', secret_key)
+
+        # Create TOTP code.
+        otp_code = onetimepass.get_totp(clean_secret)
+        assert otp_code
+        assert len(str(otp_code)) == 6
+
+        response = client.post(
+            "/2fa_setup",
+            data={"csrf_token": csrf_token, "otp_code": otp_code},
+            follow_redirects=True,
+        )
+
+        assert response.request.path == url_for("views.home")
+        assert "Two factor enabled successfully" in response.text
 
 ### Logout page tests.
 

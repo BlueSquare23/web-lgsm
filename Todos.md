@@ -174,14 +174,16 @@
 * [x] **Make sure pass reqs not enforced if change pass disabled on edit users page**
   - Noticed this is blocking submits while doing some manual qa.
 
-* [ ] **Add way to mark installs failed to front end**
+* [x] **Add way to mark installs failed to front end**
   - There are times where the install never gets marked finished because some
     apt install fails or something. But the game server might still be totally
     playable. So just make installed failed and still let users interact with
     game server, cause it might actually be totally fine.
 
-* [ ] **Add tests for new totp 2fa page and authflow**
-  - I'll have to add some new ones and tweak some existing tests.
+* [x] **Add tests for new totp 2fa page and authflow**
+  - [x] **Test setup responses enable 2fa**
+  - [x] **Test 2fa page content.**
+  - [x] **Test 2fa page responses.**
 
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software

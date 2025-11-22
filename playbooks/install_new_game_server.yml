@@ -29,6 +29,22 @@
         - tasks/create_new_user.yml
         - tasks/set_default_new_user_group.yml
 
+    - name: Create ~/.ssh directory exists and set perms
+      file:
+        path: "/home/{{ username }}/.ssh"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0700'
+
+    - name: Create ~/.ssh/authorized_keys file and set perms 
+      file:
+        path: "/home/{{ username }}/.ssh/authorized_keys"
+        state: touch
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: '0600'
+
     - name: Download linuxgsm.sh to /tmp/
       get_url:
         url: https://raw.githubusercontent.com/GameServerManagers/LinuxGSM/master/linuxgsm.sh
@@ -79,19 +95,4 @@
             path: "/tmp/{{ server_script_name }}"
             state: absent
 
-    - name: Create ~/.ssh directory exists and set perms
-      file:
-        path: "/home/{{ username }}/.ssh"
-        state: directory
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        mode: '0700'
-
-    - name: Create ~/.ssh/authorized_keys file and set perms 
-      file:
-        path: "/home/{{ username }}/.ssh/authorized_keys"
-        state: touch
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        mode: '0600'
 ...

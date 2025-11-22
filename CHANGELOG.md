@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.8.6 - 2025-11-22]
+
+### Added
+
+- Add basic anti-brute force lockout protection to login page.
+- Add ability to toggle password visibility to all password forms.
+- Add ability to reset TOTP 2fa secret via web-lgsm.py script.
+- Add TOTP Two Factor Auth option for web panel login!
+- Add Password Strength indicator to password setup fields.
+
+### Changed
+
+- Change style for Edit User page, integrate password strength indicator.
+- Change style for Setup page, integrate password strength indicator.
+
+### Fixed
+
+- Fix delete server with jobs to cleanup jobs first.
+- Fix alert messages to push down rest of page.
+
 ## [v1.8.5 - 2025-08-17]
 
 ### Added

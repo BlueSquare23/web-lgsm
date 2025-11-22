@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}2FA Setup{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card bg-dark border-light">
+        <div class="card-header border-light">
+          <h1 class="card-title text-center text-white mb-0">Two-Factor Auth Setup</h1>
+        </div>
+
+        <div class="card-body">
+          <p class="text-center text-light mb-4">
+            <i class="bi bi-shield-check me-2"></i>
+            You're almost done! Please scan the QR code below with your authenticator app.
+          </p>
+
+          <!-- QR Code Section -->
+          <div class="text-center mb-4 p-3 bg-secondary bg-opacity-25 rounded-3">
+            <img id="qrcode" class="img-fluid rounded p-2 border border-light bg-white" 
+                 src="{{ url_for('auth.qrcode') }}" alt="TOTP QR Code">
+            <div class="mt-2">
+              <small class="text-white">Scan this QR code with your authenticator app</small>
+            </div>
+          </div>
+
+          <!-- Manual Entry Section -->
+          <div class="text-center mb-4">
+            <a class="btn btn-sm btn-outline-secondary mb-2" data-bs-toggle="collapse" href="#manualEntry" role="button">
+              <i class="bi bi-key me-1"></i>Manual Entry Option
+            </a>
+            
+            <div class="collapse" id="manualEntry">
+              <div class="card card-body bg-secondary bg-opacity-10 border-secondary text-start">
+                <p class="text-light mb-2">If you can't scan the QR code, enter this secret key manually:</p>
+                <div class="input-group">
+                  <input type="text" class="white-placeholder form-control bg-dark text-white border-dark" 
+                         value="{{fsecret}}" id="secretKey" readonly>
+                  <button class="btn btn-outline-light" type="button" id="copySecret">
+                    <i class="bi bi-clipboard"></i>
+                  </button>
+                </div>
+                <small class="text-white-50 mt-2">
+                  <i class="bi bi-info-circle"></i> 
+                  Make sure to set the time-based option in your authenticator app
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <hr style="color:white"/>
+
+          <!-- Verification Form -->
+          <div class="mx-auto" style="max-width: 400px;">
+            <form method="POST">
+              {{ form.hidden_tag() }}
+
+              <h5 class="text-white text-center mb-3">
+                <i class="bi bi-chat-square-dots me-2"></i>Enter Verification Code
+              </h5>
+
+              <div class="form-group m-3">
+                {{ form.otp_code.label(class="form-label text-white") }}
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-white">
+                    <i class="bi bi-lock"></i>
+                  </span>
+                  {{ form.otp_code(class="white-placeholder form-control bg-dark border-white text-white", 
+                                  placeholder="Enter 6-digit code") }}
+                </div>
+              </div>
+
+              <div class="text-center">
+                {{ form.submit(class="btn btn-primary px-4") }}
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card-footer border-light text-center">
+          <small class="text-white-50">
+            <i class="bi bi-lightbulb"></i> 
+            Need an authenticator app? Try 2FAS Auth, Authy, or Google Authenticator
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('copySecret').addEventListener('click', function() {
+    const secretInput = document.getElementById('secretKey');
+    
+    secretInput.select();
+    secretInput.setSelectionRange(0, 99999);
+    
+    try {
+        // Modern clipboard API
+        const successful = document.execCommand('copy');
+        if (successful) {
+            // Visual feedback
+            const button = this;
+            const originalText = button.querySelector('i').className;
+            
+            button.querySelector('i').className = 'bi bi-check-lg';
+            button.classList.add('text-success');
+            
+            setTimeout(() => {
+                button.querySelector('i').className = originalText;
+                button.classList.remove('text-success');
+            }, 1500);
+            showAlert('Text copied!', 'success');
+        }
+    } catch (err) {
+        console.error('Copy failed: ', err);
+    }
+});
+</script>
+
+{% endblock %}

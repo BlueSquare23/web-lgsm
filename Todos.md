@@ -119,71 +119,92 @@
     new service layer classes. New features will just be built this way from
     the start. Old features will be transitioned over time.
 
+## Version 1.8.6 Todos
 
-## Version 1.8.5 Todos
+* [x] **Add optional TOTP 2fa for login page**
+  - This will be a toggle in the main.conf.
+    - Users can enable it but it wont be on by default.
+    - In the tug of war between security and liberty, liberty must prevail.
+      Otherwise, security has no purpose.
+  - How it should work, High Level:
+    - If enabled in main.conf, is mandatory. All users must set it up.
+    - If not already setup, on successful login will force user to set it up
+      before allowing them to login.
+    - Once setup for a user otp field on login page becomes required.
+    - After setup the only way to change otp settings is to login with otp, or
+      to have an admin reset it for you from users settings page.
+  - What we need:
+    - Database:
+      - Add `otp_secret` (bin string, 10 chars, base32 encoded) to User model
+        - `base64.b32encode(os.urandom(10)).decode('utf-8')`
+      - Add `otp_enabled` bool to track if users otp has been setup yet
+      - Add `backup_codes` list of hashed 2fa 1 time use backup codes.
+    - Routes:
+      - Tweak login, add otp field
+    - Forms:
+      - Tweak login form add otp code field
+  - Sources:
+    - https://github.com/miguelgrinberg/two-factor-auth-flask/blob/master/app.py
+    - https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask
+    - https://pypi.org/project/onetimepass/
+    - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
 
-* [x] **Add new Restart/Backup Scheduler (Cron Wrapper)**
-  - User suggested this feature and I think its a good one.
-    - https://github.com/BlueSquare23/web-lgsm/issues/20
-  - The idea here would be to create a simple web interface to wrap up adding
-    crontab entries. Then the actual restarts or backups will just be handled
-    by the lgsm game server cli script itself.
-  - [x] Add permissions controls for new /jobs route.
-  - [x] Add api routes for:
-    - [x] `/api/add_job`
-    - [x] `/api/delete_job`
-    - [x] `/api/list_jobs`
-  - [x] Add docs for new api routes.
-  - [x] Add new neutral service layer class for handling actual needful doing.
-  - [x] Add new route and form for `/jobs`.
-  - [ ] Add more security validation around playbooks for adding cronjobs.
+* [x] **Add user totp reset via web-lgsm.py**
+  - If user forgets or loses their 2fa secret and needs to reset it, they'll
+    have to ssh into the server and run web-lgsm.py to reset it.
 
-* [x] **Cache connected ssh client objects**
-  - I want to cache the connection objects after initial connection is make
-    subsequent ssh requests super speedy. 
-  - Looks like I can use functools `lru_cache` to do it.
 
-* [x] **Add user action audit log feature + route for viewing**
-  - Now that I have multiple users, when some user takes an action, I want to
-    record who did what when to an audit log for later viewing by
-    administrators in the web interface.
-  - [x] Need new database model to store audit log info.
+* [x] **Add proper password strength indicator to setup & user edit pages**
+  - I think this will be fun to make. It should just be mostly JS and won't
+    really have anything to do with the minimum pass requirements.
+  - It should also do some frontend validation to check if it meets the min
+    reqs. just as a helpful tip to user to not even let them submit an invalid
+    pass.
 
-* [x] **Add new Edit Game Server Info**
-  - So far the only option for users to change game server information has been
-    to delete the install and manually re-add it. Not a great solution.
-  - I need to allow users to change their game server name, path, username,
-    ssh-key, etc.
-  - So there's need to be a new page and backend logic to enable this new
-    feature.
-  - This DB Model line set's install name to be unique:
-    `install_name = db.Column(db.String(150), unique=True)`
+* [x] **Build basic bruteforce login protection**
+  - I'm thinking a list of 10000 failed login IPs in memory that new get push
+    onto and old get shifted off from.
+  - Will need to fetch X-Forwarded-IP for revproxy setups.
+  - This is no replacement for fail2ban, users should still use fail2ban with a
+    403 -> real firewall ban rule in place.
 
-* [x] **Add pictures to install page**
-  - [x] Need to download and serve images locally or via my own cdn link. The
-    LGSM folks don't like hotlinking. Kinda expected that, just was in dev atm.
-    Wanted to see what it would look like mostly.
+* [x] **Make work for python 3.13**
+  - Just had to update some pip reqs. 
 
-* [x] **Continue fixing up tests**
-  1. [x] Add new tests for new features:
-    - [x] cron page contents
-    - [x] cron page responses
-    - [x] cron api routes
-    - [x] cron service class unit
-    - [x] edit servers tests
-    - [x] audit page content
-    - [x] audit page responses
+* [x] **Make sure pass reqs not enforced if change pass disabled on edit users page**
+  - Noticed this is blocking submits while doing some manual qa.
 
-* [x] **Fix auto update to allow run headlessly**
-  - [Related Issue](https://github.com/bluesquare23/web-lgsm/issues/45)
+* [x] **Add way to mark installs failed to front end**
+  - There are times where the install never gets marked finished because some
+    apt install fails or something. But the game server might still be totally
+    playable. So just make installed failed and still let users interact with
+    game server, cause it might actually be totally fine.
 
-* [x] **Fix, test, and robustify docker stuff more**
-  - Issue #43: https://github.com/bluesquare23/web-lgsm/issues/43
-  - Issue #44: https://github.com/bluesquare23/web-lgsm/issues/44
-  - I really need to do more manual qa testing on debian before release. My dev
-    env is ubuntu.
+* [x] **Add tests for new totp 2fa page and authflow**
+  - [x] **Test setup responses enable 2fa**
+  - [x] **Test 2fa page content.**
+  - [x] **Test 2fa page responses.**
+
+* [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
+  - This is not technically difficult, as in setting this up from a software
+    perspective would be relatively simple.
+  - Thing is I don't know about the regulatory side and how that applies to me
+    as a single creator of a simple web app...
+  - Pretty sure all of these regulations mean I need to get user consent first:
+    - GDPR (General Data Protection Regulation)
+    - CCPA (California Consumer Privacy Act)
+    - COPPA (Children's Online Privacy Protection Act)
+  - So thinking maybe after initial install & login form pops up that says "do
+    you want to send anonymous usage stats?"
+
+* [ ] **For install list do sort by alpha two columns header**
+  - At the top of the install page, add some buttons to sort by alphabetical
+    order for both columns.
+  - Right now order is ascending by server short name.
+
 
 ## Version 1.8.x Todos
+
 
 * [ ] **Continue fixing up tests**
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
@@ -193,26 +214,6 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
-
-* [ ] **Fully integrated file explorer for managing files and mods**
-  - Idea here is to clean up the existing edit page and add in a file manager.
-    - So right now file manager takes as input the full path to files. This is
-      dumb as hell. It should only take in relative path to game server's base
-      dir. Keeps url looking cleaner + implicitly limits to game server dir.
-  - I'm not super thrilled with the idea of doing a full file manager by
-    wrapping shell commands. But designwise I've sorta backed myself into that
-    corner. How else do I do it over ssh, most of the app works over ssh.
-  - There are hacky ways to run native python over ssh, but that's really not
-    much better than just using shell commands.
-  - I think it'll be okay if I just do these operations:
-    - list
-    - edit
-    - delete
-    - create
-    - upload
-  - Just like the file editor it'll be disabled by default and users will have
-    to opt-in to enable it. And won't be accessable from setting page.
-  - This will take some work to do properly and safely. But we'll figure it out.
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something
@@ -224,11 +225,6 @@
   - [ ] Also build out new class for controls service layer.
   - [ ] Make both API and Route code use this new neutral service class to
     actually do the needful.
-
-* [ ] **Make work for python 3.13**
-  - I was silly and tried to put 3.13 in the tests at the end of this release
-    and of course it failed lol. So screw it, v1.8 doesn't work with 3.13, will
-    make it work soon.
 
 * [ ] **Make config options display on page if debug true**
   - Makes sense and I've seen other web apps do this sorta thing before. Just
@@ -309,11 +305,6 @@
 * [ ] **Setup github pages to host Swagger docs for project w/ github actions**
   - https://github.com/peter-evans/swagger-github-pages
 
-* [ ] **Write some database tests that use the sqlite3 cli to test that data is
-  actually making it into the db file.**
-  - So just anywhere the app add stuff to the db, just verify with sqlite3
-    commands that its in there.
-
 * [ ] **Add Python Selenium end-to-end tests to actually login and do a bunch of
   stuff in the web interface.**
   - Try to thoroughly test site functionality, basically redo all of the same
@@ -332,17 +323,59 @@
 
 Maybe I'll do these things but really they're all just kinda dreams for now.
 
-* [ ] **Add option for anonymous usage statistics.**
-  - This is not technically difficult, as in setting this up from a software
-    perspective would be relatively simple.
-  - Thing is I don't know about the regulatory side and how that applies to me
-    as a single creator of a simple web app...
-  - Pretty sure all of these regulations mean I need to get user consent first:
-    - GDPR (General Data Protection Regulation)
-    - CCPA (California Consumer Privacy Act)
-    - COPPA (Children's Online Privacy Protection Act)
-  - So thinking maybe after initial install & login form pops up that says "do
-    you want to send anonymous usage stats?"
+* [ ] **Custom Commands on Control Panel**
+  - I don't really want to make this just another webshell/rce panel/linux web
+    gui. I think there's enough of those already out there in the world and
+    obviously would be a huge security hole.
+  - Instead, what I want to do is create a user extensible way to allow them to
+    create their own custom dashboards for managing game servers.
+  - I think the idea here would be users can define custom command objects
+    inside of a json conf file.
+    - Example:
+```json
+{
+  "uptime": {
+    "command": ["/usr/bin/uptime"],
+    "description": "Gets system uptime",
+    "type": "daemon",
+    "refresh": 5
+  },
+  "temp": {
+    "command": ["/usr/bin/sensors"],
+    "description": "Gets system cpu temperature",
+    "type": "daemon"
+    "refresh": 60
+  },
+  "custom": {
+    "command": ["/path/to/custom.sh", "arg1", "arg2"],
+    "description": "Custom button",
+    "type": "button"
+  }
+}
+```
+    - Those will then be parsed and loaded by the app.
+    - I think I want to limit these to showing up on the controls page.
+
+* [ ] **Fully integrated file explorer for managing files and mods**
+  - Idea here is to clean up the existing edit page and add in a file manager.
+    - So right now file manager takes as input the full path to files. This is
+      dumb as hell. It should only take in relative path to game server's base
+      dir. Keeps url looking cleaner + implicitly limits to game server dir.
+  - I'm not super thrilled with the idea of doing a full file manager by
+    wrapping shell commands. But designwise I've sorta backed myself into that
+    corner. How else do I do it over ssh, most of the app works over ssh.
+  - There are hacky ways to run native python over ssh, but that's really not
+    much better than just using shell commands.
+  - I think it'll be okay if I just do these operations:
+    - list
+    - edit
+    - delete
+    - create
+    - upload
+  - Just like the file editor it'll be disabled by default and users will have
+    to opt-in to enable it. And won't be accessable from setting page.
+  - This will take some work to do properly and safely. But we'll figure it out.
+
 
 * [ ] **Add more thorough tests over SSH.**
   - Setup a remote host with Minecraft on it.
@@ -351,12 +384,6 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - Can't add a priv key so can't connect the ci tests to a remote host.
     - This would just be for me to run manually every so often to check
       everything over remote ssh is all good.
-
-
-* [ ] **For install list do sort by alpha two columns header**
-  - At the top of the install page, add some buttons to sort by alphabetical
-    order for both columns.
-  - Right now order is ascending by server short name.
 
 ## Disclaimer
 

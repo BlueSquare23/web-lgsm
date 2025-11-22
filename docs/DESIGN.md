@@ -474,6 +474,47 @@ Root logger level: WARNING
 <base> -> d2829b640c78 (head), add img_path to User model
 ```
 
+### Reverting
+
+Say you want to roll back some changes because you messed up something in the
+db model and need to fix it. You can run downgrade to go back to the previous
+head.
+
+```
+flask --app app:main db history
+Root logger level: WARNING
+6f1dce569562 -> 46316fc0e18c (head), bad update need to revert
+ef9d6478fcfe -> 6f1dce569562, remove unique constraint from GameServer install_name
+592b30a8d8c9 -> ef9d6478fcfe, Create new Audit table
+aa0ff60b5509 -> 592b30a8d8c9, add Jobs class/table
+83095689301a -> aa0ff60b5509, Remove img_path from user
+<base> -> 83095689301a, Initial migrate
+```
+
+```
+flask --app app:main db downgrade
+```
+
+Then you can also remove the most recent `migrations/versions` file for these
+changes to remove them from the list.
+
+```
+rm migrations/versions/46316fc0e18c_bad_update_need_to_revert.py
+```
+
+You should see you're on the new head:
+
+```
+flask --app app:main db history
+Root logger level: WARNING
+ef9d6478fcfe -> 6f1dce569562 (head), remove unique constraint from GameServer install_name
+592b30a8d8c9 -> ef9d6478fcfe, Create new Audit table
+aa0ff60b5509 -> 592b30a8d8c9, add Jobs class/table
+83095689301a -> aa0ff60b5509, Remove img_path from user
+<base> -> 83095689301a, Initial migrate
+```
+You can then add any fixed changes again after that.
+
 [Flask-Migrate Official Docs](https://flask-migrate.readthedocs.io/en/latest/)
 
 ---

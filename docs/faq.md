@@ -68,3 +68,34 @@
      user.
    - To fix this, simply change the username in `playbooks/vars/web_lgsm_user.yml` 
      file to the username the web-lgsm app is running as.
+
+10. Question: How do I reset my 2fa codes?
+    - Answer: There are two ways to reset TOTP 2fa codes for web interface
+      users.
+    - Solution 1 (Web): Have an admin user disable two factor for the user on
+      the "Edit Users" page, (Click Submit), then re-enable (Click Submit
+      again). The user will then be prompted to setup two factor again on next
+      login.
+    - Solution 2 (CLI): Use the `./web-lgsm.py --reset_totp` script + option to
+      completely reset the totp shared secret for a given user. WARNING - this
+      will completely invalidate any devices already setup with totp 2fa for
+      the given user.
+
+11. Question: I failed my login a few times and now I just get "Access
+    denied" when I try to go to the login page. How do I fix?
+    - Answer: Restart the gunicorn server with `./web-lgsm.py --restart`, that
+      should clear the lockout blocked IP list.
+
+12. Question: I get a 500 when trying to start the server for the first time.
+      OR When I start the server with `web-lgsm.py --debug` I get this error:
+    `OperationalError sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: user`
+    - Answer: Something as probably gone wrong during your install and the 
+      sqlite database has not been setup properly. To fix this and finish initializing the database, run the following:
+```bash
+cd /path/to/web-lgsm
+source /opt/web-lgsm/bin/activate
+mv app/database.db app/database.db.bak
+touch app/database.db
+flask --app app:main db upgrade
+```
+

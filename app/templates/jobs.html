@@ -11,6 +11,11 @@
         <h2>Web-LGSM Job Scheduler</h2>
         <hr />
 
+        {% if game_servers|length == 0 %}
+            <p>No game servers added yet...</p>
+            <p>Please <a href="/add">add</a> or <a href="/install">install</a> a game server in order to use the crontab editor.</p>
+        {% endif %}
+
         <div class="container mt-4">
           {% include 'game_servers.html' %}
         </div>
@@ -19,7 +24,7 @@
           <div class="container mt-4">
             <h3>Cron Jobs for {{ server_name }}:</h3>
             <hr />
-            <div class="card mb-4 rounded border-secondary">
+            <div class="card mb-4 rounded border-white">
               <div class="card-body bg-dark d-flex justify-content-center">
                 <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCronModal">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
@@ -60,8 +65,8 @@
         <!-- Add Cron Modal -->
         <div class="modal fade" id="addCronModal" tabindex="-1" aria-labelledby="addCronModalLabel" aria-hidden="true">
           <div class="modal-dialog">
-            <div class="modal-content bg-dark text-light">
-              <div class="modal-header bg-dark border-secondary">
+            <div class="modal-content bg-dark text-light border border-white">
+              <div class="modal-header bg-dark">
                 <h5 class="modal-title" id="addCronModalLabel">Cron Job Editor</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>

@@ -23,16 +23,13 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Server (please complete the following information):**
+ - OS: [e.g. Debian, Ubuntu, etc]
+ - Python Version: [e.g. 3.9, 3.10, 3.11, 3.12]
+ - Version [e.g. v1.8.x]
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**Desktop (please complete the following information):**
+ - Browser [e.g. Chrome, Safari, Firefox, etc]
 
 **Additional context**
 Add any other context about the problem here.

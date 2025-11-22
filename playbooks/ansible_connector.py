@@ -112,11 +112,10 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
 
         proc.wait()
         exit_status = proc.returncode
-        # Debugging...
-        print(f"######### EXIT STATUS: {exit_status}")
 
         if exit_status != 0:
             print("\033[91mCommand failed!\033[0m")
+            print(f"######### EXIT STATUS: {exit_status}")
             exit(exit_status)
 
         print(f"Command '{cmd}' executed successfully.")
@@ -127,6 +126,17 @@ def run_cmd(cmd, exec_dir=os.getcwd()):
         print(f"Command '{cmd}' not found.")
     except Exception as e:
         print(f"An unexpected error occurred while running '{cmd}': {str(e)}")
+
+
+def mark_install_failed(server_id):
+    """Mark failed with new session context."""
+    # Can't use app context in ansible connector.
+    engine = create_engine('sqlite:///app/database.db')
+    with Session(engine) as session:
+        server = session.get(GameServer, server_id)
+        server.install_finished = True
+        server.install_failed = True
+        session.commit()
 
 
 def post_install_cfg_fix(install_path):
@@ -190,7 +200,7 @@ def run_install_new_game_server(server_id):
     Wraps the invocation of the install_new_game_server.yml playbook
 
     Args:
-        server_id (int): Id of GameServer to install.
+        server_id (uuid): Id of GameServer to install.
     """
     server = db_fetch(server_id)
 
@@ -242,7 +252,11 @@ def run_install_new_game_server(server_id):
         exit()
     else:
         # After game server install, install required apt reqs as root.
-        run_cmd(install_reqs, server.install_path)
+        try:
+            run_cmd(install_reqs, server.install_path)
+        except:
+            mark_install_failed(server_id)
+            exit()
 
     # Post install ssh setup for different users.
     append_new_authorized_key(server)
@@ -253,6 +267,7 @@ def run_install_new_game_server(server_id):
     with Session(engine) as session:
         server = session.get(GameServer, server_id)
         server.install_finished = True
+        server.install_failed = False
         session.commit()
 
     # Same neon green as default color scheme in ansi escape.

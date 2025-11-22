@@ -1649,7 +1649,7 @@ def clear_proc_info_post_install(server_id, app_context):
 
             # If install thread not running anymore and install marked
             # finished, clear out the old proc_info object.
-            if server.install_finished:
+            if server.install_finished and not server.install_failed:
                 current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
                 remove_process(server_id)
                 return

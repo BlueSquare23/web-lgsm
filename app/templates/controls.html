@@ -15,7 +15,7 @@
         <script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
 
         <!-- Send game server cmd form hidden until openForm onclick -->
-        <div class="container bg-dark border border-secondary p-2 form-group form-popup rounded-3" id="send_cmd_form" style="color: white;">
+        <div class="container bg-dark border border-white p-2 form-group form-popup rounded-3" id="send_cmd_form" style="color: white;">
           <button type="button" class="btn-close p-2 btn-close-white position-absolute top-0 end-0" aria-label="Close" onclick="document.getElementById('send_cmd_form').style.display = 'none'"></button>
           <form method="POST" class="form-group" id="send_cmd_form" action="/controls">
             {{ send_cmd_form.csrf_token }}

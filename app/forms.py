@@ -76,6 +76,26 @@ class ValidConfigFile:
             raise ValidationError(self.message)
 
 
+class ValidateOTPCode:
+    """Validator that checks if 2fa otp code in form is valid"""
+
+    def __init__(self, user_id=None, message="Invalid otp code!"):
+        self.message = message
+        self.user_id = user_id
+
+    def __call__(self, form, field):
+        if not hasattr(form, 'user_id') or not form.user_id:
+            raise ValidationError("User ID is required for OTP validation")
+
+        user = User.query.filter_by(id=form.user_id).first()
+
+        if not user:
+            raise ValidationError("User not found")
+
+        if not user.verify_totp(field.data):
+            raise ValidationError(self.message)
+
+
 ## Main Forms
 
 class LoginForm(FlaskForm):
@@ -95,6 +115,13 @@ class LoginForm(FlaskForm):
             Length(min=12, max=150),
         ],
         render_kw={"placeholder": "Enter Password", "class": "form-control"},
+    )
+
+    otp_code = IntegerField(
+        "OTP Code",
+        validators=[
+            Optional(),  # We validate in route code for login totp validation
+        ],
     )
 
     submit = SubmitField("Login", render_kw={"class": "btn btn-outline-primary"})
@@ -129,6 +156,8 @@ class SetupForm(FlaskForm):
         render_kw={"placeholder": "Retype Password", "class": "form-control"},
     )
 
+    enable_otp = BooleanField("Enable Two Factor Auth")
+
     submit = SubmitField("Submit", render_kw={"class": "btn btn-outline-primary"})
 
     def validate_password1(self, field):
@@ -151,6 +180,20 @@ class SetupForm(FlaskForm):
     def validate_password2(self, field):
         if self.password1.data != field.data:
             raise ValidationError("Passwords do not match")
+
+
+class OTPSetupForm(FlaskForm):
+    user_id = None
+
+    otp_code = IntegerField(
+        "OTP Code",
+        validators=[
+            InputRequired(),
+            ValidateOTPCode(),
+        ],
+    )
+
+    submit = SubmitField("Submit", render_kw={"class": "btn btn-outline-primary"})
 
 
 class AddForm(FlaskForm):
@@ -566,16 +609,19 @@ class EditUsersForm(FlaskForm):
             Length(min=4, max=150),
             Regexp(BAD_CHARS, message=BAD_CHARS_MSG),
         ],
+        render_kw={"placeholder": "Enter Username", "class": "form-control"},
     )
     password1 = PasswordField(
         "Password",
         validators=[
             ConditionalPasswordRequired(),
         ],
+        render_kw={"placeholder": "Enter Password", "class": "form-control"},
     )
     password2 = PasswordField(
         "Confirm Password",
         validators=[EqualTo("password1", message="Passwords must match")],
+        render_kw={"placeholder": "Retype Password", "class": "form-control"},
     )
 
     # Admin toggle
@@ -588,7 +634,9 @@ class EditUsersForm(FlaskForm):
         default="false",
     )
 
+
     # Permissions
+    enable_otp = BooleanField("Enable Two Factor Auth")
     install_servers = BooleanField("Can Install New Game Servers")
     add_servers = BooleanField("Can Add/Edit Existing Game Servers")
     mod_settings = BooleanField("Can Modify Web-LGSM Settings Page")

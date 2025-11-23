@@ -81,25 +81,6 @@
 
 ## Main Goals for v1.8 -> v1.9
 
-* [ ] **Restructure application and build out proper API**
-  - Ideally, the pages should just be an interface that communicate via rest-ish
-    JSON to apps API endpoints.
-  - Right now views routes / functions are handling waaayy tooo much logic. Whole
-    apps functionality happens via views functions. All this should be
-    happening via the app's API routes and just strung together by views logic.
-  
-* [ ] **Use Web Sockets for realtime communication**
-  - The console for this thing is just some inefficient jquery contently making
-    requests back to api endpoints. It works, but its a hacky mess. 
-  - I want to transition the app to use web sockets for this communication
-    instead.
-
-* [x] **Overhaul & Redesign test code**
-  - [x] Every single test should be idempotent (they're not rn).
-  - [x] No test should depend on any other test (they all depend on each other rn).
-  - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
-  - [ ] Bonus points: If I can get some Selenium tests in here.
-
 * [ ] **Improve overall design & documentation for project**
   - I want to actually properly try to design, document, and build out parts of
     this app. Full honest, I've never really done real software design before
@@ -118,73 +99,155 @@
   - To accomplish this, I'm going to slowly transition existing routes to use
     new service layer classes. New features will just be built this way from
     the start. Old features will be transitioned over time.
+  - See new cron.py for example of `CronService` class to act as intermediary
+    between API and DB (model). 
 
-## Version 1.8.6 Todos
+* [ ] **Reduce redundancies in isomorphic representations of the same data**
+  - I have too many different representations of the same underlying data.
+    - There's the data in the DB.
+    - There's the data on disk, in flat json files.
+    - There's the data on disk about game server state.
+    - There's the data returned from game server commands.
+    - There's the validation of the data in the form classes.
+    - There's the validation of the data in the utils.
+    - There's data in the `processes_global.py` singleton in memory.
+    - Its all over the place.
+  - I think the idea of creating neutral service classes that can be used by
+    the API or by the Route code to talk to the DB is a good start.
+    - But part of me also wonders if its just more bloat.
+  - Basically, I can see the same shapes and imprints of those shapes all over.
+    But I have yet to come up with a good way to like bring all that together
+    under like the same class or something.
+  - I'm optimistic that as I redesign and make more things OOP, some of the old
+    poppycock-nonsense will naturally unfold.
 
-* [x] **Add optional TOTP 2fa for login page**
-  - This will be a toggle in the main.conf.
-    - Users can enable it but it wont be on by default.
-    - In the tug of war between security and liberty, liberty must prevail.
-      Otherwise, security has no purpose.
-  - How it should work, High Level:
-    - If enabled in main.conf, is mandatory. All users must set it up.
-    - If not already setup, on successful login will force user to set it up
-      before allowing them to login.
-    - Once setup for a user otp field on login page becomes required.
-    - After setup the only way to change otp settings is to login with otp, or
-      to have an admin reset it for you from users settings page.
-  - What we need:
-    - Database:
-      - Add `otp_secret` (bin string, 10 chars, base32 encoded) to User model
-        - `base64.b32encode(os.urandom(10)).decode('utf-8')`
-      - Add `otp_enabled` bool to track if users otp has been setup yet
-      - Add `backup_codes` list of hashed 2fa 1 time use backup codes.
-    - Routes:
-      - Tweak login, add otp field
-    - Forms:
-      - Tweak login form add otp code field
-  - Sources:
-    - https://github.com/miguelgrinberg/two-factor-auth-flask/blob/master/app.py
-    - https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask
-    - https://pypi.org/project/onetimepass/
-    - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
+* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+  - This project has been poorly designed and modeled up until this point.
+  - I am now beginning the process of redesigning the project piecemeal while
+    maintaining functionality.
+  - What I really need to do is:
+    - Figure out what Objects I need
+    - Figure out what they need to do
+    - Figure out how they need to relate to each other
+    - Figure out how to get from here to there, bit by bit
 
-* [x] **Add user totp reset via web-lgsm.py**
-  - If user forgets or loses their 2fa secret and needs to reset it, they'll
-    have to ssh into the server and run web-lgsm.py to reset it.
+* [ ] **Enable remote install over ssh via ansible connector**
+  - From the very beginning when I first wrote the ansible connector I imagined
+    doing it not only locally but also to remote machines.
+  - So you can have your web interface setup on serverA and then install your
+    game on serverB.
+    - Right now you can manage them over ssh, but never got around to making
+      install over ssh work.
 
+* [ ] **Rethink main design to sandbox things even more**
+  - Right now the web -> db -> ansible connector as root way of administering
+    the system has me nervous.
+  - There's validation, there's sanitization. But the whole approach seems bad.
+    - Too much happening as root!
+  - I've waffled with this so much and decided on the connector script as a
+    necessaity to package up all the escalted dirty work in one script.
+  - But its overloaded and its data channels are too wide and I suspect leaky.
+    - A new approach is needed.
+  - Running as the new user through sudo maybe the preferable way over
+    backwardsass ssh to localhost approach.
 
-* [x] **Add proper password strength indicator to setup & user edit pages**
-  - I think this will be fun to make. It should just be mostly JS and won't
-    really have anything to do with the minimum pass requirements.
-  - It should also do some frontend validation to check if it meets the min
-    reqs. just as a helpful tip to user to not even let them submit an invalid
-    pass.
+* [ ] **Get fully working shell interface through web terminal**
+  - This would be a direct passthrough to a live shell session running as the
+    user with stdin, stdout, stderr of the node xterm session plugged directly
+    into 0,1,2 of an underlying shell session running as the user for that game
+    server.
+  - Like many of other *spicy* features, this will ship DISABLED by default.
+  - Mainly I just kinda want to see if I can do it. 
+  - Would be dope if it could work as any user that web-lgsm has access to.
 
-* [x] **Build basic bruteforce login protection**
-  - I'm thinking a list of 10000 failed login IPs in memory that new get push
-    onto and old get shifted off from.
-  - Will need to fetch X-Forwarded-IP for revproxy setups.
-  - This is no replacement for fail2ban, users should still use fail2ban with a
-    403 -> real firewall ban rule in place.
+* [ ] **Try to make draft version of pie in the sky custom command web-modules**
+  - So like users could define custom command modules and add them to the page
+    as specialized buttons or whatever to do the needful.
 
-* [x] **Make work for python 3.13**
-  - Just had to update some pip reqs. 
+* [ ] **Build (or otherwise integrate with existing) web based remote file browser / mod manager**
+  - Seems like the community wants an FTP-like web interface.
+  - Building this myself from scratch would take a ton of effort and time that
+    I don't really have tbh. Unless people are willing to be very patient.
+  - A better road would be to integrate someone else's existing web based file
+    browser into my project. There is one Flask extention for file browser I
+    saw but it sucks and I don't want to use it and I can't use it for over ssh :(
+  - So still no idea how to do this but might end up having to write it mostly
+    from scratch.
 
-* [x] **Make sure pass reqs not enforced if change pass disabled on edit users page**
-  - Noticed this is blocking submits while doing some manual qa.
+* [ ] **Allow in app game server moves**
+  - This should be integrated with the in app file browser whenever I get to that. 
 
-* [x] **Add way to mark installs failed to front end**
-  - There are times where the install never gets marked finished because some
-    apt install fails or something. But the game server might still be totally
-    playable. So just make installed failed and still let users interact with
-    game server, cause it might actually be totally fine.
+* [ ] **Pythonify and Deshellify as much as possible**
+  - Too much of this app is misc bash code doing more than it should with
+    questionable validation / sanitization.
+  - I've always written it off as "Its all behind auth anyway" which is true,
+    but that's really not a great excuse. 
+  - I need to transition like everything besides the core web-lgsm scripts
+    themselves to be pure python and lock down all non-intentional leakage best
+    I can.
+  - This is going to take some core redesigns which I haven't had time to
+    experiment & come up with yet.
 
-* [x] **Add tests for new totp 2fa page and authflow**
-  - [x] **Test setup responses enable 2fa**
-  - [x] **Test 2fa page content.**
-  - [x] **Test 2fa page responses.**
+* [ ] **Restructure application and build out proper API**
+  - [ ] Setup proper external API Keys for api auth only that can be used with
+    this app besides having to establish a session token first.
+  - Ideally, the pages should just be an interface that communicate via rest-ish
+    JSON to apps API endpoints.
+  - Right now views routes / functions are handling waaayy tooo much logic. Whole
+    apps functionality happens via views functions. All this should be
+    happening via the app's API routes and just strung together by views logic.
+  - [ ] I've been doing so much by hand but it might be worth taking some time
+    to experiment with FastAPI to help me truly build out this API and swagger
+    docs.
+    - https://fastapi.tiangolo.com/
+  
+* [ ] **Use Web Sockets for realtime communication**
+  - The console for this thing is just some inefficient jquery contently making
+    requests back to api endpoints. It works, but its a hacky mess. 
+  - I want to transition the app to use web sockets for this communication
+    instead.
 
+* [x] **Overhaul & Redesign test code**
+  - [x] Every single test should be idempotent (they're not rn).
+  - [x] No test should depend on any other test (they all depend on each other rn).
+  - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
+  - [ ] Bonus points: If I can get some Selenium tests in here.
+
+## Version 1.8.7 Todos
+
+* [ ] **Make redirect to github on about page open in new tab.**
+
+* [ ] **Make web-lgsm.py update json work again for new game servers**
+  - I broke this when I added pictures. 
+  - [ ] Tbh whole json file needs restructured like this instead:
+```json
+[
+   "Assetto Corsa": {
+    "script": "acserver",
+    "name": "Assetto Corsa",
+    "img": "https://cdn.cloudflare.steamstatic.com/steam/apps/244210/header.jpg",
+   },
+   ...
+]
+```
+
+* [ ] **Remove custom tmux socket file name caching in favor of flask cache**
+  - I wrote the custom caching stuff before I was really using flask cache.
+  - Now I need to rip all that code out and replace it with buitin cache code.
+  - Not super urgent though cause old code works fine.
+
+* [ ] **More install configuration options!!!**
+  - Users should be able to set other things via the install form!
+  - They should be able to set:
+    - `install_name`
+    - `install_path`
+    - `username` 
+    - `install_host` 
+
+* [ ] **Add reverse_proxy main.conf var to [server] section for setting name through rev proxy**
+  - [ ] Then pipe this var through to API where it get's hostname and if
+    `rev_proxy` name is set, use that instead.
+  
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.
@@ -202,9 +265,11 @@
     order for both columns.
   - Right now order is ascending by server short name.
 
-
-## Version 1.8.x Todos
-
+* [ ] **Change sort order of game servers on main page**
+  - User wants the ability to change the ordering of the GameServer items on
+    the home page.
+  - Either sort alphabetically or custom order.
+  - [Related Issue](https://github.com/BlueSquare23/web-lgsm/issues/55)
 
 * [ ] **Continue fixing up tests**
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
@@ -214,6 +279,9 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
+
+
+## Version 1.8.x Todos
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something

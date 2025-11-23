@@ -258,6 +258,38 @@ Both of these things together mean that any one test should be able to be run
 in isolation and be self contained, and its passing or failing should not
 affect any other tests.
 
+### How to Run Tests
+
+First make sure to source the virtual environment:
+
+```bash
+source /opt/web-lgsm/bin/activate
+```
+
+To run a single test you can do it like this:
+
+```bash
+python3 -m pytest -vvv tests/functional/test_auth.py::test_2fa_responses
+```
+
+You can run a whole test file like this:
+
+```bash
+python3 -m pytest -vvv tests/functional/test_auth.py
+```
+
+If you want to run all the projects tests, you can use the `web-lgsm.py` script
+so the app resets itself after testing and also generates a coverage report for
+you.
+
+```bash
+# Regular test mode is only unit & functional tests
+./web-lgsm.py --test
+
+# Full test includes full install integration tests (takes longer)
+./web-lgsm.py --test_full
+```
+
 ### Coverage
 
 Code coverage reports generated with [`coverage`](https://coverage.readthedocs.io/en/7.8.0/).

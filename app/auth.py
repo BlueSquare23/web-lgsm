@@ -25,7 +25,7 @@ from flask import (
 )
 
 from . import db
-from .forms import LoginForm, SetupForm, EditUsersForm, OTPSetupForm
+from .forms.auth import LoginForm, SetupForm, EditUsersForm, OTPSetupForm
 from .models import User, GameServer
 from .utils import validation_errors, log_wrap, audit_log_event
 from .blocklist import is_blocked, add_failed, get_client_ip

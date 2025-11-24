@@ -221,6 +221,10 @@
 
 ## Version 1.8.7 Todos
 
+* [ ] **Rename views to routes**
+  - Views is the default name I used because like MVC arch made sense. But its a bad name.
+  - Really this is where route code lives, so just call it routes.
+
 * [ ] **Make real singleton to hold proc_info objects**
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.

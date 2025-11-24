@@ -11,7 +11,7 @@ from .models import *
 from .cron import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
-from .forms import ValidateID
+from .forms.views import ValidateID
 from . import db
 
 api_bp = Blueprint("api", __name__)

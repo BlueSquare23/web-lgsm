@@ -221,6 +221,10 @@
 
 ## Version 1.8.7 Todos
 
+* [ ] **Make real singleton to hold proc_info objects**
+  - I've been using a module level singleton, but this sucks.
+  - Might as well just put it in a real class.
+
 * [ ] **Make redirect to github on about page open in new tab.**
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**

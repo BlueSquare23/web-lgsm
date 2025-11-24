@@ -91,6 +91,22 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
+* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+  - This project has been poorly designed and modeled up until this point.
+  - I am now beginning the process of redesigning the project piecemeal while
+    maintaining functionality.
+  - What I really need to do is:
+    - Figure out what Objects I need
+    - Figure out what they need to do
+    - Figure out how they need to relate to each other
+    - Figure out how to get from here to there, bit by bit
+  - https://realpython.com/solid-principles-python/
+
+* [ ] **Validation logic should happen in the form classes**
+  - FlaskForm/Wtforms is our user input handling & validation layer.
+  - All user input coming into the app, even through the API should go through
+    a form class for valiation.
+
 * [ ] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
   - The idea here is twofold:
     1. I want the app to have a mature api, where basically anything you can do
@@ -102,7 +118,7 @@
   - See new cron.py for example of `CronService` class to act as intermediary
     between API and DB (model). 
 
-* [ ] **Reduce redundancies in isomorphic representations of the same data**
+* [ ] **Reduce redundancies in disparate isomorphic representations of the same data**
   - I have too many different representations of the same underlying data.
     - There's the data in the DB.
     - There's the data on disk, in flat json files.
@@ -120,16 +136,6 @@
     under like the same class or something.
   - I'm optimistic that as I redesign and make more things OOP, some of the old
     poppycock-nonsense will naturally unfold.
-
-* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
-  - This project has been poorly designed and modeled up until this point.
-  - I am now beginning the process of redesigning the project piecemeal while
-    maintaining functionality.
-  - What I really need to do is:
-    - Figure out what Objects I need
-    - Figure out what they need to do
-    - Figure out how they need to relate to each other
-    - Figure out how to get from here to there, bit by bit
 
 * [ ] **Enable remote install over ssh via ansible connector**
   - From the very beginning when I first wrote the ansible connector I imagined

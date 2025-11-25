@@ -37,6 +37,8 @@ from .paths import PATHS
 # Initialize view blueprint.
 views = Blueprint("views", __name__)
 
+from .config.config_manager import ConfigManager
+config = ConfigManager()
 
 ######### Home Page #########
 
@@ -44,13 +46,17 @@ views = Blueprint("views", __name__)
 @views.route("/home", methods=["GET"])
 @login_required
 def home():
-    config_options = read_config("home")
-    current_app.logger.info(log_wrap("config_options", config_options))
+# TODO: Most of the code for this route is logging. Maybe I need a dedicated
+# route logger, where I can just say route, pass it current_app and it'll log
+# everything I care about seeing for that route.
 
-    current_app.logger.info(str(type(current_user)))
-    current_app.logger.info(log_wrap("current_user.username", current_user.username))
-    current_app.logger.info(log_wrap("current_user.role", current_user.role))
-    current_app.logger.info(
+#    config_options = read_config("home")
+#    current_app.logger.info(log_wrap("config_options", config_options))
+    current_app.logger.debug(log_wrap("config text_color", config.get('aesthetic','text_color')))
+
+    current_app.logger.debug(log_wrap("current_user.username", current_user.username))
+    current_app.logger.debug(log_wrap("current_user.role", current_user.role))
+    current_app.logger.debug(
         log_wrap("current_user.permissions", current_user.permissions)
     )
 
@@ -66,7 +72,7 @@ def home():
         "home.html",
         user=current_user,
         all_game_servers=installed_servers,
-        config_options=config_options,
+        _config=config,
     )
 
 
@@ -75,9 +81,6 @@ def home():
 @views.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
-    config_options = read_config("controls")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
     # Initialize forms
     send_cmd_form = SendCommandForm()
     controls_form = ServerControlForm()
@@ -113,7 +116,7 @@ def controls():
 
         # Pull in commands list from commands.json file.
         cmds_list = get_commands(
-            server.script_name, config_options["send_cmd"], current_user
+            server.script_name, config.getboolean("settings", "send_cmd"), current_user
         )
 
         if should_use_ssh(server):
@@ -133,7 +136,7 @@ def controls():
         cache_key = f"cfg_paths_{server_id}"
         cfg_paths = cache.get(cache_key)
 
-        if not config_options["cfg_editor"]:
+        if not config.getboolean("settings","cfg_editor"):
             cfg_paths = []
 
         elif cfg_paths is None:  # Not in cache.
@@ -155,7 +158,7 @@ def controls():
             server_name=server.install_name,
             show_jobs_edit=jobs_edit,
             server_commands=cmds_list,
-            config_options=config_options,
+            _config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,
             controls_form=controls_form,
@@ -193,7 +196,7 @@ def controls():
     # rn.
     # Validate short_cmd against contents of commands.json file.
     if not valid_command(
-        short_cmd, server.script_name, config_options["send_cmd"], current_user
+        short_cmd, server.script_name, config.get('settings',"send_cmd"), current_user
     ):
         flash("Invalid Command!", category="error")
         return redirect(url_for("views.controls", server_id=server_id))
@@ -203,7 +206,7 @@ def controls():
         return redirect(url_for("views.home"))
 
     # If cfg editor is disabled in the main.conf.
-    if not config_options["cfg_editor"]:
+    if not config.getboolean('settings',"cfg_editor"):
         cfg_paths = []
     else:
         current_app.logger.info("Getting cfg_paths")
@@ -216,7 +219,7 @@ def controls():
 
     # Pull in commands list from commands.json file.
     cmds_list = get_commands(
-        server.script_name, config_options["send_cmd"], current_user
+        server.script_name, config.getboolean('settings','send_cmd'), current_user
     )
 
     if not cmds_list:
@@ -240,7 +243,7 @@ def controls():
             server_id=server_id,
             server_name=server.install_name,
             server_commands=cmds_list,
-            config_options=config_options,
+            config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,
             controls_form=controls_form,
@@ -250,7 +253,8 @@ def controls():
 
     elif short_cmd == "sd":
         # Check if send_cmd is enabled in main.conf.
-        if not config_options["send_cmd"]:
+#        if not config_options["send_cmd"]:
+        if not config.getboolean('settings','send_cmd'):
             flash("Send console command button disabled!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
 

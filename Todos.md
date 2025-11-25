@@ -221,6 +221,13 @@
 
 ## Version 1.8.7 Todos
 
+* [ ] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
+  - I'm using flask extensions for logging and DB stuff, etc.
+  - This code is clogging up the main `__init__.py` and that things a mess.
+  - I know there's better ways to organize flask extension stuff, I've just
+    never really looked into it.
+  - Time to do that!
+
 * [ ] **Rename views to routes**
   - Views is the default name I used because like MVC arch made sense. But its a bad name.
   - Really this is where route code lives, so just call it routes.

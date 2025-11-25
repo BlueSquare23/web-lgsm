@@ -39,7 +39,7 @@ structure is better. But sill we should take care in building out new code.
 * [ ] **The utils.py file is bloated, unorganized, and untestable!**
   - Needs broken up into a bunch of different classes!
 
-* [ ] **Apps module code needs to be re-organized**
+ [ ] **Apps module code needs to be re-organized**
   - Take for example the `forms.py` file. Too many classes all in one file.
   - I might want to break that up into a directory of class files instead.
   - But in general, that code shouldn't be sprinkled with the main route, api,
@@ -82,5 +82,31 @@ web-lgsm/
 ├── requirements.txt
 └── web-lgsm.py                  # Entry point
 ```
+
+
+### New Classes Needed
+
+#### New ConfigManager Class
+
+The config for this app is a little a typical. I'm using python's
+`configparser` and keeping my config in ini style format. This way the config
+variable in the ini are dynamic. Anytime I go to read them configparser fetches
+me the newest thing in the conf.
+
+All that to say, I'm not really using python's builtin app.config dictionary / handler.
+
+https://flask.palletsprojects.com/en/stable/config/
+
+Thing is, that data is static and important. Like I don't want someone somehow
+dynamically updating the config and it reloading the app in debug mode. That
+would be bad. Things like debug mode and other app.config var are fine to only
+ever be set once at app start up. That data doesn't need to be dynamic.
+
+But lots of the other settings in the main.conf are dynamic and do get updated
+on the fly and the app should respond accordingly.
+
+Gonna call it ConfigManager to distinguish it from main app.config.
+
+
 
 

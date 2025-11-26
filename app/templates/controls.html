@@ -110,7 +110,6 @@
         let serverId = "{{ server_id }}";
         let textColor = "{{ _config.get('aesthetic','text_color') }}";
       {# If show_stderr var True #}
-{#      {% if config_options.show_stderr is defined and config_options.show_stderr %} #}
       {% if _config.get('settings','show_stderr') %}
         let showStderr = true;
       {% else %}
@@ -137,7 +136,7 @@
       <script src="/static/js/delete-btn.js"></script>
 
       <!-- TODO v1.9: Make config options display on page if debug.
-      {# if config_options.debug is defined and config_options.debug #}
+      {# if config.getboolean('debug','debug') #}
         <p>Config Options: {{_config}}</p>
       {# endif #}
       -->

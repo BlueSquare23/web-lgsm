@@ -79,9 +79,9 @@
       {# TODO v1.9 Put this in its own template file, used here and on controls #}
       <script>
         var serverId = "{{ server_id }}";
-        var textColor = "{{ config_options.text_color }}";
+        var textColor = "{{ _config.get('aesthetic','text_color') }}";
       {# If show_stderr var True #}
-      {% if config_options.show_stderr is defined and config_options.show_stderr %}
+      {% if _config.get('settings','show_stderr') %}
         let showStderr = true;
       {% else %}
         let showStderr = false;

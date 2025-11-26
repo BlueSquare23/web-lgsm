@@ -23,6 +23,7 @@ def app():
 @pytest.fixture
 def client(app):
     # Reset config file.
+    os.system('git restore main.conf')
     shutil.copyfile("main.conf", "main.conf.local")
     return app.test_client()
 
@@ -60,20 +61,20 @@ def db_session(app):
 def test_vars():
     """Load vars once per test session"""
     with open("tests/test_vars.json", "r") as f:
-        config = json.load(f)
+        test_vars = json.load(f)
 
-    return config
+    return test_vars
 
 
 @pytest.fixture()
-def config():
+def test_config():
     """Load vars once per test session"""
     # Import config data.
-    config = configparser.ConfigParser()
+    test_config = configparser.ConfigParser()
     config_file = "main.conf.local"  # Local config override.
-    config.read(config_file)
+    test_config.read(config_file)
 
-    return config
+    return test_config
 
 
 @pytest.fixture()

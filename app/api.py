@@ -13,7 +13,9 @@ from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms.views import ValidateID
 from . import db
+from .config.config_manager import ConfigManager
 
+config = ConfigManager()
 api_bp = Blueprint("api", __name__)
 api = Api(api_bp)
 
@@ -265,6 +267,7 @@ api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")
 class GameServerDelete(Resource):
     @login_required
     def delete(self, server_id):
+        global config
         server = GameServer.query.filter_by(id=server_id).first()
         if server == None:
             resp_dict = {"Error": "Server not found!"}
@@ -275,14 +278,11 @@ class GameServerDelete(Resource):
 
         server_name = server.install_name
 
-        config = read_config("delete")
-        current_app.logger.info(log_wrap("config", config))
-
         # NOTE: For everyone's safety, if config options are incongruous, default
         # to safer keep user, keep files option. (ie. If delete_user is True and
         # remove_files is False, default to keep user.
-        if config["delete_user"] and not config["remove_files"]:
-            config["delete_user"] = False
+        if config.getboolean('settings', 'delete_user') and not config.getboolean('settings', 'remove_files'):
+            config.set('settings', 'delete_user', False)
 
         # Check if user has permissions to delete route & server.
         if not user_has_permissions(current_user, "delete", server_id):
@@ -316,7 +316,8 @@ class GameServerDelete(Resource):
         # Log to ensure process was dropped.
         current_app.logger.info(log_wrap("All processes", get_all_processes()))
 
-        if not delete_server(server, config["remove_files"], config["delete_user"]):
+        # TODO: Refactor this now that config handling has been changed.
+        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
             resp_dict = {
                 "Error": "Problem deleting server, see error logs for more details."
             }
@@ -327,8 +328,8 @@ class GameServerDelete(Resource):
 
         # We don't want to keep deleted servers in the cache.
         update_tmux_socket_name_cache(server_id, None, True)
-        delete_user = str(config["delete_user"])
-        remove_files = str(config["remove_files"])
+        delete_user = str(config.getboolean('settings','delete_user'))
+        remove_files = str(config.getboolean('settings','remove_files'))
         audit_log_event(current_user.id, f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
 
         return "", 204

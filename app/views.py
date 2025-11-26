@@ -2,7 +2,6 @@ import os
 import json
 import yaml
 import getpass
-import configparser
 import markdown
 import shortuuid
 
@@ -50,8 +49,6 @@ def home():
 # route logger, where I can just say route, pass it current_app and it'll log
 # everything I care about seeing for that route.
 
-#    config_options = read_config("home")
-#    current_app.logger.info(log_wrap("config_options", config_options))
     current_app.logger.debug(log_wrap("config text_color", config.get('aesthetic','text_color')))
 
     current_app.logger.debug(log_wrap("current_user.username", current_user.username))
@@ -81,6 +78,7 @@ def home():
 @views.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
+    global config
     # Initialize forms
     send_cmd_form = SendCommandForm()
     controls_form = ServerControlForm()
@@ -115,9 +113,7 @@ def controls():
             return redirect(url_for("views.home"))
 
         # Pull in commands list from commands.json file.
-        cmds_list = get_commands(
-            server.script_name, config.getboolean("settings", "send_cmd"), current_user
-        )
+        cmds_list = get_commands(server.script_name, current_user)
 
         if should_use_ssh(server):
             if not is_ssh_accessible(server.install_host):
@@ -150,6 +146,7 @@ def controls():
             cache.set(cache_key, cfg_paths, timeout=1800)
 
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
+        current_app.logger.info(log_wrap("cmds_list", cmds_list))
 
         return render_template(
             "controls.html",
@@ -195,9 +192,7 @@ def controls():
     # first, then get server in order to run this validation. So this works for
     # rn.
     # Validate short_cmd against contents of commands.json file.
-    if not valid_command(
-        short_cmd, server.script_name, config.get('settings',"send_cmd"), current_user
-    ):
+    if not valid_command(short_cmd, server.script_name, current_user):
         flash("Invalid Command!", category="error")
         return redirect(url_for("views.controls", server_id=server_id))
 
@@ -218,9 +213,7 @@ def controls():
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in commands list from commands.json file.
-    cmds_list = get_commands(
-        server.script_name, config.getboolean('settings','send_cmd'), current_user
-    )
+    cmds_list = get_commands(server.script_name, current_user)
 
     if not cmds_list:
         flash("Error loading commands.json file!", category="error")
@@ -243,7 +236,7 @@ def controls():
             server_id=server_id,
             server_name=server.install_name,
             server_commands=cmds_list,
-            config=config,
+            _config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,
             controls_form=controls_form,
@@ -253,7 +246,6 @@ def controls():
 
     elif short_cmd == "sd":
         # Check if send_cmd is enabled in main.conf.
-#        if not config_options["send_cmd"]:
         if not config.getboolean('settings','send_cmd'):
             flash("Send console command button disabled!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
@@ -350,9 +342,6 @@ def install():
     if not user_has_permissions(current_user, "install"):
         return redirect(url_for("views.home"))
 
-    config_options = read_config("install")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
     # Pull in install server list from game_servers.json file.
     install_list = get_servers()
     if not install_list:
@@ -408,7 +397,7 @@ def install():
             servers=install_list,
             install_name=install_name,
             server_id=server_id,
-            config_options=config_options,
+            _config=config,
             running_installs=running_installs,
             form=form,
         )
@@ -447,7 +436,7 @@ def install():
     # reasons, to keep things simple. Inside of a container installs are
     # going to be same user only.
     if "CONTAINER" in os.environ:
-        config_options["install_create_new_user"] = False
+        config.set('settings','install_create_new_user', False)
 
     server = GameServer()
     server.install_name = server_install_name
@@ -463,7 +452,7 @@ def install():
     # If install_create_new_user config parameter is true then create a new
     # user for the new game server and set install path to the path in that
     # new users home directory.
-    if config_options["install_create_new_user"]:
+    if config.getboolean('settings','install_create_new_user'):
         server.username = server_script_name
         server.install_path = (
             f"/home/{server_script_name}/GameServers/{server_install_name}"
@@ -525,7 +514,7 @@ def install():
         "install.html",
         user=current_user,
         servers=install_list,
-        config_options=config_options,
+        _config=config,
         install_name=install_name,
         server_id=server_id,
         running_installs=running_installs,
@@ -538,6 +527,8 @@ def install():
 @views.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
+    global config
+
     # Check if user has permissions to settings route.
     if not user_has_permissions(current_user, "settings"):
         return redirect(url_for("views.home"))
@@ -545,39 +536,24 @@ def settings():
     # Create SettingsForm.
     form = SettingsForm()
 
-    # Since settings also writes to config, open config parse here too.
-    config = configparser.ConfigParser()
-    config_file = "main.conf"
-    config_local = "main.conf.local"  # Local config override.
-    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
-        config_file = config_local
-    current_app.logger.info(log_wrap("config_file", config_file))
-    config.read(config_file)
-
-    # But still pull all settings from read_config() wrapper.
-    config_options = read_config("settings")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
     if request.method == "GET":
         # Set form defaults.
-        # NOTE: This logic for setting defaults could be moved into the
-        # SettingsForm class, still thinking abt if I want to do that or not...
-        form.text_color.default = config_options["text_color"]
-        form.graphs_primary.default = config_options["graphs_primary"]
-        form.graphs_secondary.default = config_options["graphs_secondary"]
-        form.terminal_height.default = config_options["terminal_height"]
-        form.delete_user.default = str(config_options["delete_user"]).lower()
-        form.remove_files.default = str(config_options["remove_files"]).lower()
+        form.text_color.default = config.get('aesthetic','text_color')
+        form.graphs_primary.default = config.get('aesthetic','graphs_primary')
+        form.graphs_secondary.default = config.get('aesthetic','graphs_secondary')
+        form.terminal_height.default = config.getint('aesthetic','terminal_height')
+        form.delete_user.default = str(config.getboolean('settings','delete_user')).lower()
+        form.remove_files.default = str(config.getboolean('settings','remove_files')).lower()
         form.install_new_user.default = str(
-            config_options["install_create_new_user"]
+            config.getboolean('settings','install_create_new_user')
         ).lower()
-        form.newline_ending.default = str(config_options["end_in_newlines"]).lower()
-        form.show_stderr.default = str(config_options["show_stderr"]).lower()
+        form.newline_ending.default = str(config.getboolean('settings','end_in_newlines')).lower()
+        form.show_stderr.default = str(config.getboolean('settings','show_stderr')).lower()
         form.clear_output_on_reload.default = str(
-            config_options["clear_output_on_reload"]
+            config.getboolean('settings','clear_output_on_reload')
         ).lower()
         # BooleanFields handle setting default differently from RadioFields.
-        if config_options["show_stats"]:
+        if config.getboolean('aesthetic','show_stats'):
             form.show_stats.default = "true"
         form.process()  # Required to apply form changes.
 
@@ -585,7 +561,7 @@ def settings():
             "settings.html",
             user=current_user,
             system_user=USER,
-            config_options=config_options,
+            _config=config,
             form=form,
         )
 
@@ -594,8 +570,10 @@ def settings():
         validation_errors(form)
         return redirect(url_for("views.settings"))
 
-    # TODO v1.9: Retrieve form options via separate function like read_config()
-    # (maybe read_form()) to cleanup the mess that is the block of text below.
+    # TODO v1.9: Restructure this. These giant blocks of text aren't great, but
+    # I do want to log this. Idk maybe I just log with dir or something to get
+    # a deeper/dumper view of things. Wish I had perl's data dumper :(
+
     text_color_pref = str(form.text_color.data).lower()
     user_del_pref = str(form.delete_user.data).lower()
     file_pref = str(form.remove_files.data).lower()
@@ -628,57 +606,19 @@ def settings():
     if purge_tmux_cache != None:
         purge_tmux_socket_cache()
 
-    # Set Remove user setting.
-    config["settings"]["delete_user"] = "yes"
-    if user_del_pref == "false":
-        config["settings"]["delete_user"] = "no"
-
-    # Set Remove files setting.
-    config["settings"]["remove_files"] = "yes"
-    if file_pref == "false":
-        config["settings"]["remove_files"] = "no"
-
-    config["settings"]["clear_output_on_reload"] = "yes"
-    if clear_output_pref == "false":
-        config["settings"]["clear_output_on_reload"] = "no"
-
-    # Set New user install setting.
-    config["settings"]["install_create_new_user"] = "yes"
-    if install_new_user_pref == "false":
-        config["settings"]["install_create_new_user"] = "no"
-
-    # Newline ending settings.
-    config["settings"]["end_in_newlines"] = "yes"
-    if newline_ending_pref == "false":
-        config["settings"]["end_in_newlines"] = "no"
-
-    # Show stderr setting.
-    config["settings"]["show_stderr"] = "yes"
-    if show_stderr_pref == "false":
-        config["settings"]["show_stderr"] = "no"
-
-    if text_color_pref:
-        config["aesthetic"]["text_color"] = text_color_pref
-
-    if graphs_primary_pref:
-        config["aesthetic"]["graphs_primary"] = graphs_primary_pref
-
-    if graphs_secondary_pref:
-        config["aesthetic"]["graphs_secondary"] = graphs_secondary_pref
-
-    # Default to no, if checkbox is unchecked.
-    config["aesthetic"]["show_stats"] = "no"
-    if show_stats_pref == "true":
-        config["aesthetic"]["show_stats"] = "yes"
-
-    # Set default text area height setting.
-    config["aesthetic"]["terminal_height"] = config_options["terminal_height"]
-    if height_pref:
-        # Have to cast to string to save in config.
-        config["aesthetic"]["terminal_height"] = str(height_pref)
-
-    with open(config_file, "w") as configfile:
-        config.write(configfile)
+    # Batch update config via context handler.
+    with config.batch_update() as config:
+        config.set('aesthetic', 'text_color', text_color_pref)
+        config.set('settings',  'delete_user', user_del_pref)
+        config.set('settings',  'remove_files', file_pref)
+        config.set('settings',  'clear_output_on_reload', clear_output_pref)
+        config.set('aesthetic', 'terminal_height', height_pref)
+        config.set('aesthetic', 'graphs_primary', graphs_primary_pref)
+        config.set('aesthetic', 'graphs_secondary', graphs_secondary_pref)
+        config.set('aesthetic', 'show_stats', show_stats_pref)
+        config.set('settings',  'install_create_new_user', install_new_user_pref)
+        config.set('settings',  'end_in_newlines', newline_ending_pref)
+        config.set('settings',  'show_stderr', show_stderr_pref)
 
     # Update's the weblgsm.
     if update_weblgsm == "true":
@@ -709,11 +649,9 @@ def settings():
 @views.route("/about", methods=["GET"])
 @login_required
 def about():
-    config_options = read_config("about")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
+    global config
     return render_template(
-        "about.html", user=current_user, config_options=config_options
+        "about.html", user=current_user, _config=config
     )
 
 
@@ -885,14 +823,12 @@ def add():
 @views.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit():
+    global config
     # NOTE: The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
-    config_options = read_config("edit")
-    current_app.logger.info(log_wrap("config_options", config_options))
-
-    if not config_options["cfg_editor"]:
+    if not config.getboolean('settings','cfg_editor'):
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("views.home"))
 
@@ -975,8 +911,6 @@ def jobs():
     if not user_has_permissions(current_user, "jobs"):
         return redirect(url_for("views.home"))
 
-    config_options = read_config("jobs")
-
     # Create JobsForm.
     form = JobsForm()
 
@@ -1008,15 +942,15 @@ def jobs():
             current_app.logger.info(log_wrap("server_json", server_json))
 
             # Pull in commands list from commands.json file.
-            cmds_list = get_commands(
-                server.script_name, config_options["send_cmd"], current_user
-            )
+            cmds_list = get_commands(server.script_name, current_user)
+
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [cmd.long_cmd for cmd in cmds_list]
+
             if 'console' in form.command.choices:
                 form.command.choices.remove('console')
 
-            if config_options['allow_custom_jobs']:
+            if config.getboolean('settings','allow_custom_jobs'):
                 form.command.choices.append('custom')
 
         current_app.logger.debug(log_wrap("jobs_list", jobs_list))

@@ -52,3 +52,35 @@ class ConfigManager:
     def __getitem__(self, section):
         self.reload()
         return self._config[section]
+
+    def set(self, section, option, value, immediate=True):
+        if not self._config.has_section(section):
+            self._config.add_section(section)
+        self._config[section][option] = str(value)
+
+        if immediate and not self._batch_mode:
+            self._write_config()
+        else:
+            self._pending_writes = True
+
+    def batch_update(self):
+        """Context manager for multiple updates with single write"""
+        return self.BatchUpdateContext(self)
+
+    class BatchUpdateContext:
+        def __init__(self, config):
+            self.config = config
+
+        def __enter__(self):
+            self.config._batch_mode = True
+            return self.config
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.config._batch_mode = False
+            if self.config._pending_writes:
+                self.config._write_config()
+                self.config._pending_writes = False
+
+    def _write_config(self):
+        with open(self.config_file, 'w') as configfile:
+            self._config.write(configfile)

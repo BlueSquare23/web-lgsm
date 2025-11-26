@@ -14,7 +14,6 @@ import paramiko
 import requests
 import subprocess
 import threading
-import configparser
 
 from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
@@ -25,6 +24,9 @@ from .cmd_descriptor import CmdDescriptor
 from .processes_global import *
 from . import db
 from . import cache
+from .config.config_manager import ConfigManager
+
+config = ConfigManager()
 
 # Constants.
 CWD = os.getcwd()
@@ -71,11 +73,7 @@ def process_popen_output(proc, proc_info, output_type):
     Returns:
         None: Just fills out ProcInfoVessel objects text fields with parsed text.
     """
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    end_in_newlines = get_config_value(
-        config, "settings", "end_in_newlines", True, True
-    )
+    global config
 
     while True:
         if output_type == "stdout":
@@ -103,7 +101,7 @@ def process_popen_output(proc, proc_info, output_type):
                     line = line + "\n"
 
                 # Add the newlines for optional old-style setting.
-                if end_in_newlines:
+                if config.getboolean('settings', 'end_in_newlines'):
                     if not line.endswith("\n"):
                         line = line + "\n"
 
@@ -134,13 +132,7 @@ def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
     """
     proc_info = get_process(cmd_id, create=True)
 
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    clear_output_on_reload = get_config_value(
-        config, "settings", "clear_output_on_reload", True, True
-    )
-
-    if clear_output_on_reload:
+    if config.getboolean('settings', 'clear_output_on_reload'):
         proc_info.stdout.clear()
         proc_info.stderr.clear()
 
@@ -723,7 +715,7 @@ def delete_server(server, remove_files, delete_user):
     return True
 
 
-def get_commands(server, send_cmd, current_user):
+def get_commands(server, current_user):
     """
     Turns data in commands.json into list of command objects that implement the
     CmdDescriptor class. This list of commands is used to validate user input
@@ -731,12 +723,13 @@ def get_commands(server, send_cmd, current_user):
 
     Args:
         server (string): Name of game server to get commands for.
-        send_cmd (bool): Whether or not send cmd button is enabled.
         current_user (LocalProxy): Currently logged in flask user object.
 
     Returns:
         commands (list): List of command objects for server.
     """
+    global config
+
     commands = []
 
     try:
@@ -751,7 +744,7 @@ def get_commands(server, send_cmd, current_user):
         return commands
 
     # Remove send cmd if option disabled in main.conf.
-    if send_cmd == False:
+    if not config.getboolean('settings','send_cmd'):
         json_data["short_cmds"].remove("sd")
         json_data["long_cmds"].remove("send")
         json_data["descriptions"].remove("Send command to game server console.")
@@ -815,7 +808,7 @@ def get_servers():
 # TODO/NOTE: This can stay for now, but its on the chopping block. This
 # validation should now be handled by flask-wtf/wtforms classes. Once I get
 # this fixed up in the controls route, this can go.
-def valid_command(cmd, server, send_cmd, current_user):
+def valid_command(cmd, server, current_user):
     """
     Validates short commands from controls route form for game server. Some
     game servers may have specific game server command exemptions. This
@@ -825,14 +818,12 @@ def valid_command(cmd, server, send_cmd, current_user):
     Args:
         cmd (str): Short cmd string to validate.
         server (GameServer): Game server to check command against.
-        send_cmd (bool): Config option specifying if send_cmd button is
-                         enabled/allowed.
         current_user (LocalProxy): Currently logged in flask user object.
 
     Returns:
         bool: True if cmd is valid for user & game server, False otherwise.
     """
-    commands = get_commands(server, send_cmd, current_user)
+    commands = get_commands(server, current_user)
     for command in commands:
         # Aka is valid command.
         if cmd == command.short_cmd:
@@ -1234,16 +1225,7 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
 
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
 
-    config = configparser.ConfigParser()
-    config.read("main.conf")
-    end_in_newlines = get_config_value(
-        config, "settings", "end_in_newlines", True, True
-    )
-    clear_output_on_reload = get_config_value(
-        config, "settings", "clear_output_on_reload", True, True
-    )
-
-    if clear_output_on_reload:
+    if config.getboolean('settings', 'clear_output_on_reload'):
         proc_info.stdout.clear()
         proc_info.stderr.clear()
 
@@ -1285,7 +1267,7 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
                     if line == "\r\n":
                         continue
                     if line not in proc_info.stdout:
-                        if end_in_newlines and not (
+                        if config.getboolean('settings', 'end_in_newlines') and not (
                             line.endswith("\n") or line.endswith("\r")
                         ):
                             line += "\n"
@@ -1300,7 +1282,7 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
                     if line == "\r\n":
                         continue
                     if line not in proc_info.stderr:
-                        if end_in_newlines and not (
+                        if config.getboolean('settings', 'end_in_newlines') and not (
                             line.endswith("\n") or line.endswith("\r")
                         ):
                             line += "\n"
@@ -1416,39 +1398,6 @@ def write_file_over_ssh(server, file_path, content):
         return False
 
 
-def get_config_value(config, section, option, default, is_bool=False):
-    """
-    Wraps checking config object for option. If no config option found return
-    default value.
-
-    Args:
-        config (ConfigParser): Config object to read & get options from.
-        section (str): Section of config to fetch option from.
-        option (str): The option to fetch value of.
-        default (str|bool): Default value if can't find option in config.
-        is_bool (bool): Option type is a boolean (different option fetch method).
-
-    Returns:
-        str|bool: Value of configured option in config or default value if
-                  can't one get from config.
-    """
-    try:
-        if config and config.has_section(section):
-            if is_bool:
-                return config[section].getboolean(option)
-
-            return config[section][option]
-
-        else:
-            return default
-
-    except (ValueError, IndexError, KeyError) as e:
-        return default
-
-    except configparser.NoOptionError:
-        return default
-
-
 def read_changelog():
     """
     Reads in the local CHANGELOG.md file and returns its contents.
@@ -1467,151 +1416,6 @@ def read_changelog():
     except Exception as e:
         return f"Problem reading CHANGELOG.md: {e}"
 
-
-def read_config(route):
-    """
-    Reads in relevant main config parameters for a given route. Also protects
-    against empty config options.
-
-    Args:
-        route (str): Name of route to fetch config parameters for.
-
-    Returns:
-        config_options (dict): Configuration options for route.
-    """
-    # Import config data.
-    config = configparser.ConfigParser()
-    config_file = "main.conf"
-    config_local = "main.conf.local"  # Local config override.
-    if os.path.isfile(config_local) and os.access(config_local, os.R_OK):
-        config_file = config_local
-    config.read(config_file)
-
-    config_options = dict()
-
-    # NOTE: Probably a smarter way to do this than an if for each route, but
-    # ehh not a huge deal rn.
-
-    if route == "home":
-        config_options["text_color"] = get_config_value(
-            config, "aesthetic", "text_color", "#09ff00"
-        )
-        config_options["graphs_primary"] = get_config_value(
-            config, "aesthetic", "graphs_primary", "#e01b24"
-        )
-        config_options["graphs_secondary"] = get_config_value(
-            config, "aesthetic", "graphs_secondary", "#0d6efd"
-        )
-        config_options["show_stats"] = get_config_value(
-            config, "aesthetic", "show_stats", True, True
-        )
-        config_options["show_barrel_roll"] = get_config_value(
-            config, "aesthetic", "show_barrel_roll", True, True
-        )
-        return config_options
-
-    if route == "controls":
-        config_options["text_color"] = get_config_value(
-            config, "aesthetic", "text_color", "#09ff00"
-        )
-        config_options["terminal_height"] = get_config_value(
-            config, "aesthetic", "terminal_height", 10
-        )
-        config_options["cfg_editor"] = get_config_value(
-            config, "settings", "cfg_editor", False, True
-        )
-        config_options["send_cmd"] = get_config_value(
-            config, "settings", "send_cmd", False, True
-        )
-        config_options["show_stderr"] = get_config_value(
-            config, "settings", "show_stderr", True, True
-        )
-        return config_options
-
-    if route == "install":
-        config_options["terminal_height"] = get_config_value(
-            config, "aesthetic", "terminal_height", 10
-        )
-        config_options["text_color"] = get_config_value(
-            config, "aesthetic", "text_color", "#09ff00"
-        )
-        config_options["install_create_new_user"] = get_config_value(
-            config, "settings", "install_create_new_user", True, True
-        )
-        return config_options
-
-    if route == "settings":
-        config_options["text_color"] = get_config_value(
-            config, "aesthetic", "text_color", "#09ff00"
-        )
-        config_options["graphs_primary"] = get_config_value(
-            config, "aesthetic", "graphs_primary", "#e01b24"
-        )
-        config_options["graphs_secondary"] = get_config_value(
-            config, "aesthetic", "graphs_secondary", "#0d6efd"
-        )
-        config_options["terminal_height"] = get_config_value(
-            config, "aesthetic", "terminal_height", 10
-        )
-        config_options["show_stats"] = get_config_value(
-            config, "aesthetic", "show_stats", True, True
-        )
-        config_options["send_cmd"] = get_config_value(
-            config, "settings", "send_cmd", False, True
-        )
-        config_options["show_stderr"] = get_config_value(
-            config, "settings", "show_stderr", True, True
-        )
-        config_options["install_create_new_user"] = get_config_value(
-            config, "settings", "install_create_new_user", True, True
-        )
-        config_options["delete_user"] = get_config_value(
-            config, "settings", "delete_user", False, True
-        )
-        config_options["remove_files"] = get_config_value(
-            config, "settings", "remove_files", False, True
-        )
-        config_options["clear_output_on_reload"] = get_config_value(
-            config, "settings", "clear_output_on_reload", True, True
-        )
-        config_options["end_in_newlines"] = get_config_value(
-            config, "settings", "end_in_newlines", False, True
-        )
-        config_options["show_stderr"] = get_config_value(
-            config, "settings", "show_stderr", False, True
-        )
-        return config_options
-
-    if route == "about":
-        config_options["text_color"] = get_config_value(
-            config, "aesthetic", "text_color", "#09ff00"
-        )
-        return config_options
-
-    if route == "delete":
-        config_options["delete_user"] = get_config_value(
-            config, "settings", "delete_user", False, True
-        )
-        config_options["remove_files"] = get_config_value(
-            config, "settings", "remove_files", False, True
-        )
-        return config_options
-
-    if route == "edit":
-        config_options["cfg_editor"] = get_config_value(
-            config, "settings", "cfg_editor", False, True
-        )
-        return config_options
-
-    if route == "jobs":
-        config_options["send_cmd"] = get_config_value(
-            config, "settings", "send_cmd", False, True
-        )
-
-        config_options["allow_custom_jobs"] = get_config_value(
-            config, "settings", "allow_custom_jobs", False, True
-        )
-        return config_options
 
 
 def clear_proc_info_post_install(server_id, app_context):

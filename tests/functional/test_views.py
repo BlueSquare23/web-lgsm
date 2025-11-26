@@ -931,14 +931,14 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = no")
+        check_main_conf("install_create_new_user = false")
 
         data["install_new_user"] = "true"
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = yes")
+        check_main_conf("install_create_new_user = true")
 
         # Test invalid choice.
         error_msg = b"Not a valid choice"

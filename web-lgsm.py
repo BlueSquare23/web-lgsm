@@ -89,6 +89,7 @@ import shutil
 import string
 import getpass
 import tarfile
+import random
 import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
@@ -572,13 +573,19 @@ def run_tests():
         db_file = os.path.join(SCRIPTPATH, "app/database.db")
         db_backup = backup_file(db_file)
 
+    main_conf = 'main.conf'
     local_conf = 'main.conf.local'
     if os.path.exists(local_conf):
         local_conf_bak = backup_file(local_conf)
+        os.system(f"git restore {main_conf}")
+        shutil.copyfile(main_conf, local_conf)
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:
         O["verbose"] = True
+
+    # Random chance they run in reverse 15% of the time.
+    probability = 0.15
 
     try:
         if O["test_full"]:
@@ -590,12 +597,22 @@ def run_tests():
                 # Then torch dir.
                 shutil.rmtree(mcdir)
 
-            cmd = "coverage run -m pytest -v tests/"
-            run_command_popen(cmd)
+            run_tests = "coverage run -m pytest --cache-clear -v tests/"
+
+            # Random chance tests get run in reverse order.
+            if random.random() < probability:
+                run_tests = "coverage run -m pytest --reverse --cache-clear -v tests/"
+                
+            run_command_popen(run_tests)
 
         else:
-            cmd = "coverage run -m pytest -vvv tests/ -m 'not integration'"
-            run_command_popen(cmd)
+            run_tests = "coverage run -m pytest --cache-clear -vvv tests/ -m 'not integration'"
+
+            # Random chance tests get run in reverse order.
+            if random.random() < probability:
+                run_tests = "coverage run -m pytest --reverse --cache-clear -vvv tests/ -m 'not integration'"
+
+            run_command_popen(run_tests)
 
     finally:
         if db_backup:

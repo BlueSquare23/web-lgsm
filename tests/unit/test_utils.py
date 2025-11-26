@@ -2,7 +2,7 @@ import os
 import pytest
 import json
 from app.utils import *
-
+from utils import *
 
 # Mock current user class.
 class ModCurrentUser:
@@ -20,7 +20,7 @@ def test_get_commands():
 
     current_user = ModCurrentUser("admin", json.dumps({"admin": True}))
 
-    for command in get_commands("mcserver", "no", current_user):
+    for command in get_commands("mcserver", current_user):
         assert command.short_cmd in json_data["short_cmds"]
         assert len(command.short_cmd) < 3
         assert command.long_cmd in json_data["long_cmds"]
@@ -52,15 +52,18 @@ def test_valid_command():
     commands_json.close()
 
     current_user = ModCurrentUser("admin", json.dumps({"admin": True}))
+    os.system('cat main.conf.local')
+
+    toggle_send_cmd(True)
 
     valid_cmds = json_data["short_cmds"]
     for cmd in valid_cmds:
-        assert valid_command(cmd, "mcserver", "yes", current_user) == True
+        assert valid_command(cmd, "mcserver", current_user) == True
 
     # Send should be invalid when no is supplied to valid_command().
     invalid_cmds = ["fart", "blah", 777777, None, "---------", "send"]
     for cmd in invalid_cmds:
-        assert valid_command(cmd, "mcserver", "no", current_user) == False
+        assert valid_command(cmd, "mcserver", current_user) == False
 
     # Test valid & invalid cmds for user.
     permissions = dict()
@@ -74,11 +77,11 @@ def test_valid_command():
     print(current_user2.permissions)
 
     for cmd in invalid_cmds:
-        assert valid_command(cmd, "mcserver", "no", current_user2) == False
+        assert valid_command(cmd, "mcserver", current_user2) == False
 
     valid_cmds = ["st", "sp"]
     for cmd in valid_cmds:
-        assert valid_command(cmd, "mcserver", "no", current_user2) == True
+        assert valid_command(cmd, "mcserver", current_user2) == True
 
 
 def test_get_network_stats():

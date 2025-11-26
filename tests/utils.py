@@ -41,28 +41,28 @@ def toggle_cfg_editor(enable=False):
     """
     Toggle cfg_editor setting in config file.
     """
-    config = configparser.ConfigParser()
-    config.read("main.conf.local")
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
     if enable:
-        config['settings']['cfg_editor'] = 'yes'
+        test_config['settings']['cfg_editor'] = 'yes'
     else:
-        config['settings']['cfg_editor'] = 'no'
+        test_config['settings']['cfg_editor'] = 'no'
     with open("main.conf.local", "w") as configfile:
-        config.write(configfile)
+        test_config.write(configfile)
 
 
 def toggle_send_cmd(enable=False):
     """
     Toggle send_cmd setting in config file.
     """
-    config = configparser.ConfigParser()
-    config.read("main.conf.local")
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
     if enable:
-        config['settings']['send_cmd'] = 'yes'
+        test_config['settings']['send_cmd'] = 'yes'
     else:
-        config['settings']['send_cmd'] = 'no' 
+        test_config['settings']['send_cmd'] = 'no' 
     with open("main.conf.local", "w") as configfile:
-        config.write(configfile)
+        test_config.write(configfile)
 
 
 def check_install_finished(server_id):

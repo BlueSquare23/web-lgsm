@@ -30,11 +30,21 @@ def check_response(response, msg, resp_code, url):
     assert msg in response.data
 
 
-def check_main_conf(confstr):
+def check_main_conf_str(confstr):
     with open("main.conf.local", "r") as f:
         content = f.read()
 
     assert confstr in content
+
+
+def check_main_conf_bool(section, option, enabled=True):
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
+    if enabled:
+        assert test_config.getboolean(section, option) == True
+    else:
+        assert test_config.getboolean(section, option) == False
 
 
 def toggle_cfg_editor(enable=False):
@@ -43,6 +53,7 @@ def toggle_cfg_editor(enable=False):
     """
     test_config = configparser.ConfigParser()
     test_config.read("main.conf.local")
+
     if enable:
         test_config['settings']['cfg_editor'] = 'yes'
     else:
@@ -57,6 +68,7 @@ def toggle_send_cmd(enable=False):
     """
     test_config = configparser.ConfigParser()
     test_config.read("main.conf.local")
+
     if enable:
         test_config['settings']['send_cmd'] = 'yes'
     else:

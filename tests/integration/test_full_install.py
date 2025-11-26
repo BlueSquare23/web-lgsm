@@ -282,9 +282,9 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = yes")
-        check_main_conf("remove_files = yes")
-        check_main_conf("delete_user = yes")
+        check_main_conf_bool('settings','install_create_new_user', True)
+        check_main_conf_bool('settings','remove_files', True)
+        check_main_conf_bool('settings','delete_user', True)
 
         # Test full install as new user.
         full_game_server_install(client)
@@ -368,7 +368,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = no")
+        check_main_conf_bool('settings','install_create_new_user', False)
 
         # Test full install as existing user.
         full_game_server_install(client)

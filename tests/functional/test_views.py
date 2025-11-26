@@ -863,7 +863,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf(f"text_color = {text_color}")
+        check_main_conf_str(f"text_color = {text_color}")
 
         # Test missing csrf_token.
         data = default_data.copy()
@@ -931,14 +931,14 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = false")
+        check_main_conf_bool('settings','install_create_new_user', False)
 
         data["install_new_user"] = "true"
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = true")
+        check_main_conf_bool('settings','install_create_new_user', True)
 
         # Test invalid choice.
         error_msg = b"Not a valid choice"
@@ -956,7 +956,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("terminal_height = 10")
+        check_main_conf_str("terminal_height = 10")
 
         # App only accepts terminal height between 5 and 100.
         error_msg = b"Number must be between 5 and 100"
@@ -965,28 +965,28 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check nothing changed in conf, just to be sure.
-        check_main_conf("terminal_height = 10")
+        check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "test"
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check nothing changed in conf, just to be sure.
-        check_main_conf("terminal_height = 10")
+        check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "99999"
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check nothing changed in conf, just to be sure.
-        check_main_conf("terminal_height = 10")
+        check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "-e^(i*3.14)"
         response = client.post("/settings", data=data, follow_redirects=True)
         check_response(response, error_msg, resp_code, "views.settings")
 
         # Check nothing changed in conf, just to be sure.
-        check_main_conf("terminal_height = 10")
+        check_main_conf_str("terminal_height = 10")
 
 
 

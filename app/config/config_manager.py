@@ -21,6 +21,8 @@ class ConfigManager:
             self.config_file = self.config_local
 
         self._config = configparser.ConfigParser()
+        self._batch_mode = False
+        self._pending_writes = False
         self.reload()
 
     def reload(self):

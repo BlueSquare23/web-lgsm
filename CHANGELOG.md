@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Created new `ConfigManager` class for handling main.conf ConfigParser stuff.
 - Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
 
 ### Fixed

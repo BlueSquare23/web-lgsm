@@ -225,7 +225,7 @@
   - I'm making an effort to clean up the `utils.py` file.
   - First thing to do is take those ugly functions in the utils file and move
     them into their own class and update the app code and tests.
-  - [ ] Then write some unit tests for the new class n'@.
+  - [x] Then write some unit tests for the new class n'@.
 
 * [ ] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
   - I'm using flask extensions for logging and DB stuff, etc.

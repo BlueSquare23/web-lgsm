@@ -7,7 +7,7 @@ import getpass
 import configparser
 from werkzeug.security import generate_password_hash
 
-from app import main
+from app import create_app
 from app.models import User, GameServer, Job
 from app.services.cron_service import CronService
 from utils import *
@@ -15,13 +15,23 @@ from utils import *
 
 @pytest.fixture
 def app():
-    app = main()
+    app = create_app()
     app.config.update({"TESTING": True})
     yield app
 
 
 @pytest.fixture
-def client(app):
+def reset(app):
+    # Reset config file.
+    os.system('git restore main.conf')
+    shutil.copyfile("main.conf", "main.conf.local")
+
+    # Reset crontab.
+    os.system('crontab -r')
+
+
+@pytest.fixture
+def client(app, reset):
     # Reset config file.
     os.system('git restore main.conf')
     shutil.copyfile("main.conf", "main.conf.local")

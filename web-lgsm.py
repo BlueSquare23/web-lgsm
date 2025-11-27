@@ -93,7 +93,7 @@ import random
 import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
-from app import db, main as appmain
+from app import db, create_app
 from app.models import User
 from app.utils import check_and_get_lgsmsh
 
@@ -196,7 +196,7 @@ def start_server():
             LOG_LEVEL,
             f"--bind={HOST}:{PORT}",
             "--daemon",
-            "app:main()",
+            "app:create_app()",
         ]
 
         cert = None
@@ -264,13 +264,13 @@ def start_server():
 
 def start_debug():
     """Starts the app in debug mode"""
-    from app import main
+    from app import create_app
     if DEBUG:
         os.environ["DEBUG"] = "YES"
 
     # For clean ctrl + c handling.
     signal.signal(signal.SIGINT, signalint_handler)
-    app = main()
+    app = create_app()
     app.run(debug=True, host=HOST, port=PORT)
 
 
@@ -618,6 +618,7 @@ def run_tests():
         if db_backup:
             shutil.move(db_backup, db_file)
 
+        os.system('crontab -r')  # Reset crontab
         shutil.move(local_conf_bak, local_conf)
         print("Restored database and main.conf.local")
 
@@ -766,7 +767,7 @@ def main(argv):
             return
         elif opt in ("-p", "--passwd"):
             # Technically, needs run in app context.
-            app = appmain()
+            app = create_app()
             with app.app_context():
                 change_password()
             return
@@ -781,7 +782,7 @@ def main(argv):
             add_valid_gs_user(arg)
             return
         elif opt in ("-P", "--reset_totp"):
-            app = appmain()
+            app = create_app()
             with app.app_context():
                 reset_totp()
             return

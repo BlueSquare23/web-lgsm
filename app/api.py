@@ -8,7 +8,7 @@ from werkzeug.datastructures import MultiDict
 
 from .utils import *
 from .models import *
-from .cron import CronService
+from .services.cron_service import CronService
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms.views import ValidateID

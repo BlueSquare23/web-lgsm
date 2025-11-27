@@ -11,7 +11,7 @@ import subprocess
 import configparser
 
 from app.models import User, GameServer, Job, Audit
-from app.cron import CronService
+from app.services.cron_service import CronService
 from app.models import db
 from utils import *
 

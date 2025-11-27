@@ -24,7 +24,7 @@ from .models import *
 from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms.views import *
-from .cron import CronService
+from .services.cron_service import CronService
 from . import cache
 
 # Constants.

@@ -3,25 +3,23 @@ import shortuuid
 
 from cron_converter import Cron
 
-from .models import *
-from .utils import *
-from .paths import PATHS
-from . import db
-from .models import *
+from app.models import *
+from app.utils import *
+from app.paths import PATHS
+from app import db
 
 """
 Service class interface for interacting with system cron from API and jobs
 route.
 """
 
-CONNECTOR_CMD = [
-    PATHS["sudo"],
-    "-n",
-    "/opt/web-lgsm/bin/python",
-    PATHS["ansible_connector"],
-]
-
 class CronService:
+    CONNECTOR_CMD = [
+        PATHS["sudo"],
+        "-n",
+        "/opt/web-lgsm/bin/python",
+        PATHS["ansible_connector"],
+    ]
 
     def __init__(self, server_id):
         self.server_id = server_id 
@@ -60,7 +58,7 @@ class CronService:
         db.session.commit()
 
         # Then, add job to system crontab for user via connector.
-        cmd = CONNECTOR_CMD + ["--cron", cronjob.id]
+        cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id]
 
         cmd_id = f'add_job_{cronjob.id}'
         run_cmd_popen(cmd, cmd_id)
@@ -91,7 +89,7 @@ class CronService:
             return False
 
         # Remove job from system crontab.
-        cmd = CONNECTOR_CMD + ["--cron", cronjob.id, "--delete", self.server_id]
+        cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id, "--delete", self.server_id]
 
         cmd_id = f'delete_job_{cronjob.id}'
         run_cmd_popen(cmd, cmd_id)

@@ -45,46 +45,45 @@ def main():
         "debug": logging.DEBUG,  # Most verbose, debug info.
     }
 
-    if "DEBUG" in os.environ:
-        # Get log_level from env var, default to info if none set.
-        log_level_str = os.getenv("LOG_LEVEL", "info").lower()
-        log_level = log_level_map.get(log_level_str, logging.INFO)
-        dictConfig(
-            {
-                "version": 1,
-                "formatters": {
-                    "default": {
-                        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-                    },
-                    "audit": {
-                        "format": "[%(asctime)s] AUDIT: %(message)s",
-                    }
+    # Get log_level from env var, default to info if none set.
+    log_level_str = os.getenv("LOG_LEVEL", "info").lower()
+    log_level = log_level_map.get(log_level_str, logging.INFO)
+    dictConfig(
+        {
+            "version": 1,
+            "formatters": {
+                "default": {
+                    "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
                 },
-                "handlers": {
-                    "wsgi": {
-                        "class": "logging.StreamHandler",
-                        "stream": "ext://flask.logging.wsgi_errors_stream",
-                        "formatter": "default",
-                    },
-                    "audit_file": {
-                        "class": "logging.FileHandler",
-                        "filename": "logs/audit.log",
-                        "formatter": "audit",
-                    }
+                "audit": {
+                    "format": "[%(asctime)s] AUDIT: %(message)s",
+                }
+            },
+            "handlers": {
+                "wsgi": {
+                    "class": "logging.StreamHandler",
+                    "stream": "ext://flask.logging.wsgi_errors_stream",
+                    "formatter": "default",
                 },
-                "loggers": {
-                    "audit": {
-                        "level": "INFO",
-                        "handlers": ["audit_file"],
-                        "propagate": False,
-                    }
-                },
-                "root": {
-                    "level": log_level,
-                    "handlers": ["wsgi"]
-                },
-            }
-        )
+                "audit_file": {
+                    "class": "logging.FileHandler",
+                    "filename": "logs/audit.log",
+                    "formatter": "audit",
+                }
+            },
+            "loggers": {
+                "audit": {
+                    "level": "INFO",
+                    "handlers": ["audit_file"],
+                    "propagate": False,
+                }
+            },
+            "root": {
+                "level": log_level,
+                "handlers": ["wsgi"]
+            },
+        }
+    )
 
     current_log_level = logging.getLogger().getEffectiveLevel()
 

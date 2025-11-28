@@ -357,7 +357,7 @@ def install():
 
     # Check for / install the main linuxgsm.sh script.
     lgsmsh = "linuxgsm.sh"
-    check_and_get_lgsmsh(f"scripts/{lgsmsh}")
+    check_and_get_lgsmsh(f"bin/{lgsmsh}")
 
     # Check if any installs are currently running.
     running_installs = get_running_installs()

@@ -402,7 +402,7 @@ def change_password():
 
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
-    lgsmsh = SCRIPTPATH + "/scripts/linuxgsm.sh"
+    lgsmsh = SCRIPTPATH + "/bin/linuxgsm.sh"
     check_and_get_lgsmsh(lgsmsh)
 
     servers_list = os.popen(f"{lgsmsh} list").read()

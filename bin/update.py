@@ -13,8 +13,8 @@ import tarfile
 
 RAW_URL = 'https://raw.githubusercontent.com/BlueSquare23/web-lgsm'
 UNINSTALL_URL =  RAW_URL + '/refs/heads/master/uninstall.sh'
-ROOT_INSTALL_URL =  RAW_URL + '/refs/heads/master/scripts/root_install.sh'
-UPDATE_PY_URL =  RAW_URL + '/refs/heads/dev-1.8.5/scripts/update.py'
+ROOT_INSTALL_URL =  RAW_URL + '/refs/heads/master/bin/root_install.sh'
+UPDATE_PY_URL =  RAW_URL + '/refs/heads/bin/update.py'
 INSTALL_CONF = '/usr/local/share/web-lgsm/install_conf.json'
 
 # Global options hash.

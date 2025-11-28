@@ -1460,7 +1460,7 @@ def download_cfg(server, cfg_path):
     file_contents = read_cfg_file(server, cfg_path)
     if file_contents == None:
         flash("Problem retrieving file contents", category="error")
-        return redirect(url_for("views.home"))
+        return redirect(url_for("main.home"))
 
     cfg_file = os.path.basename(cfg_path)
 

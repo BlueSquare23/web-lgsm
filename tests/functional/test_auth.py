@@ -263,7 +263,7 @@ def test_login_responses(db_session, client, setup_client, test_vars):
             follow_redirects=True
         )
         msg = b"Logged in"
-        check_for_error(response, msg, "views.home")
+        check_for_error(response, msg, "main.home")
 
         # Logout again.
         response = client.get("/logout", follow_redirects=True)
@@ -377,7 +377,7 @@ def test_2fa_responses(db_session, client, authed_client, test_vars):
             follow_redirects=True,
         )
 
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert "Two factor enabled successfully" in response.text
 
 ### Logout page tests.
@@ -579,7 +579,7 @@ def test_create_new_user(db_session, client, authed_client, test_vars):
         response = client.post(
             "/edit_users", data=create_user_data, follow_redirects=True
         )
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"New User Added" in response.data
 
 
@@ -600,7 +600,7 @@ def test_login_as_new_user(db_session, client, add_second_user_no_perms):
             follow_redirects=True
         )
         assert response.status_code == 200  # 200 bc follow_redirects=True
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
 
 
 def test_require_auth(db_session, client, setup_client):

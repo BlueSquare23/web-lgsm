@@ -98,7 +98,7 @@ def login():
     login_user(user, remember=True, duration=four_weeks_delta)
     confirm_login()
     audit_log_event(user.id, f"User '{username}' logged in")
-    return redirect(url_for("views.home"))
+    return redirect(url_for("main.home"))
 
 
 ######### Setup Route #########
@@ -145,7 +145,7 @@ def setup():
     if enable_otp:
         return redirect(url_for("auth.two_factor_setup"))
 
-    return redirect(url_for("views.home"))
+    return redirect(url_for("main.home"))
 
 
 ######### Logout Route #########
@@ -166,7 +166,7 @@ def logout():
 def edit_users():
     if current_user.role != "admin":
         flash("Only Admins are allowed to edit users!", category="error")
-        return redirect(url_for("views.home"))
+        return redirect(url_for("main.home"))
 
     installed_servers = GameServer.query.all()
     all_server_ids = [server.id for server in installed_servers]
@@ -388,7 +388,7 @@ def edit_users():
         db.session.commit()
         audit_log_event(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
-        return redirect(url_for("views.home"))
+        return redirect(url_for("main.home"))
 
     # This is a bool because it comes from a toggle, whereas above inputs are
     # from radios, so are str "true/false". Confusing I know, sorry. Will get my
@@ -452,7 +452,7 @@ def two_factor_setup():
     flash("Two factor enabled successfully!", category="success")
     user.otp_setup = True
     db.session.commit()
-    return redirect(url_for("views.home"))
+    return redirect(url_for("main.home"))
 
 
 ######### 2fa QRCode Route #########

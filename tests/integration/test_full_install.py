@@ -279,7 +279,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_bool('settings','install_create_new_user', True)
@@ -297,7 +297,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         response = client.get(
             "/controls",
@@ -365,7 +365,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_bool('settings','install_create_new_user', False)

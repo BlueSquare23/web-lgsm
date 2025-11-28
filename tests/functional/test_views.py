@@ -108,7 +108,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             data={"csrf_token": csrf_token, "install_name": "", "install_path": "", "script_name": ""},
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         response = client.post(
             "/add",
@@ -121,7 +121,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         response = client.post(
             "/add",
@@ -134,7 +134,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         response = client.post(
             "/add",
@@ -147,7 +147,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         # Empty install_name.
         response = client.post(
@@ -161,7 +161,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         # Empty script_name.
         response = client.post(
@@ -175,7 +175,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         # Empty install_path.
         response = client.post(
@@ -189,7 +189,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         # Empty install_type.
         response = client.post(
@@ -202,7 +202,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             },
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.add")
+        check_response(response, error_msg, resp_code, "main.add")
 
         ## Test empty csrf_token.
         error_msg = b"The CSRF token is invalid"
@@ -234,7 +234,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         assert response.status_code == 200
 
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"Game server added!" in response.data
 
         ## Bad char tests.
@@ -242,7 +242,7 @@ def test_add_responses(db_session, client, authed_client, test_vars):
         def contains_bad_chars(response):
 
             # Check redirect by seeing if path changed.
-            assert response.request.path == url_for("views.add")
+            assert response.request.path == url_for("main.add")
             assert "Input contains invalid characters" in response.data.decode('utf-8')
 
         bad_chars = {
@@ -627,7 +627,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"server_id: This field is required." in response.data
 
         ## Test empty server name.
@@ -635,7 +635,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"server_id: This field is required." in response.data
 
         ## Test invalid server name.
@@ -643,7 +643,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"Invalid game server name!" in response.data
 
         ## Test No game server installation directory error.
@@ -655,7 +655,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"No game server installation directory found!" in response.data
 
         # Finally move the installation back into place.
@@ -670,7 +670,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"server_id: This field is required." in response.data
 
         ## Test invalid server name.
@@ -678,7 +678,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"Invalid game server ID!" in response.data
 
         ## Test No game server installation directory error.
@@ -690,7 +690,7 @@ def test_controls_responses(db_session, client, authed_client, add_mock_server, 
         # Should redirect to home. 200 bc
         assert response.status_code == 200
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"No game server installation directory found!" in response.data
 
         # Finally move the installation back into place.
@@ -748,35 +748,35 @@ def test_install_responses(db_session, client, authed_client, test_vars):
         resp_code = 200
         error_msg = b"The CSRF token is missing."
         response = client.post("/install", follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
         # Test no script_name.
         error_msg = b"This field is required."
         response = client.post(
             "/install", data={"csrf_token": csrf_token, "full_name": "Minecraft"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
         # Test invalid script_name.
         error_msg = b"Invalid script name."
         response = client.post(
             "/install", data={"csrf_token": csrf_token, "script_name": "fartingbuttz", "full_name": "Minecraft"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
         # Test no full_name.
         error_msg = b"This field is required."
         response = client.post(
             "/install", data={"csrf_token": csrf_token, "script_name": "mcserver"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
         # Test for empty form fields.
         error_msg = b"Invalid full name."
         response = client.post(
             "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Jerry's still dead man"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
         # Test for empty form fields.
         error_msg = b"This field is required."
@@ -786,7 +786,7 @@ def test_install_responses(db_session, client, authed_client, test_vars):
             follow_redirects=True,
         )
 
-        check_response(response, error_msg, resp_code, "views.install")
+        check_response(response, error_msg, resp_code, "main.install")
 
 
 ### Settings page tests.
@@ -860,7 +860,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         text_color = "#000000"
         data["text_color"] = text_color
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_str(f"text_color = {text_color}")
@@ -872,7 +872,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         response = client.post("/settings", data=data, follow_redirects=True)
         print(extract_alert_messages(response))
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Text color tests.
         error_msg = b"Invalid text color!"
@@ -880,15 +880,15 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         data["text_color"] = "test"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["text_color"] = "red"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["text_color"] = "#aaaaaaaaaaaaaaaa"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Primary color tests
         error_msg = b"Invalid primary color!"
@@ -896,15 +896,15 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         data["graphs_primary"] = "test"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["graphs_primary"] = "red"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["graphs_primary"] = "#aaaaaaaaaaaaaaaa"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Secondary color tests
         error_msg = b"Invalid secondary color!"
@@ -912,15 +912,15 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         data["graphs_secondary"] = "test"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["graphs_secondary"] = "red"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         data["graphs_secondary"] = "#aaaaaaaaaaaaaaaa"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         ## Test install as new user settings. 
         data = default_data.copy()
@@ -928,14 +928,14 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
 
         data["install_new_user"] = "false"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_bool('settings','install_create_new_user', False)
 
         data["install_new_user"] = "true"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_bool('settings','install_create_new_user', True)
@@ -944,7 +944,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         error_msg = b"Not a valid choice"
         data["install_new_user"] = "sneeeeeeeeeeeeeeeeee"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         ## Test text area height change.
 
@@ -953,7 +953,7 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         error_msg = b"Settings Updated!"
         data["terminal_height"] = "10"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
         check_main_conf_str("terminal_height = 10")
@@ -962,28 +962,28 @@ def test_settings_responses(db_session, client, authed_client, test_vars):
         error_msg = b"Number must be between 5 and 100"
         data["terminal_height"] = "-20"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check nothing changed in conf, just to be sure.
         check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "test"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check nothing changed in conf, just to be sure.
         check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "99999"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check nothing changed in conf, just to be sure.
         check_main_conf_str("terminal_height = 10")
 
         data["terminal_height"] = "-e^(i*3.14)"
         response = client.post("/settings", data=data, follow_redirects=True)
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check nothing changed in conf, just to be sure.
         check_main_conf_str("terminal_height = 10")
@@ -1164,33 +1164,33 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         response = client.get(
             f"/edit?cfg_path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test is null.
         response = client.get(
             f"/edit?server_id=&cfg_path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # No cfg specified tests.
         # Test is none.
         response = client.get(
             f"/edit?server_id={server_id}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test is null.
         response = client.get(
             f"/edit?server_id={server_id}&cfg_path=", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Invalid game server name test.
         error_msg = b"Invalid game server ID"
         response = client.get(
             f"/edit?server_id=TEST&cfg_path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # No game server installation directory found test.
         # First move the installation directory to .bak.
@@ -1200,7 +1200,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         response = client.get(
             f"/edit?server_id={server_id}&cfg_path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Finally move the installation back into place.
         os.system(f"mv {test_server_path}.bak {test_server_path}")
@@ -1212,7 +1212,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
             f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # No such file test.
         error_msg = b"Error reading file!"
@@ -1221,7 +1221,7 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
             f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
 
 def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client_no_perms, test_vars):
@@ -1240,17 +1240,17 @@ def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client
         response = client.get(
             "/edit_users", data={"username": "newuser"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test install page.
         response = client.get("/install", follow_redirects=True)
         error_msg = b"Your user does NOT have permission access the install page"
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test add page.
         response = client.get("/add", follow_redirects=True)
         error_msg = b"Your user does NOT have permission access the add page"
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test delete api.
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
@@ -1261,14 +1261,14 @@ def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client
         # Test settings page.
         response = client.get("/settings", follow_redirects=True)
         error_msg = b"Your user does NOT have permission access the settings page"
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test game server controls page.
         response = client.get(f"/controls?server_id={server_id}", follow_redirects=True)
         error_msg = b"Your user does NOT have permission access this game server"
         print(response.get_data(as_text=True))
 #        print(response.data.decode("utf-8"))
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
 
 def test_enable_new_user_perms(db_session, client, authed_client, add_mock_server, add_second_user_no_perms, test_vars):
@@ -1335,12 +1335,12 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         response = client.get(
             "/edit_users", data={"username": "newuser"}, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.home")
+        check_response(response, error_msg, resp_code, "main.home")
 
         # Test install page.
         response = client.get("/install", follow_redirects=True)
         msg = b"Install a New LGSM Server"
-        check_response(response, msg, resp_code, "views.install")
+        check_response(response, msg, resp_code, "main.install")
 
         # Test delete page.
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
@@ -1349,13 +1349,13 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         # Test delete message pops up after delete
         response = client.get(f"/home", follow_redirects=True)
         msg = b"Game server, Mockcraft deleted"
-        check_response(response, msg, resp_code, "views.home")
+        check_response(response, msg, resp_code, "main.home")
 
         # Test add page.
         response = client.get("/add", follow_redirects=True)
         csrf_token = get_csrf_token(response)
         msg = b"Add or Edit Existing LGSM Installation Details"
-        check_response(response, msg, resp_code, "views.add")
+        check_response(response, msg, resp_code, "main.add")
 
         ## Test legit server add.
         response = client.post(
@@ -1375,7 +1375,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         assert response.status_code == 200
 
         # Check redirect by seeing if path changed.
-        assert response.request.path == url_for("views.home")
+        assert response.request.path == url_for("main.home")
         assert b"Game server added!" in response.data
 
         server_id = get_server_id(test_server)
@@ -1384,12 +1384,12 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         # Test game server controls page.
         response = client.get(f"/controls?server_id={server_id}", follow_redirects=True)
         msg = b"Server Controls for Mockcraft"
-        check_response(response, msg, resp_code, "views.controls")
+        check_response(response, msg, resp_code, "main.controls")
 
         # Test settings page.
         response = client.get("/settings", follow_redirects=True)
         msg = b"Web LGSM Settings"
-        check_response(response, msg, resp_code, "views.settings")
+        check_response(response, msg, resp_code, "main.settings")
 
 
 def test_delete_game_server(add_mock_server, client, authed_client, test_vars):
@@ -1406,7 +1406,7 @@ def test_delete_game_server(add_mock_server, client, authed_client, test_vars):
         # Test delete message pops up after delete
         response = client.get(f"/home", follow_redirects=True)
         msg = b"Game server, Mockcraft deleted"
-        check_response(response, msg, 200, "views.home")
+        check_response(response, msg, 200, "main.home")
 
 
 def test_delete_new_user(add_second_user_no_perms, client, authed_client, test_vars):

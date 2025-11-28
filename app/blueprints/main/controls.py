@@ -206,7 +206,7 @@ def controls():
             flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        cmd = [script_path, short_cmd, send_cmd]
+        cmd = [script_path, short_ctrl, send_cmd]
 
         flash("Sending command to console")
         audit_log_event(current_user.id, f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")

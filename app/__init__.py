@@ -88,11 +88,11 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register blueprints with the app"""
-    from .views import views
+    from .blueprints.main import main_bp
     from .auth import auth
     from .api import api_bp
 
-    app.register_blueprint(views, url_prefix="/")
+    app.register_blueprint(main_bp, url_prefix="/")
     app.register_blueprint(auth, url_prefix="/")
     app.register_blueprint(api_bp, url_prefix="/api")
 

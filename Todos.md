@@ -234,11 +234,7 @@
     never really looked into it.
   - Time to do that!
 
-* [ ] **Rename views to routes**
-  - Views is the default name I used because like MVC arch made sense. But its a bad name.
-  - Really this is where route code lives, so just call it routes.
-
-* [ ] **Break up apps blueprints into dir**
+* [x] **Break up apps blueprints into dir**
 ```
 └── blueprints/
      ├── main/

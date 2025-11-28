@@ -53,7 +53,7 @@
           <div class="row align-items-start">
             <div class="col">
               <div class="text-center">
-                <a href="{{ url_for('views.add', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                <a href="{{ url_for('main.add', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
                   Edit {{server_name|capitalize}} Settings
                 </a>
               </div>
@@ -61,7 +61,7 @@
           {% if show_jobs_edit %}
             <div class="col">
               <div class="text-center">
-                <a href="{{ url_for('views.jobs', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                <a href="{{ url_for('main.jobs', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
                   Edit {{server_name|capitalize}} Jobs
                 </a>
               </div>

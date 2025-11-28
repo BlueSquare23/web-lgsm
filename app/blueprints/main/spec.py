@@ -1,7 +1,7 @@
 import os
 import yaml
 
-from flask_login import login_required, current_user
+from flask_login import login_required
 from flask import request
 
 from . import main_bp

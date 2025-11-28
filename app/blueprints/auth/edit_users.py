@@ -1,21 +1,8 @@
-import os
 import json
-import base64
-import onetimepass
-import pyqrcode
-from datetime import timedelta
-from io import BytesIO
 
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import (
-    login_user,
-    confirm_login,
-    logout_user,
-    login_required,
-    current_user,
-)
+from werkzeug.security import generate_password_hash
+from flask_login import login_required, current_user
 from flask import (
-    Blueprint,
     render_template,
     redirect,
     url_for,
@@ -24,144 +11,16 @@ from flask import (
     current_app,
 )
 
-from . import db
-from .forms.auth import LoginForm, SetupForm, EditUsersForm, OTPSetupForm
-from .models import User, GameServer
-from .utils import validation_errors, log_wrap, audit_log_event
-from .blocklist import is_blocked, add_failed, get_client_ip
+from app import db
+from app.forms.auth import EditUsersForm
+from app.models import User, GameServer
+from app.utils import validation_errors, log_wrap, audit_log_event
 
-
-auth = Blueprint("auth", __name__)
-
-######### Login Route #########
-
-@auth.route("/login", methods=["GET", "POST"])
-def login():
-    # Create LoginForm.
-    form = LoginForm()
-
-    if User.query.first() == None:
-        flash("Please add a user!", category="success")
-        return redirect(url_for("auth.setup"))
-
-    ip = get_client_ip(request)
-    if is_blocked(ip):
-        return 'Access denied', 403
-
-    if request.method == "GET":
-        return render_template("login.html", user=current_user, form=form), 200
-
-    # Handle Invalid form submissions.
-    if not form.validate_on_submit():
-        validation_errors(form)
-        return redirect(url_for("auth.login"))
-
-    username = form.username.data
-    password = form.password.data
-    otp_code = form.otp_code.data
-
-    # Check login info.
-    user = User.query.filter_by(username=username).first()
-    if user == None:
-        add_failed(ip)
-        flash("Incorrect Username or Password!", category="error")
-        return render_template("login.html", user=current_user, form=form), 403
-
-    current_app.logger.info(user)
-
-    if not check_password_hash(user.password, password):
-        add_failed(ip)
-        flash("Incorrect Username or Password!", category="error")
-        return render_template("login.html", user=current_user, form=form), 403
-
-    if current_user.is_authenticated:
-        logout_user()
-
-    four_weeks_delta = timedelta(days=28)
-
-    # Handle 2fa Logins.
-    if user.otp_enabled:
-        # For case where user is setting up otp for first time.
-        if not user.otp_setup:
-            login_user(user, remember=True, duration=four_weeks_delta)
-            confirm_login()
-            audit_log_event(user.id, f"User '{username}' logged in")
-            flash("Please setup two factor authentication!", category="success")
-            return redirect(url_for("auth.two_factor_setup"))
-
-        if not user.verify_totp(otp_code):
-            add_failed(ip)
-            flash("Invalid otp 2fa code!", category="error")
-            return render_template("login.html", user=current_user, form=form), 403
-
-    flash("Logged in!", category="success")
-    login_user(user, remember=True, duration=four_weeks_delta)
-    confirm_login()
-    audit_log_event(user.id, f"User '{username}' logged in")
-    return redirect(url_for("main.home"))
-
-
-######### Setup Route #########
-
-@auth.route("/setup", methods=["GET", "POST"])
-def setup():
-    # If already a user added, disable the setup route.
-    if User.query.first() != None:
-        flash("User already added. Please sign in!", category="error")
-        return redirect(url_for("auth.login"))
-
-    # Create SetupForm.
-    form = SetupForm()
-
-    if request.method == "GET":
-        return render_template("setup.html", form=form, user=current_user), 200
-
-    # Handle Invalid form submissions.
-    if not form.validate_on_submit():
-        validation_errors(form)
-        return redirect(url_for("auth.login"))
-
-    # Collect form data
-    username = form.username.data
-    password = form.password1.data
-    enable_otp = form.enable_otp.data
-
-    # Add the new_user to the database, then redirect home.
-    new_user = User(
-        username=username,
-        password=generate_password_hash(password, method="pbkdf2:sha256"),
-        role="admin",
-        permissions=json.dumps({"admin": True}),
-        otp_enabled=enable_otp,
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    db.session.refresh(new_user)
-
-    flash("User created!")
-    login_user(new_user, remember=True)
-    audit_log_event(new_user.id, f"New user '{username}' created")
-
-    if enable_otp:
-        return redirect(url_for("auth.two_factor_setup"))
-
-    return redirect(url_for("main.home"))
-
-
-######### Logout Route #########
-
-@auth.route("/logout")
-@login_required
-def logout():
-    audit_log_event(current_user.id, f"User '{current_user.username}' logged out")
-    logout_user()
-    flash("Logged out!", category="success")
-    return redirect(url_for("auth.login"))
-
+from . import auth_bp
 
 ######### Create / Edit User(s) Route #########
 
-@auth.route("/edit_users", methods=["GET", "POST"])
+@auth_bp.route("/edit_users", methods=["GET", "POST"])
 @login_required
 def edit_users():
     if current_user.role != "admin":
@@ -415,62 +274,3 @@ def edit_users():
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))
 
-
-######### 2fa Setup Route #########
-
-@auth.route("/2fa_setup", methods=["GET", "POST"])
-@login_required
-def two_factor_setup():
-    user = User.query.filter_by(username=current_user.username).first()
-    if user is None:
-        return redirect(url_for("logout"))
-
-    # Setup otp_secret if doesn't already exist (for legacy user compat).
-    if user.otp_secret is None:
-        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
-        db.session.commit()
-
-    form = OTPSetupForm()
-    form.user_id = user.id
-
-    if request.method == "GET":
-        # Format the secret for easier manual entry (add spaces every 4 characters).
-        formatted_secret = ' '.join([user.otp_secret[i:i+4] for i in range(0, len(user.otp_secret), 4)])
-
-        # Don't cache qrcode!
-        return render_template('2fa_setup.html', user=current_user, form=form, fsecret=formatted_secret), 200, {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        }
-
-    # Handle Invalid form submissions.
-    if not form.validate_on_submit():
-        validation_errors(form)
-        return redirect(url_for("auth.two_factor_setup"))
-    
-    flash("Two factor enabled successfully!", category="success")
-    user.otp_setup = True
-    db.session.commit()
-    return redirect(url_for("main.home"))
-
-
-######### 2fa QRCode Route #########
-
-@auth.route('/qrcode')
-@login_required
-def qrcode():
-    user = User.query.filter_by(username=current_user.username).first()
-    if user is None:
-        return redirect(url_for("logout"))
-
-    # Render qrcode, no caching.
-    url = pyqrcode.create(user.get_totp_uri())
-    stream = BytesIO()
-    url.svg(stream, scale=3)
-    return stream.getvalue(), 200, {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    }

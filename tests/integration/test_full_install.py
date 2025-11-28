@@ -82,7 +82,7 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'st',
+            "control": 'st',
             "ctrl_form": 'true',
         },
         follow_redirects=True
@@ -112,7 +112,7 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'sd',
+            "control": 'sd',
             "send_cmd": 'test',
             "send_form": 'true',
         },
@@ -147,7 +147,7 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'sp',
+            "control": 'sp',
             "ctrl_form": "true",
         },
         follow_redirects=True
@@ -199,7 +199,7 @@ def console_output(client):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'st',
+            "control": 'st',
             "ctrl_form": "true",
         },
         follow_redirects=True
@@ -304,7 +304,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
             data={
                 "csrf_token": csrf_token,
                 "server_id": server_id,
-                "command": 'sp',
+                "control": 'sp',
                 "ctrl_form": "true",
             },
             follow_redirects=True

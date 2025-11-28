@@ -25,7 +25,7 @@ from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms.views import *
 from .services.cron_service import CronService
-from .services.cmd_service import CmdService
+from .services.controls_service import ControlService
 from . import cache
 
 # Constants.
@@ -39,7 +39,7 @@ views = Blueprint("views", __name__)
 
 from .config.config_manager import ConfigManager
 config = ConfigManager()
-cmd_service = CmdService()
+controls_service = ControlService()
 
 ######### Home Page #########
 
@@ -81,7 +81,7 @@ def home():
 @login_required
 def controls():
     global config
-    global cmd_service
+    global controls_service
     # Initialize forms
     send_cmd_form = SendCommandForm()
     controls_form = ServerControlForm()
@@ -115,9 +115,9 @@ def controls():
         if not user_has_permissions(current_user, "controls", server_id):
             return redirect(url_for("views.home"))
 
-        # Pull in commands list from commands.json file.
-        cmds_list = cmd_service.get_commands(server.script_name, current_user)
-        current_app.logger.debug(cmds_list)
+        # Pull in controls list from controls.json file.
+        controls_list = controls_service.get_controls(server.script_name, current_user)
+        current_app.logger.debug(controls_list)
 
         if should_use_ssh(server):
             if not is_ssh_accessible(server.install_host):
@@ -150,7 +150,7 @@ def controls():
             cache.set(cache_key, cfg_paths, timeout=1800)
 
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
-        current_app.logger.info(log_wrap("cmds_list", cmds_list))
+        current_app.logger.info(log_wrap("controls_list", controls_list))
 
         return render_template(
             "controls.html",
@@ -158,7 +158,7 @@ def controls():
             server_id=server_id,
             server_name=server.install_name,
             show_jobs_edit=jobs_edit,
-            server_commands=cmds_list,
+            server_controls=controls_list,
             _config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,
@@ -173,7 +173,7 @@ def controls():
             return redirect(url_for("views.home"))
 
         server_id = controls_form.server_id.data
-        short_cmd = controls_form.command.data
+        short_ctrl = controls_form.control.data
 
     elif send_cmd_form.send_form.data:
         if not send_cmd_form.validate_on_submit():
@@ -181,7 +181,7 @@ def controls():
             return redirect(url_for("views.home"))
 
         server_id = send_cmd_form.server_id.data
-        short_cmd = send_cmd_form.command.data
+        short_ctrl = send_cmd_form.control.data
         send_cmd = send_cmd_form.send_cmd.data
 
     else:
@@ -195,8 +195,8 @@ def controls():
     # validation. Problem is right now, not sure how to validate server id
     # first, then get server in order to run this validation. So this works for
     # rn.
-    # Validate short_cmd against contents of commands.json file.
-    if not valid_command(short_cmd, server.script_name, current_user):
+    # Validate short_ctrl against contents of control.json file.
+    if not valid_command(short_ctrl, server.script_name, current_user):
         flash("Invalid Command!", category="error")
         return redirect(url_for("views.controls", server_id=server_id))
 
@@ -216,18 +216,17 @@ def controls():
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
-    # Pull in commands list from commands.json file.
-#    cmds_list = get_commands(server.script_name, current_user)
-    cmds_list = cmd_service.get_commands(server.script_name, current_user)
+    # Pull in controls list from controls.json file.
+    controls_list = controls_service.get_controls(server.script_name, current_user)
 
-    if not cmds_list:
-        flash("Error loading commands.json file!", category="error")
+    if not controls_list:
+        flash("Error loading controls.json file!", category="error")
         return redirect(url_for("views.home"))
 
     script_path = os.path.join(server.install_path, server.script_name)
 
     # Console option, use tmux capture-pane to get output.
-    if short_cmd == "c":
+    if short_ctrl == "c":
         active = get_server_status(server)
         if not active:
             flash("Server is Off! No Console Output!", category="error")
@@ -240,7 +239,7 @@ def controls():
             user=current_user,
             server_id=server_id,
             server_name=server.install_name,
-            server_commands=cmds_list,
+            server_controls=controls_list,
             _config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,
@@ -249,10 +248,10 @@ def controls():
             console=True,
         )
 
-    elif short_cmd == "sd":
+    elif short_ctrl == "sd":
         # Check if send_cmd is enabled in main.conf.
         if not config.getboolean('settings','send_cmd'):
-            flash("Send console command button disabled!", category="error")
+            flash("Send command button disabled!", category="error")
             return redirect(url_for("views.controls", server_id=server_id))
 
         active = get_server_status(server)
@@ -292,7 +291,7 @@ def controls():
         return redirect(url_for("views.controls", server_id=server_id))
 
     else:
-        if short_cmd == "st":
+        if short_ctrl == "st":
             # On start, check if socket_name is null. If so delete the
             # socket file cache for game server before startup. This
             # ensures the status indicators work properly after initial
@@ -301,15 +300,15 @@ def controls():
             if socket_name == None:
                 update_tmux_socket_name_cache(server.id, None, True)
 
-        cmd = [script_path, short_cmd]
+        cmd = [script_path, short_ctrl]
 
-        # Get long_cmd for matching short_cmd for audit logging. 
-        long_cmd = short_cmd  # To at least long something in case fail to find long_cmd.
-        for c in cmds_list:
-            if c.short_cmd == short_cmd:
-                long_cmd = c.long_cmd
+        # Get long_ctrl for matching short_ctrl for audit logging. 
+        for control in controls_list:
+            if control.short_ctrl == short_ctrl:
+                long_ctrl = control.long_ctrl
+                break
 
-        audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_cmd}' on '{server.install_name}'")
+        audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
 
         if should_use_ssh(server):
             daemon = Thread(
@@ -912,6 +911,8 @@ def edit():
 @views.route("/jobs", methods=["GET", "POST"])
 @login_required
 def jobs():
+    global config
+
     # Check if user has permissions to jobs route.
     if not user_has_permissions(current_user, "jobs"):
         return redirect(url_for("views.home"))
@@ -925,7 +926,7 @@ def jobs():
         server_name = None
         server_json = None
         jobs_list = []
-        cmds_list = []
+        controls_list = []
         game_servers = GameServer.query.all()
 
         if request.args:
@@ -946,12 +947,11 @@ def jobs():
             server_json = json.dumps(server_dict)
             current_app.logger.info(log_wrap("server_json", server_json))
 
-            # Pull in commands list from commands.json file.
-#            cmds_list = get_commands(server.script_name, current_user)
-            cmds_list = cmd_service.get_commands(server.script_name, current_user)
+            # Pull in controls list from controls.json file.
+            controls_list = controls_service.get_controls(server.script_name, current_user)
 
             # No console for automated jobs. Don't even give the user the option to be stupid.
-            form.command.choices = [cmd.long_cmd for cmd in cmds_list]
+            form.command.choices = [ctrl.long_ctrl for ctrl in controls_list]
 
             if 'console' in form.command.choices:
                 form.command.choices.remove('console')

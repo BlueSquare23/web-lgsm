@@ -20,12 +20,11 @@ from flask import flash, current_app, send_file, send_from_directory, url_for, r
 from functools import lru_cache
 
 from .models import GameServer, Audit
-from app.services.cmd import Cmd
 from .processes_global import *
 from . import db
 from . import cache
 from .config.config_manager import ConfigManager
-from .services.cmd_service import CmdService
+from .services.controls_service import ControlService
 
 config = ConfigManager()
 
@@ -716,70 +715,6 @@ def delete_server(server, remove_files, delete_user):
     return True
 
 
-def get_commands(server, current_user):
-    """
-    Turns data in commands.json into list of command objects that implement the
-    Cmd class. This list of commands is used to validate user input
-    and populate the buttons on the controls page.
-
-    Args:
-        server (string): Name of game server to get commands for.
-        current_user (LocalProxy): Currently logged in flask user object.
-
-    Returns:
-        commands (list): List of command objects for server.
-    """
-    global config
-
-    commands = []
-
-    try:
-        with open("json/commands.json", "r") as commands_json:
-            json_data = json.load(commands_json)
-
-        with open("json/ctrl_exemptions.json", "r") as exemptions_json:
-            exemptions_data = json.load(exemptions_json)
-
-    except Exception as e:
-        flash("Problem reading command json files!", category="error")
-        return commands
-
-    # Remove send cmd if option disabled in main.conf.
-    if not config.getboolean('settings','send_cmd'):
-        json_data["short_cmds"].remove("sd")
-        json_data["long_cmds"].remove("send")
-        json_data["descriptions"].remove("Send command to game server console.")
-
-    # Remove exempted cmds.
-    if server in exemptions_data:
-        for short_cmd in exemptions_data[server]["short_cmds"]:
-            json_data["short_cmds"].remove(short_cmd)
-        for long_cmd in exemptions_data[server]["long_cmds"]:
-            json_data["long_cmds"].remove(long_cmd)
-        for desc in exemptions_data[server]["descriptions"]:
-            json_data["descriptions"].remove(desc)
-
-    cmds = zip(
-        json_data["short_cmds"], json_data["long_cmds"], json_data["descriptions"]
-    )
-
-    # Remove commands for non-admin users. Part of permissions controls.
-    user_perms = json.loads(current_user.permissions)
-
-    for short_cmd, long_cmd, description in cmds:
-        if current_user.role != "admin":
-            if long_cmd not in user_perms["controls"]:
-                continue
-
-        cmd = Cmd()
-        cmd.long_cmd = long_cmd
-        cmd.short_cmd = short_cmd
-        cmd.description = description
-        commands.append(cmd)
-
-    return commands
-
-
 def get_servers():
     """
     Turns data in games_servers.json into servers list for install route.
@@ -809,27 +744,26 @@ def get_servers():
 # TODO/NOTE: This can stay for now, but its on the chopping block. This
 # validation should now be handled by flask-wtf/wtforms classes. Once I get
 # this fixed up in the controls route, this can go.
-def valid_command(cmd, server, current_user):
+def valid_command(ctrl, server, current_user):
     """
     Validates short commands from controls route form for game server. Some
     game servers may have specific game server command exemptions. This
     function basically just checks if supplied cmd is in list of accepted cmds
-    from get_commands().
+    from get_controls().
 
     Args:
-        cmd (str): Short cmd string to validate.
+        ctrl (str): Short ctrl string to validate.
         server (GameServer): Game server to check command against.
         current_user (LocalProxy): Currently logged in flask user object.
 
     Returns:
         bool: True if cmd is valid for user & game server, False otherwise.
     """
-#    commands = get_commands(server, current_user)
-    cmd_service = CmdService()
-    commands = cmd_service.get_commands(server, current_user)
-    for command in commands:
-        # Aka is valid command.
-        if cmd == command.short_cmd:
+    control_service = ControlService()
+    controls = control_service.get_controls(server, current_user)
+    for control in controls:
+        # Aka is valid control.
+        if ctrl == control.short_ctrl:
             return True
 
     return False

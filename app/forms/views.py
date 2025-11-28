@@ -374,7 +374,7 @@ class ValidateID(Form):
 class SendCommandForm(FlaskForm):
     send_form = HiddenField("Send Command Form")
     server_id = HiddenField("Server ID")
-    command = HiddenField("Command", default="sd")
+    control = HiddenField("Control", default="sd")
     send_cmd = StringField("Console Command", validators=[InputRequired()])
     submit = SubmitField("Send")
 
@@ -382,10 +382,8 @@ class SendCommandForm(FlaskForm):
 class ServerControlForm(FlaskForm):
     ctrl_form = HiddenField("Control Form")
     server_id = HiddenField("Server ID")
-    command = HiddenField("Command", validators=[InputRequired()])
+    control = HiddenField("Control", validators=[InputRequired()])
     submit = SubmitField("Execute")
-
-
 
 
 class InstallForm(FlaskForm):
@@ -431,7 +429,7 @@ class ValidCronExpr:
 
 class JobsForm(FlaskForm):
     command = SelectField(
-        "Command",
+        "Control",
         validators=[InputRequired()],
         # Just for setting defaults as good practice. Will get overwritten by
         # route logic for game server specific options.

@@ -386,6 +386,8 @@ class ServerControlForm(FlaskForm):
     submit = SubmitField("Execute")
 
 
+
+
 class InstallForm(FlaskForm):
     servers = get_servers()
     short_names = []

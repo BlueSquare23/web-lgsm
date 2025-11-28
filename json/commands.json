@@ -1,44 +1,50 @@
 {
-    "short_cmds":[
-       "st",
-       "sp",
-       "r",
-       "m",
-       "ta",
-       "dt",
-       "pd",
-       "ul",
-       "u",
-       "b",
-       "c",
-       "sd"
-    ],
-    "long_cmds":[
-       "start",
-       "stop",
-       "restart",
-       "monitor",
-       "test-alert",
-       "details",
-       "postdetails",
-       "update-lgsm",
-       "update",
-       "backup",
-       "console",
-       "send"
-    ],
-    "descriptions":[
-       "Start the server.",
-       "Stop the server.",
-       "Restart the server.",
-       "Check server status and restart if crashed.",
-       "Send a test alert.",
-       "Display server information.",
-       "Post details to termbin.com (removing passwords).",
-       "Check and apply any LinuxGSM updates.",
-       "Check and apply any server updates.",
-       "Create backup archives of the server.",
-       "Access server console.",
-       "Send command to game server console."
-    ]
+  "start": {
+    "short_cmd": "st",
+    "description": "Start the server."
+  },
+  "stop": {
+    "short_cmd": "sp",
+    "description": "Stop the server."
+  },
+  "restart": {
+    "short_cmd": "r",
+    "description": "Restart the server."
+  },
+  "monitor": {
+    "short_cmd": "m",
+    "description": "Check server status and restart if crashed."
+  },
+  "test-alert": {
+    "short_cmd": "ta",
+    "description": "Send a test alert."
+  },
+  "details": {
+    "short_cmd": "dt",
+    "description": "Display server information."
+  },
+  "postdetails": {
+    "short_cmd": "pd",
+    "description": "Post details to termbin.com (removing passwords)."
+  },
+  "update-lgsm": {
+    "short_cmd": "ul",
+    "description": "Check and apply any LinuxGSM updates."
+  },
+  "update": {
+    "short_cmd": "u",
+    "description": "Check and apply any server updates."
+  },
+  "backup": {
+    "short_cmd": "b",
+    "description": "Create backup archives of the server."
+  },
+  "console": {
+    "short_cmd": "c",
+    "description": "Access server console."
+  },
+  "send": {
+    "short_cmd": "sd",
+    "description": "Send command to game server console."
+  }
 }

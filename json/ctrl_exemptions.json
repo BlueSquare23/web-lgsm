@@ -1,13 +1,3 @@
 {
-  "bf1942server": {
-    "short_cmds": [
-      "c"
-    ],
-    "long_cmds": [
-      "console"
-    ],
-    "descriptions": [
-      "Access server console."
-    ]
-  }
+  "bf1942server": ["console", "send"]
 }

@@ -25,6 +25,7 @@ from .proc_info_vessel import ProcInfoVessel
 from .processes_global import *
 from .forms.views import *
 from .services.cron_service import CronService
+from .services.cmd_service import CmdService
 from . import cache
 
 # Constants.
@@ -38,6 +39,7 @@ views = Blueprint("views", __name__)
 
 from .config.config_manager import ConfigManager
 config = ConfigManager()
+cmd_service = CmdService()
 
 ######### Home Page #########
 
@@ -79,6 +81,7 @@ def home():
 @login_required
 def controls():
     global config
+    global cmd_service
     # Initialize forms
     send_cmd_form = SendCommandForm()
     controls_form = ServerControlForm()
@@ -113,7 +116,8 @@ def controls():
             return redirect(url_for("views.home"))
 
         # Pull in commands list from commands.json file.
-        cmds_list = get_commands(server.script_name, current_user)
+        cmds_list = cmd_service.get_commands(server.script_name, current_user)
+        current_app.logger.debug(cmds_list)
 
         if should_use_ssh(server):
             if not is_ssh_accessible(server.install_host):
@@ -213,7 +217,8 @@ def controls():
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in commands list from commands.json file.
-    cmds_list = get_commands(server.script_name, current_user)
+#    cmds_list = get_commands(server.script_name, current_user)
+    cmds_list = cmd_service.get_commands(server.script_name, current_user)
 
     if not cmds_list:
         flash("Error loading commands.json file!", category="error")
@@ -942,7 +947,8 @@ def jobs():
             current_app.logger.info(log_wrap("server_json", server_json))
 
             # Pull in commands list from commands.json file.
-            cmds_list = get_commands(server.script_name, current_user)
+#            cmds_list = get_commands(server.script_name, current_user)
+            cmds_list = cmd_service.get_commands(server.script_name, current_user)
 
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [cmd.long_cmd for cmd in cmds_list]

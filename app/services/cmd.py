@@ -1,4 +1,4 @@
-class CmdDescriptor:
+class Cmd:
     """
     Class used to create objects for holding command descriptions. Used by the
     get_commands() util function.
@@ -15,8 +15,8 @@ class CmdDescriptor:
         self.description = ""
 
     def __str__(self):
-        return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
+        return f"Cmd(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
 
     def __repr__(self):
-        return f"CmdDescriptor(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
+        return f"Cmd(long_cmd='{self.long_cmd}', short_cmd='{self.short_cmd}', description='{self.description}')"
 

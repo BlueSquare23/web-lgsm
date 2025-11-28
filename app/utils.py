@@ -20,11 +20,12 @@ from flask import flash, current_app, send_file, send_from_directory, url_for, r
 from functools import lru_cache
 
 from .models import GameServer, Audit
-from .cmd_descriptor import CmdDescriptor
+from app.services.cmd import Cmd
 from .processes_global import *
 from . import db
 from . import cache
 from .config.config_manager import ConfigManager
+from .services.cmd_service import CmdService
 
 config = ConfigManager()
 
@@ -718,7 +719,7 @@ def delete_server(server, remove_files, delete_user):
 def get_commands(server, current_user):
     """
     Turns data in commands.json into list of command objects that implement the
-    CmdDescriptor class. This list of commands is used to validate user input
+    Cmd class. This list of commands is used to validate user input
     and populate the buttons on the controls page.
 
     Args:
@@ -770,7 +771,7 @@ def get_commands(server, current_user):
             if long_cmd not in user_perms["controls"]:
                 continue
 
-        cmd = CmdDescriptor()
+        cmd = Cmd()
         cmd.long_cmd = long_cmd
         cmd.short_cmd = short_cmd
         cmd.description = description
@@ -823,7 +824,9 @@ def valid_command(cmd, server, current_user):
     Returns:
         bool: True if cmd is valid for user & game server, False otherwise.
     """
-    commands = get_commands(server, current_user)
+#    commands = get_commands(server, current_user)
+    cmd_service = CmdService()
+    commands = cmd_service.get_commands(server, current_user)
     for command in commands:
         # Aka is valid command.
         if cmd == command.short_cmd:

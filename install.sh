@@ -101,7 +101,7 @@ EOF
     chmod 600 .secret
 
     echo -e "${GREEN}####### Updating Database...${RESET}"
-    /opt/web-lgsm/bin/flask --app app:main db upgrade
+    /opt/web-lgsm/bin/flask --app app:create_app db upgrade
 
     echo -e "${GREEN}####### Project Setup & Installation Complete!!!${RESET}"
     echo -e "${GREEN}Run the \`web-lgsm.py\` script to start the server.${RESET}"

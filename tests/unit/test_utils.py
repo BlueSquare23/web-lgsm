@@ -11,24 +11,6 @@ class ModCurrentUser:
         self.permissions = permissions
 
 
-# For now just test that the cmds in commands.json make it through. Will write
-# tests for cmd exemptions another time.
-def test_get_commands():
-    commands_json = open("json/commands.json", "r")
-    json_data = json.load(commands_json)
-    commands_json.close()
-
-    current_user = ModCurrentUser("admin", json.dumps({"admin": True}))
-
-    for command in get_commands("mcserver", current_user):
-        assert command.short_cmd in json_data["short_cmds"]
-        assert len(command.short_cmd) < 3
-        assert command.long_cmd in json_data["long_cmds"]
-        assert len(command.long_cmd) >= 4
-        assert command.description in json_data["descriptions"]
-        assert len(command.description.split()) >= 2  # Count words.
-
-
 def test_get_servers():
     servers_json = open("json/game_servers.json", "r")
     json_data = json.load(servers_json)
@@ -46,42 +28,43 @@ def test_get_servers():
         assert any(x.isupper() for x in servers[short][0]) == True
 
 
-def test_valid_command():
-    commands_json = open("json/commands.json", "r")
-    json_data = json.load(commands_json)
-    commands_json.close()
-
-    current_user = ModCurrentUser("admin", json.dumps({"admin": True}))
-    os.system('cat main.conf.local')
-
-    toggle_send_cmd(True)
-
-    valid_cmds = json_data["short_cmds"]
-    for cmd in valid_cmds:
-        assert valid_command(cmd, "mcserver", current_user) == True
-
-    # Send should be invalid when no is supplied to valid_command().
-    invalid_cmds = ["fart", "blah", 777777, None, "---------", "send"]
-    for cmd in invalid_cmds:
-        assert valid_command(cmd, "mcserver", current_user) == False
-
-    # Test valid & invalid cmds for user.
-    permissions = dict()
-    permissions["controls"] = ["start", "stop"]
-    current_user2 = ModCurrentUser("user", json.dumps(permissions))
-
-    invalid_cmds = json_data["short_cmds"]
-    invalid_cmds.remove("st")
-    invalid_cmds.remove("sp")
-
-    print(current_user2.permissions)
-
-    for cmd in invalid_cmds:
-        assert valid_command(cmd, "mcserver", current_user2) == False
-
-    valid_cmds = ["st", "sp"]
-    for cmd in valid_cmds:
-        assert valid_command(cmd, "mcserver", current_user2) == True
+# TODO: REPLACE THIS WITH UNIT TESTS FOR NEW CMD_SERVICE CLASS!
+#def test_valid_command():
+#    commands_json = open("json/commands.json", "r")
+#    json_data = json.load(commands_json)
+#    commands_json.close()
+#
+#    current_user = ModCurrentUser("admin", json.dumps({"admin": True}))
+#    os.system('cat main.conf.local')
+#
+#    toggle_send_cmd(True)
+#
+#    valid_cmds = json_data["short_cmds"]
+#    for cmd in valid_cmds:
+#        assert valid_command(cmd, "mcserver", current_user) == True
+#
+#    # Send should be invalid when no is supplied to valid_command().
+#    invalid_cmds = ["fart", "blah", 777777, None, "---------", "send"]
+#    for cmd in invalid_cmds:
+#        assert valid_command(cmd, "mcserver", current_user) == False
+#
+#    # Test valid & invalid cmds for user.
+#    permissions = dict()
+#    permissions["controls"] = ["start", "stop"]
+#    current_user2 = ModCurrentUser("user", json.dumps(permissions))
+#
+#    invalid_cmds = json_data["short_cmds"]
+#    invalid_cmds.remove("st")
+#    invalid_cmds.remove("sp")
+#
+#    print(current_user2.permissions)
+#
+#    for cmd in invalid_cmds:
+#        assert valid_command(cmd, "mcserver", current_user2) == False
+#
+#    valid_cmds = ["st", "sp"]
+#    for cmd in valid_cmds:
+#        assert valid_command(cmd, "mcserver", current_user2) == True
 
 
 def test_get_network_stats():

@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 
+- Created new `ControlService` class as service for interacting with controls data.
+- Created new `ConfigManager` class for handling main.conf ConfigParser stuff.
 
 ### Changed
 
-- Created new `ConfigManager` class for handling main.conf ConfigParser stuff.
-- Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
+- Renamed "Command" to "Controls" through projects source (where applicable).
 
 ### Fixed
 
-- 
+- Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
 
 ## [v1.8.6 - 2025-11-22]
 

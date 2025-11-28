@@ -227,7 +227,7 @@
     them into their own class and update the app code and tests.
   - [x] Then write some unit tests for the new class n'@.
 
-* [ ] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
+* [x] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
   - I'm using flask extensions for logging and DB stuff, etc.
   - This code is clogging up the main `__init__.py` and that things a mess.
   - I know there's better ways to organize flask extension stuff, I've just
@@ -237,6 +237,34 @@
 * [ ] **Rename views to routes**
   - Views is the default name I used because like MVC arch made sense. But its a bad name.
   - Really this is where route code lives, so just call it routes.
+
+* [ ] **Break up apps blueprints into dir**
+```
+└── blueprints/
+     ├── main/
+     │     home.py
+     │     controls.py
+     │     settings.py
+     │     ...
+     ├── auth/
+     │     login.py
+     │     logout.py
+     │     two_factor.py
+     │     ...
+     └── api/
+           cron.py
+           console.py
+           ...
+```
+
+* [ ] **Break up models into separate class files.**
+```
+└── models/
+    ├── __init__.py
+    ├── user.py
+    └── game_server.py
+    etc.
+```
 
 * [ ] **Make real singleton to hold proc_info objects**
   - I've been using a module level singleton, but this sucks.

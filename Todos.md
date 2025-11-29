@@ -270,6 +270,12 @@
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.
 
+* [ ] **Write unit tests for new service layer classes before get too behind**
+  - Gotta write tests for these:
+    * `BlocklistService`
+    * `ControlsService`
+    * `ProcInfoService`
+
 * [ ] **Make redirect to github on about page open in new tab.**
 
 * [ ] **Add buy me a coffee link to about page author section**

@@ -28,7 +28,6 @@ NOTE: This project has not been built with a great deal of care toward OOD up
 until this point (dev-v1.8.7, Nov. 2025). You see that fact reflected in the
 current pretty flat and boring state of the projects class diagram.
 
-
 ### Where to go from here...
 
 Only up. So far there's been little to no design. So as far as I see it, any
@@ -39,7 +38,7 @@ structure is better. But sill we should take care in building out new code.
 * [ ] **The utils.py file is bloated, unorganized, and untestable!**
   - Needs broken up into a bunch of different classes!
 
- [ ] **Apps module code needs to be re-organized**
+ [x] **Apps module code needs to be re-organized**
   - Take for example the `forms.py` file. Too many classes all in one file.
   - I might want to break that up into a directory of class files instead.
   - But in general, that code shouldn't be sprinkled with the main route, api,
@@ -49,65 +48,128 @@ structure is better. But sill we should take care in building out new code.
   - Things are too tightly linked and interfaces need made standard and generic.
   - Need to embrace polymorphism.
 
+### Breaking Up `utils.py`
 
-### New Preposed Structure
+Here's the rough plan for breaking up the very overloaded utils functions into
+a new set of service layer classes. More about them below.
 
-We're going to package up functionality and move classes into their own
-directories. This alone is probably going to take a while.
+#### Grouping Our Current Functions
 
+Server Operations Group (~8-10 functions)
 ```
-web-lgsm/
-├── app/
-│   ├── __init__.py              # Flask app factory
-│   ├── models/                  # Database models
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   └── post.py
-│   ├── forms/                   # WTForms classes
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── user.py
-│   │   └── post.py
-│   ├── routes/                  # View functions
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── main.py
-│   │   └── api.py
-│   ├── templates/               # Jinja2 templates
-│   ├── static/                  # CSS, JS, images
-│   └── utils/                   # Helper classes/functions
-│       ├── __init__.py
-│       └── helpers.py
-├── tests/                       # Test suite
-├── requirements.txt
-└── web-lgsm.py                  # Entry point
+    get_server_status, get_all_server_statuses, get_tmux_socket_name*, should_use_ssh
 ```
 
+File Operations Group (~6-8 functions)
+```
+    read_cfg_file, write_cfg, download_cfg, find_cfg_paths, file operations over SSH
+```
 
-### New Classes Needed
+Command Execution Group (~5-7 functions)
+```
+    run_cmd_popen, process_popen_output, run_cmd_ssh, cancel_install
+```
 
-#### New ConfigManager Class
+System & Monitoring Group (~4-6 functions)
 
-The config for this app is a little a typical. I'm using python's
-`configparser` and keeping my config in ini style format. This way the config
-variable in the ini are dynamic. Anytime I go to read them configparser fetches
-me the newest thing in the conf.
+```
+    get_server_stats, get_network_stats, get_running_installs
+```
 
-All that to say, I'm not really using python's builtin app.config dictionary / handler.
+SSH Infrastructure Group (~5-7 functions)
 
-https://flask.palletsprojects.com/en/stable/config/
+```
+    _get_ssh_client, is_ssh_accessible, generate_ecdsa_ssh_keypair, get_ssh_key_file
+```
 
-Thing is, that data is static and important. Like I don't want someone somehow
-dynamically updating the config and it reloading the app in debug mode. That
-would be bad. Things like debug mode and other app.config var are fine to only
-ever be set once at app start up. That data doesn't need to be dynamic.
+Installation Management Group (~3-5 functions)
 
-But lots of the other settings in the main.conf are dynamic and do get updated
-on the fly and the app should respond accordingly.
+```
+    clear_proc_info_post_install, installation-related functions
+```
 
-Gonna call it ConfigManager to distinguish it from main app.config.
+### Application Architecture
 
+We're now using a layered architecture with a separation between presentation,
+business logic, and data access layers.
 
+* Presentation Layer: API & view route handlers
+* Business Logic Layer: Service classes containing application logic
+* Data Access Layer: Database operations abstracted within services
 
-#### New CommandService Class
+We're now using a _Service Layer_ to separate core application logic from the
+backend functionality of specific app components.
 
+For example, the CronService class is used to wrap up logic concerned with
+accessing the database and invoking the ansible playbook to create or destroy
+cronjobs on the system. In this way it interfaces with other service layer
+classes, the database, and the core route code.
+
+![Service Layer Diagram](ServiceLayerDiagram.png)
+
+##### Directory Tree Structure
+
+If you look at the version 1.8.6 release you'll see the app's code is still
+mainly housed in just a few files. This was becoming too disorganized and a
+limitation on growth. So instead, we've now broken things up a lot more.
+
+```
+app/
+├── blueprints     # Route blueprints for api, auth, & main views
+├── config         # ConfigManager class for handling main.conf ini files (TODO: Turn into service layer class)
+├── database.db    # Sqlite database file
+├── extensions.py  # Flask extension specific stuff
+├── forms          # Flask-Wtf Wtforms classes (user input handling & validation)
+├── __init__.py    # App factory for producing app
+├── models         # Flask-Sqlalchemy database model classes
+├── paths.py       # Static hardcoded path vars (needs moved into utils)
+├── services       # Service layer classes
+├── static         # Static CSS, Javascript, & Images
+├── templates      # Jinja2 html template files
+└── utils          # Non-dependant generic helpers
+```
+
+### Service Layer Classes (Done)
+
+* `BlocklistService` - Simple in memory fixed size IP block list for basic brute force login protection.
+* `ControlsService` - Interface for fetching dynamic GameServer specific controls.
+* `CronService` - Interface for interacting with crontab editing and app jobs data.
+* `ProcInfoService` - Singleton class for sharing `proc_info` objects between route code and other services.
+
+### Service Layer Classes (Needed)
+
+* `GameServerService` - GameServer specific service for finding additional info about GameServer objects.
+* `FileService` - Service for interacting with files on the file system (or over ssh via dep inversion).
+* `CommandExecService` - Interface for command line operations (via local shell, ssh, or docker via dep inversion).
+* `MonitoringService` - Interface for checking system stats for front page charts.
+* `InstallService` - Interface for dealing with installing related stuff (might not need this one yet).
+
+I'm still not totally sure how I'm going to do the FileService and CommandExec
+service. I'd like to use dependency inversion to pass both of those an
+interface that is either local or remote or docker and have it just do the
+necessary thing.
+
+### Service Container
+
+We're passing the individual services through a `ServicesContainer` object for
+ease of use. (Pseudo code below, not implemented yet...)
+
+```python3
+# services/__init__.py
+from .server_service import ServerService
+from .file_service import FileService
+from .command_service import CommandService
+from .ssh_service import SSHService
+from .system_service import SystemService
+
+# Simple service container
+class ServiceContainer:
+    def __init__(self):
+        self.ssh = SSHService()
+        self.command = CommandService() 
+        self.file = FileService(self.ssh)
+        self.server = ServerService(self.command, self.file)
+        self.system = SystemService()
+
+services = ServiceContainer()
+```

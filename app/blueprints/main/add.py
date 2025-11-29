@@ -14,7 +14,6 @@ from flask import (
 from app import db
 from app.utils import *
 from app.models import GameServer, User
-from app.processes_global import *
 from app.forms.views import ValidateID, AddForm
 
 # Constants.

@@ -2,7 +2,6 @@ from flask_login import login_required, current_user
 from flask import render_template, request
 
 from app.models import Audit, User
-from app.processes_global import *
 
 from . import main_bp
 

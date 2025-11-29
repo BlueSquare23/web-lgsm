@@ -6,7 +6,6 @@ from flask_restful import Resource
 
 from app.utils import *
 from app.models import GameServer
-from app.processes_global import *
 
 from . import api
 

@@ -253,7 +253,7 @@
            ...
 ```
 
-* [ ] **Break up models into separate class files.**
+* [x] **Break up models into separate class files.**
 ```
 └── models/
     ├── __init__.py
@@ -262,15 +262,19 @@
     etc.
 ```
 
-* [ ] **Convert blocklist.py into blocklist_service.py class and make singleton**
+* [x] **Convert blocklist.py into blocklist_service.py class and make singleton**
   - Right now just threw that in there quick and dirty as a module level singleton. 
   - But with all the other restructures, needs its own class file made proper singleton n'@.
 
-* [ ] **Make real singleton to hold proc_info objects**
+* [x] **Make real singleton to hold proc_info objects**
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.
 
 * [ ] **Make redirect to github on about page open in new tab.**
+
+* [ ] **Add buy me a coffee link to about page author section**
+  - My buddies opinion is that it should be prominent on the page.
+  - I don't really care to much tbh, but I'll do it for him.
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 

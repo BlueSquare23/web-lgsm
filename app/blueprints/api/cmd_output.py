@@ -5,18 +5,19 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-from app.processes_global import *
+from app.services import ProcInfoService
 
 from . import api
-
 
 ######### API CMD Output #########
 
 class CmdOutput(Resource):
     @login_required
     def get(self, server_id):
+        proc_service = ProcInfoService()
+
         # Can't do anything if we don't have proc info vessel stored.
-        if server_id not in get_all_processes():
+        if server_id not in proc_service.get_all_processes():
             resp_dict = {"Error": "eer never heard of em"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
@@ -30,10 +31,10 @@ class CmdOutput(Resource):
             )
             return response
 
-        output = get_process(server_id, create=True)
+        proc_info = proc_service.get_process(server_id, create=True)
 
         # Returns json for used by ajax code on /controls route.
-        response = Response(output.toJSON(), status=200, mimetype="application/json")
+        response = Response(proc_info.toJSON(), status=200, mimetype="application/json")
         return response
 
 api.add_resource(CmdOutput, "/cmd-output/<string:server_id>")

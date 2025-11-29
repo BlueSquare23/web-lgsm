@@ -1,7 +1,6 @@
 import json
 
-
-class ProcInfoVessel:
+class ProcInfo:
     """
     Class used to create objects that hold information about processes launched
     via the subprocess Popen wrapper.

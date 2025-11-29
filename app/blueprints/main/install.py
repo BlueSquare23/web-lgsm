@@ -16,7 +16,7 @@ from flask import (
 from app import db
 from app.utils import *
 from app.models import User, GameServer
-from app.processes_global import *
+from app.services import ProcInfoService
 from app.forms.views import InstallForm
 
 # Constants.
@@ -78,7 +78,7 @@ def install():
                 return redirect(url_for("main.install"))
 
             # Log proc info so can see what's going on.
-            proc_info = get_process(server.id)
+            proc_info = ProcInfoService().get_process(server.id)
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
             if proc_info.pid:
@@ -187,7 +187,7 @@ def install():
     ]
 
     current_app.logger.info(log_wrap("cmd", cmd))
-    current_app.logger.info(log_wrap("all processes", get_all_processes()))
+    current_app.logger.info(log_wrap("all processes", ProcInfoService().get_all_processes()))
 
     install_daemon = Thread(
         target=run_cmd_popen,

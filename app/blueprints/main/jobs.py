@@ -12,7 +12,6 @@ from flask import (
 
 from app.utils import *
 from app.models import GameServer
-from app.processes_global import *
 from app.forms.views import ValidateID, JobsForm
 from app.services.cron_service import CronService
 from app.services.controls_service import ControlService

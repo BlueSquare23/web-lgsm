@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash
 
 from app import create_app
 from app.models import User, GameServer, Job
-from app.services.cron_service import CronService
+from app.services import CronService
 from utils import *
 
 

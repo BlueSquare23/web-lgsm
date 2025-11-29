@@ -8,12 +8,8 @@ from werkzeug.datastructures import MultiDict
 
 from app.utils import *
 from app.models import Job
-from app.services.cron_service import CronService
-from app.processes_global import *
+from app.services import CronService
 from app.forms.views import ValidateID
-from app.config.config_manager import ConfigManager
-
-config = ConfigManager()
 
 from . import api
 

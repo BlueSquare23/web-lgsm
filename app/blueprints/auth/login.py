@@ -19,7 +19,7 @@ from flask import (
 from app.forms.auth import LoginForm 
 from app.models import User
 from app.utils import validation_errors, audit_log_event
-from app.blocklist import is_blocked, add_failed, get_client_ip
+from app.services import BlocklistService
 
 from . import auth_bp
 
@@ -34,8 +34,11 @@ def login():
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
-    ip = get_client_ip(request)
-    if is_blocked(ip):
+    blocklist = BlocklistService()
+
+    ip = blocklist.get_client_ip(request)
+
+    if blocklist.is_blocked(ip):
         return 'Access denied', 403
 
     if request.method == "GET":
@@ -53,14 +56,14 @@ def login():
     # Check login info.
     user = User.query.filter_by(username=username).first()
     if user == None:
-        add_failed(ip)
+        blocklist.add_failed(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
     current_app.logger.info(user)
 
     if not check_password_hash(user.password, password):
-        add_failed(ip)
+        blocklist.add_failed(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
@@ -80,7 +83,7 @@ def login():
             return redirect(url_for("auth.two_factor_setup"))
 
         if not user.verify_totp(otp_code):
-            add_failed(ip)
+            blocklist.add_failed(ip)
             flash("Invalid otp 2fa code!", category="error")
             return render_template("login.html", user=current_user, form=form), 403
 

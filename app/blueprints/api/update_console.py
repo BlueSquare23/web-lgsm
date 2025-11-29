@@ -6,7 +6,7 @@ from flask_restful import Resource
 
 from app.utils import *
 from app.models import GameServer
-from app.processes_global import *
+from app.services import ProcInfoService
 
 from . import api
 
@@ -55,7 +55,7 @@ class UpdateConsole(Resource):
         else:
             run_cmd_popen(cmd, server.id)
 
-        proc_info = get_process(server.id, create=True)
+        proc_info = ProcInfoService().get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}

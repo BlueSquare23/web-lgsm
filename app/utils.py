@@ -20,11 +20,9 @@ from flask import flash, current_app, send_file, send_from_directory, url_for, r
 from functools import lru_cache
 
 from app.models import GameServer, Audit
-from .processes_global import *
-from . import db
-from . import cache
-from .config.config_manager import ConfigManager
-from .services.controls_service import ControlService
+from app import db
+from app import cache
+from app.config.config_manager import ConfigManager
 
 config = ConfigManager()
 
@@ -130,7 +128,8 @@ def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
     Returns:
         None: Doesn't return anything, just updates ProcInfoVessel object.
     """
-    proc_info = get_process(cmd_id, create=True)
+    from app.services import ProcInfoService
+    proc_info = ProcInfoService().get_process(cmd_id, create=True)
 
     if config.getboolean('settings', 'clear_output_on_reload'):
         proc_info.stdout.clear()
@@ -171,13 +170,15 @@ def cancel_install(pid):
     Returns:
         bool: True if install canceled successfully, False otherwise.
     """
+    from app.services import ProcInfoService
+
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of a game server's ID.
     cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
     cmd_id = 'cancel_install'
     run_cmd_popen(cmd, cmd_id)
-    proc_info = get_process(cmd_id)
+    proc_info = ProcInfoService().get_process(cmd_id)
 
     if proc_info == None:
         return False
@@ -267,11 +268,12 @@ def get_tmux_socket_name_docker(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
+    from app.services import ProcInfoService
     cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
 
     cmd_id = "get_tmux_socket_name_docker"
     run_cmd_popen(cmd, cmd_id)
-    proc_info = get_process(cmd_id)
+    proc_info = ProcInfoService().get_process(cmd_id)
 
     if proc_info.exit_status > 0:
         current_app.logger.info(proc_info)
@@ -297,10 +299,11 @@ def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
         str: Returns the socket name for game server. None if can't get
              socket name.
     """
+    from app.services import ProcInfoService
     cmd = [PATHS["cat"], gs_id_file_path]
 
     success = run_cmd_ssh(cmd, server)
-    proc_info = get_process(server.id)
+    proc_info = ProcInfoService().get_process(server.id)
     if proc_info == None:
         return None
 
@@ -457,6 +460,7 @@ def get_server_status(server):
         bool|None: True if game server is active, False if inactive, None if
                    indeterminate.
     """
+    from app.services import ProcInfoService
     socket = get_tmux_socket_name(server)
     if socket == None:
         return None
@@ -488,7 +492,7 @@ def get_server_status(server):
     else:
         run_cmd_popen(cmd, cmd_id)
 
-    proc_info = get_process(cmd_id)
+    proc_info = ProcInfoService().get_process(cmd_id)
     current_app.logger.info(log_wrap("proc_info", proc_info))
 
     if proc_info == None:
@@ -558,6 +562,7 @@ def find_cfg_paths(server):
     Returns:
         cfg_paths (list): List of found valid config files.
     """
+    from app.services import ProcInfoService
     cfg_paths = []
     cmd_id = "find_cfg_paths"
 
@@ -586,7 +591,7 @@ def find_cfg_paths(server):
         ] + wanted[:-1]
 
         success = run_cmd_ssh(cmd, server, False, 5.0, cmd_id)
-        proc_info = get_process(cmd_id)
+        proc_info = ProcInfoService().get_process(cmd_id)
 
         # If the ssh connection itself fails return False.
         if not success:
@@ -655,6 +660,7 @@ def delete_server(server, remove_files, delete_user):
     Returns:
         Bool: True if deletion was successful, False if something went wrong.
     """
+    from app.services import ProcInfoService
     if not remove_files:
         server.delete()
         flash(f"Game server, {server.install_name} deleted!")
@@ -697,7 +703,7 @@ def delete_server(server, remove_files, delete_user):
         cmd = [PATHS["rm"], "-rf", server.install_path]
 
         success = run_cmd_ssh(cmd, server)
-        proc_info = get_process(server.id)
+        proc_info = ProcInfoService().get_process(server.id)
 
         # If the ssh connection itself fails return False.
         if not success or proc_info == None:
@@ -759,6 +765,8 @@ def valid_command(ctrl, server, current_user):
     Returns:
         bool: True if cmd is valid for user & game server, False otherwise.
     """
+
+    from app.services import ControlService
     control_service = ControlService()
     controls = control_service.get_controls(server, current_user)
     for control in controls:
@@ -822,11 +830,13 @@ def update_self():
         Str: String containing update status, based on web-lgsm.py script
              output.
     """
+
+    from app.services import ProcInfoService
     update_cmd = ["./web-lgsm.py", "--auto"]
 
     cmd_id = "update_self"
     run_cmd_popen(update_cmd, cmd_id)
-    proc_info = get_process(cmd_id)
+    proc_info = ProcInfoService().get_process(cmd_id)
     if proc_info == None:
         return "Error: Something went wrong checking update status"
 
@@ -1050,6 +1060,8 @@ def generate_ecdsa_ssh_keypair(key_name):
     Returns:
         bool: True if key files created successfully, False otherwise.
     """
+
+    from app.services import ProcInfoService
     key_path = os.path.expanduser(f"~/.ssh/{key_name}")
     key_size = 256
 
@@ -1069,7 +1081,7 @@ def generate_ecdsa_ssh_keypair(key_name):
     cmd_id = "generate_ecdsa_ssh_keypair"
     run_cmd_popen(cmd, cmd_id)
 
-    proc_info = get_process(cmd_id)
+    proc_info = ProcInfoService().get_process(cmd_id)
     if proc_info == None:
         return False
 
@@ -1152,13 +1164,15 @@ def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     Returns:
         bool: True if command runs successfully, False otherwise.
     """
+
+    from app.services import ProcInfoService
     hostname = server.install_host
     username = server.username
     cmd_id = server.id
     if opt_id:
         cmd_id = opt_id
 
-    proc_info = get_process(cmd_id, create=True)
+    proc_info = ProcInfoService().get_process(cmd_id, create=True)
 
     pub_key_file = get_ssh_key_file(server.username, server.install_host)
 
@@ -1366,6 +1380,8 @@ def clear_proc_info_post_install(server_id, app_context):
         app_context (AppContext): Optional Current app context needed for
                                   logging in a thread.
     """
+
+    from app.services import ProcInfoService
     # App context needed for logging in threads.
     if app_context:
         app_context.push()
@@ -1392,7 +1408,7 @@ def clear_proc_info_post_install(server_id, app_context):
             # finished, clear out the old proc_info object.
             if server.install_finished and not server.install_failed:
                 current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
-                remove_process(server_id)
+                ProcInfoService().remove_process(server_id)
                 return
 
         time.sleep(5)

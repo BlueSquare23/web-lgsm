@@ -4,9 +4,12 @@ import shortuuid
 from cron_converter import Cron
 
 from app.models import GameServer, Job
-from app.utils import *
+from app.utils import should_use_ssh, run_cmd_ssh, run_cmd_popen
 from app.paths import PATHS
 from app import db
+
+# Has to be local import to avoid circular import
+from .proc_info_service import ProcInfoService
 
 """
 Service class interface for interacting with system cron from API and jobs
@@ -62,7 +65,7 @@ class CronService:
 
         cmd_id = f'add_job_{cronjob.id}'
         run_cmd_popen(cmd, cmd_id)
-        proc_info = get_process(cmd_id)
+        proc_info = ProcInfoService().get_process(cmd_id)
 
         if proc_info == None:
             return False
@@ -93,7 +96,7 @@ class CronService:
 
         cmd_id = f'delete_job_{cronjob.id}'
         run_cmd_popen(cmd, cmd_id)
-        proc_info = get_process(cmd_id)
+        proc_info = ProcInfoService().get_process(cmd_id)
 
         if proc_info == None:
             return False
@@ -127,7 +130,7 @@ class CronService:
         else:
             run_cmd_popen(cmd, cmd_id)
 
-        proc_info = get_process(cmd_id)
+        proc_info = ProcInfoService().get_process(cmd_id)
 
         return self.parse_cron_jobs("".join(proc_info.stdout), server.id)
 

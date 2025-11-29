@@ -10,7 +10,7 @@ from flask import (
 )
 
 from app.utils import *
-from app.models import *
+from app.models import GameServer
 from app.processes_global import *
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app.services.controls_service import ControlService

@@ -94,7 +94,7 @@ import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, create_app
-from app.models import User
+from app.models.user import User
 from app.utils import check_and_get_lgsmsh
 
 # Import config data.

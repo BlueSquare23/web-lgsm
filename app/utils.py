@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 from functools import lru_cache
 
-from .models import GameServer, Audit
+from app.models import GameServer, Audit
 from .processes_global import *
 from . import db
 from . import cache

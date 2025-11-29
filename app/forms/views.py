@@ -26,8 +26,7 @@ from wtforms import (
     HiddenField,
 )
 
-from ..utils import get_servers
-from ..models import *
+from app.utils import get_servers
 from .helpers import ServerExists, ValidConfigFile
 
 USERNAME = getpass.getuser()

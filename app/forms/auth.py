@@ -1,3 +1,5 @@
+# TODO: Breakup each of these into its own class file eventually.
+
 import re
 import os
 import json
@@ -23,7 +25,7 @@ from wtforms import (
     SelectMultipleField,
 )
 
-from ..models import *
+from app.models import User, GameServer
 from .helpers import ValidateOTPCode
 
 USERNAME = getpass.getuser()

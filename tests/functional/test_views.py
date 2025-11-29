@@ -10,9 +10,9 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-from app.models import User, GameServer, Job, Audit
+from app.models import *
 from app.services.cron_service import CronService
-from app.models import db
+from app import db
 from utils import *
 
 ### Home Page tests.

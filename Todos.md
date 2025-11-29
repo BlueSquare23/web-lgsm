@@ -262,6 +262,10 @@
     etc.
 ```
 
+* [ ] **Convert blocklist.py into blocklist_service.py class and make singleton**
+  - Right now just threw that in there quick and dirty as a module level singleton. 
+  - But with all the other restructures, needs its own class file made proper singleton n'@.
+
 * [ ] **Make real singleton to hold proc_info objects**
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.

@@ -42,7 +42,7 @@ def client(app, reset):
 def db_session(app):
     """Create a clean database with proper transaction isolation for each test."""
     with app.app_context():
-        from app.models import db
+        from app import db
 
         # Drop and create all tables fresh.
         db.drop_all()

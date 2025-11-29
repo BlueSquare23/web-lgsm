@@ -2,7 +2,7 @@ from flask_login import login_required, current_user
 from flask import render_template, current_app
 
 from app.utils import *
-from app.models import *
+from app.models import GameServer
 from app.processes_global import *
 
 from app.config.config_manager import ConfigManager

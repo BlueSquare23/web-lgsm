@@ -3,7 +3,7 @@ import shortuuid
 
 from cron_converter import Cron
 
-from app.models import *
+from app.models import GameServer, Job
 from app.utils import *
 from app.paths import PATHS
 from app import db

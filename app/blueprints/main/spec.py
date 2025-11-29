@@ -11,7 +11,7 @@ from . import main_bp
 @main_bp.route("/api/spec")
 @login_required
 def get_spec():
-    spec_path = os.path.join(os.path.dirname(__file__), "specs", "api_spec.yaml")
+    spec_path = os.path.join(os.path.dirname(__file__), "../api/specs", "api_spec.yaml")
     with open(spec_path, "r") as f:
         spec = yaml.safe_load(f)
 

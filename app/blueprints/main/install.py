@@ -15,7 +15,7 @@ from flask import (
 
 from app import db
 from app.utils import *
-from app.models import *
+from app.models import User, GameServer
 from app.processes_global import *
 from app.forms.views import InstallForm
 

@@ -5,7 +5,7 @@ from cron_converter import Cron
 
 from app.models import GameServer, Job
 from app.utils import should_use_ssh, run_cmd_ssh, run_cmd_popen
-from app.paths import PATHS
+from app.utils.paths import PATHS
 from app import db
 
 # Has to be local import to avoid circular import

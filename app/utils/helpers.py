@@ -29,7 +29,7 @@ config = ConfigManager()
 # Constants.
 CWD = os.getcwd()
 USER = getpass.getuser()
-from .paths import PATHS
+from app.utils.paths import PATHS
 CONNECTOR_CMD = [
     PATHS["sudo"],
     "-n",
@@ -849,86 +849,6 @@ def update_self():
     if "Update Required" in proc_info.stdout:
         return "Web LGSM Upgraded! Restarting momentarily..."
 
-
-def get_network_stats():
-    """
-    Gets bytes in/out per second. Stores last got values in globals. Used by
-    get_server_stats() to collect network status for /api/system-usage route.
-
-    Returns:
-        dict: Dictionary containing bytes_sent_rate & bytes_recv_rate.
-    """
-    global prev_bytes_sent, prev_bytes_recv, prev_time
-
-    # Get current counters and timestamp.
-    net_io = psutil.net_io_counters()
-    current_bytes_sent = net_io.bytes_sent
-    current_bytes_recv = net_io.bytes_recv
-    current_time = time.time()
-
-    # Calculate the rate of bytes sent and received per second.
-    bytes_sent_rate = (current_bytes_sent - prev_bytes_sent) / (
-        current_time - prev_time
-    )
-    bytes_recv_rate = (current_bytes_recv - prev_bytes_recv) / (
-        current_time - prev_time
-    )
-
-    # Update previous counters and timestamp.
-    prev_bytes_sent = current_bytes_sent
-    prev_bytes_recv = current_bytes_recv
-    prev_time = current_time
-
-    return {"bytes_sent_rate": bytes_sent_rate, "bytes_recv_rate": bytes_recv_rate}
-
-
-def get_server_stats():
-    """
-    Returns disk, cpu, mem, and network stats which are later turned into json
-    for the /api/system-usage route which is used by home page resource usage
-    stats charts.
-
-    Returns:
-        dict: Dictionary containing disk, cpu, mem, and network usage
-              statistics.
-    """
-    stats = dict()
-
-    # Disk
-    total, used, free = shutil.disk_usage("/")
-    # Add ~4% for ext4 filesystem metadata usage.
-    percent_used = (((total * 0.04) + used) / total) * 100
-    stats["disk"] = {
-        "total": total,
-        "used": used,
-        "free": free,
-        "percent_used": percent_used,
-    }
-
-    # CPU
-    load1, load5, load15 = psutil.getloadavg()
-    cpu_usage = (load1 / os.cpu_count()) * 100
-    stats["cpu"] = {
-        "load1": load1,
-        "load5": load5,
-        "load15": load15,
-        "cpu_usage": cpu_usage,
-    }
-
-    # Mem
-    mem = psutil.virtual_memory()
-    # Total, used, available, percent_used.
-    stats["mem"] = {
-        "total": mem[0],
-        "used": mem[3],
-        "free": mem[1],
-        "percent_used": mem[2],
-    }
-
-    # Network
-    stats["network"] = get_network_stats()
-
-    return stats
 
 
 def user_has_permissions(current_user, route, server_id=None):

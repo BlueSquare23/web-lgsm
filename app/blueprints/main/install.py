@@ -23,7 +23,7 @@ from app.forms.views import InstallForm
 CWD = os.getcwd()
 USER = getpass.getuser()
 VENV = "/opt/web-lgsm/"
-from app.paths import PATHS
+from app.utils.paths import PATHS
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()

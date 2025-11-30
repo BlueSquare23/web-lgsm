@@ -130,12 +130,12 @@ def edit_users():
     password2 = form.password2.data
     enable_otp = form.enable_otp.data
     is_admin = form.is_admin.data
-    install_servers = form.install_servers.data
-    add_servers = form.add_servers.data
-    mod_settings = form.mod_settings.data
-    edit_cfgs = form.edit_cfgs.data
-    edit_jobs = form.edit_jobs.data
-    delete_server = form.delete_server.data
+    install = form.install.data
+    add = form.add.data
+    settings = form.settings.data
+    edit = form.edit.data
+    jobs = form.jobs.data
+    delete = form.delete.data
     controls = form.controls.data
     server_ids = form.server_ids.data
 
@@ -147,12 +147,12 @@ def edit_users():
     current_app.logger.debug(log_wrap("password2", password2))
     current_app.logger.debug(log_wrap("enable_otp", enable_otp))
     current_app.logger.debug(log_wrap("is_admin", is_admin))
-    current_app.logger.debug(log_wrap("install_servers", install_servers))
-    current_app.logger.debug(log_wrap("add_servers", add_servers))
-    current_app.logger.debug(log_wrap("mod_settings", mod_settings))
-    current_app.logger.debug(log_wrap("edit_cfgs", edit_cfgs))
-    current_app.logger.debug(log_wrap("edit_jobs", edit_jobs))
-    current_app.logger.debug(log_wrap("delete_server", delete_server))
+    current_app.logger.debug(log_wrap("install", install))
+    current_app.logger.debug(log_wrap("add", add))
+    current_app.logger.debug(log_wrap("settings", settings))
+    current_app.logger.debug(log_wrap("edit", edit))
+    current_app.logger.debug(log_wrap("jobs", jobs))
+    current_app.logger.debug(log_wrap("delete", delete))
     current_app.logger.debug(log_wrap("controls", controls))
     current_app.logger.debug(log_wrap("server_ids", server_ids))
 
@@ -183,29 +183,30 @@ def edit_users():
     permissions = dict()
     role = "user"  # Default to user role.
 
-    permissions["install_servers"] = False
-    if install_servers:
-        permissions["install_servers"] = True
+    # Page access controls
+    permissions["install"] = False
+    if install:
+        permissions["install"] = True
 
-    permissions["add_servers"] = False
-    if add_servers:
-        permissions["add_servers"] = True
+    permissions["add"] = False
+    if add:
+        permissions["add"] = True
 
-    permissions["mod_settings"] = False
-    if mod_settings:
-        permissions["mod_settings"] = True
+    permissions["settings"] = False
+    if settings:
+        permissions["settings"] = True
 
-    permissions["edit_cfgs"] = False
-    if edit_cfgs:
-        permissions["edit_cfgs"] = True
+    permissions["edit"] = False
+    if edit:
+        permissions["edit"] = True
 
-    permissions["edit_jobs"] = False
-    if edit_jobs:
-        permissions["edit_jobs"] = True
+    permissions["jobs"] = False
+    if jobs:
+        permissions["jobs"] = True
 
-    permissions["delete_server"] = False
-    if delete_server:
-        permissions["delete_server"] = True
+    permissions["delete"] = False
+    if delete:
+        permissions["delete"] = True
 
     permissions["controls"] = []
     if controls:

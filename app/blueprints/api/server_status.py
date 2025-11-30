@@ -23,7 +23,7 @@ class ServerStatus(Resource):
             )
             return response
 
-        if not user_has_permissions(current_user, "server-statuses", server.id):
+        if not current_user.has_access("server-statuses", server.id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

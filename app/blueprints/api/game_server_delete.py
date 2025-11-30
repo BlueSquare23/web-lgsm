@@ -37,7 +37,7 @@ class GameServerDelete(Resource):
             config.set('settings', 'delete_user', False)
 
         # Check if user has permissions to delete route & server.
-        if not user_has_permissions(current_user, "delete", server_id):
+        if not current_user.has_access("delete", server_id):
             resp_dict = {
                 "Error": f"Insufficient permission to delete {server.install_name}"
             }

@@ -24,7 +24,7 @@ class CmdOutput(Resource):
             )
             return response
 
-        if not user_has_permissions(current_user, "cmd-output", server_id):
+        if not current_user.has_access("cmd-output", server_id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

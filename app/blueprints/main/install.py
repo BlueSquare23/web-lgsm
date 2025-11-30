@@ -36,7 +36,8 @@ from . import main_bp
 @login_required
 def install():
     # Check if user has permissions to install route.
-    if not user_has_permissions(current_user, "install"):
+    if not current_user.has_access("install"):
+        flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
     # Pull in install server list from game_servers.json file.

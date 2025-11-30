@@ -27,7 +27,8 @@ from . import main_bp
 @login_required
 def add():
     # Check if user has permissions to add route.
-    if not user_has_permissions(current_user, "add"):
+    if not current_user.has_access("add"):
+        flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
     server_json = None

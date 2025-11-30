@@ -6,12 +6,12 @@ if (userRole == 'admin') {
 // Function to apply the user permissions to the form.
 function applyUserPermissions() {
   // Check or uncheck basic permissions based on userPerms.
-  document.getElementById('install_servers').checked = userPerms.install_servers;
-  document.getElementById('add_servers').checked = userPerms.add_servers;
-  document.getElementById('mod_settings').checked = userPerms.mod_settings;
-  document.getElementById('edit_cfgs').checked = userPerms.edit_cfgs;
-  document.getElementById('edit_jobs').checked = userPerms.edit_jobs;
-  document.getElementById('delete_server').checked = userPerms.delete_server;
+  document.getElementById('install').checked = userPerms.install;
+  document.getElementById('add').checked = userPerms.add;
+  document.getElementById('settings').checked = userPerms.settings;
+  document.getElementById('edit').checked = userPerms.edit;
+  document.getElementById('jobs').checked = userPerms.jobs;
+  document.getElementById('delete').checked = userPerms.delete;
 
   // Check the controls checkboxes.
   const controlCheckboxes = document.querySelectorAll('.control-checkbox');

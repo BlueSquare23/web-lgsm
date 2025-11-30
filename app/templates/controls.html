@@ -30,7 +30,7 @@
         </div>
 
         {% set parsed_json = user.permissions|from_json %}
-        {% if user.role == 'admin' or parsed_json.edit_cfgs %}
+        {% if user.role == 'admin' or parsed_json.edit %}
           {% if cfg_paths|length %}
             <div class="row">
               <h2>Edit Config(s)</h2>

@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import onetimepass
 
@@ -35,4 +36,45 @@ class User(db.Model, UserMixin):
 
     def verify_totp(self, token):
         return onetimepass.valid_totp(token, self.otp_secret)
+
+
+    def has_access(self, route, server_id=None):
+        """
+        Check's if user has permissions to access various routes.
+    
+        Args:
+            route (string): The route to apply permissions controls to.
+            server_id (string): Game server id to check user has access to.
+                                  Only matters for controls & delete routes.
+    
+        Returns:
+            bool: True if user has appropriate perms, False otherwise.
+    
+        """
+        # Admins can always do anything.
+        if self.role == "admin":
+            return True
+
+        valid_routes = ["install", "edit", "add", "delete", "settings", "controls",
+                        "update-console", "server-statuses", "jobs"]
+
+        assert route in valid_routes, f"Invalid route: {route}"
+
+        user_perms = json.loads(self.permissions)
+
+        # Does user have access to server_id?
+        if server_id:
+            if server_id not in user_perms["server_ids"]:
+                return False
+
+        # Does user have access to route?
+        if route not in user_perms:
+            return False
+
+        # Special case for update-console, user needs access to console control too.
+        if route == "update-console":
+            if "console" not in user_perms["controls"]:
+                return False
+
+        return True
 

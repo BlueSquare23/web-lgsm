@@ -27,6 +27,10 @@ def edit():
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
 
+    if not current_user.has_access("edit"):
+        flash("Your user does not have access to this page!", category="error")
+        return redirect(url_for("main.home"))
+
     if not config.getboolean('settings','cfg_editor'):
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("main.home"))

@@ -15,7 +15,7 @@ from . import api
 class UpdateConsole(Resource):
     @login_required
     def post(self, server_id):
-        if not user_has_permissions(current_user, "update-console"):
+        if not current_user.has_access("update-console"):
             resp_dict = {"Error": "Permission denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

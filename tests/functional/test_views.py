@@ -1244,12 +1244,12 @@ def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client
 
         # Test install page.
         response = client.get("/install", follow_redirects=True)
-        error_msg = b"Your user does NOT have permission access the install page"
+        error_msg = b"Your user does not have access to this page"
         check_response(response, error_msg, resp_code, "main.home")
 
         # Test add page.
         response = client.get("/add", follow_redirects=True)
-        error_msg = b"Your user does NOT have permission access the add page"
+        error_msg = b"Your user does not have access to this page"
         check_response(response, error_msg, resp_code, "main.home")
 
         # Test delete api.
@@ -1260,12 +1260,12 @@ def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client
 
         # Test settings page.
         response = client.get("/settings", follow_redirects=True)
-        error_msg = b"Your user does NOT have permission access the settings page"
+        error_msg = b"Your user does not have access to this page"
         check_response(response, error_msg, resp_code, "main.home")
 
         # Test game server controls page.
         response = client.get(f"/controls?server_id={server_id}", follow_redirects=True)
-        error_msg = b"Your user does NOT have permission access this game server"
+        error_msg = b"Your user does not have access to this server"
         print(response.get_data(as_text=True))
 #        print(response.data.decode("utf-8"))
         check_response(response, error_msg, resp_code, "main.home")

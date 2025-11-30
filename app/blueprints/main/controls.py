@@ -58,7 +58,8 @@ def controls():
         jobs_edit = True if server.install_type == 'local' else False
 
         # Check if user has permissions to game server for controls route.
-        if not user_has_permissions(current_user, "controls", server_id):
+        if not current_user.has_access("controls", server_id):
+            flash("Your user does not have access to this server", category="error")
             return redirect(url_for("main.home"))
 
         # Pull in controls list from controls.json file.
@@ -147,7 +148,8 @@ def controls():
         return redirect(url_for("main.controls", server_id=server_id))
 
     # Check if user has permissions to game server for controls route.
-    if not user_has_permissions(current_user, "controls", server_id):
+    if not current_user.has_access("controls", server_id):
+        flash("Your user does not have access to this server", category="error")
         return redirect(url_for("main.home"))
 
     # If cfg editor is disabled in the main.conf.

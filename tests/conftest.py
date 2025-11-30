@@ -214,12 +214,12 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
         password=generate_password_hash(test_vars["password"]),
         role="user",
         permissions=json.dumps({
-            "install_servers": True,
-            "add_servers": True,
-            "mod_settings": True,
-            "edit_cfgs": True,
-            "edit_jobs": True,
-            "delete_server": True,
+            "install": True,
+            "add": True,
+            "settings": True,
+            "edit": True,
+            "jobs": True,
+            "delete": True,
             "controls": [
                 "start",
                 "stop",

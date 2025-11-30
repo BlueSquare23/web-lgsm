@@ -17,7 +17,7 @@ from . import api
 
 class ManageCron(Resource):
     def check_perms(self):
-        if not user_has_permissions(current_user, "jobs"):
+        if not current_user.has_access("jobs"):
             resp_dict = { "Error": f"Insufficient permission" }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

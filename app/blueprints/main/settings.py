@@ -25,7 +25,8 @@ def settings():
     global config
 
     # Check if user has permissions to settings route.
-    if not user_has_permissions(current_user, "settings"):
+    if not current_user.has_access("settings"):
+        flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
     # Create SettingsForm.

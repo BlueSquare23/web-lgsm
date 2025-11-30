@@ -430,12 +430,12 @@ def test_edit_user_contents(db_session, client, authed_client, test_vars):
         assert (
             b"Regular User - Configure limited user permissions below" in response.data
         )
-        assert b"Basic Permissions" in response.data
-        assert b"Can Install New Game Servers" in response.data
-        assert b"Can Add/Edit Existing Game Servers" in response.data
-        assert b"Can Modify Web-LGSM Settings Page" in response.data
-        assert b"Can Edit Game Server Configs" in response.data
-        assert b"Can Delete Game Servers" in response.data
+        assert b"Allowed to Pages" in response.data
+        assert b"Can install new game servers" in response.data
+        assert b"Can add/edit existing game servers" in response.data
+        assert b"Can modify web-lgsm settings page" in response.data
+        assert b"Can edit game server configs" in response.data
+        assert b"Can delete game servers" in response.data
         assert b"Allowed Controls" in response.data
         assert b"start" in response.data
         assert b"stop" in response.data

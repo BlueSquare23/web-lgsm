@@ -62,7 +62,7 @@
             </li>
             {% if user.is_authenticated %}
               {% set parsed_json = user.permissions|from_json %}
-              {% if user.role == 'admin' or parsed_json.mod_settings %}
+              {% if user.role == 'admin' or 'settings' in parsed_json.routes %}
             <li class="nav-item">
               <a class="nav-link" href="/settings">Settings</a>
             </li>

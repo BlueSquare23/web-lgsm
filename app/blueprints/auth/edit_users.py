@@ -130,12 +130,7 @@ def edit_users():
     password2 = form.password2.data
     enable_otp = form.enable_otp.data
     is_admin = form.is_admin.data
-    install = form.install.data
-    add = form.add.data
-    settings = form.settings.data
-    edit = form.edit.data
-    jobs = form.jobs.data
-    delete = form.delete.data
+    routes = form.routes.data
     controls = form.controls.data
     server_ids = form.server_ids.data
 
@@ -147,12 +142,7 @@ def edit_users():
     current_app.logger.debug(log_wrap("password2", password2))
     current_app.logger.debug(log_wrap("enable_otp", enable_otp))
     current_app.logger.debug(log_wrap("is_admin", is_admin))
-    current_app.logger.debug(log_wrap("install", install))
-    current_app.logger.debug(log_wrap("add", add))
-    current_app.logger.debug(log_wrap("settings", settings))
-    current_app.logger.debug(log_wrap("edit", edit))
-    current_app.logger.debug(log_wrap("jobs", jobs))
-    current_app.logger.debug(log_wrap("delete", delete))
+    current_app.logger.debug(log_wrap("routes", routes))
     current_app.logger.debug(log_wrap("controls", controls))
     current_app.logger.debug(log_wrap("server_ids", server_ids))
 
@@ -180,33 +170,18 @@ def edit_users():
             )
             return redirect(url_for("auth.edit_users"))
 
-    permissions = dict()
+    permissions = {
+        "routes": []
+    }
     role = "user"  # Default to user role.
 
-    # Page access controls
-    permissions["install"] = False
-    if install:
-        permissions["install"] = True
+    # Route access controls
+    for route in routes:
+        permissions["routes"].append(route)
 
-    permissions["add"] = False
-    if add:
-        permissions["add"] = True
-
-    permissions["settings"] = False
-    if settings:
-        permissions["settings"] = True
-
-    permissions["edit"] = False
-    if edit:
-        permissions["edit"] = True
-
-    permissions["jobs"] = False
-    if jobs:
-        permissions["jobs"] = True
-
-    permissions["delete"] = False
-    if delete:
-        permissions["delete"] = True
+    # Everyone get's to see server status indicators and cmd output.
+    permissions["routes"].append("server-statuses")
+    permissions["routes"].append("cmd-output")
 
     permissions["controls"] = []
     if controls:
@@ -215,6 +190,11 @@ def edit_users():
             if control not in all_controls:
                 flash("Invalid Control Supplied!", category="error")
                 return redirect(url_for("auth.edit_users"))
+
+            # If they have console access allow to api route.
+            if control == 'console':
+                permissions["routes"].append("update-console")
+
         permissions["controls"] = controls
 
     permissions["server_ids"] = []

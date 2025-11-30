@@ -171,12 +171,7 @@ def add_second_user_no_perms(db_session, setup_client, test_vars):
         password=generate_password_hash(test_vars["password"]),
         role="user",
         permissions=json.dumps({
-            "install_servers": False, 
-            "add_servers": False, 
-            "mod_settings": False, 
-            "edit_cfgs": False, 
-            "edit_jobs": False, 
-            "delete_server": False, 
+            "routes": [], 
             "controls": [], 
             "server_ids": []
         }),
@@ -214,12 +209,18 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
         password=generate_password_hash(test_vars["password"]),
         role="user",
         permissions=json.dumps({
-            "install": True,
-            "add": True,
-            "settings": True,
-            "edit": True,
-            "jobs": True,
-            "delete": True,
+            "routes": [
+                "controls",
+                "install",
+                "add",
+                "settings",
+                "edit",
+                "jobs",
+                "delete",
+                "update-console", 
+                "cmd-output",
+                "server-statuses"
+            ],
             "controls": [
                 "start",
                 "stop",

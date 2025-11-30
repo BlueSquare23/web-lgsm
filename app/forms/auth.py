@@ -263,16 +263,21 @@ class EditUsersForm(FlaskForm):
     )
 
 
-    # Permissions
+    # Basic bool perms
     enable_otp = BooleanField("Enable Two Factor Auth")
-    install = BooleanField("Can Install New Game Servers")
-    add = BooleanField("Can Add/Edit Existing Game Servers")
-    settings = BooleanField("Can Modify Web-LGSM Settings Page")
-    edit = BooleanField("Can Edit Game Server Configs")
-    jobs = BooleanField("Can Edit Game Server Jobs")
-    delete = BooleanField("Can Delete Game Servers")
 
-    # Controls and servers (using SelectMultipleField for multiple checkboxes)
+    route_choices = [
+        ("add", "Can add/edit existing game servers"),
+        ("controls", "Can access control panel for allowed game server(s)"),
+        ("install", "Can install new game servers"),
+        ("settings", "Can modify web-lgsm settings page"),
+        ("edit", "Can edit game server configs"),
+        ("jobs", "Can edit game server jobs"),
+        ("delete", "Can delete game servers"),
+    ]
+
+    # List of options perms (using SelectMultipleField for multiple checkboxes)
+    routes = SelectMultipleField("Basic Permissions", choices=route_choices, coerce=str)
     controls = SelectMultipleField("Allowed Controls", choices=[], coerce=str)
     server_ids = SelectMultipleField("Allowed Game Servers", choices=[], coerce=str)
 

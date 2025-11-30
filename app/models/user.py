@@ -56,7 +56,7 @@ class User(db.Model, UserMixin):
             return True
 
         valid_routes = ["install", "edit", "add", "delete", "settings", "controls",
-                        "update-console", "server-statuses", "jobs"]
+                        "update-console", "cmd-output", "server-statuses", "jobs"]
 
         assert route in valid_routes, f"Invalid route: {route}"
 
@@ -68,7 +68,7 @@ class User(db.Model, UserMixin):
                 return False
 
         # Does user have access to route?
-        if route not in user_perms:
+        if route not in user_perms["routes"]:
             return False
 
         # Special case for update-console, user needs access to console control too.

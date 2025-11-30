@@ -123,28 +123,25 @@
 
       <br>
 
-      {% if user.role != 'admin' and not parsed_json.install_servers and not parsed_json.add_servers %}
-      {% else %}
       <h2 style="color: white;">Other Options</h2>
       <div class="list-group border border-secondary">
-        {% if user.role == 'admin' or parsed_json.install_servers %}
+        {% if user.role == 'admin' or 'install' in parsed_json.routes %}
         <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.add_servers %}
+        {% if user.role == 'admin' or 'add' in parsed_json.routes %}
         <a href="/add" class="list-group-item list-group-item-action">Add or Edit Existing LGSM Installation Details</a>
         {% endif %}
         {% if user.is_authenticated and user.role == 'admin' %}
           <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.edit_jobs %}
+        {% if user.role == 'admin' or 'jobs' in parsed_json.routes %}
         <a href="/jobs" class="list-group-item list-group-item-action">Create or Edit Web-LGSM Jobs</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.audit %}
+        {% if user.role == 'admin' or 'audit' in parsed_json.routes %}
         <a href="/audit" class="list-group-item list-group-item-action">View Audit Log</a>
         {% endif %}
         <a href="/2fa_setup" class="list-group-item list-group-item-action">Setup Two Factor Auth</a>
       </div>
-      {% endif %}
 
       <br>
 

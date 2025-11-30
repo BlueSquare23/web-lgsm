@@ -99,3 +99,11 @@ touch app/database.db
 flask --app app:main db upgrade
 ```
 
+13. Question: I just upgraded to v1.8.7+ and now my non-Admin web panel
+    users can't do anything and have no permissons! How do I fix?
+    - Answer: Simply go to the Edit Users page as an admin and manually re-set
+      the users permissions.
+    - Why? Yeah, sorry user perm data is stored as json string in DB and I
+      haven't come up with a good migration path for it yet, because json
+      schema for perms data is not tracked like normal DB schema is.
+

@@ -9,14 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Created new `ProcInfoService` singleton class for sharing `proc_info` objects.
-- Created new `BlocklistService` singleton class for handling login failure blocklist.
-- Created new `ControlService` class as service for interacting with controls data.
-- Created new `ConfigManager` class for handling main.conf ConfigParser stuff.
+- Add new `ProcInfoService` singleton class for sharing `proc_info` objects.
+- Add new `BlocklistService` singleton class for handling login failure blocklist.
+- Add new `ControlService` class as service for interacting with controls data.
+- Add new `ConfigManager` class for handling main.conf ConfigParser stuff.
 
 ### Changed
 
-- Renamed "Command" to "Controls" through projects source (where applicable).
+- Change user permission structure (**BREAKING CHANGE!** :warning: See FAQ 13)
+- Rename "Command" to "Controls" through projects source (where applicable).
 
 ### Fixed
 

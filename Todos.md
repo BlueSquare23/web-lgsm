@@ -270,11 +270,21 @@
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.
 
+* [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
+  - The `utils.py` file is the last big whale of a file that needs chopped up.
+  - This gives us an opportunity to do some basic redesigns in the process.
+    - There's a lot of stuff in the utils.py file that can be either turned
+      into new service classes, added to the existing database classes as
+      methods, or refactored away completely.
+    - There will still be some neutral true utils stuff remaining, but plan is
+      to significantly boil it down.
+    - See `docs/DESIGN_OOD.md` for more details about how.
+
 * [ ] **Write unit tests for new service layer classes before get too behind**
   - Gotta write tests for these:
-    * `BlocklistService`
-    * `ControlsService`
-    * `ProcInfoService`
+    * [ ] `BlocklistService`
+    * [ ] `ControlsService`
+    * [ ] `ProcInfoService`
 
 * [ ] **Make redirect to github on about page open in new tab.**
 

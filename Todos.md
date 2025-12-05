@@ -270,6 +270,103 @@
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.
 
+* [ ] **Experiment with alt architecture of system user management**
+  - SSH is great. But SSH to localhost is a dirty hack. A working dirty hack.
+    But still not ideal.
+  - I did this originally because its an easy way to handle user auth and
+    isolation. Also I wanted to add the ablity to admin remote machines so why
+    get 2 for 1.
+  - But as the project grows and I continue to re-architect other things, this
+    "solution" has become a hindrance.
+  - I need a different way to manage users on the system.
+  - **PROBLEM!**
+    - If I do it via sudo then I need to manage updating sudoers.d files again.
+      - Not terrible because I could just validate accepted users to give
+        access to and only allow create sudoers rules for those users. Template
+        it all, make it secure.
+      - But then also this isn't _Pythonic_
+        - Or perhaps could it be...
+    - So then real problem is, if we're not going to do it via some prebuild
+      access control mechanism like sudo, how tf are we going to do it?
+    - Option 1: **Root Daemon, Drop Privs**
+      - Yuck, I hate the idea of this already.
+    - Option 2: **Root Sudoers Script, Drop Privs**
+      - This is what we have already with the ansible connector.
+      - I'm not saying we overload the ansible connector with even more duties.
+        - Plus it'd be extreemly slow and not real time anymore to run it through
+          the connector.
+      - But this would be a new script using the same approach of user has
+        NOPASS access to run as root in order to drop privs, is what I mean.
+      - Thing is, this is also not very secure. I'm not even really happy with
+        the current design of the connector script. So the idea of building a
+        parallel channel that works the same way is not great...
+    - Option 3: **Magic Fairy Comes and does it for me!**
+      - I like this idea the best. Just then I don't have to do anything and
+        get to take all the credit!
+      - Problem is world too complex, nothing that simple.
+    - Option 4: **Ship python script to user, exec under their context via sudo**
+      - I'm liking this idea more and more. Basically install playbook would
+        setup not only the lgsm game server dir but also a web-lgsm dir as each
+        new system user.
+      - Then the python script would be invoked via sudo -u newuser still. But
+        it would be python -> shell -> python. Which imho is much better than
+        python -> shell + user input -> rce ya pwned.
+      - Actually, thinking about it, doesn't even need to be installed as that
+        user. Can be installed in system level dir and just that user has perms
+        to execute it.
+        - Yeah simplifies things a lot.
+      - The communication channel back could just be json.
+      - But how to send info hrrmm...
+        - Yeah client scripts wouldn't be able to access the DB as alt user so
+          they need to be sent any variable info the need.
+        - Well let's think a little bit more about what these system user client
+          scripts/functions/libs are going to need to do exactly...
+          - We're going to need one to read the game servers tmux socket file for
+            status indicators.
+          - One to edit crontab as the user (perhaps, have working version through connector, but its not great).
+          - One to run game server commands as new user (perhaps, might not need to wrap those tbh).
+          - One to find all config file paths for cfg editor.
+          - One for reading files as the user.
+          - One for writing files as the user.
+          - Potentially more for exploring files as the user in the future...
+        - So yeah they're going to need to be sent a lot of info.
+        - Which means I need a protocol / system that can do this. 
+        - Steps are:
+          - App runs script as user via sudo -u
+          - Data in via ??? (json?)
+          - Data out via ??? (json?)
+        - I kinda don't want to just use stdin and stdout because they're leaky,
+          unreliable, and I don't want to run long complicated commands via
+          subprocess.popen sudo -u. That's just ugly.
+        - So was thinking, maybe each user get's an API key or something, and
+          they can send data back via post to web app's API perhaps?
+        - But getting data back isn't really the problem. Its sending the data
+          in the first place, in a way that can be validated and locked down
+          made secure.
+          - Perhaps could do secure fetch via api or something, where client
+            code as new user gets url or id and fetches data via api first.
+        - But then that all sounds like overkill and I'd have to do api key
+          managment and stuff. Nahh I don't like via the web app api.
+        - Maybe there's some simple clever crytographic way I could sign the
+          data payloads or something so the client code knows this is a legit
+          request coming from web app. But tbh at this point not main prio,
+          since still better than existing ssh access to do whatever as other
+          users anyways.
+        - All this to me sounds like we need a new SysUserMgmtService class or
+          maybe multiple new classes.
+    - Going to use json sent via UNIX domain sockets for io.
+      - Mainly because I want to play around with Unix domain sockets but also
+        because with this approach we can restrict socket file access to
+        web-lgsm group members to make things easier yet still secure.
+  - **PLAN/SOLUTION**
+    - New script / module / something that is meant to be run as alt system users via sudo -u.
+    - New step to install playbook to add sudoers rule for web-lgsm -> new user automatically.
+    - Remove old steps for adding ssh keys n'@.
+    - Remove old route code for creating new ssh keys for installs.
+    - Going to use json sent via UNIX domain sockets for io.
+
+
+
 * [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
   - The `utils.py` file is the last big whale of a file that needs chopped up.
   - This gives us an opportunity to do some basic redesigns in the process.

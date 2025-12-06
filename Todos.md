@@ -366,6 +366,18 @@
     - Going to use json sent via UNIX domain sockets for io.
 
 
+* [ ] **Build IPC Bridge using Unix Domain Sockets for Communication b/w App & Sys User Scripts**
+  - Plan here is:
+    * App (via IPCSocketBridgeService) creates a new socket, binds to it in one thread.
+    * App then launches new scripty wrapy thingy for user client via sudo -u newuser /path/to/newthing.py.
+    * Client script connects to socket.
+    * Thread sends playload.
+    * Client receives payload and acts on it.
+    * Client returns results via re-used socket.
+    * Server gets response in thread.
+    * Thread cleans up socket file and dies.
+  - Sockets are owned, created, and cleaned up by App user.
+  - Socket files are group owned by web-lgsm group, allowing client to read and write.
 
 * [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
   - The `utils.py` file is the last big whale of a file that needs chopped up.
@@ -419,6 +431,15 @@
 * [ ] **Add reverse_proxy main.conf var to [server] section for setting name through rev proxy**
   - [ ] Then pipe this var through to API where it get's hostname and if
     `rev_proxy` name is set, use that instead.
+
+* [ ] **I need a public site for the project**
+  - Not only do I need to catch form posts for usage stats and crash reports,
+    but it'd be nice to have somewhere with all the links to be like yeah this
+    is legit.
+  - Basically can just be same as readme and about page.
+  - I'm thinking I just make a branch of the main flask app an spend a few
+    bucks on a .com.
+  - We can throw it up on my VPS at work its fine.
   
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
@@ -431,6 +452,12 @@
     - COPPA (Children's Online Privacy Protection Act)
   - So thinking maybe after initial install & login form pops up that says "do
     you want to send anonymous usage stats?"
+
+* [ ] **Crash reports**
+  - This kinda goes along with the usage stats. Might not really be easy. Idk I
+    might have to look at gunicorn and see if there's something we can do to
+    catch 500's and send a stack trace and maybe some anonomized vars dump back
+    to me somehow. (Email sucks so prolly just post to a site I control)
 
 * [ ] **For install list do sort by alpha two columns header**
   - At the top of the install page, add some buttons to sort by alphabetical

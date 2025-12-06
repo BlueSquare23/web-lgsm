@@ -12,12 +12,10 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import ControlService
+from app.services import ControlService, CommandExecService
 from app import cache
 
 from app.config.config_manager import ConfigManager
-config = ConfigManager()
-controls_service = ControlService()
 
 from . import main_bp
 
@@ -26,8 +24,10 @@ from . import main_bp
 @main_bp.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
-    global config
-    global controls_service
+    config = ConfigManager()
+    controls_service = ControlService()
+    command_service = CommandExecService(config)
+
     # Initialize forms
     send_cmd_form = SendCommandForm()
     controls_form = ServerControlForm()
@@ -211,27 +211,13 @@ def controls():
 
         flash("Sending command to console")
         audit_log_event(current_user.id, f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
-        if should_use_ssh(server):
-            daemon = Thread(
-                target=run_cmd_ssh,
-                args=(
-                    cmd,
-                    server,
-                    current_app.app_context(),
-                    None,
-                ),
-                daemon=True,
-                name="send",
-            )
-            daemon.start()
-            return redirect(url_for("main.controls", server_id=server_id))
 
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=run_cmd_popen,
-            args=(cmd, server_id, current_app.app_context()),
+            target=command_service.run_command,
+            args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="ConsoleCMD",
         )
@@ -258,26 +244,12 @@ def controls():
 
         audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
 
-        if should_use_ssh(server):
-            daemon = Thread(
-                target=run_cmd_ssh,
-                args=(
-                    cmd,
-                    server,
-                    current_app.app_context(),
-                ),
-                daemon=True,
-                name="Command",
-            )
-            daemon.start()
-            return redirect(url_for("main.controls", server_id=server_id))
-
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=run_cmd_popen,
-            args=(cmd, server_id, current_app.app_context()),
+            target=command_service.run_command,
+            args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="Command",
         )

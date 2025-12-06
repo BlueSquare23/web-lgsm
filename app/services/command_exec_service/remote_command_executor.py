@@ -3,6 +3,7 @@ import shlex
 import time
 import os
 from functools import lru_cache
+from flask import current_app
 from .command_executor import BaseCommandExecutor
 
 class SshCommandExecutor(BaseCommandExecutor):
@@ -78,11 +79,10 @@ class SshCommandExecutor(BaseCommandExecutor):
         pub_key_file = self._get_ssh_key_file(server.username, server.install_host)
 
         # App context needed for logging in threads.
+        print('########################' + str(app_context))
         if app_context:
             app_context.push()
 
-        from flask import current_app
-        
         safe_cmd = shlex.join(cmd)
         
         # Log info.
@@ -136,7 +136,6 @@ class SshCommandExecutor(BaseCommandExecutor):
     
     def _read_ssh_output(self, channel, proc_info):
         """Read output from SSH channel."""
-        from flask import current_app
         
         while True:
             # Read stdout if data is available.
@@ -193,5 +192,4 @@ class SshCommandExecutor(BaseCommandExecutor):
             
             # Log
             log_msg = self._log_wrap(output_type, line.strip())
-            from flask import current_app
             current_app.logger.debug(log_msg)

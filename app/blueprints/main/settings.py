@@ -13,16 +13,18 @@ from app.utils import *
 from app.forms.views import SettingsForm
 
 from app.config.config_manager import ConfigManager
-config = ConfigManager()
+from app.services import ControlService, CommandExecService
 
 from . import main_bp
+
 
 ######### Settings Page #########
 
 @main_bp.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    global config
+    config = ConfigManager()
+    command_service = CommandExecService(config)
 
     # Check if user has permissions to settings route.
     if not current_user.has_access("settings"):
@@ -127,8 +129,8 @@ def settings():
 
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=run_cmd_popen,
-            args=(cmd, str(uuid.uuid4()), current_app.app_context()),
+            target=command_service.run_command,
+            args=(cmd, None, str(uuid.uuid4()), current_app.app_context()),
             daemon=True,
             name="restart",
         )

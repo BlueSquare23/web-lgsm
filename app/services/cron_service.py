@@ -3,13 +3,14 @@ import shortuuid
 
 from cron_converter import Cron
 
+from app.config.config_manager import ConfigManager
 from app.models import GameServer, Job
-from app.utils import should_use_ssh, run_cmd_ssh, run_cmd_popen
 from app.utils.paths import PATHS
 from app import db
 
 # Has to be local import to avoid circular import
 from .proc_info_service.proc_info_service import ProcInfoService
+from ..services.command_exec_service.command_exec_service import CommandExecService
 
 """
 Service class interface for interacting with system cron from API and jobs
@@ -23,6 +24,9 @@ class CronService:
         "/opt/web-lgsm/bin/python",
         PATHS["ansible_connector"],
     ]
+
+    config = ConfigManager()
+    command_service = CommandExecService(config)
 
     def __init__(self, server_id):
         self.server_id = server_id 
@@ -64,7 +68,8 @@ class CronService:
         cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id]
 
         cmd_id = f'add_job_{cronjob.id}'
-        run_cmd_popen(cmd, cmd_id)
+        self.command_service.run_command(cmd, None, cmd_id)
+
         proc_info = ProcInfoService().get_process(cmd_id)
 
         if proc_info == None:
@@ -95,7 +100,7 @@ class CronService:
         cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id, "--delete", self.server_id]
 
         cmd_id = f'delete_job_{cronjob.id}'
-        run_cmd_popen(cmd, cmd_id)
+        self.command_service.run_command(cmd, None, cmd_id)
         proc_info = ProcInfoService().get_process(cmd_id)
 
         if proc_info == None:
@@ -125,10 +130,7 @@ class CronService:
         cmd_id = 'list_jobs'
         cmd = ['crontab', '-l']
 
-        if should_use_ssh(server):
-            run_cmd_ssh(cmd, server, False, 5.0, cmd_id) 
-        else:
-            run_cmd_popen(cmd, cmd_id)
+        self.command_service.run_command(cmd, server, cmd_id)
 
         proc_info = ProcInfoService().get_process(cmd_id)
 

@@ -10,7 +10,7 @@ class LocalCommandExecutor(BaseCommandExecutor):
         super().__init__()
         self.config = config
     
-    def run(self, cmd, cmd_id=None, app_context=False):
+    def run(self, cmd, cmd_id=None, app_context=False, timeout=False):
         """Execute command locally using subprocess.Popen."""
         if cmd_id is None:
             cmd_id = str(uuid.uuid4())

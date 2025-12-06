@@ -365,7 +365,7 @@
     - Remove old route code for creating new ssh keys for installs.
     - Going to use json sent via stdin and got via stdout.
 
-* [ ] **New Class for Command Execution Service**
+* [x] **New Class for Command Execution Service**
   - Before I get started with re-building the "run as other users" system, I
     want to modularize the command executor service.
   - So right now utils is bloated, blah blah blah.
@@ -375,6 +375,14 @@
   - Instead of casing on if local or remote in method and branching there, lets
     just pass in the cmd exec interface we need and it'll have the same methods
     for if ssh or if local exec.
+
+* [x] **Integrate new CommandExecService into app code**
+  - I made them work via backward compat `utils.py` functions for right now so
+    wouldn't have to change rest of the route code.
+  - But obv goal is to now just call CommandExecService directly from route
+    code and ditch utils file for that.
+  - Many things can just be a find and replace for `run_command` but the
+    stuff in threads, might need to think abt little bit.
 
 * [ ] **New Class for Running Alt Sys User Script**
   - We're going to have a new script that'll be the point of entry for all

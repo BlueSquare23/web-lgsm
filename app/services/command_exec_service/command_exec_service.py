@@ -24,7 +24,7 @@ class CommandExecService:
         """Get executor based on server type."""
         if server_type == 'local':
             return self.get_local_executor()
-        elif server_type == 'ssh':
+        elif server_type == 'remote':
             return self.get_ssh_executor()
         else:
             raise ValueError(f"Unknown server type: {server_type}")
@@ -36,7 +36,7 @@ class CommandExecService:
         
         Args:
             cmd (list): Command to execute
-            server: Server object (required for SSH, optional for local)
+            server (GameServer): Server object (required for ssh command)
             cmd_id (str): Optional command ID
             app_context: Flask app context for threads
             timeout: Command timeout
@@ -49,11 +49,27 @@ class CommandExecService:
         if server is None:
             # Local execution
             executor = self.get_local_executor()
-            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, 
-                              timeout=timeout, **kwargs)
-        else:
+            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, **kwargs)
+
+# TODO: Remove this code block once remote executor only used for remote systems.
+# Hack until other code exists to do non same user via local executor.
+        import getpass
+        USER = getpass.getuser()
+        if server.install_type == 'local':
+            if server.username == USER:
+                # Local execution
+                executor = self.get_local_executor()
+                return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, **kwargs)
+            else:
+                # SSH execution
+                executor = self.get_ssh_executor()
+                return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, server=server, **kwargs)
+                
+
+        if server.install_type == 'remote':
             # SSH execution
             executor = self.get_ssh_executor()
-            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, 
-                              timeout=timeout, server=server, **kwargs)
+            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, server=server, **kwargs)
 
+        else:
+            raise ValueError(f"Unable to get executor for server.install_type: {server.install_type}")

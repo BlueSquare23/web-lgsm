@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add new `CommandExecService` class for handling local and remote command execs.
 - Add new `ProcInfoService` singleton class for sharing `proc_info` objects.
 - Add new `BlocklistService` singleton class for handling login failure blocklist.
 - Add new `ControlService` class as service for interacting with controls data.

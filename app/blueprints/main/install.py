@@ -26,7 +26,8 @@ VENV = "/opt/web-lgsm/"
 from app.utils.paths import PATHS
 
 from app.config.config_manager import ConfigManager
-config = ConfigManager()
+
+from app.services import CommandExecService
 
 from . import main_bp
 
@@ -35,6 +36,9 @@ from . import main_bp
 @main_bp.route("/install", methods=["GET", "POST"])
 @login_required
 def install():
+    config = ConfigManager()
+    command_service = CommandExecService(config)
+
     # Check if user has permissions to install route.
     if not current_user.has_access("install"):
         flash("Your user does not have access to this page", category="error")
@@ -191,8 +195,8 @@ def install():
     current_app.logger.info(log_wrap("all processes", ProcInfoService().get_all_processes()))
 
     install_daemon = Thread(
-        target=run_cmd_popen,
-        args=(cmd, server_id, current_app.app_context()),
+        target=command_service.run_command,
+        args=(cmd, None, server.id, current_app.app_context()),
         daemon=True,
         name=f"web_lgsm_install_{server_id}",
     )

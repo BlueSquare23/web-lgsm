@@ -4,15 +4,19 @@ from flask import Response
 from flask_login import login_required, current_user
 from flask_restful import Resource
 
+from app.config.config_manager import ConfigManager
 from app.utils import *
 from app.models import GameServer
-from app.services import ProcInfoService
+from app.services import ProcInfoService, CommandExecService
 
 from . import api
 
 ######### API Update Console #########
 
 class UpdateConsole(Resource):
+    config = ConfigManager()
+    command_service = CommandExecService(config)
+
     @login_required
     def post(self, server_id):
         if not current_user.has_access("update-console"):
@@ -50,11 +54,7 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        if should_use_ssh(server):
-            run_cmd_ssh(cmd, server)
-        else:
-            run_cmd_popen(cmd, server.id)
-
+        command_service.run_command(cmd, server, server.id)
         proc_info = ProcInfoService().get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:

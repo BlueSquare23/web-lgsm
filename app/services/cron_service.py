@@ -9,7 +9,7 @@ from app.utils.paths import PATHS
 from app import db
 
 # Has to be local import to avoid circular import
-from .proc_info_service import ProcInfoService
+from .proc_info_service.proc_info_service import ProcInfoService
 
 """
 Service class interface for interacting with system cron from API and jobs

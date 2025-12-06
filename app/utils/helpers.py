@@ -57,107 +57,119 @@ def log_wrap(item_name, item):
     log_msg = f"{item_name} {str(type(item))}: {item}"
     return log_msg
 
-
-def process_popen_output(proc, proc_info, output_type):
-    """
-    Reads stdout & stderr from proc subprocess object to parse it and append it
-    to proc_info object.
-
-    Args:
-        proc (subprocess.Popen): Process object to squeeze stdout/stderr out of.
-        proc_info (ProcInfoVessel): Object for holding info about process.
-        output_type (str): Output stream we're parsing.
-
-    Returns:
-        None: Just fills out ProcInfoVessel objects text fields with parsed text.
-    """
-    global config
-
-    while True:
-        if output_type == "stdout":
-            out_line = proc.stdout.read1().decode("utf-8")
-        else:
-            out_line = proc.stderr.read1().decode("utf-8")
-
-        if not out_line:
-            break
-
-        for rline in out_line.split("\r"):
-            if rline == "":
-                continue
-
-            # Add back in carriage returns, ignoring lines terminated with a newline.
-            if not rline.endswith("\r") and not rline.endswith("\n"):
-                rline = rline + "\r"
-
-            for line in rline.split("\n"):
-                if line == "":
-                    continue
-
-                # Add back in newlines, ignoring lines terminated with a carriage return.
-                if not line.endswith("\n") and not line.endswith("\r"):
-                    line = line + "\n"
-
-                # Add the newlines for optional old-style setting.
-                if config.getboolean('settings', 'end_in_newlines'):
-                    if not line.endswith("\n"):
-                        line = line + "\n"
-
-                if output_type == "stdout":
-                    proc_info.stdout.append(line)
-                    log_msg = log_wrap("stdout", line.replace("\n", ""))
-                    current_app.logger.debug(log_msg)
-
-                else:
-                    proc_info.stderr.append(line)
-                    log_msg = log_wrap("stderr", line.replace("\n", ""))
-                    current_app.logger.debug(log_msg)
-
-
 def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
     """
-    General purpose subprocess.Popen wrapper function. Keeps track of processes
-    stdout, stderr, pid, and other info via ProcInfo object.
-
-    Args:
-        cmd (list): Command to be run via subprocess.Popen.
-        cmd_id (str): Optional cmd_id to associate proc_info obj w/.
-        app_context (AppContext): Optional Current app context needed for
-                                  logging in a thread.
-
-    Returns:
-        None: Doesn't return anything, just updates ProcInfoVessel object.
+    Wrapper for backward compatibility.
     """
-    from app.services import ProcInfoService
-    proc_info = ProcInfoService().get_process(cmd_id, create=True)
+    from app.services import CommandExecService
 
-    if config.getboolean('settings', 'clear_output_on_reload'):
-        proc_info.stdout.clear()
-        proc_info.stderr.clear()
+    config = ConfigManager()
+    
+    service = CommandExecService(config)
+    executor = service.get_executor('local')
+    
+    return executor.run(cmd, cmd_id, app_context)
 
-    # Set lock flag to true.
-    proc_info.process_lock = True
-
-    # App context needed for logging in threads.
-    if app_context:
-        app_context.push()
-
-    current_app.logger.info(log_wrap("cmd", cmd))
-
-    # Subprocess call, Bytes mode, not buffered.
-    proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, bufsize=-1
-    )
-
-    proc_info.pid = proc.pid
-
-    process_popen_output(proc, proc_info, "stdout")
-    process_popen_output(proc, proc_info, "stderr")
-
-    proc_info.exit_status = proc.wait()
-
-    # Reset process_lock flag.
-    proc_info.process_lock = False
+#def process_popen_output(proc, proc_info, output_type):
+#    """
+#    Reads stdout & stderr from proc subprocess object to parse it and append it
+#    to proc_info object.
+#
+#    Args:
+#        proc (subprocess.Popen): Process object to squeeze stdout/stderr out of.
+#        proc_info (ProcInfoVessel): Object for holding info about process.
+#        output_type (str): Output stream we're parsing.
+#
+#    Returns:
+#        None: Just fills out ProcInfoVessel objects text fields with parsed text.
+#    """
+#    global config
+#
+#    while True:
+#        if output_type == "stdout":
+#            out_line = proc.stdout.read1().decode("utf-8")
+#        else:
+#            out_line = proc.stderr.read1().decode("utf-8")
+#
+#        if not out_line:
+#            break
+#
+#        for rline in out_line.split("\r"):
+#            if rline == "":
+#                continue
+#
+#            # Add back in carriage returns, ignoring lines terminated with a newline.
+#            if not rline.endswith("\r") and not rline.endswith("\n"):
+#                rline = rline + "\r"
+#
+#            for line in rline.split("\n"):
+#                if line == "":
+#                    continue
+#
+#                # Add back in newlines, ignoring lines terminated with a carriage return.
+#                if not line.endswith("\n") and not line.endswith("\r"):
+#                    line = line + "\n"
+#
+#                # Add the newlines for optional old-style setting.
+#                if config.getboolean('settings', 'end_in_newlines'):
+#                    if not line.endswith("\n"):
+#                        line = line + "\n"
+#
+#                if output_type == "stdout":
+#                    proc_info.stdout.append(line)
+#                    log_msg = log_wrap("stdout", line.replace("\n", ""))
+#                    current_app.logger.debug(log_msg)
+#
+#                else:
+#                    proc_info.stderr.append(line)
+#                    log_msg = log_wrap("stderr", line.replace("\n", ""))
+#                    current_app.logger.debug(log_msg)
+#
+#
+#def run_cmd_popen(cmd, cmd_id=str(uuid.uuid4()), app_context=False):
+#    """
+#    General purpose subprocess.Popen wrapper function. Keeps track of processes
+#    stdout, stderr, pid, and other info via ProcInfo object.
+#
+#    Args:
+#        cmd (list): Command to be run via subprocess.Popen.
+#        cmd_id (str): Optional cmd_id to associate proc_info obj w/.
+#        app_context (AppContext): Optional Current app context needed for
+#                                  logging in a thread.
+#
+#    Returns:
+#        None: Doesn't return anything, just updates ProcInfoVessel object.
+#    """
+#    from app.services import ProcInfoService
+#    proc_info = ProcInfoService().get_process(cmd_id, create=True)
+#
+#    if config.getboolean('settings', 'clear_output_on_reload'):
+#        proc_info.stdout.clear()
+#        proc_info.stderr.clear()
+#
+#    # Set lock flag to true.
+#    proc_info.process_lock = True
+#
+#    # App context needed for logging in threads.
+#    if app_context:
+#        app_context.push()
+#
+#    current_app.logger.info(log_wrap("cmd", cmd))
+#
+#    # Subprocess call, Bytes mode, not buffered.
+#    proc = subprocess.Popen(
+#        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, bufsize=-1
+#    )
+#
+#    proc_info.pid = proc.pid
+#
+#    process_popen_output(proc, proc_info, "stdout")
+#    process_popen_output(proc, proc_info, "stderr")
+#
+#    proc_info.exit_status = proc.wait()
+#
+#    # Reset process_lock flag.
+#    proc_info.process_lock = False
 
 
 def cancel_install(pid):

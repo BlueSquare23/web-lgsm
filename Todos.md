@@ -354,30 +354,38 @@
           users anyways.
         - All this to me sounds like we need a new SysUserMgmtService class or
           maybe multiple new classes.
-    - Going to use json sent via UNIX domain sockets for io.
-      - Mainly because I want to play around with Unix domain sockets but also
-        because with this approach we can restrict socket file access to
-        web-lgsm group members to make things easier yet still secure.
+    - Going to use json sent via stdin and got via stdout
+      - I contemplated using domain sockets and having two daemons and even
+        built a little poc with a couple of scripts. But this is all overkill.
+      - Just Keep it simple stupid, json via normal input output streams.
   - **PLAN/SOLUTION**
-    - New script / module / something that is meant to be run as alt system users via sudo -u.
+    - New script & module that is meant to be run as alt system users via sudo -u.
     - New step to install playbook to add sudoers rule for web-lgsm -> new user automatically.
     - Remove old steps for adding ssh keys n'@.
     - Remove old route code for creating new ssh keys for installs.
-    - Going to use json sent via UNIX domain sockets for io.
+    - Going to use json sent via stdin and got via stdout.
 
+* [ ] **New Class for Command Execution Service**
+  - Before I get started with re-building the "run as other users" system, I
+    want to modularize the command executor service.
+  - So right now utils is bloated, blah blah blah.
+  - I think we can do this new cmd exec service in a clever way. We want it to
+    do both remote ssh execs, and local same user execs.
+  - So let's use dependency inversion!
+  - Instead of casing on if local or remote in method and branching there, lets
+    just pass in the cmd exec interface we need and it'll have the same methods
+    for if ssh or if local exec.
 
-* [ ] **Build IPC Bridge using Unix Domain Sockets for Communication b/w App & Sys User Scripts**
-  - Plan here is:
-    * App (via IPCSocketBridgeService) creates a new socket, binds to it in one thread.
-    * App then launches new scripty wrapy thingy for user client via sudo -u newuser /path/to/newthing.py.
-    * Client script connects to socket.
-    * Thread sends playload.
-    * Client receives payload and acts on it.
-    * Client returns results via re-used socket.
-    * Server gets response in thread.
-    * Thread cleans up socket file and dies.
-  - Sockets are owned, created, and cleaned up by App user.
-  - Socket files are group owned by web-lgsm group, allowing client to read and write.
+* [ ] **New Class for Running Alt Sys User Script**
+  - We're going to have a new script that'll be the point of entry for all
+    things that need done as alt users.
+  - All the alt user controls will be handled on the app side by new
+    SysUserMgmtService (name not final).
+  - "Client side" class (for lack of better word) will be ManageUser class (or something like that).
+  - So it'll go:
+    - `App -> SysUserMgmtService -> sudo -u newuser /path/to/user_mgmt.py -> ManageUser`
+  - And then we'll just keep it simple and do everything through json stdin, stdout.
+
 
 * [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
   - The `utils.py` file is the last big whale of a file that needs chopped up.

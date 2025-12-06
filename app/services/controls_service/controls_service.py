@@ -1,5 +1,5 @@
 import json
-from app.services.control import Control 
+from .control import Control 
 from app.config.config_manager import ConfigManager
 
 class ControlService:

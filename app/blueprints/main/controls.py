@@ -12,7 +12,7 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services.controls_service import ControlService
+from app.services import ControlService
 from app import cache
 
 from app.config.config_manager import ConfigManager

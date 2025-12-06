@@ -13,8 +13,7 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, JobsForm
-from app.services.cron_service import CronService
-from app.services.controls_service import ControlService
+from app.services import CronService, ControlService
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()

@@ -1,4 +1,5 @@
 from .local_command_executor import LocalCommandExecutor
+from .remote_command_executor import SshCommandExecutor
 
 class CommandExecService:
     """Service for command execution with dependency injection."""
@@ -13,12 +14,46 @@ class CommandExecService:
             self._executors['local'] = LocalCommandExecutor(self.config)
         return self._executors['local']
     
-    def get_executor(self, server_type='local'):
+    def get_ssh_executor(self):
+        """Get SSH command executor."""
+        if 'ssh' not in self._executors:
+            self._executors['ssh'] = SshCommandExecutor(self.config)
+        return self._executors['ssh']
+    
+    def get_executor(self, server_type='local', **kwargs):
         """Get executor based on server type."""
         if server_type == 'local':
             return self.get_local_executor()
         elif server_type == 'ssh':
-            # This will be implemented later for SSH
-            raise NotImplementedError("SSH executor not implemented yet")
+            return self.get_ssh_executor()
         else:
             raise ValueError(f"Unknown server type: {server_type}")
+    
+    def run_command(self, cmd, server=None, cmd_id=None, app_context=False, 
+                   timeout=None, **kwargs):
+        """
+        Unified command execution interface.
+        
+        Args:
+            cmd (list): Command to execute
+            server: Server object (required for SSH, optional for local)
+            cmd_id (str): Optional command ID
+            app_context: Flask app context for threads
+            timeout: Command timeout
+            **kwargs: Additional executor-specific arguments
+        
+        Returns:
+            Process info or boolean result
+        """
+        # Determine executor type
+        if server is None:
+            # Local execution
+            executor = self.get_local_executor()
+            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, 
+                              timeout=timeout, **kwargs)
+        else:
+            # SSH execution
+            executor = self.get_ssh_executor()
+            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, 
+                              timeout=timeout, server=server, **kwargs)
+

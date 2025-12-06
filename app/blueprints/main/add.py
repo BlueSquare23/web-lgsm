@@ -139,15 +139,18 @@ def add():
             f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
         )
 
-    if should_use_ssh(server) and new_server:
-        keyfile = get_ssh_key_file(username, server.install_host)
-        if keyfile == None:
-            flash(f"Problem generating new ssh keys!", category="error")
-            return redirect(url_for("main.add"))
-
-        flash(
-            f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
-        )
+    # TODO: Change this to use just type remote for flashing message about
+    # creating new key.
+# This is going away because will no longer be using ssh to admin local servers.
+#    if should_use_ssh(server) and new_server:
+#        keyfile = get_ssh_key_file(username, server.install_host)
+#        if keyfile == None:
+#            flash(f"Problem generating new ssh keys!", category="error")
+#            return redirect(url_for("main.add"))
+#
+#        flash(
+#            f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
+#        )
 
     if new_server:
         db.session.add(server)

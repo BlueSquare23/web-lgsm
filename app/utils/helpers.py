@@ -894,235 +894,257 @@ def is_ssh_accessible(hostname):
         sock.close()
 
 
-def generate_ecdsa_ssh_keypair(key_name):
-    """
-    Wraps the ssh-keygen shell util to generate a 256 bit ecdsa ssh key.
-
-    Args:
-        key_name (str): Name of key files to be generated.
-
-    Returns:
-        bool: True if key files created successfully, False otherwise.
-    """
-
-    from app.services import ProcInfoService
-    key_path = os.path.expanduser(f"~/.ssh/{key_name}")
-    key_size = 256
-
-    # Build ssh-keygen command.
-    cmd = [
-        PATHS["ssh-keygen"],
-        "-t",
-        "ecdsa",
-        "-b",
-        str(key_size),
-        "-f",
-        key_path,
-        "-N",
-        "",
-    ]
-
-    cmd_id = "generate_ecdsa_ssh_keypair"
-    run_cmd_popen(cmd, cmd_id)
-
-    proc_info = ProcInfoService().get_process(cmd_id)
-    if proc_info == None:
-        return False
-
-    if proc_info.exit_status > 0:
-        return False
-
-    return True
-
-
-def get_ssh_key_file(user, host):
-    """
-    Fetches ssh private key file for user:host from ~/.ssh. If user:host key
-    does not exist yet, it creates one.
-
-    Args:
-        user (str): Username of remote user.
-        host (str): Hostname of remote server.
-
-    Returns:
-        str: Path to public ssh key file for user:host.
-    """
-    home_dir = os.path.expanduser("~")
-    ssh_dir = os.path.join(home_dir, ".ssh")
-    if not os.path.isdir(ssh_dir):
-        os.mkdir(ssh_dir, mode=0o700)
-
-    all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith(".pub")]
-
-    key_name = f"id_ecdsa_{user}_{host}"
-
-    # If no key files for user@server yet, create new one.
-    if key_name + ".pub" not in all_pub_keys:
-        # Log keygen failures.
-        if not generate_ecdsa_ssh_keypair(key_name):
-            log_msg = f"Failed to generate new key pair for {user}:{host}!"
-            current_app.logger.info(log_msg)
-            return
-
-    keyfile = os.path.join(ssh_dir, key_name)
-    return keyfile
-
-
-@lru_cache(maxsize=32)
-def _get_ssh_client(hostname, username, key_filename):
-    """
-    Cache ssh connection objects using lru_cache from functools. 
-    """
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(hostname, 
-        username=username,
-        key_filename=key_filename,
-        timeout=3,
-        look_for_keys=False, 
-        allow_agent=False
-    )
-
-    # Verify connection is alive.
-    try:
-        client.exec_command("echo 'healthcheck'", timeout=2)
-        return client
-    except:
-        client.close()
-        raise
-
-
 def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
     """
-    Runs remote commands over ssh to admin game servers.
-
-    Args:
-        cmd (list): Command to run over SSH.
-        server (GameServer): Game server associated with machine to ssh into.
-        app_context (AppContext): Optional Current app context needed for
-                                  logging in a thread.
-        timeout (float): Timeout in seconds for ssh command. None = no timeout.
-        opt_id (str): Optional alternative ID to use for storing process info.
-                      Will be used instead of server.id.
-
-    Returns:
-        bool: True if command runs successfully, False otherwise.
+    Wrapper for backward compatibility.
     """
-
-    from app.services import ProcInfoService
-    hostname = server.install_host
-    username = server.username
+    from app.services import CommandExecService
+    
+    config = ConfigManager()
+    
+    service = CommandExecService(config)
+    
     cmd_id = server.id
     if opt_id:
         cmd_id = opt_id
+    
+    return service.run_command(
+        cmd=cmd,
+        server=server,
+        cmd_id=cmd_id,
+        app_context=app_context,
+        timeout=timeout
+    )
 
-    proc_info = ProcInfoService().get_process(cmd_id, create=True)
-
-    pub_key_file = get_ssh_key_file(server.username, server.install_host)
-
-    if config.getboolean('settings', 'clear_output_on_reload'):
-        proc_info.stdout.clear()
-        proc_info.stderr.clear()
-
-    # App context needed for logging in threads.
-    if app_context:
-        app_context.push()
-
-    safe_cmd = shlex.join(cmd)
-
-    # Log info.
-    current_app.logger.debug(log_wrap("proc_info pre ssh cmd:", proc_info))
-    current_app.logger.info(cmd)
-    current_app.logger.info(safe_cmd)
-    current_app.logger.info(hostname)
-    current_app.logger.info(username)
-    current_app.logger.info(pub_key_file)
-    current_app.logger.info("pre stdout: " + str(proc_info.stdout))
-    current_app.logger.info("pre stderr: " + str(proc_info.stderr))
-
-    try:
-        client = _get_ssh_client(hostname, username, pub_key_file)
-
-        proc_info.process_lock = True
-        # Open a new session and request a PTY.
-        channel = client.get_transport().open_session()
-        channel.set_combine_stderr(False)
-        channel.exec_command(safe_cmd)
-
-        # Optionally set timeout (if provided).
-        if timeout:
-            channel.settimeout(timeout)
-
-        while True:
-            # Read stdout if data is available.
-            if channel.recv_ready():
-                stdout_chunk = channel.recv(8192).decode("utf-8")
-                stdout_lines = stdout_chunk.splitlines(keepends=True)
-                for line in stdout_lines:
-                    if line == "\r\n":
-                        continue
-                    if line not in proc_info.stdout:
-                        if config.getboolean('settings', 'end_in_newlines') and not (
-                            line.endswith("\n") or line.endswith("\r")
-                        ):
-                            line += "\n"
-                        proc_info.stdout.append(line)
-                        log_msg = log_wrap("stdout", line.strip())
-                        current_app.logger.debug(log_msg)
-
-            if channel.recv_stderr_ready():
-                stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
-                stderr_lines = stderr_chunk.splitlines(keepends=True)
-                for line in stderr_lines:
-                    if line == "\r\n":
-                        continue
-                    if line not in proc_info.stderr:
-                        if config.getboolean('settings', 'end_in_newlines') and not (
-                            line.endswith("\n") or line.endswith("\r")
-                        ):
-                            line += "\n"
-                        proc_info.stderr.append(line)
-                        log_msg = log_wrap("stderr", line.strip())
-                        current_app.logger.debug(log_msg)
-
-            # Break the loop if the command has finished.
-            if channel.exit_status_ready():
-                # Ensure any remaining stderr and stdout are captured.
-                while channel.recv_stderr_ready():
-                    stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
-                    proc_info.stderr.append(stderr_chunk)
-
-                while channel.recv_ready():
-                    stdout_chunk = channel.recv(8192).decode("utf-8")
-                    proc_info.stdout.append(stdout_chunk)
-
-                break
-
-            # Keep CPU from burning.
-            time.sleep(0.1)
-
-        # Wait for the command to finish and get the exit status.
-        proc_info.exit_status = channel.recv_exit_status()
-        proc_info.process_lock = False
-        ret_status = True
-
-    except paramiko.SSHException as e:
-        current_app.logger.debug(str(e))
-        proc_info.stderr.append(str(e))
-        proc_info.exit_status = 5
-        proc_info.process_lock = False
-        ret_status = False
-
-    except TimeoutError as e:
-        current_app.logger.debug(str(e))
-        proc_info.stderr.append(str(e))
-        proc_info.exit_status = 7
-        proc_info.process_lock = False
-        ret_status = False
-
-    finally:
+#def generate_ecdsa_ssh_keypair(key_name):
+#    """
+#    Wraps the ssh-keygen shell util to generate a 256 bit ecdsa ssh key.
+#
+#    Args:
+#        key_name (str): Name of key files to be generated.
+#
+#    Returns:
+#        bool: True if key files created successfully, False otherwise.
+#    """
+#
+#    from app.services import ProcInfoService
+#    key_path = os.path.expanduser(f"~/.ssh/{key_name}")
+#    key_size = 256
+#
+#    # Build ssh-keygen command.
+#    cmd = [
+#        PATHS["ssh-keygen"],
+#        "-t",
+#        "ecdsa",
+#        "-b",
+#        str(key_size),
+#        "-f",
+#        key_path,
+#        "-N",
+#        "",
+#    ]
+#
+#    cmd_id = "generate_ecdsa_ssh_keypair"
+#    run_cmd_popen(cmd, cmd_id)
+#
+#    proc_info = ProcInfoService().get_process(cmd_id)
+#    if proc_info == None:
+#        return False
+#
+#    if proc_info.exit_status > 0:
+#        return False
+#
+#    return True
+#
+#
+#def get_ssh_key_file(user, host):
+#    """
+#    Fetches ssh private key file for user:host from ~/.ssh. If user:host key
+#    does not exist yet, it creates one.
+#
+#    Args:
+#        user (str): Username of remote user.
+#        host (str): Hostname of remote server.
+#
+#    Returns:
+#        str: Path to public ssh key file for user:host.
+#    """
+#    home_dir = os.path.expanduser("~")
+#    ssh_dir = os.path.join(home_dir, ".ssh")
+#    if not os.path.isdir(ssh_dir):
+#        os.mkdir(ssh_dir, mode=0o700)
+#
+#    all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith(".pub")]
+#
+#    key_name = f"id_ecdsa_{user}_{host}"
+#
+#    # If no key files for user@server yet, create new one.
+#    if key_name + ".pub" not in all_pub_keys:
+#        # Log keygen failures.
+#        if not generate_ecdsa_ssh_keypair(key_name):
+#            log_msg = f"Failed to generate new key pair for {user}:{host}!"
+#            current_app.logger.info(log_msg)
+#            return
+#
+#    keyfile = os.path.join(ssh_dir, key_name)
+#    return keyfile
+#
+#
+#@lru_cache(maxsize=32)
+#def _get_ssh_client(hostname, username, key_filename):
+#    """
+#    Cache ssh connection objects using lru_cache from functools. 
+#    """
+#    client = paramiko.SSHClient()
+#    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#    client.connect(hostname, 
+#        username=username,
+#        key_filename=key_filename,
+#        timeout=3,
+#        look_for_keys=False, 
+#        allow_agent=False
+#    )
+#
+#    # Verify connection is alive.
+#    try:
+#        client.exec_command("echo 'healthcheck'", timeout=2)
+#        return client
+#    except:
 #        client.close()
-        return ret_status
+#        raise
+#
+#
+#def run_cmd_ssh(cmd, server, app_context=False, timeout=5.0, opt_id=None):
+#    """
+#    Runs remote commands over ssh to admin game servers.
+#
+#    Args:
+#        cmd (list): Command to run over SSH.
+#        server (GameServer): Game server associated with machine to ssh into.
+#        app_context (AppContext): Optional Current app context needed for
+#                                  logging in a thread.
+#        timeout (float): Timeout in seconds for ssh command. None = no timeout.
+#        opt_id (str): Optional alternative ID to use for storing process info.
+#                      Will be used instead of server.id.
+#
+#    Returns:
+#        bool: True if command runs successfully, False otherwise.
+#    """
+#
+#    from app.services import ProcInfoService
+#    hostname = server.install_host
+#    username = server.username
+#    cmd_id = server.id
+#    if opt_id:
+#        cmd_id = opt_id
+#
+#    proc_info = ProcInfoService().get_process(cmd_id, create=True)
+#
+#    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+#
+#    if config.getboolean('settings', 'clear_output_on_reload'):
+#        proc_info.stdout.clear()
+#        proc_info.stderr.clear()
+#
+#    # App context needed for logging in threads.
+#    if app_context:
+#        app_context.push()
+#
+#    safe_cmd = shlex.join(cmd)
+#
+#    # Log info.
+#    current_app.logger.debug(log_wrap("proc_info pre ssh cmd:", proc_info))
+#    current_app.logger.info(cmd)
+#    current_app.logger.info(safe_cmd)
+#    current_app.logger.info(hostname)
+#    current_app.logger.info(username)
+#    current_app.logger.info(pub_key_file)
+#    current_app.logger.info("pre stdout: " + str(proc_info.stdout))
+#    current_app.logger.info("pre stderr: " + str(proc_info.stderr))
+#
+#    try:
+#        client = _get_ssh_client(hostname, username, pub_key_file)
+#
+#        proc_info.process_lock = True
+#        # Open a new session and request a PTY.
+#        channel = client.get_transport().open_session()
+#        channel.set_combine_stderr(False)
+#        channel.exec_command(safe_cmd)
+#
+#        # Optionally set timeout (if provided).
+#        if timeout:
+#            channel.settimeout(timeout)
+#
+#        while True:
+#            # Read stdout if data is available.
+#            if channel.recv_ready():
+#                stdout_chunk = channel.recv(8192).decode("utf-8")
+#                stdout_lines = stdout_chunk.splitlines(keepends=True)
+#                for line in stdout_lines:
+#                    if line == "\r\n":
+#                        continue
+#                    if line not in proc_info.stdout:
+#                        if config.getboolean('settings', 'end_in_newlines') and not (
+#                            line.endswith("\n") or line.endswith("\r")
+#                        ):
+#                            line += "\n"
+#                        proc_info.stdout.append(line)
+#                        log_msg = log_wrap("stdout", line.strip())
+#                        current_app.logger.debug(log_msg)
+#
+#            if channel.recv_stderr_ready():
+#                stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
+#                stderr_lines = stderr_chunk.splitlines(keepends=True)
+#                for line in stderr_lines:
+#                    if line == "\r\n":
+#                        continue
+#                    if line not in proc_info.stderr:
+#                        if config.getboolean('settings', 'end_in_newlines') and not (
+#                            line.endswith("\n") or line.endswith("\r")
+#                        ):
+#                            line += "\n"
+#                        proc_info.stderr.append(line)
+#                        log_msg = log_wrap("stderr", line.strip())
+#                        current_app.logger.debug(log_msg)
+#
+#            # Break the loop if the command has finished.
+#            if channel.exit_status_ready():
+#                # Ensure any remaining stderr and stdout are captured.
+#                while channel.recv_stderr_ready():
+#                    stderr_chunk = channel.recv_stderr(8192).decode("utf-8")
+#                    proc_info.stderr.append(stderr_chunk)
+#
+#                while channel.recv_ready():
+#                    stdout_chunk = channel.recv(8192).decode("utf-8")
+#                    proc_info.stdout.append(stdout_chunk)
+#
+#                break
+#
+#            # Keep CPU from burning.
+#            time.sleep(0.1)
+#
+#        # Wait for the command to finish and get the exit status.
+#        proc_info.exit_status = channel.recv_exit_status()
+#        proc_info.process_lock = False
+#        ret_status = True
+#
+#    except paramiko.SSHException as e:
+#        current_app.logger.debug(str(e))
+#        proc_info.stderr.append(str(e))
+#        proc_info.exit_status = 5
+#        proc_info.process_lock = False
+#        ret_status = False
+#
+#    except TimeoutError as e:
+#        current_app.logger.debug(str(e))
+#        proc_info.stderr.append(str(e))
+#        proc_info.exit_status = 7
+#        proc_info.process_lock = False
+#        ret_status = False
+#
+#    finally:
+##        client.close()
+#        return ret_status
 
 
 def read_file_over_ssh(server, file_path):

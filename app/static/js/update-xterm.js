@@ -119,5 +119,5 @@ if (typeof serverId === 'undefined' || serverId === null || !serverId) {
 } else {
   var interval = setInterval(function() {
     updateTerminal(serverId);
-  }, 500);
+  }, 1000);
 }

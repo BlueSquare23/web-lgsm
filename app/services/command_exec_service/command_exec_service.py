@@ -1,8 +1,12 @@
+import getpass
 from .local_command_executor import LocalCommandExecutor
 from .remote_command_executor import SshCommandExecutor
+from app.utils.paths import PATHS
+from app.models import GameServer
 
 class CommandExecService:
     """Service for command execution with dependency injection."""
+    USER = getpass.getuser()
     
     def __init__(self, config):
         self.config = config
@@ -43,33 +47,44 @@ class CommandExecService:
             **kwargs: Additional executor-specific arguments
         
         Returns:
-            Process info or boolean result
+            Process info or boolean result  (TODO: Make just bool, proc_info should all go in ProcInfoService singleton and fetched via IDs)
         """
-        # Determine executor type
+
+        args = {
+            "cmd": cmd, 
+            "cmd_id": cmd_id,
+            "app_context": app_context,
+            "timeout": timeout,
+            **kwargs
+        }
+
         if server is None:
-            # Local execution
+            args["server"] = None
             executor = self.get_local_executor()
-            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, **kwargs)
-
-# TODO: Remove this code block once remote executor only used for remote systems.
-# Hack until other code exists to do non same user via local executor.
-        import getpass
-        USER = getpass.getuser()
-        if server.install_type == 'local':
-            if server.username == USER:
-                # Local execution
-                executor = self.get_local_executor()
-                return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, **kwargs)
-            else:
-                # SSH execution
-                executor = self.get_ssh_executor()
-                return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, server=server, **kwargs)
-                
-
-        if server.install_type == 'remote':
-            # SSH execution
-            executor = self.get_ssh_executor()
-            return executor.run(cmd, cmd_id=cmd_id, app_context=app_context, timeout=timeout, server=server, **kwargs)
-
         else:
-            raise ValueError(f"Unable to get executor for server.install_type: {server.install_type}")
+            assert isinstance(server, GameServer), "server is not an instance of GameServer"
+            executor = self.get_executor(server.install_type)
+
+        # Prepend sudo stuff for local non-same user installs.
+        if server.install_type == 'local' and server.username != CommandExecService.USER:
+            cmd = [
+                PATHS["sudo"],
+                "-n",
+                "-u",
+                server.username,
+            ] + cmd
+                
+        # Prepend docker stuff.
+        if server.install_type == 'docker':
+            cmd = [
+                PATHS["sudo"],
+                "-n",
+                PATHS["docker"],
+                "exec",
+                "--user",
+                server.username,
+                server.script_name,
+            ] + cmd
+ 
+        return executor.run(**args)
+

@@ -88,7 +88,11 @@ def controls():
 
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
-            cfg_paths = find_cfg_paths(server)
+
+            from app.services import CfgManagerService
+            #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
+            cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+            cfg_paths = cfg_manager.find_cfg_paths(server)
 
             if cfg_paths == "failed":
                 flash("Error reading accepted_cfgs.json!", category="error")
@@ -157,10 +161,11 @@ def controls():
         cfg_paths = []
     else:
         current_app.logger.info("Getting cfg_paths")
-        cfg_paths = find_cfg_paths(server)
-        if cfg_paths == "failed":
-            flash("Error reading accepted_cfgs.json!", category="error")
-            cfg_paths = []
+
+        from app.services import CfgManagerService
+        #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
+        cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+        cfg_paths = cfg_manager.find_cfg_paths(server)
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 

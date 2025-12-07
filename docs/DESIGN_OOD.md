@@ -131,6 +131,7 @@ app/
 
 ### Service Layer Classes (Done)
 
+* `CommandExecService` - Interface for command line operations (via local shell, or ssh via dep inversion).
 * `BlocklistService` - Simple in memory fixed size IP block list for basic brute force login protection.
 * `ControlsService` - Interface for fetching dynamic GameServer specific controls.
 * `CronService` - Interface for interacting with crontab editing and app jobs data.
@@ -140,7 +141,6 @@ app/
 
 * `GameServerService` - GameServer specific service for finding additional info about GameServer objects.
 * `FileService` - Service for interacting with files on the file system (or over ssh via dep inversion).
-* `CommandExecService` - Interface for command line operations (via local shell, ssh, or docker via dep inversion).
 * `MonitoringService` - Interface for checking system stats for front page charts.
 * `InstallService` - Interface for dealing with installing related stuff (might not need this one yet).
 
@@ -173,3 +173,54 @@ class ServiceContainer:
 
 services = ServiceContainer()
 ```
+
+
+### How CommandExecService Works
+
+The `CommandExecService` class acts as a universal interface for running
+commands via the app. It takes advantage of dependency inversion to run both
+local commands and commands over ssh.
+
+The way this works is we create a `BaseCommandExecutor` class that both
+`SshCommandExecutor` and `LocalCommandExecutor` inherit from. Then when the
+`CommandExecService`, `run_command` method is called, it will select and use
+the appropriate executor.
+
+
+
+### UserModuleService
+
+The user module service is a facade. It runs user module scripts which are kept
+in the `app/utils/shared` directory.
+
+These "scripts" can be invoked by the UserModuleService in two ways:
+
+1. These modules are directly imported and run (used for same user game servers).
+2. These modules are run through shared cli.py via sudo -u username (used for non-same user game servers).
+
+This service provides a uniform interface running shared module code, that is
+not dependant on the user the code needs to be invoked as.
+
+For example, see the `app/utils/shared/find_cfg_paths.py` shared module file.
+If a game server is installed under the same username as the web app then we
+can simply import the `find_cfg_paths` function from that file and run it.
+
+However, if the game server is installed under some other user, then we'll need
+to run that code via `sudo -u otheruser python -m shared.cli` in order to get
+results back.
+
+The whole point is that the client calling this wrapper does need to care if
+its same user or some other user. The results returned should be the same
+either way.
+
+
+### CfgManagerService
+
+This class makes use of the UserModuleService in order to fetch the location of
+`cfg_files`. Its really just another wrapper to make it easy for route code to
+fetch this info and not have to care about if server is remote, local
+same-user, or local non-same-user.
+
+
+
+

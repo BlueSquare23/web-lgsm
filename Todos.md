@@ -384,16 +384,21 @@
   - Many things can just be a find and replace for `run_command` but the
     stuff in threads, might need to think abt little bit.
 
-* [ ] **New Class for Running Alt Sys User Script**
-  - We're going to have a new script that'll be the point of entry for all
-    things that need done as alt users.
-  - All the alt user controls will be handled on the app side by new
-    SysUserMgmtService (name not final).
-  - "Client side" class (for lack of better word) will be ManageUser class (or something like that).
-  - So it'll go:
-    - `App -> SysUserMgmtService -> sudo -u newuser /path/to/user_mgmt.py -> ManageUser`
-  - And then we'll just keep it simple and do everything through json stdin, stdout.
+* [ ] **Sudo pass form again for when adding things that need edit as root**
+  - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
+  - So I need a pass, which means I need a form again to get a pass from the user for elevating privs.
+  - Specifically, for example when adding game servers manually, app will now need to edit sudoers rules.
+    - For game servers with default names no prob, can validate and add without auth. 
+    - But for new unique usernames, will need to add sudoers rules. Not going
+      to allow arbitrary sudoers rule username injection obv so will need sudo
+      path to auth and add unknown usernames to validation list first. Then
+      normal playbook to add sudoer rules for user.
 
+* [ ] **New Shared Modules Class(es)**
+  - Took me a long ass time but finally figure it out. I don't really need to
+    do that much special.
+  - I just need to push some classes up into a new `/opt/web-lgsm/shared` dir.
+    - These will be for code used by both the main app and the additional user stuff.
 
 * [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
   - The `utils.py` file is the last big whale of a file that needs chopped up.

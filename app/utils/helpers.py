@@ -697,72 +697,72 @@ def is_ssh_accessible(hostname):
         sock.close()
 
 
-def read_file_over_ssh(server, file_path):
-    """
-    Reads a file from a remote server over SSH and returns its content. Used
-    for updating config files for remote installs. However, its been built as a
-    general purpose read file over ssh using paramiko sftp.
-
-    Args:
-        server (GameServer): Server to get file for.
-        file_path: The path of the file to read on the remote machine.
-
-    Returns:
-        str: Returns the contents of the file as a string.
-    """
-    current_app.logger.info(log_wrap("file_path", file_path))
-    pub_key_file = get_ssh_key_file(server.username, server.install_host)
-    hostname = server.install_host
-    username = server.username
-
-    try:
-        client = _get_ssh_client(hostname, username, pub_key_file)
-
-        # Open sftp session.
-        with client.open_sftp() as sftp:
-            # Open file over sftp.
-            with sftp.open(file_path, "r") as file:
-                content = file.read()
-
-        return content.decode()
-
-    except Exception as e:
-        current_app.logger.debug(e)
-        return None
-
-
-def write_file_over_ssh(server, file_path, content):
-    """
-    Writes a string to a file on a remote server over SSH. Similarly to
-    read_file_over_ssh(), this function is used to update cfg files for remote
-    game servers. However, it is written as a general purpose write over ssh
-    using paramiko sftp.
-
-    Parameters:
-        server (GameServer): Game Server to write the cfg file changes for.
-        file_path (str): The path of the file to write on the remote server.
-        content (str): The string content to write to the file.
-
-    Returns:
-        Bool: True if the write was successful, False otherwise.
-    """
-    current_app.logger.info(log_wrap("file_path", file_path))
-    pub_key_file = get_ssh_key_file(server.username, server.install_host)
-    hostname = server.install_host
-    username = server.username
-
-    try:
-        client = _get_ssh_client(hostname, username, pub_key_file)
-
-        with client.open_sftp() as sftp:
-            with sftp.open(file_path, "w") as file:
-                file.write(content)
-
-        return True
-
-    except Exception as e:
-        current_app.logger.debug(e)
-        return False
+#def read_file_over_ssh(server, file_path):
+#    """
+#    Reads a file from a remote server over SSH and returns its content. Used
+#    for updating config files for remote installs. However, its been built as a
+#    general purpose read file over ssh using paramiko sftp.
+#
+#    Args:
+#        server (GameServer): Server to get file for.
+#        file_path: The path of the file to read on the remote machine.
+#
+#    Returns:
+#        str: Returns the contents of the file as a string.
+#    """
+#    current_app.logger.info(log_wrap("file_path", file_path))
+#    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+#    hostname = server.install_host
+#    username = server.username
+#
+#    try:
+#        client = _get_ssh_client(hostname, username, pub_key_file)
+#
+#        # Open sftp session.
+#        with client.open_sftp() as sftp:
+#            # Open file over sftp.
+#            with sftp.open(file_path, "r") as file:
+#                content = file.read()
+#
+#        return content.decode()
+#
+#    except Exception as e:
+#        current_app.logger.debug(e)
+#        return None
+#
+#
+#def write_file_over_ssh(server, file_path, content):
+#    """
+#    Writes a string to a file on a remote server over SSH. Similarly to
+#    read_file_over_ssh(), this function is used to update cfg files for remote
+#    game servers. However, it is written as a general purpose write over ssh
+#    using paramiko sftp.
+#
+#    Parameters:
+#        server (GameServer): Game Server to write the cfg file changes for.
+#        file_path (str): The path of the file to write on the remote server.
+#        content (str): The string content to write to the file.
+#
+#    Returns:
+#        Bool: True if the write was successful, False otherwise.
+#    """
+#    current_app.logger.info(log_wrap("file_path", file_path))
+#    pub_key_file = get_ssh_key_file(server.username, server.install_host)
+#    hostname = server.install_host
+#    username = server.username
+#
+#    try:
+#        client = _get_ssh_client(hostname, username, pub_key_file)
+#
+#        with client.open_sftp() as sftp:
+#            with sftp.open(file_path, "w") as file:
+#                file.write(content)
+#
+#        return True
+#
+#    except Exception as e:
+#        current_app.logger.debug(e)
+#        return False
 
 
 def read_changelog():
@@ -850,102 +850,102 @@ def validation_errors(form):
                 flash(f"{field}: {error}", "error")
 
 
-def read_cfg_file(server, cfg_path):
-    """
-    Wraps up reading in file contents for edit page.
-
-    Args:
-        server (GameServer): Game server object cfg file's related to.
-        cfg_path (str): Path to cfg file
-
-    Returns:
-        str: String of file contents if can read it, None otherwise.
-    """
-    file_contents = ""
-
-    if should_use_ssh(server):
-        # Read in file contents over ssh.
-        file_contents = read_file_over_ssh(server, cfg_path)
-
-        return file_contents
-
-    # Read in file contents from cfg file.
-    # Try except in case problem with file.
-    try:
-        with open(cfg_path) as f:
-            file_contents = f.read()
-    except:
-        return None
-
-    return file_contents
-
-
-def download_cfg(server, cfg_path):
-    """
-    Wraps up cfg file download logic for edit page.
-
-    Args:
-        server (GameServer): Game server object cfg file's related to.
-        cfg_path (str): Path to cfg file
-    """
-
-    file_contents = read_cfg_file(server, cfg_path)
-    if file_contents == None:
-        flash("Problem retrieving file contents", category="error")
-        return redirect(url_for("main.home"))
-
-    cfg_file = os.path.basename(cfg_path)
-
-    if should_use_ssh(server):
-        file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
-        return send_file(
-            file_like_thingy,
-            as_attachment=True,
-            download_name=cfg_file,
-            mimetype="text/plain",
-        )
-
-    basedir, basename = os.path.split(cfg_path)
-    current_app.logger.info(log_wrap("basedir", basedir))
-    current_app.logger.info(log_wrap("basename", basename))
-    return send_from_directory(basedir, basename, as_attachment=True)
-
-
-def write_cfg(server, cfg_path, new_file_contents):
-    """
-    Wraps up cfg file write logic for edit page.
-
-    Args:
-        server (GameServer): Game server object cfg file's related to.
-        cfg_path (str): Path to cfg file.
-        new_file_contents (str): New stuff to be written.
-
-    Returns:
-        bool: True if written successfully, false otherwise.
-    """
-
-    if should_use_ssh(server):
-        written = write_file_over_ssh(
-            server, cfg_path, new_file_contents.replace("\r", "")
-        )
-        if written:
-            return True
-
-        return False
-
-    # Check that file exists before allowing writes to it. Aka don't allow
-    # arbitrary file creation. Even though the above should block creating
-    # files with arbitrary names, we still don't want to allow arbitrary file
-    # creation anywhere on the file system the app has write perms to.
-    if not os.path.isfile(cfg_path):
-        return False
-
-    try:
-        with open(cfg_path, "w") as f:
-            f.write(new_file_contents.replace("\r", ""))
-        return True
-    except:
-        return False
+#def read_cfg_file(server, cfg_path):
+#    """
+#    Wraps up reading in file contents for edit page.
+#
+#    Args:
+#        server (GameServer): Game server object cfg file's related to.
+#        cfg_path (str): Path to cfg file
+#
+#    Returns:
+#        str: String of file contents if can read it, None otherwise.
+#    """
+#    file_contents = ""
+#
+#    if should_use_ssh(server):
+#        # Read in file contents over ssh.
+#        file_contents = read_file_over_ssh(server, cfg_path)
+#
+#        return file_contents
+#
+#    # Read in file contents from cfg file.
+#    # Try except in case problem with file.
+#    try:
+#        with open(cfg_path) as f:
+#            file_contents = f.read()
+#    except:
+#        return None
+#
+#    return file_contents
+#
+#
+#def download_cfg(server, cfg_path):
+#    """
+#    Wraps up cfg file download logic for edit page.
+#
+#    Args:
+#        server (GameServer): Game server object cfg file's related to.
+#        cfg_path (str): Path to cfg file
+#    """
+#
+#    file_contents = read_cfg_file(server, cfg_path)
+#    if file_contents == None:
+#        flash("Problem retrieving file contents", category="error")
+#        return redirect(url_for("main.home"))
+#
+#    cfg_file = os.path.basename(cfg_path)
+#
+#    if should_use_ssh(server):
+#        file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
+#        return send_file(
+#            file_like_thingy,
+#            as_attachment=True,
+#            download_name=cfg_file,
+#            mimetype="text/plain",
+#        )
+#
+#    basedir, basename = os.path.split(cfg_path)
+#    current_app.logger.info(log_wrap("basedir", basedir))
+#    current_app.logger.info(log_wrap("basename", basename))
+#    return send_from_directory(basedir, basename, as_attachment=True)
+#
+#
+#def write_cfg(server, cfg_path, new_file_contents):
+#    """
+#    Wraps up cfg file write logic for edit page.
+#
+#    Args:
+#        server (GameServer): Game server object cfg file's related to.
+#        cfg_path (str): Path to cfg file.
+#        new_file_contents (str): New stuff to be written.
+#
+#    Returns:
+#        bool: True if written successfully, false otherwise.
+#    """
+#
+#    if should_use_ssh(server):
+#        written = write_file_over_ssh(
+#            server, cfg_path, new_file_contents.replace("\r", "")
+#        )
+#        if written:
+#            return True
+#
+#        return False
+#
+#    # Check that file exists before allowing writes to it. Aka don't allow
+#    # arbitrary file creation. Even though the above should block creating
+#    # files with arbitrary names, we still don't want to allow arbitrary file
+#    # creation anywhere on the file system the app has write perms to.
+#    if not os.path.isfile(cfg_path):
+#        return False
+#
+#    try:
+#        with open(cfg_path, "w") as f:
+#            f.write(new_file_contents.replace("\r", ""))
+#        return True
+#    except:
+#        return False
 
 
 def audit_log_event(user_id, message):

@@ -91,7 +91,8 @@ def controls():
 
             from app.services import CfgManagerService
             #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
-            cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+#            cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+            cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
             cfg_paths = cfg_manager.find_cfg_paths(server)
 
             if cfg_paths == "failed":
@@ -164,7 +165,8 @@ def controls():
 
         from app.services import CfgManagerService
         #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
-        cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+#        cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
+        cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
         cfg_paths = cfg_manager.find_cfg_paths(server)
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))

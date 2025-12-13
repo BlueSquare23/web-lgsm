@@ -59,11 +59,13 @@ class CommandExecService:
         }
 
         if server is None:
-            args["server"] = None
             executor = self.get_local_executor()
-        else:
-            assert isinstance(server, GameServer), "server is not an instance of GameServer"
-            executor = self.get_executor(server.install_type)
+            return executor.run(**args)
+
+        assert isinstance(server, GameServer), "server is not an instance of GameServer"
+        executor = self.get_executor(server.install_type)
+        if server.install_type == 'remote':
+            args["server"] = server
 
         # Prepend sudo stuff for local non-same user installs.
         if server.install_type == 'local' and server.username != CommandExecService.USER:

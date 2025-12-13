@@ -3,6 +3,12 @@ import sys
 import json
 import os
 
+from flask import current_app
+
+from app.config import ConfigManager
+from .command_exec_service.command_exec_service import CommandExecService
+from .proc_info_service.proc_info_service import ProcInfoService
+
 class UserModuleService:
     """
     The user module service runs user module scripts. These module scripts are
@@ -33,18 +39,20 @@ class UserModuleService:
             }
 
             cmd = [
-                'sudo', '-u', as_user,
+                'sudo', '-n', '-u', as_user,
                 f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
                 sys.executable, '-m', 'shared.cli',
                 json.dumps(data)
             ]
 
-            result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
-                check=True,
-            )
+            cmd_id = 'user_module_service'
+            CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
+            proc_info = ProcInfoService().get_process(cmd_id)
 
-            return json.loads(result.stdout)
+            if proc_info == None or proc_info.exit_status > 0:
+                return {}
+
+            module_out = "\n".join(proc_info.stdout)
+            current_app.logger.info(json.loads(module_out))
+            return json.loads(module_out)
 

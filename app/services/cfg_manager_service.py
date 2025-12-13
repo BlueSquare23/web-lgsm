@@ -1,6 +1,14 @@
+import os
 import getpass
 import json
+
+from flask import current_app, flash
+
+from app.utils.paths import PATHS
+from app.config import ConfigManager
+
 from .user_module_service import UserModuleService
+from .proc_info_service.proc_info_service import ProcInfoService
 from .command_exec_service.command_exec_service import CommandExecService
 
 class CfgManagerService:
@@ -18,7 +26,7 @@ class CfgManagerService:
         valid_gs_cfgs = json_data["accepted_cfgs"]
 
         if server.install_type == 'remote':
-            return self.find_cfg_paths_ssh(valid_gs_cfgs)
+            return self.find_cfg_paths_ssh(server, valid_gs_cfgs)
 
         args = [ server.install_path, valid_gs_cfgs ]
 
@@ -45,7 +53,8 @@ class CfgManagerService:
             "-type",
             "f",
         ] + wanted[:-1]
-   
+
+        cmd_id = "find_cfg_paths"
         success = CommandExecService(ConfigManager()).run_command(cmd, server, cmd_id)
         proc_info = ProcInfoService().get_process(cmd_id)
 

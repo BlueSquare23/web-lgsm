@@ -384,6 +384,8 @@
   - Many things can just be a find and replace for `run_command` but the
     stuff in threads, might need to think abt little bit.
 
+* [ ] **Add new shared modules dir setup to root_install.sh**
+
 * [ ] **Sudo pass form again for when adding things that need edit as root**
   - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
   - So I need a pass, which means I need a form again to get a pass from the user for elevating privs.

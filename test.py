@@ -1,9 +1,9 @@
 from app import create_app
-from app.services import UserModuleExecService
+from app.services import UserModuleService
 
 app = create_app()
 
-executor = UserModuleExecService('/home/blue/Projects/web-lgsm/app/utils/')
+executor = UserModuleService('/home/blue/Projects/web-lgsm/app/utils/')
 
 result1 = executor.call('find_cfg_paths', '/home/blue/Projects/web-lgsm/GameServers/Minecraft/', ['common.cfg'])
 

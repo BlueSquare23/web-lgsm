@@ -23,7 +23,6 @@ class ServerStatusService:
             bool|None: True if game server is active, False if inactive, None if
                        indeterminate.
         """
-#        socket = get_tmux_socket_name(server)
         socket = TmuxSocketNameService().get_tmux_socket_name(server)
         if socket == None:
             return None

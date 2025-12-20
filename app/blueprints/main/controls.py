@@ -12,7 +12,7 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import ControlService, CommandExecService
+from app.services import ControlService, CommandExecService, TmuxSocketNameService
 from app import cache
 
 from app.config.config_manager import ConfigManager
@@ -182,7 +182,8 @@ def controls():
 
     # Console option, use tmux capture-pane to get output.
     if short_ctrl == "c":
-        active = get_server_status(server)
+        status_service = ServerStatusService()
+        active = status_service.get_status(server)
         if not active:
             flash("Server is Off! No Console Output!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
@@ -209,7 +210,8 @@ def controls():
             flash("Send command button disabled!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        active = get_server_status(server)
+        status_service = ServerStatusService()
+        active = status_service.get_status(server)
         if not active:
             flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
@@ -237,7 +239,7 @@ def controls():
             # socket file cache for game server before startup. This
             # ensures the status indicators work properly after initial
             # install.
-            socket_name = get_tmux_socket_name(server)
+            socket_name = TmuxSocketNameService().get_tmux_socket_name(server)
             if socket_name == None:
                 update_tmux_socket_name_cache(server.id, None, True)
 

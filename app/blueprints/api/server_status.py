@@ -32,8 +32,6 @@ class ServerStatus(Resource):
             )
             return response
 
-#        server_status = get_server_status(server)
-
         status_service = ServerStatusService()
         server_status = status_service.get_status(server)
 

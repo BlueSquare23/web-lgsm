@@ -7,6 +7,8 @@ from flask_restful import Resource
 from app.utils import *
 from app.models import GameServer
 
+from app.services import ServerStatusService
+
 from . import api
 
 
@@ -30,7 +32,11 @@ class ServerStatus(Resource):
             )
             return response
 
-        server_status = get_server_status(server)
+#        server_status = get_server_status(server)
+
+        status_service = ServerStatusService()
+        server_status = status_service.get_status(server)
+
         resp_dict = {"id": server.id, "status": server_status}
         current_app.logger.info(log_wrap("resp_dict", resp_dict))
 

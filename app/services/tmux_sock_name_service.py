@@ -1,12 +1,22 @@
+import os
+import getpass
+
 from app import cache
+from app.models import GameServer
+
+from .user_module_service import UserModuleService
+from .file_manager_service.file_manager_service import FileManagerService
 
 #{"7b2dddb1-58d0-4c76-b81a-c23c820264a8": "bf1942server-1f93f3de"}
 
 
 class TmuxSocketNameService:
 
+    # TODO: Probably can just put this in the current_app var or something. Idk fine for now.
+    USER = getpass.getuser()
+
     def __init__(self):
-        pass
+        self.executor = UserModuleService()
 
     def purge_tmux_socket_cache():
         """
@@ -182,8 +192,7 @@ class TmuxSocketNameService:
         socket_name = cache_data[str(server.id)]
         return socket_name
     
-    
-    def get_tmux_socket_name(server):
+    def get_tmux_socket_name(self, server):
         """
         Get's the tmux socket file name for a given game server. Will call
         get_tmux_socket_name_from_cache() for remote, docker, & non-same user
@@ -197,21 +206,17 @@ class TmuxSocketNameService:
             str: Returns the socket name for game server. None if can't get socket
                  name.
         """
+        assert isinstance(server, GameServer), "server is not an instance of GameServer"
+
         gs_id_file_path = os.path.join(
             server.install_path, f"lgsm/data/{server.script_name}.uid"
         )
     
         socket_file_name = cache.get(server.id + 'socket_name')
         if socket_file_name == None:  # Aka cache empty
-#            socket_file_name = read_over_ssh_somehow...
-    
-        if not os.path.isfile(gs_id_file_path):
-            return None
-    
-        with open(gs_id_file_path, "r") as file:
-            gs_id = file.read()
-    
-        return server.script_name + "-" + gs_id.rstrip()
+            file_manager = FileManagerService(server)
+            gs_id = file_manager.read_file(gs_id_file_path)
 
+        return server.script_name + "-" + gs_id.rstrip()
 
 

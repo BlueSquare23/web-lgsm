@@ -122,15 +122,15 @@ def should_use_ssh(server):
     return False
 
 
-def purge_tmux_socket_cache():
-    """
-    Deletes local cache of sock file names for installs. Used by setting page
-    option. Useful for when game server has been re-installed to get status
-    indicators working again.
-    """
-    socket_file_name_cache = os.path.join(CWD, "json/tmux_socket_name_cache.json")
-    if os.path.exists(socket_file_name_cache):
-        os.remove(socket_file_name_cache)
+#def purge_tmux_socket_cache():
+#    """
+#    Deletes local cache of sock file names for installs. Used by setting page
+#    option. Useful for when game server has been re-installed to get status
+#    indicators working again.
+#    """
+#    socket_file_name_cache = os.path.join(CWD, "json/tmux_socket_name_cache.json")
+#    if os.path.exists(socket_file_name_cache):
+#        os.remove(socket_file_name_cache)
 
 
 def docker_cmd_build(server):
@@ -154,245 +154,245 @@ def docker_cmd_build(server):
     ]
 
 
-def get_tmux_socket_name_docker(server, gs_id_file_path):
-    """
-    Gets tmux socket name for docker type installs by running commands through
-    CommandExecService.run_command().
-
-    Args:
-        server (GameServer): Game Server to get tmux socket name for.
-        gs_id_file_path (str): Path to gs_id file for game server.
-
-    Returns:
-        str: Returns the socket name for game server. None if can't get
-             socket name.
-    """
-    from app.services import ProcInfoService, CommandExecService
-    cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
-
-    cmd_id = "get_tmux_socket_name_docker"
-
-    CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
-    proc_info = ProcInfoService().get_process(cmd_id)
-
-    if proc_info.exit_status > 0:
-        current_app.logger.info(proc_info)
-        return None
-
-    gs_id = proc_info.stdout[0].strip()
-
-    if len(gs_id) == 0:
-        return None
-
-    return server.script_name + "-" + gs_id
-
-
-def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
-    """
-    Uses SSH to get tmux socket name for remote and non-same user installs.
-
-    Args:
-        server (GameServer): Game Server to get tmux socket name for.
-        gs_id_file_path (str): Path to gs_id file for game server.
-
-    Returns:
-        str: Returns the socket name for game server. None if can't get
-             socket name.
-    """
-    from app.services import ProcInfoService, CommandExecService
-    cmd = [PATHS["cat"], gs_id_file_path]
-
-    success = CommandExecService(ConfigManager()).run_command(cmd, server, server.id)
-    proc_info = ProcInfoService().get_process(server.id)
-    if proc_info == None:
-        return None
-
-    # If the ssh connection itself fails return None.
-    if not success:
-        current_app.logger.info(proc_info)
-        return None
-
-    if proc_info.exit_status > 0:
-        current_app.logger.info(proc_info)
-        return None
-
-    gs_id = proc_info.stdout[0].strip()
-
-    if len(gs_id) == 0:
-        return None
-
-    return server.script_name + "-" + gs_id
-
-
-def update_tmux_socket_name_cache(server_id, socket_name, delete=False):
-    """
-    Writes to tmux socket name cache with fresh data.
-
-    Args:
-        server_id (int): ID of Game Server to get tmux socket name for.
-        delete (bool): If delete specified, given entry will be removed.
-
-    Returns:
-        None
-    """
-    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
-    cache_data = dict()
-    current_app.logger.debug(log_wrap("Updating cache for server_id:", server_id))
-
-    if os.path.exists(cache_file):
-        with open(cache_file, "r") as file:
-            cache_data = json.load(file)
-
-    if delete:
-        # Json.dump casts int to str. So need to re-cast to str on delete.
-        server_id = str(server_id)
-        if server_id in cache_data:
-            del cache_data[server_id]
-    else:
-        cache_data[server_id] = socket_name
-
-    with open(cache_file, "w") as file:
-        json.dump(cache_data, file)
-
-
-def get_tmux_socket_name_from_cache(server, gs_id_file_path):
-    """
-    Get's the tmux socket name for remote, docker, and non-same user installs
-    from the cache. If there is no cache file get socket for server and create
-    cache. If the cache file is older than a week get socket name and update
-    cache. Otherwise just pull the socket name value from the json cache.
-
-    Args:
-        server (GameServer): Game Server to get tmux socket name for.
-        gs_id_file_path (str): Path to gs_id file for game server.
-
-    Returns:
-        str: Returns the socket name for game server. None if cant get
-             one.
-    """
-    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
-
-    if not os.path.exists(cache_file):
-        if server.install_type == "docker":
-            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
-        else:
-            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
-        update_tmux_socket_name_cache(server.id, socket_name)
-        return socket_name
-
-    # Check if cache has expired.
-    cache_mtime = os.path.getmtime(cache_file)
-
-    # Convert the mtime to a datetime object.
-    cache_time = datetime.fromtimestamp(cache_mtime)
-
-    current_time = datetime.now()
-    one_week_ago = current_time - timedelta(weeks=1)
-
-    # Time comparisons always confuse me. With Epoch time, bigger number ==
-    # more recent. Aka if the epoch time of one week ago is larger than the
-    # epoch timestamp of cache file than the cache must be older than a week.
-    if cache_time < one_week_ago:
-        if server.install_type == "docker":
-            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
-        else:
-            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
-
-        update_tmux_socket_name_cache(server.id, socket_name)
-        return socket_name
-
-    with open(cache_file, "r") as file:
-        cache_data = json.load(file)
-
-    if str(server.id) not in cache_data:
-        if server.install_type == "docker":
-            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
-        else:
-            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
-
-        update_tmux_socket_name_cache(server.id, socket_name)
-        return socket_name
-
-    socket_name = cache_data[str(server.id)]
-    return socket_name
-
-
-def get_tmux_socket_name(server):
-    """
-    Get's the tmux socket file name for a given game server. Will call
-    get_tmux_socket_name_from_cache() for remote, docker, & non-same user
-    installs, otherwise will just read the gs_id value from the local file
-    system to build the socket name.
-
-    Args:
-        server (GameServer): Game Server to get tmux socket name for.
-
-    Returns:
-        str: Returns the socket name for game server. None if can't get socket
-             name.
-    """
-    gs_id_file_path = os.path.join(
-        server.install_path, f"lgsm/data/{server.script_name}.uid"
-    )
-
-    if should_use_ssh(server) or server.install_type == "docker":
-        return get_tmux_socket_name_from_cache(server, gs_id_file_path)
-
-    if not os.path.isfile(gs_id_file_path):
-        return None
-
-    with open(gs_id_file_path, "r") as file:
-        gs_id = file.read()
-
-    return server.script_name + "-" + gs_id.rstrip()
-
-
-def get_server_status(server):
-    """
-    Get's the game server status (on/off) for a specific game server. For
-    install_type local same user, does so by running tmux cmd locally. For
-    install_type remote and local not same user, fetches status by running tmux
-    cmd over SSH. For install_type docker, uses docker cmd to fetch status.
-
-    Args:
-        server (GameServer): Game server object to check status of.
-    Returns:
-        bool|None: True if game server is active, False if inactive, None if
-                   indeterminate.
-    """
-    from app.services import ProcInfoService, CommandExecService
-    socket = get_tmux_socket_name(server)
-    if socket == None:
-        return None
-
-    cmd = [PATHS["tmux"], "-L", socket, "list-session"]
-
-    cmd_id = "get_server_status:" + server.install_name
-
-    if server.install_type == "docker":
-        cmd = [
-            PATHS["sudo"],
-            "-n",
-            PATHS["docker"],
-            "exec",
-            "--user",
-            server.username,
-            server.script_name,
-        ] + cmd
+#def get_tmux_socket_name_docker(server, gs_id_file_path):
+#    """
+#    Gets tmux socket name for docker type installs by running commands through
+#    CommandExecService.run_command().
+#
+#    Args:
+#        server (GameServer): Game Server to get tmux socket name for.
+#        gs_id_file_path (str): Path to gs_id file for game server.
+#
+#    Returns:
+#        str: Returns the socket name for game server. None if can't get
+#             socket name.
+#    """
+#    from app.services import ProcInfoService, CommandExecService
+#    cmd = docker_cmd_build(server) + [PATHS["cat"], gs_id_file_path]
+#
+#    cmd_id = "get_tmux_socket_name_docker"
+#
+#    CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
+#    proc_info = ProcInfoService().get_process(cmd_id)
+#
+#    if proc_info.exit_status > 0:
+#        current_app.logger.info(proc_info)
+#        return None
+#
+#    gs_id = proc_info.stdout[0].strip()
+#
+#    if len(gs_id) == 0:
+#        return None
+#
+#    return server.script_name + "-" + gs_id
+#
+#
+#def get_tmux_socket_name_over_ssh(server, gs_id_file_path):
+#    """
+#    Uses SSH to get tmux socket name for remote and non-same user installs.
+#
+#    Args:
+#        server (GameServer): Game Server to get tmux socket name for.
+#        gs_id_file_path (str): Path to gs_id file for game server.
+#
+#    Returns:
+#        str: Returns the socket name for game server. None if can't get
+#             socket name.
+#    """
+#    from app.services import ProcInfoService, CommandExecService
+#    cmd = [PATHS["cat"], gs_id_file_path]
+#
+#    success = CommandExecService(ConfigManager()).run_command(cmd, server, server.id)
+#    proc_info = ProcInfoService().get_process(server.id)
+#    if proc_info == None:
+#        return None
+#
+#    # If the ssh connection itself fails return None.
+#    if not success:
+#        current_app.logger.info(proc_info)
+#        return None
+#
+#    if proc_info.exit_status > 0:
+#        current_app.logger.info(proc_info)
+#        return None
+#
+#    gs_id = proc_info.stdout[0].strip()
+#
+#    if len(gs_id) == 0:
+#        return None
+#
+#    return server.script_name + "-" + gs_id
+#
+#
+#def update_tmux_socket_name_cache(server_id, socket_name, delete=False):
+#    """
+#    Writes to tmux socket name cache with fresh data.
+#
+#    Args:
+#        server_id (int): ID of Game Server to get tmux socket name for.
+#        delete (bool): If delete specified, given entry will be removed.
+#
+#    Returns:
+#        None
+#    """
+#    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
+#    cache_data = dict()
+#    current_app.logger.debug(log_wrap("Updating cache for server_id:", server_id))
+#
+#    if os.path.exists(cache_file):
+#        with open(cache_file, "r") as file:
+#            cache_data = json.load(file)
+#
+#    if delete:
+#        # Json.dump casts int to str. So need to re-cast to str on delete.
+#        server_id = str(server_id)
+#        if server_id in cache_data:
+#            del cache_data[server_id]
+#    else:
+#        cache_data[server_id] = socket_name
+#
+#    with open(cache_file, "w") as file:
+#        json.dump(cache_data, file)
+#
+#
+#def get_tmux_socket_name_from_cache(server, gs_id_file_path):
+#    """
+#    Get's the tmux socket name for remote, docker, and non-same user installs
+#    from the cache. If there is no cache file get socket for server and create
+#    cache. If the cache file is older than a week get socket name and update
+#    cache. Otherwise just pull the socket name value from the json cache.
+#
+#    Args:
+#        server (GameServer): Game Server to get tmux socket name for.
+#        gs_id_file_path (str): Path to gs_id file for game server.
+#
+#    Returns:
+#        str: Returns the socket name for game server. None if cant get
+#             one.
+#    """
+#    cache_file = os.path.join(CWD, "json/tmux_socket_name_cache.json")
+#
+#    if not os.path.exists(cache_file):
+#        if server.install_type == "docker":
+#            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+#        else:
+#            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+#        update_tmux_socket_name_cache(server.id, socket_name)
+#        return socket_name
+#
+#    # Check if cache has expired.
+#    cache_mtime = os.path.getmtime(cache_file)
+#
+#    # Convert the mtime to a datetime object.
+#    cache_time = datetime.fromtimestamp(cache_mtime)
+#
+#    current_time = datetime.now()
+#    one_week_ago = current_time - timedelta(weeks=1)
+#
+#    # Time comparisons always confuse me. With Epoch time, bigger number ==
+#    # more recent. Aka if the epoch time of one week ago is larger than the
+#    # epoch timestamp of cache file than the cache must be older than a week.
+#    if cache_time < one_week_ago:
+#        if server.install_type == "docker":
+#            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+#        else:
+#            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+#
+#        update_tmux_socket_name_cache(server.id, socket_name)
+#        return socket_name
+#
+#    with open(cache_file, "r") as file:
+#        cache_data = json.load(file)
+#
+#    if str(server.id) not in cache_data:
+#        if server.install_type == "docker":
+#            socket_name = get_tmux_socket_name_docker(server, gs_id_file_path)
+#        else:
+#            socket_name = get_tmux_socket_name_over_ssh(server, gs_id_file_path)
+#
+#        update_tmux_socket_name_cache(server.id, socket_name)
+#        return socket_name
+#
+#    socket_name = cache_data[str(server.id)]
+#    return socket_name
+#
+#
+#def get_tmux_socket_name(server):
+#    """
+#    Get's the tmux socket file name for a given game server. Will call
+#    get_tmux_socket_name_from_cache() for remote, docker, & non-same user
+#    installs, otherwise will just read the gs_id value from the local file
+#    system to build the socket name.
+#
+#    Args:
+#        server (GameServer): Game Server to get tmux socket name for.
+#
+#    Returns:
+#        str: Returns the socket name for game server. None if can't get socket
+#             name.
+#    """
+#    gs_id_file_path = os.path.join(
+#        server.install_path, f"lgsm/data/{server.script_name}.uid"
+#    )
+#
+#    if should_use_ssh(server) or server.install_type == "docker":
+#        return get_tmux_socket_name_from_cache(server, gs_id_file_path)
+#
+#    if not os.path.isfile(gs_id_file_path):
+#        return None
+#
+#    with open(gs_id_file_path, "r") as file:
+#        gs_id = file.read()
+#
+#    return server.script_name + "-" + gs_id.rstrip()
 
 
-    CommandExecService(ConfigManager()).run_command(cmd, server, cmd_id)
-
-    proc_info = ProcInfoService().get_process(cmd_id)
-    current_app.logger.info(log_wrap("proc_info", proc_info))
-
-    if proc_info == None:
-        return None
-
-    if proc_info.exit_status > 0:
-        return False
-
-    return True
+#def get_server_status(server):
+#    """
+#    Get's the game server status (on/off) for a specific game server. For
+#    install_type local same user, does so by running tmux cmd locally. For
+#    install_type remote and local not same user, fetches status by running tmux
+#    cmd over SSH. For install_type docker, uses docker cmd to fetch status.
+#
+#    Args:
+#        server (GameServer): Game server object to check status of.
+#    Returns:
+#        bool|None: True if game server is active, False if inactive, None if
+#                   indeterminate.
+#    """
+#    from app.services import ProcInfoService, CommandExecService
+#    socket = get_tmux_socket_name(server)
+#    if socket == None:
+#        return None
+#
+#    cmd = [PATHS["tmux"], "-L", socket, "list-session"]
+#
+#    cmd_id = "get_server_status:" + server.install_name
+#
+#    if server.install_type == "docker":
+#        cmd = [
+#            PATHS["sudo"],
+#            "-n",
+#            PATHS["docker"],
+#            "exec",
+#            "--user",
+#            server.username,
+#            server.script_name,
+#        ] + cmd
+#
+#
+#    CommandExecService(ConfigManager()).run_command(cmd, server, cmd_id)
+#
+#    proc_info = ProcInfoService().get_process(cmd_id)
+#    current_app.logger.info(log_wrap("proc_info", proc_info))
+#
+#    if proc_info == None:
+#        return None
+#
+#    if proc_info.exit_status > 0:
+#        return False
+#
+#    return True
 
 
 def get_all_server_statuses(all_game_servers):
@@ -697,74 +697,6 @@ def is_ssh_accessible(hostname):
         sock.close()
 
 
-#def read_file_over_ssh(server, file_path):
-#    """
-#    Reads a file from a remote server over SSH and returns its content. Used
-#    for updating config files for remote installs. However, its been built as a
-#    general purpose read file over ssh using paramiko sftp.
-#
-#    Args:
-#        server (GameServer): Server to get file for.
-#        file_path: The path of the file to read on the remote machine.
-#
-#    Returns:
-#        str: Returns the contents of the file as a string.
-#    """
-#    current_app.logger.info(log_wrap("file_path", file_path))
-#    pub_key_file = get_ssh_key_file(server.username, server.install_host)
-#    hostname = server.install_host
-#    username = server.username
-#
-#    try:
-#        client = _get_ssh_client(hostname, username, pub_key_file)
-#
-#        # Open sftp session.
-#        with client.open_sftp() as sftp:
-#            # Open file over sftp.
-#            with sftp.open(file_path, "r") as file:
-#                content = file.read()
-#
-#        return content.decode()
-#
-#    except Exception as e:
-#        current_app.logger.debug(e)
-#        return None
-#
-#
-#def write_file_over_ssh(server, file_path, content):
-#    """
-#    Writes a string to a file on a remote server over SSH. Similarly to
-#    read_file_over_ssh(), this function is used to update cfg files for remote
-#    game servers. However, it is written as a general purpose write over ssh
-#    using paramiko sftp.
-#
-#    Parameters:
-#        server (GameServer): Game Server to write the cfg file changes for.
-#        file_path (str): The path of the file to write on the remote server.
-#        content (str): The string content to write to the file.
-#
-#    Returns:
-#        Bool: True if the write was successful, False otherwise.
-#    """
-#    current_app.logger.info(log_wrap("file_path", file_path))
-#    pub_key_file = get_ssh_key_file(server.username, server.install_host)
-#    hostname = server.install_host
-#    username = server.username
-#
-#    try:
-#        client = _get_ssh_client(hostname, username, pub_key_file)
-#
-#        with client.open_sftp() as sftp:
-#            with sftp.open(file_path, "w") as file:
-#                file.write(content)
-#
-#        return True
-#
-#    except Exception as e:
-#        current_app.logger.debug(e)
-#        return False
-
-
 def read_changelog():
     """
     Reads in the local CHANGELOG.md file and returns its contents.
@@ -849,103 +781,6 @@ def validation_errors(form):
                 current_app.logger.debug(f"{field}: {error}")
                 flash(f"{field}: {error}", "error")
 
-
-#def read_cfg_file(server, cfg_path):
-#    """
-#    Wraps up reading in file contents for edit page.
-#
-#    Args:
-#        server (GameServer): Game server object cfg file's related to.
-#        cfg_path (str): Path to cfg file
-#
-#    Returns:
-#        str: String of file contents if can read it, None otherwise.
-#    """
-#    file_contents = ""
-#
-#    if should_use_ssh(server):
-#        # Read in file contents over ssh.
-#        file_contents = read_file_over_ssh(server, cfg_path)
-#
-#        return file_contents
-#
-#    # Read in file contents from cfg file.
-#    # Try except in case problem with file.
-#    try:
-#        with open(cfg_path) as f:
-#            file_contents = f.read()
-#    except:
-#        return None
-#
-#    return file_contents
-#
-#
-#def download_cfg(server, cfg_path):
-#    """
-#    Wraps up cfg file download logic for edit page.
-#
-#    Args:
-#        server (GameServer): Game server object cfg file's related to.
-#        cfg_path (str): Path to cfg file
-#    """
-#
-#    file_contents = read_cfg_file(server, cfg_path)
-#    if file_contents == None:
-#        flash("Problem retrieving file contents", category="error")
-#        return redirect(url_for("main.home"))
-#
-#    cfg_file = os.path.basename(cfg_path)
-#
-#    if should_use_ssh(server):
-#        file_like_thingy = io.BytesIO(file_contents.encode("utf-8"))
-#        return send_file(
-#            file_like_thingy,
-#            as_attachment=True,
-#            download_name=cfg_file,
-#            mimetype="text/plain",
-#        )
-#
-#    basedir, basename = os.path.split(cfg_path)
-#    current_app.logger.info(log_wrap("basedir", basedir))
-#    current_app.logger.info(log_wrap("basename", basename))
-#    return send_from_directory(basedir, basename, as_attachment=True)
-#
-#
-#def write_cfg(server, cfg_path, new_file_contents):
-#    """
-#    Wraps up cfg file write logic for edit page.
-#
-#    Args:
-#        server (GameServer): Game server object cfg file's related to.
-#        cfg_path (str): Path to cfg file.
-#        new_file_contents (str): New stuff to be written.
-#
-#    Returns:
-#        bool: True if written successfully, false otherwise.
-#    """
-#
-#    if should_use_ssh(server):
-#        written = write_file_over_ssh(
-#            server, cfg_path, new_file_contents.replace("\r", "")
-#        )
-#        if written:
-#            return True
-#
-#        return False
-#
-#    # Check that file exists before allowing writes to it. Aka don't allow
-#    # arbitrary file creation. Even though the above should block creating
-#    # files with arbitrary names, we still don't want to allow arbitrary file
-#    # creation anywhere on the file system the app has write perms to.
-#    if not os.path.isfile(cfg_path):
-#        return False
-#
-#    try:
-#        with open(cfg_path, "w") as f:
-#            f.write(new_file_contents.replace("\r", ""))
-#        return True
-#    except:
-#        return False
 
 
 def audit_log_event(user_id, message):

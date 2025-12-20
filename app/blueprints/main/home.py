@@ -33,8 +33,8 @@ def home():
         current_app.logger.info(server.id)
 
     current_app.logger.debug(log_wrap("installed_servers", installed_servers))
-    for proc_id, proc in ProcInfoService().get_all_processes().items():
-        current_app.logger.debug(log_wrap(proc_id, proc))
+#    for proc_id, proc in ProcInfoService().get_all_processes().items():
+#        current_app.logger.debug(log_wrap(proc_id, proc))
 
     return render_template(
         "home.html",

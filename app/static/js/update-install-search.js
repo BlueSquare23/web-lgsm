@@ -10,8 +10,9 @@ searchForm.addEventListener('input', (event) =>  {
 
 function hideNonMatching(searchStr) {
   allInstallForms.forEach(form => {
-    const shortName = form[1].value;
-    const longName = form[2].value;
+    const shortName = form[3].value;
+    const longName = form[4].value;
+
     const divId = 'form-'.concat(shortName);
     const installFormDiv = document.getElementById(divId);
 

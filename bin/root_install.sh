@@ -181,6 +181,12 @@ echo "web_lgsm_user: $USERNAME" > $SCRIPTPATH/playbooks/vars/web_lgsm_user.yml
 cp -r playbooks/* $PLAYBOOKS_PATH
 mv $PLAYBOOKS_PATH/ansible_connector.py $CONNECTOR_PATH
 
+echo -e "${GREEN}####### Setting up Share Modules Dir...${RESET}"
+
+venv_utils="$VENV_PATH/utils"
+mkdir "$venv_utils"
+cp -r "$SCRIPT_PATH/app/utils/shared" "$venv_utils/"
+
 echo -e "${GREEN}####### Setting up Sudoers Rules...${RESET}"
 
 apb="$VENV_PATH/bin/ansible-playbook"

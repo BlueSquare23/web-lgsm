@@ -384,7 +384,20 @@
   - Many things can just be a find and replace for `run_command` but the
     stuff in threads, might need to think abt little bit.
 
-* [ ] **Add new shared modules dir setup to root_install.sh**
+* [x] **Add new shared modules dir setup to root_install.sh**
+
+* [x] **Rework install form to accept more options!!!**
+  - Users should be able to set other things via the install form!
+  - They should be able to set:
+    - `install_name`
+    - `install_path`
+    - `username`
+  - Not right away, but in the future:
+    - `install_type`
+    - `install_host`
+
+* [ ] **Integrate new sudoers setup into install**
+  - Need to find and re-add the steps for editing sudoers rules to install playbook.
 
 * [ ] **Sudo pass form again for when adding things that need edit as root**
   - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
@@ -412,8 +425,12 @@
       to significantly boil it down.
     - See `docs/DESIGN_OOD.md` for more details about how.
 
+* [ ] **Cleanup render template calls with kwargs packing**
+  - I can just shove all the stuff in a kwargs dict before calling render
+    template. Would make things look nicer, easier to read.
+
 * [ ] **Write unit tests for new service layer classes before get too behind**
-  - Gotta write tests for these:
+  - Gotta write tests for ~these~ Basically everything in new services dir:
     * [ ] `BlocklistService`
     * [ ] `ControlsService`
     * [ ] `ProcInfoService`
@@ -442,14 +459,6 @@
   - I wrote the custom caching stuff before I was really using flask cache.
   - Now I need to rip all that code out and replace it with buitin cache code.
   - Not super urgent though cause old code works fine.
-
-* [ ] **More install configuration options!!!**
-  - Users should be able to set other things via the install form!
-  - They should be able to set:
-    - `install_name`
-    - `install_path`
-    - `username` 
-    - `install_host` 
 
 * [ ] **Add reverse_proxy main.conf var to [server] section for setting name through rev proxy**
   - [ ] Then pipe this var through to API where it get's hostname and if

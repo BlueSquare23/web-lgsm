@@ -17,7 +17,7 @@ from app import db
 from app.utils import *
 from app.models import User, GameServer
 from app.services import ProcInfoService
-from app.forms.views import InstallForm
+from app.forms.views import InstallForm, AddForm
 
 # Constants.
 CWD = os.getcwd()
@@ -60,7 +60,7 @@ def install():
     # Check if any installs are currently running.
     running_installs = get_running_installs()
 
-    form = InstallForm()
+    form = AddForm()
 
     if request.method == "GET":
         server_id = request.args.get("server_id")
@@ -96,11 +96,13 @@ def install():
         return render_template(
             "install.html",
             user=current_user,
+            web_lgsm_user = USER,
             servers=install_list,
             install_name=install_name,
             server_id=server_id,
             _config=config,
             running_installs=running_installs,
+            create_new_user=config.getboolean('settings','install_create_new_user'),
             form=form,
         )
 
@@ -108,61 +110,45 @@ def install():
 
     # Handle Invalid form submissions.
     if not form.validate_on_submit():
-        # Debug
-#        for field, value in request.form.items():
-#            current_app.logger.debug(f"Field: {field}, Value: {value}")
         validation_errors(form)
         return redirect(url_for("main.install"))
 
-    # NOTE: For install POSTs we need to user server_name cause server not in
-    # DB yet so doesn't have an ID.
-    server_script_name = form.script_name.data
-    server_install_name = form.full_name.data
+#    from flask import jsonify
+#    return jsonify(form.data)
 
-    # Make server_install_name a unix friendly directory name.
-    server_install_name = server_install_name.replace(" ", "_")
-    server_install_name = server_install_name.replace(":", "")
+    # Form data.
+    install_name = form.install_name.data
+    install_path = form.install_path.data
+    install_type = 'local'  # Hardcode to local for now is fine.
+    script_name = form.script_name.data
+    username = form.username.data
 
-    # Used to pass install_name to frontend js.
-    install_name = server_install_name
+    # Just to be doubly sure.
+    install_name = install_name.replace(" ", "_")
+    install_name = install_name.replace(":", "")
 
     install_exists = GameServer.query.filter_by(
-        install_name=server_install_name
+        install_name=install_name,
+        install_path=install_path,
+        install_type=install_type,
+        script_name=script_name,
+        username=username
     ).first()
 
     if install_exists:
-        flash("An installation by that name already exits.", category="error")
+        flash("An installation with those details already exits.", category="error")
         return redirect(url_for("main.install"))
 
-    # If running in a container do not allow install new user! For design
-    # reasons, to keep things simple. Inside of a container installs are
-    # going to be same user only.
-    if "CONTAINER" in os.environ:
-        config.set('settings','install_create_new_user', False)
-
     server = GameServer()
-    server.install_name = server_install_name
-    server.install_path = os.path.join(CWD, f"GameServers/{server_install_name}")
-    server.script_name = server_script_name
-    server.username = USER
+    server.install_name = install_name
+    server.install_path = install_path
+    server.script_name = script_name
+    server.username = username
     server.is_container = False
-    server.install_type = "local"
+    server.install_type = install_type
     server.install_host = "127.0.0.1"
     server.install_finished = False
     server.keyfile_path = ""
-
-    # If install_create_new_user config parameter is true then create a new
-    # user for the new game server and set install path to the path in that
-    # new users home directory.
-    if config.getboolean('settings','install_create_new_user'):
-        server.username = server_script_name
-        server.install_path = (
-            f"/home/{server_script_name}/GameServers/{server_install_name}"
-        )
-
-        # Add keyfile path for server to DB.
-        keyfile = get_ssh_key_file(server.username, server.install_host)
-        server.keyfile_path = keyfile
 
     current_app.logger.info(log_wrap("server", server))
 
@@ -170,7 +156,7 @@ def install():
     db.session.add(server)
     db.session.commit()
 
-    server_id = GameServer.query.filter_by(install_name=server_install_name).first().id
+    server_id = GameServer.query.filter_by(install_name=install_name).first().id
 
     current_app.logger.info(log_wrap("server_id", server_id))
 

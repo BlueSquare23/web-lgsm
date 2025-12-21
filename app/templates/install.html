@@ -6,6 +6,57 @@
 
       <br />
 
+      <!-- TODO: At some point make this more module. Its the same form as the add/edit form basically. So probs can be cleaned up and made importable in both pages. -->
+      <!-- Modal for advanced settings -->
+      <div class="modal fade" id="advancedSettingsModal" tabindex="-1" aria-labelledby="advancedSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content bg-dark border border-white border-rounded">
+            <div class="modal-header">
+              <h5 class="modal-title text-white" id="advancedSettingsModalLabel">Advanced Installation Settings</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="container bg-dark border border-white rounded-3 p-2">
+                <form method="POST" id="advancedSettingsForm" action="/install">
+                  <h3 class="text-white">
+                    Edit Installation Details
+                  </h3>
+                  <div id="editingHeader" style="display: none;">
+                    <h4 class="text-white" id="currentEditName"></h4>
+                  </div>
+                  <div class="form-group" style="color: white;">
+                    <!-- Hidden includes CSRF token -->
+                    {{ form.hidden_tag() }}
+      
+                    <!-- For these to be hidden on this page -->
+                    <input type="hidden" id="modal_script_name" name="script_name" value="">
+                    <!-- Hardcoded to local for now till remote install implemented -->
+                    <input type="hidden" id="modal_install_type" name="install_type" value="local">
+      
+                    <!-- Text Inputs -->
+                    <label class="pt-2" for="install_name">Installation Title</label>
+                    {{ form.install_name(class="form-control") }}
+      
+                    <label class="pt-2" for="install_path">Installation directory path</label>
+                    {{ form.install_path(class="form-control") }}
+      
+                    <label class="pt-2" for="username">Game server system username</label>
+                    {{ form.username(class="form-control") }}
+                    <i>If left empty will default to the user the web-lgsm process is running as.</i>
+      
+                    <br/>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" form="advancedSettingsForm" class="btn btn-primary">Install</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="container">
         {% if running_installs|length > 0 %}
           <h2>Currently Running Installs</h2>
@@ -58,16 +109,42 @@
               </div>
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title text-white">{{full_name}}</h5>
+                {% set clean_name = full_name.replace(" ", "_") %}
+                {% set clean_name = clean_name.replace(" ", "_") %}
+                {% set install_path = '/home/' + script_name + '/GameServers/' + clean_name + '/' %}
+                {% set username = web_lgsm_user %}
+                {% if create_new_user %}
+                  {% set username = script_name %}
+                {% endif %}
+
+                <!-- Quick Install Form - Just assume they want defaults -->
                 <form method="POST" class="form-group mt-auto" action="/install">
-                  {{ form.csrf_token }}
-                  {{ form.script_name(value=script_name) }}
-                  {{ form.full_name(value=full_name) }}
+                    <!-- Hidden includes CSRF token -->
+                    {{ form.hidden_tag() }}
+                  <!-- Hardcoded to local for now till remote install implemented -->
+                  <input type="hidden" name="install_type" value="local">
+                  <input type="hidden" name="script_name" value="{{script_name}}">
+                  <input type="hidden" name="install_name" value="{{clean_name}}">
+                  <input type="hidden" name="install_path" value="{{install_path}}">
+                  <input type="hidden" name="username" value="{{username}}">
                   <button type="submit" 
                           onclick="return confirm('Are you sure you want to install {{full_name}}?');" 
-                          class="btn btn-outline-primary w-100">
+                          class="btn btn-outline-primary w-100 mb-2">
                     Install {{script_name}}
                   </button>
                 </form>
+
+                <!-- Advanced Settings - Otherwise pass data to modal form via js -->
+                <button type="button" 
+                        class="btn btn-outline-secondary w-100 advanced-settings-btn"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#advancedSettingsModal"
+                        data-script-name="{{script_name}}"
+                        data-full-name="{{full_name}}"
+                        data-install-path="{{install_path}}"
+                        data-username="{{username}}">
+                  Advanced Settings
+                </button>
               </div>
             </div>
           </div>
@@ -98,6 +175,69 @@
       </script>
       <script src="/static/js/update-xterm.js"></script>
       <script src="/static/js/update-install-search.js"></script>
+
+<!-- JavaScript to handle modal data -->
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle advanced settings button click
+  const advancedSettingsButtons = document.querySelectorAll('.advanced-settings-btn');
+  
+  advancedSettingsButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const scriptName = this.getAttribute('data-script-name');
+      const fullName = this.getAttribute('data-full-name');
+      const installPath = this.getAttribute('data-install-path');
+      const username = this.getAttribute('data-username');
+      const install_type = 'local';
+
+      console.log(scriptName);
+      console.log(fullName);
+      console.log(installPath);
+      console.log(username);
+
+      // Set the script name in the modal form
+      document.getElementById('modal_script_name').value = scriptName;
+      
+      // Pre-fill the script name field if it exists in the form
+      const scriptNameField = document.querySelector('#advancedSettingsForm input[name="script_name"]');
+      if (scriptNameField) {
+        scriptNameField.value = scriptName;
+      }
+
+      const installNameField = document.querySelector('#advancedSettingsForm input[name="install_name"]');
+      if (installNameField) {
+        installNameField.value = fullName;
+      }
+
+      const installPathField = document.querySelector('#advancedSettingsForm input[name="install_path"]');
+      if (installPathField) {
+        installPathField.value = installPath;
+      }
+
+      const usernameField = document.querySelector('#advancedSettingsForm input[name="username"]');
+      if (usernameField) {
+        usernameField.value = username;
+      }
+      
+      // Update modal title or display editing info
+      const editingHeader = document.getElementById('editingHeader');
+      const currentEditName = document.getElementById('currentEditName');
+      
+      // Show editing header if editing existing
+      editingHeader.style.display = 'block';
+      currentEditName.textContent = `Currently Editing ${fullName}`;
+    });
+  });
+  
+  // Reset modal when closed
+  const modal = document.getElementById('advancedSettingsModal');
+  modal.addEventListener('hidden.bs.modal', function() {
+    document.getElementById('modal_script_name').value = '';
+    document.getElementById('editingHeader').style.display = 'none';
+  });
+});
+</script>
 
       {% if server_id %}
         <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server_id={{server_id}}&cancel=true" role="button">Cancel Install</a>

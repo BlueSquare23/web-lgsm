@@ -675,6 +675,20 @@ for our form.
 ...
 ```
 
+
+### Debugging Form Submissions
+
+I always add a couple lines like these whenever I need to quickly checkout data
+coming from the frontend via a FlaskForm.
+
+```python
+    # Handle POSTs
+    from flask import jsonify
+    return jsonify(form.data)
+```
+
+That'll just dump the form data as json for quick inspection n'@.
+
 ---
 
 ## 13. Formatting & Linting

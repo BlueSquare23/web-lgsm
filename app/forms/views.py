@@ -278,8 +278,8 @@ class SettingsForm(FlaskForm):
         "Show Live Server Stats on Home Page", render_kw={"class": "form-check-input"}
     )
 
-    purge_tmux_cache = BooleanField(
-        "Delete local tmux socket file name cache",
+    purge_cache = BooleanField(
+        "Delete server side cache",
         render_kw={"class": "form-check-input"},
     )
 

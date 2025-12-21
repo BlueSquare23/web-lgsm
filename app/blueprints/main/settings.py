@@ -81,7 +81,7 @@ def settings():
     graphs_primary_pref = str(form.graphs_primary.data).lower()
     graphs_secondary_pref = str(form.graphs_secondary.data).lower()
     show_stats_pref = str(form.show_stats.data).lower()
-    purge_tmux_cache = str(form.purge_tmux_cache.data).lower()
+    purge_cache = str(form.purge_cache.data).lower()
     install_new_user_pref = str(form.install_new_user.data).lower()
     newline_ending_pref = str(form.newline_ending.data).lower()
     show_stderr_pref = str(form.show_stderr.data).lower()
@@ -96,13 +96,13 @@ def settings():
     current_app.logger.info(log_wrap("graphs_primary_pref", graphs_primary_pref))
     current_app.logger.info(log_wrap("graphs_secondary_pref", graphs_secondary_pref))
     current_app.logger.info(log_wrap("show_stats_pref", show_stats_pref))
-    current_app.logger.info(log_wrap("purge_tmux_cache", purge_tmux_cache))
+    current_app.logger.info(log_wrap("purge_cache", purge_cache))
     current_app.logger.info(log_wrap("install_new_user_pref", install_new_user_pref))
     current_app.logger.info(log_wrap("newline_ending_pref", newline_ending_pref))
     current_app.logger.info(log_wrap("show_stderr_pref", show_stderr_pref))
 
-    if purge_tmux_cache != None:
-        purge_tmux_socket_cache()
+    if purge_cache != None:
+        cache.clear()
 
     # Batch update config via context handler.
     with config.batch_update() as config:

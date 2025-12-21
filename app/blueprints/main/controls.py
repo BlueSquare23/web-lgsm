@@ -90,8 +90,6 @@ def controls():
             current_app.logger.info("Getting cfg_paths")
 
             from app.services import CfgManagerService
-            #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
-#            cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
             cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
             cfg_paths = cfg_manager.find_cfg_paths(server)
 
@@ -164,8 +162,6 @@ def controls():
         current_app.logger.info("Getting cfg_paths")
 
         from app.services import CfgManagerService
-        #TODO: UPDATE THIS HARDCODED STRING WHEN YOU'RE DONE YOU FRICKIN IDIOT!!!
-#        cfg_manager = CfgManagerService('/home/blue/Projects/web-lgsm/app/utils/')
         cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
         cfg_paths = cfg_manager.find_cfg_paths(server)
 
@@ -234,15 +230,6 @@ def controls():
         return redirect(url_for("main.controls", server_id=server_id))
 
     else:
-        if short_ctrl == "st":
-            # On start, check if socket_name is null. If so delete the
-            # socket file cache for game server before startup. This
-            # ensures the status indicators work properly after initial
-            # install.
-            socket_name = TmuxSocketNameService().get_tmux_socket_name(server)
-            if socket_name == None:
-                update_tmux_socket_name_cache(server.id, None, True)
-
         cmd = [script_path, short_ctrl]
 
         # Get long_ctrl for matching short_ctrl for audit logging. 

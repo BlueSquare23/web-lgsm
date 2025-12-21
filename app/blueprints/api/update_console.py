@@ -7,7 +7,7 @@ from flask_restful import Resource
 from app.config.config_manager import ConfigManager
 from app.utils import *
 from app.models import GameServer
-from app.services import ProcInfoService, CommandExecService
+from app.services import ProcInfoService, CommandExecService, TmuxSocketNameService
 
 from . import api
 
@@ -35,7 +35,7 @@ class UpdateConsole(Resource):
             )
             return response
 
-        tmux_socket = get_tmux_socket_name(server)
+        tmux_socket = TmuxSocketNameService().get_tmux_socket_name(server)
 
         cmd = [
             PATHS["tmux"],

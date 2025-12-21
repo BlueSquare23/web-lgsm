@@ -69,7 +69,7 @@ class CommandExecService:
 
         # Prepend sudo stuff for local non-same user installs.
         if server.install_type == 'local' and server.username != CommandExecService.USER:
-            cmd = [
+            args["cmd"] = [
                 PATHS["sudo"],
                 "-n",
                 "-u",
@@ -78,7 +78,7 @@ class CommandExecService:
                 
         # Prepend docker stuff.
         if server.install_type == 'docker':
-            cmd = [
+            args["cmd"] = [
                 PATHS["sudo"],
                 "-n",
                 PATHS["docker"],

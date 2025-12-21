@@ -78,8 +78,6 @@ class GameServerDelete(Resource):
             )
             return response
 
-        # We don't want to keep deleted servers in the cache.
-        update_tmux_socket_name_cache(server_id, None, True)
         delete_user = str(config.getboolean('settings','delete_user'))
         remove_files = str(config.getboolean('settings','remove_files'))
         audit_log_event(current_user.id, f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")

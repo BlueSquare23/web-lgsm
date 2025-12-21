@@ -42,6 +42,8 @@ class TmuxSocketNameService:
         if socket_file_name == None:  # Aka cache empty
             file_manager = FileManagerService(server)
             gs_id = file_manager.read_file(gs_id_file_path)
+            if gs_id == None:
+                return None
 
             socket_file_name = server.script_name + "-" + gs_id.rstrip()
             cache.set(cache_key, socket_file_name, timeout=1800)

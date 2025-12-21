@@ -127,7 +127,7 @@ def docker_cmd_build(server):
     Builds docker cmd reused all over for given GameServer.
 
     Args:
-        server (GameServer): Game Server to get tmux socket name for.
+        server (GameServer): Game Server to build docker cmd for
 
     Returns:
         list: Docker command for GameServer as list.

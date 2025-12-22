@@ -55,7 +55,7 @@ class BaseCommandExecutor(CommandExecutor):
     
     def _log_wrap(self, stream_type, message):
         """Wrapper for logging (assuming this exists somewhere)."""
-        # This should be imported from your utils or reimplemented
+        # TODO: This should be imported from utils 
         return f"[{stream_type}] {message}"
     
     def _process_raw_output(self, raw_line, proc_info, output_type):

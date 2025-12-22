@@ -29,7 +29,7 @@ class LocalFileInterface(FileInterface):
         if encoded == None:
             return None
         
-        return base64.b64decode(encoded).decode('utf-8')
+        return base64.b64decode(encoded).decode('utf-8', errors='ignore')
 
     
     def write_file(self, file_path, content):

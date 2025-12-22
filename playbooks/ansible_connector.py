@@ -166,35 +166,6 @@ def post_install_cfg_fix(install_path):
     print("Configuration file common.cgf updated!")
 
 
-def append_new_authorized_key(server):
-    """
-    Add's server's SSH keyfile to new user's ~/.ssh/authorized_keys for new
-    servers installed as other users.
-
-    Args:
-        server (GameServer): The server to add the key for.
-
-    Returns:
-        None: Just does or dies.
-    """
-    if server.keyfile_path == '' or server.keyfile_path == None:
-        return
-
-    public_key_file = server.keyfile_path + '.pub'
-    home_dir = os.path.expanduser(f'~{server.username}')
-    ssh_dir = os.path.join(home_dir, '.ssh')
-    authorized_keys_file = os.path.join(ssh_dir, 'authorized_keys')
-
-    # Read in public key.
-    with open(public_key_file, 'r') as f:
-        public_key = f.read()
-
-    # Write new public key file.
-    with open(authorized_keys_file, 'a') as f:
-        f.write(public_key + '\n')
-        print('Appended public key to authorized_keys!')
-
-
 def run_install_new_game_server(server_id):
     """
     Wraps the invocation of the install_new_game_server.yml playbook
@@ -257,9 +228,6 @@ def run_install_new_game_server(server_id):
         except:
             mark_install_failed(server_id)
             exit()
-
-    # Post install ssh setup for different users.
-    append_new_authorized_key(server)
 
     # Mark finished with new session context.
     # Can't use app context in ansible connector.

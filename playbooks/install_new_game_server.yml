@@ -15,6 +15,16 @@
   vars_files:
     - vars/accepted_usernames.yml
     - vars/web_lgsm_user.yml
+  pre_tasks:
+    - name: Load custom usernames if available
+      include_vars:
+        file: /usr/local/share/web-lgsm_custom_users.yml
+      ignore_errors: yes
+      register: custom_users_loaded
+    
+    - name: Combine username lists
+      set_fact:
+        accepted_usernames: "{{ accepted_usernames + (custom_usernames | default([])) }}"
 
   tasks:
     - name: Check if username is equal to web_lgsm_user
@@ -28,22 +38,8 @@
         - tasks/create_new_user_group.yml
         - tasks/create_new_user.yml
         - tasks/set_default_new_user_group.yml
-
-    - name: Create ~/.ssh directory exists and set perms
-      file:
-        path: "/home/{{ username }}/.ssh"
-        state: directory
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        mode: '0700'
-
-    - name: Create ~/.ssh/authorized_keys file and set perms 
-      file:
-        path: "/home/{{ username }}/.ssh/authorized_keys"
-        state: touch
-        owner: "{{ username }}"
-        group: "{{ username }}"
-        mode: '0600'
+        - tasks/add_sudoers_rule.yml
+        - tasks/fix_sudoers_rule.yml
 
     - name: Download linuxgsm.sh to /tmp/
       get_url:

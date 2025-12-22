@@ -91,7 +91,7 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+* [x] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
   - This project has been poorly designed and modeled up until this point.
   - I am now beginning the process of redesigning the project piecemeal while
     maintaining functionality.
@@ -107,7 +107,7 @@
   - All user input coming into the app, even through the API should go through
     a form class for valiation.
 
-* [ ] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
+* [x] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
   - The idea here is twofold:
     1. I want the app to have a mature api, where basically anything you can do
        through the web, you can also do through a curl cmd.
@@ -270,7 +270,7 @@
   - I've been using a module level singleton, but this sucks.
   - Might as well just put it in a real class.
 
-* [ ] **Experiment with alt architecture of system user management**
+* [x] **Experiment with alt architecture of system user management**
   - SSH is great. But SSH to localhost is a dirty hack. A working dirty hack.
     But still not ideal.
   - I did this originally because its an easy way to handle user auth and
@@ -396,8 +396,65 @@
     - `install_type`
     - `install_host`
 
-* [ ] **Integrate new sudoers setup into install**
+* [x] **Integrate new sudoers setup into install**
   - Need to find and re-add the steps for editing sudoers rules to install playbook.
+
+* [x] **New Shared Modules Class(es)**
+  - Took me a long ass time but finally figure it out. I don't really need to
+    do that much special.
+  - I just need to push some classes up into a new `/opt/web-lgsm/shared` dir.
+    - These will be for code used by both the main app and the additional user stuff.
+
+* [x] **Continue breaking apart utils.py into service classes and adding methods to db classes**
+  - The `utils.py` file is the last big whale of a file that needs chopped up.
+  - This gives us an opportunity to do some basic redesigns in the process.
+    - There's a lot of stuff in the utils.py file that can be either turned
+      into new service classes, added to the existing database classes as
+      methods, or refactored away completely.
+    - There will still be some neutral true utils stuff remaining, but plan is
+      to significantly boil it down.
+    - See `docs/DESIGN_OOD.md` for more details about how.
+
+* [ ] **Write unit tests for new service layer classes before get too behind**
+  - Gotta write tests for ~these~ Basically everything in new services dir:
+    * [ ] `BlocklistService`
+    * [ ] `ControlsService`
+    * [ ] `ProcInfoService`
+
+* [x] **Make redirect to github on about page open in new tab.**
+
+* [x] **Add buy me a coffee link to about page author section**
+  - My buddies opinion is that it should be prominent on the page.
+  - I don't really care to much tbh, but I'll do it for him.
+
+* [x] **Need a secure way to add custom additional game server users to whitelist**
+  - Right now, customizations to the additional users whitelist will get blow
+    away on update.
+  - So need to add them _somewhere_ where they won't get uninstalled and will
+    automatically be imported.
+  - Decided to put customization here: `/usr/local/share/web-lgsm_custom_users.yml` 
+    - Then they'll survive updates and still be root only accessible.
+  - [x] Integrated into username whitelist check for install playbook!
+  - [x] Make some documentation about them.
+
+* [ ] **Add cleanup sudoers rules on game server delete**
+  - Should be simple to just have the connector do this when running delete playbook.
+
+* [ ] **Wrap up v1.8.7 Release**
+  - Okay this refactor job has been enough change for one release.
+  - I'd love to keep adding more and expanding, but I gotta call it here, tuck
+    in the corners and get another release out before I get too carried away.
+  - There's always more time for refactoring later, but with amount of work
+    I've done so far this release, time to call it and package the rest of it
+    up before adding more stuff on.
+
+## Version 1.8.x Todos
+
+* [ ] **Add cool retro term style customization options**
+  - I played around with some css for adding cool term effects to the xterm.js
+    window. Would need a lot of integration to pass user prefs back to the
+    javascript code where they're set. So will play around with that more another
+    time.
 
 * [ ] **Sudo pass form again for when adding things that need edit as root**
   - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
@@ -409,37 +466,19 @@
       path to auth and add unknown usernames to validation list first. Then
       normal playbook to add sudoer rules for user.
 
-* [ ] **New Shared Modules Class(es)**
-  - Took me a long ass time but finally figure it out. I don't really need to
-    do that much special.
-  - I just need to push some classes up into a new `/opt/web-lgsm/shared` dir.
-    - These will be for code used by both the main app and the additional user stuff.
 
-* [ ] **Continue breaking apart utils.py into service classes and adding methods to db classes**
-  - The `utils.py` file is the last big whale of a file that needs chopped up.
-  - This gives us an opportunity to do some basic redesigns in the process.
-    - There's a lot of stuff in the utils.py file that can be either turned
-      into new service classes, added to the existing database classes as
-      methods, or refactored away completely.
-    - There will still be some neutral true utils stuff remaining, but plan is
-      to significantly boil it down.
-    - See `docs/DESIGN_OOD.md` for more details about how.
+* [ ] **Need way to add sudoers rules for legacy game server system users**
+  - Basically, once someone upgrades to this release (v1.8.7), it'll break
+    their old local non-same user game server installs.
+  - To fix this just need to detect hosts that don't have sudoers rules for yet
+    and prompt user to add them.
+  - For game servers in 
+
 
 * [ ] **Cleanup render template calls with kwargs packing**
   - I can just shove all the stuff in a kwargs dict before calling render
     template. Would make things look nicer, easier to read.
 
-* [ ] **Write unit tests for new service layer classes before get too behind**
-  - Gotta write tests for ~these~ Basically everything in new services dir:
-    * [ ] `BlocklistService`
-    * [ ] `ControlsService`
-    * [ ] `ProcInfoService`
-
-* [ ] **Make redirect to github on about page open in new tab.**
-
-* [ ] **Add buy me a coffee link to about page author section**
-  - My buddies opinion is that it should be prominent on the page.
-  - I don't really care to much tbh, but I'll do it for him.
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 
@@ -455,7 +494,7 @@
 ]
 ```
 
-* [ ] **Remove custom tmux socket file name caching in favor of flask cache**
+* [x] **Remove custom tmux socket file name caching in favor of flask cache**
   - I wrote the custom caching stuff before I was really using flask cache.
   - Now I need to rip all that code out and replace it with buitin cache code.
   - Not super urgent though cause old code works fine.

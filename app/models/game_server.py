@@ -11,7 +11,7 @@ class GameServer(db.Model):
         unique=True,  # Ensure uniqueness
         nullable=False,  # Ensure not null
     )
-    # Unique name.
+    # Name.
     install_name = db.Column(db.String(150))
     # Install path.
     install_path = db.Column(db.String(150))
@@ -40,8 +40,8 @@ class GameServer(db.Model):
 
     def __str__(self):
         return (
-            f"GameServer '{self.install_name}' (ID: {self.id}, Script: {self.script_name}, "
-            + f"Type: {self.install_type}, Finished: {self.install_finished}, Keyfile Path: {self.keyfile_path})"
+            f"GameServer '{self.install_name}' (ID: {self.id}, Script: {self.script_name}, Username: {self.username}, "
+            + f"Type: {self.install_type}, Host: {self.install_host}, Finished: {self.install_finished}, Keyfile Path: {self.keyfile_path})"
         )
 
     def delete(self):

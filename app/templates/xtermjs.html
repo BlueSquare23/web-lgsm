@@ -1,4 +1,19 @@
+<!--
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/retro_term.css') }}" />
+-->
   <h2 style="color: white;">Output:</h2>
   <div class="container bg-dark border border-white p-2 rounded-3">
-    <div id="terminal" style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;" class="rounded-3 p-0" id="output-terminal"></div>
+      <div id="terminal" style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;" class="rounded-3 p-0" id="output-terminal"></div>
+  </div>
+<!--
+  <div class="crt-bezel">
+    <div class="crt-terminal-container">
+      <div class="power-light"></div>
+      
+      <div class="crt-vignette"></div>
+      
+      <div id="terminal" style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;" class="rounded-3 p-0" id="output-terminal"></div>
+    </div>
+  </div>
+-->
   </div>

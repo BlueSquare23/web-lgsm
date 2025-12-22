@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix bug with term not scaling on dynamic user resize.
 - Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
 
 ## [v1.8.6 - 2025-11-22]

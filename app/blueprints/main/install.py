@@ -5,6 +5,7 @@ import getpass
 from threading import Thread
 from flask_login import login_required, current_user
 from flask import (
+    jsonify,
     render_template,
     request,
     flash,
@@ -113,8 +114,9 @@ def install():
         validation_errors(form)
         return redirect(url_for("main.install"))
 
-#    from flask import jsonify
+# For debug
 #    return jsonify(form.data)
+    current_app.logger.debug(jsonify(form.data))
 
     # Form data.
     install_name = form.install_name.data
@@ -127,25 +129,30 @@ def install():
     install_name = install_name.replace(" ", "_")
     install_name = install_name.replace(":", "")
 
-    install_exists = GameServer.query.filter_by(
-        install_name=install_name,
-        install_path=install_path,
-        install_type=install_type,
-        script_name=script_name,
-        username=username
-    ).first()
+    
+    db_details = {
+        "install_name": install_name,
+        "install_path": install_path,
+        "install_type": install_type,
+        "script_name": script_name,
+        "username": username
+    }
+
+    install_exists = GameServer.query.filter_by(**db_details).first()
+
+    current_app.logger.debug(log_wrap('install_exists', install_exists))
 
     if install_exists:
         flash("An installation with those details already exits.", category="error")
         return redirect(url_for("main.install"))
 
-    server = GameServer()
-    server.install_name = install_name
-    server.install_path = install_path
-    server.script_name = script_name
-    server.username = username
+    server = GameServer(**db_details)
+#    server.install_name = install_name
+#    server.install_path = install_path
+#    server.script_name = script_name
+#    server.username = username
+#    server.install_type = install_type
     server.is_container = False
-    server.install_type = install_type
     server.install_host = "127.0.0.1"
     server.install_finished = False
     server.keyfile_path = ""
@@ -156,7 +163,7 @@ def install():
     db.session.add(server)
     db.session.commit()
 
-    server_id = GameServer.query.filter_by(install_name=install_name).first().id
+    server_id = GameServer.query.filter_by(**db_details).first().id
 
     current_app.logger.info(log_wrap("server_id", server_id))
 
@@ -177,8 +184,8 @@ def install():
         str(server_id),
     ]
 
-    current_app.logger.info(log_wrap("cmd", cmd))
-    current_app.logger.info(log_wrap("all processes", ProcInfoService().get_all_processes()))
+#    current_app.logger.info(log_wrap("cmd", cmd))
+#    current_app.logger.info(log_wrap("all processes", ProcInfoService().get_all_processes()))
 
     install_daemon = Thread(
         target=command_service.run_command,

@@ -1,0 +1,9 @@
+# Community sudoers is broken. This puts a space in the sudoers rule to fix
+- name: Fix missing space before NOPASSWD
+  lineinfile:
+    path: /etc/sudoers.d/{{ web_lgsm_user }}-{{ username }}
+    regexp: '^(.*)NOPASSWD:(.*)$'
+    line: '\1 NOPASSWD: \2'
+    backrefs: yes
+    validate: 'visudo -cf %s'
+  when: same_user is not defined or same_user == false

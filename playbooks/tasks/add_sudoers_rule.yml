@@ -1,0 +1,10 @@
+- name: Give {{ web_lgsm_user }} full access to {{ username }} via sudo
+  community.general.sudoers:
+    name: "{{ web_lgsm_user }}-{{ username }}"
+    user: "{{ web_lgsm_user }}"
+    host: "ALL"
+    runas: "{{ username }}"
+    nopassword: true
+    commands: ALL
+    state: present
+  when: same_user is not defined or same_user == false

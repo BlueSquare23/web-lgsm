@@ -385,33 +385,6 @@ class ServerControlForm(FlaskForm):
     submit = SubmitField("Execute")
 
 
-class InstallForm(FlaskForm):
-    servers = get_servers()
-    short_names = []
-    long_names = []
-    for short, (long, img) in servers.items():
-        short_names.append(short)
-        long_names.append(long)
-
-    script_name = HiddenField(
-        "Script Name",
-        validators=[
-            InputRequired(),
-            Length(min=0, max=150),
-            AnyOf(short_names, message="Invalid script name."),
-        ],
-    )
-
-    full_name = HiddenField(
-        "Full Name",
-        validators=[
-            InputRequired(),
-            Length(min=0, max=150),
-            AnyOf(long_names, message="Invalid full name."),
-        ],
-    )
-
-
 class ValidCronExpr:
     """Validator checks cron expression is valid"""
 

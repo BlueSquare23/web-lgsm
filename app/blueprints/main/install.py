@@ -18,7 +18,7 @@ from app import db
 from app.utils import *
 from app.models import User, GameServer
 from app.services import ProcInfoService
-from app.forms.views import InstallForm, AddForm
+from app.forms.views import AddForm
 
 # Constants.
 CWD = os.getcwd()
@@ -147,11 +147,6 @@ def install():
         return redirect(url_for("main.install"))
 
     server = GameServer(**db_details)
-#    server.install_name = install_name
-#    server.install_path = install_path
-#    server.script_name = script_name
-#    server.username = username
-#    server.install_type = install_type
     server.is_container = False
     server.install_host = "127.0.0.1"
     server.install_finished = False

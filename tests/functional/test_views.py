@@ -751,31 +751,46 @@ def test_install_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "main.install")
 
         # Test no script_name.
-        error_msg = b"This field is required."
+        error_msg = b"script_name: This field is required."
         response = client.post(
-            "/install", data={"csrf_token": csrf_token, "full_name": "Minecraft"}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "install_name": "Minecraft", "install_type": 'local', "install_path": "/tmp/testing"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "main.install")
 
         # Test invalid script_name.
         error_msg = b"Invalid script name."
         response = client.post(
-            "/install", data={"csrf_token": csrf_token, "script_name": "fartingbuttz", "full_name": "Minecraft"}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "script_name": "fartingbuttz", "install_name": "Minecraft", "install_type": 'local', "install_path": "/tmp/testing"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "main.install")
 
-        # Test no full_name.
-        error_msg = b"This field is required."
+        # Test no install_name.
+        error_msg = b"install_name: This field is required."
         response = client.post(
-            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver"}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "install_type": 'local', "install_path": "/tmp/testing"}, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "main.install")
 
-        # Test for empty form fields.
-        error_msg = b"Invalid full name."
+        # Test no install_type.
+        error_msg = b"install_type: This field is required."
         response = client.post(
-            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Jerry's still dead man"}, follow_redirects=True
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "install_name": 'Minecraft', "install_path": "/tmp/testing"}, follow_redirects=True
         )
+        check_response(response, error_msg, resp_code, "main.install")
+
+        # Test no install_path.
+        error_msg = b"install_path: This field is required."
+        response = client.post(
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "install_name": 'Minecraft', "install_type": "local"}, follow_redirects=True
+        )
+        check_response(response, error_msg, resp_code, "main.install")
+
+        # Test for invalid name.
+        error_msg = b"install_name: Input contains invalid characters"
+        response = client.post(
+            "/install", data={"csrf_token": csrf_token, "script_name": "mcserver", "install_name": ":;*/[Jerry's still dead man", "install_type": 'local', "install_path": "/tmp/testing"}, follow_redirects=True
+        )
+        debug_response(response)
         check_response(response, error_msg, resp_code, "main.install")
 
         # Test for empty form fields.

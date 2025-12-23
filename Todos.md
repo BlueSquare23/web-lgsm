@@ -81,6 +81,45 @@
 
 ## Main Goals for v1.8 -> v1.9
 
+* [ ] **Revamp the interface design and layout**
+  - I'm not much of a front end guy. However, this project has simply come too
+    far with the original design / layout of the main pages and it needs an
+    overhaul.
+  - What I really want is a more web 2.0, discordesque design. 
+  - For example, one idea I had was a panel that comes out from the side with
+    different sections for navigating the app. Rather than the current "Other
+    Options" list on the home page.
+    - Then you could get to any page from any page and is a more comfortable
+      way people are used to navigating web apps.
+    - So would need to come up with an accordion of app's sorta hierarchy and
+      page structure. Something like this for example:
+      - Home Page
+        - Same Installed List, but more configurable settings for them
+          - Sort by user, Alpha, Custom Order.
+        - Stats
+        - Links
+      - GameServers
+        - Controls
+        - Jobs
+        - Configs
+        - Install
+        - Edit
+      - Settings
+        - App Settings
+        - User Settings
+    - That's just an example, I've also toyed around with the idea of the home
+      page having the terminal on it and then install or commands somehow both
+      display through that main single and only terminal. Like the apps built
+      around the central terminal device.
+      - I really like this idea but I have no idea how to impliment it.
+  - And yeah just overall learn some more CSS and put some more time into the
+    frontend of this app to really make it spiffy and nice.
+  - The frontend's kinda always been an after thought. Like oh shit I need an
+    interface let me put some buttons on a page real quick and tweak the
+    default bootstrap styling.
+    - And that works fine, but its nothing to write home about. I want this to
+      be spiffy and to shine.
+
 * [ ] **Improve overall design & documentation for project**
   - I want to actually properly try to design, document, and build out parts of
     this app. Full honest, I've never really done real software design before
@@ -437,8 +476,16 @@
   - [x] Integrated into username whitelist check for install playbook!
   - [x] Make some documentation about them.
 
-* [ ] **Add cleanup sudoers rules on game server delete**
+* [x] **Add cleanup sudoers rules on game server delete**
   - Should be simple to just have the connector do this when running delete playbook.
+
+* [x] **On add form submit, run sudoers add with new info**
+  - This is going to need a new playbook that's basically just a sub set of the
+    install playbook but for setting up new sudoers rules.
+
+* [x] **Detect game servers that are missing sudoers rules somehow and if we can, add them automatically, otherwise throw warn flash to user.** 
+  - Need an easy way to see if we got a rule to access that game server user.
+    Just going to parse stdout.
 
 * [ ] **Wrap up v1.8.7 Release**
   - Okay this refactor job has been enough change for one release.

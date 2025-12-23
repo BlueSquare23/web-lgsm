@@ -2,12 +2,14 @@
 ## Playbook required vars.
 # username 
 
-- name: Removes Game Server User
+- name: Creates sudoers rules automatically for added game servers
   hosts: localhost
-  connection: local
   become: true
+  connection: local
   vars:
+    # Same user defaults to false, meaning default create new user.
     same_user: false
+    setup: false
   vars_files:
     - vars/accepted_usernames.yml
     - vars/web_lgsm_user.yml
@@ -31,23 +33,7 @@
       include_tasks: "{{ item }}"
       loop:
         - tasks/validate_username.yml
+        - tasks/add_sudoers_rule.yml
+        - tasks/fix_sudoers_rule.yml
 
-    - name: Kill all user processes before delete
-      command: /usr/bin/pkill -9 -u "{{ username }}"
-      register: pkill_result
-      failed_when: pkill_result.rc not in [0, 1]
-      when: same_user is not defined or same_user == false
-
-    - name: Delete user
-      user:
-        name: "{{ username }}"
-        state: absent
-        remove: yes
-      when: same_user is not defined or same_user == false
-
-    - name: Remove Sudoers Rule
-      file:
-        path: "/etc/sudoers.d/{{ web_lgsm_user }}-{{ username }}"
-        state: absent
-      when: same_user is not defined or same_user == false
 ...

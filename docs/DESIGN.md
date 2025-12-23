@@ -22,7 +22,8 @@
 13. [Formatting & Linting](#13-formatting--linting)
 14. [Future Work](#14-future-work)
 15. [Contributing](#15-contributing)
-16. [References](#16-references)
+16. [Debugging](#16-debugging)
+17. [References](#17-references)
 
 ---
 
@@ -732,10 +733,38 @@ pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 ## 15. Contributing
 - **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+---
+
+## 17. Debugging
+- **Debugging Classes**:
+You can run the code from a class file isolated like this:
+
+```python
+from app import create_app
+from app.services import UserModuleService
+
+app = create_app()
+
+
+with app.app_context():
+
+    executor = UserModuleService('/home/blue/Projects/web-lgsm/app/utils/')
+    
+    result1 = executor.call('find_cfg_paths', '/home/blue/Projects/web-lgsm/GameServers/Minecraft/', ['common.cfg'])
+    
+    print(result1)
+    
+    result2 = executor.call('find_cfg_paths', '/home/bf1942server/GameServers/Battlefield_1942/', ['common.cfg'], as_user='bf1942server')
+    print(result2)
+```
+
+This will allow you to still have an app context for the logger and other
+things. But you'll be able to import and run just the parts of the module
+you're trying to test out. Just make sure you source the venv first!
 
 ---
 
-## 16. References
+## 17. References
 - **Links**:
   - [Docs](.)
   - [Youtube Tutorials](NOT FINISHED YET...)

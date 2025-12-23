@@ -10,7 +10,7 @@ from app import db
 
 # Has to be local import to avoid circular import
 from .proc_info_service.proc_info_service import ProcInfoService
-from ..services.command_exec_service.command_exec_service import CommandExecService
+from .command_exec_service.command_exec_service import CommandExecService
 
 """
 Service class interface for interacting with system cron from API and jobs

@@ -15,6 +15,7 @@ from app import db
 from app.utils import *
 from app.models import GameServer, User
 from app.forms.views import ValidateID, AddForm
+from app.services import SudoersService
 
 # Constants.
 USER = getpass.getuser()
@@ -88,6 +89,7 @@ def add():
         username = USER
 
     # Log & set GameServer obj vars after most of the validation is done.
+    current_app.logger.info(log_wrap("server_id", server_id))
     current_app.logger.info(log_wrap("install_name", install_name))
     current_app.logger.info(log_wrap("install_path", install_path))
     current_app.logger.info(log_wrap("script_name", script_name))
@@ -157,6 +159,14 @@ def add():
 
     db.session.commit()
 
+    db_details = {
+        "install_name": install_name,
+        "install_path": install_path,
+        "install_type": install_type,
+        "script_name": script_name,
+        "username": username
+    }
+
     server = GameServer.query.filter_by(install_name=install_name).first()
 
     # Update web user's permissions to give access to new game server after adding it.
@@ -169,6 +179,13 @@ def add():
             log_wrap("Updated User Permissions:", user_ident.permissions)
         )
         db.session.commit()
+
+    # Auto add sudoers rule for server.
+    if install_type == 'local' and username != USER:
+        sudoers_service = SudoersService(username)
+        if not sudoers_service.has_access():
+            if not sudoers_service.add_user():
+                flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{username}\n{USER} ALL=({username}) NOPASSWD: ALL")
 
     flash("Game server added!")
     audit_log_event(current_user.id, f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")

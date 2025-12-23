@@ -3,11 +3,13 @@ from app.services import UserModuleService
 
 app = create_app()
 
-executor = UserModuleService('/home/blue/Projects/web-lgsm/app/utils/')
+with app.app_context():
 
-result1 = executor.call('find_cfg_paths', '/home/blue/Projects/web-lgsm/GameServers/Minecraft/', ['common.cfg'])
-
-print(result1)
-
-result2 = executor.call('find_cfg_paths', '/home/bf1942server/GameServers/Battlefield_1942/', ['common.cfg'], as_user='bf1942server')
-print(result2)
+    executor = UserModuleService('/home/blue/Projects/web-lgsm/app/utils/')
+    
+    result1 = executor.call('find_cfg_paths', '/home/blue/Projects/web-lgsm/GameServers/Minecraft/', ['common.cfg'])
+    
+    print(result1)
+    
+    result2 = executor.call('find_cfg_paths', '/home/bf1942server/GameServers/Battlefield_1942/', ['common.cfg'], as_user='bf1942server')
+    print(result2)

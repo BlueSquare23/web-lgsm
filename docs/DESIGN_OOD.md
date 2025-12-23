@@ -6,6 +6,40 @@ This application has thus far Not been build with any real Object Oriented
 Design in mind. But we're changing that now and that's why this document
 exists.
 
+## Design Philosophies Used
+
+As mentioned currently the design philosophy has been "no time to explain, grab
+a cactus!" But we're now changing that.
+
+I Think what we want to work toward here are Two main complimentary Design
+Philosophies. But I still have to learn more about these approaches cause ngl,
+don't really fully understand them yet.
+
+### Clean Architecture
+
+This is another one from Uncle Bob. The one is about the structure of our
+classes and sorta layers of our application.
+
+Its about dep management and separating concerns. We want to structure our code
+so that the core business problem we're solving is independent from the
+specific web framework or DB, etc. being used.
+
+In sort its about what each layer of our code is doing.
+
+See more about this under the High Level Design section below.
+
+### Domain-Driven Design (DDD)
+
+Domain Driven Design is about how do we lay out and model where our code lives
+and group it related to the problem it is solving.
+
+### Good-Ole MVC
+
+Under this new arrangement the classic MVC becomes relegated to the
+presentation layer only. Its becomes the outer most rim of the Clean Arch
+onion. Then DDD defines the core and we use Clean Arch principals to pull it
+all together.
+
 ### Diagramming
 
 We're going to use `mermaid` to make our class diagrams.
@@ -32,6 +66,111 @@ current pretty flat and boring state of the projects class diagram.
 
 Only up. So far there's been little to no design. So as far as I see it, any
 structure is better. But sill we should take care in building out new code.
+
+## High Level Design
+
+Watched this talk and it kinda helped.
+
+[The Clean Architecture](https://youtu.be/DJtef410XaM)
+
+Main idea is:
+
+* IO (DB calls, requests, web stuff) should be the outer most ring around a
+
+> "Imperative shell" that wraps and uses your "Functional Core"
+
+So like the inner most modules shouldn't "do" anything. They just take in one
+data structure and spit out another data structure.
+
+Its sort of an inversion of the typical paradigm where methods abstract away
+complexity and handle the messy business for you. Instead under this model,
+methods simply take data structures and return data structures and on the outer
+most layer is where the actual imperative "do" logic happens.
+
+Example:
+
+```python
+# Outer Imperative Shell
+def find_definition(word):
+    url = build_url(word)
+    data = requests.get(url).json()  # I/O
+    return pluck_definition(data)
+
+# Inner Functional Core
+def build_url(word):
+    q = 'define' + word
+    url = 'http://api.duckduckgo.com/?'
+    url += urlencode({'q': q, 'format': 'json'})
+
+def pluck_definition(data):
+    definition = data[u'Definition']
+    if definition == u'':
+        raise ValueError('that is not a word')
+    return definition
+```
+
+So now we can test our `build_url` and `pluck_definitions` functions without
+having to actually "do" anything, change any external state, etc. We just pass
+data in and confirm it comes back out again correctly.
+
+[Uncle Bob's - Clean Architecture](https://blog.cleancoder.com/uncle-bob/images/2012-08-13-the-clean-architecture/CleanArchitecture.jpg)
+
+Now here's the thing, the app is not currently (Dec 2025) setup to work like
+this, nor does it need to follow this like gospel. Its just guidelines for an
+arch that is simple, extensible, and clean.
+
+
+
+## I NEED TO RENAME AND REORGANIZE THINGS:
+
+So I accidentally ended up naming everything a "Service." This is bad and I
+already hate it. The word doesn't mean anything if everything's using it.
+
+Both Deepseek and ChatGPT recommended I use a domain specific grouping.
+
+### ChatGPT's Advice
+
+Naming rules that prevent “Service Hell”
+
+When creating a new class, ask one question:
+
+“What would break if I replaced this with a stub?”
+
+Business rules break → Service
+
+Data consistency breaks → Manager
+
+OS interaction breaks → Infrastructure
+
+Implementation swap breaks → Adapter
+
+Nothing breaks → Utility
+
+If you can’t answer → it’s probably doing too much.
+
+Final reassurance
+
+What you did is not a mistake—it’s a normal phase:
+
+    “Everything becomes a Service right before architecture starts to make sense.”
+
+The fact that you’re uncomfortable with it means your instincts are good.
+
+### Deepseek's Advice
+
+Quick Rules of Thumb
+
+    Use "Service" when: Coordinating multiple components, business workflow
+
+    Use "Manager" when: Managing lifecycle/state of a specific resource
+
+    Use "Handler" when: Processing specific requests/events
+
+    Use "Repository" when: Direct data access
+
+    Use "Client" when: External system communication
+
+    Use "Helper/Util" when: Pure functions, utilities
 
 ### Main Problems
 

@@ -487,6 +487,26 @@
   - Need an easy way to see if we got a rule to access that game server user.
     Just going to parse stdout.
 
+* [ ] **!!!STOP!!!: Its time to step back and learn a bit more about Domain Driven Design**
+  - See re-arch todo below, but tldr need a better way to organize all my new
+    classes before things start getting too outta hand.
+  - This code is still fresh and molten in its core, we need to reform and
+    rehome it (change dir structure) just a bit more before bad habits get
+    ingrained.
+  - But before I can do that I need to learn more about DDD. I should watch
+    some tutorials, takes some notes, and build some practice projects before
+    moving on.
+
+* [ ] **Do more rearchitecting, solve "Everything's a Service" problem.**
+  - I fucked up. But it's cool I can save it.
+  - I got so carried away turning code into classes that I kinda didn't think
+    about how I was going to organize and name those functions.
+    - Kinda an important part.
+  - But its cool, just gotta figure out a new model to use for organizing dirs
+    and rename some things, change some imports.
+  - The code itself doesn't really need changed, I just have to figure out how
+    to organize it in a logical reasonable way. 
+
 * [ ] **Wrap up v1.8.7 Release**
   - Okay this refactor job has been enough change for one release.
   - I'd love to keep adding more and expanding, but I gotta call it here, tuck
@@ -496,6 +516,11 @@
     up before adding more stuff on.
 
 ## Version 1.8.x Todos
+
+* [ ] **Change docstrings to use Sphinx and look into auto generated readthedocs with it**
+  - I've been using a made up fake docstring format. Time to change that to be Sphinx.
+  - https://docs.python-guide.org/writing/documentation/#sphinx
+  - https://www.sphinx-doc.org/en/master/
 
 * [ ] **Add cool retro term style customization options**
   - I played around with some css for adding cool term effects to the xterm.js

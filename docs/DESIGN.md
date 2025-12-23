@@ -735,7 +735,7 @@ pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 ---
 
-## 17. Debugging
+## 16. Debugging
 - **Debugging Classes**:
 You can run the code from a class file isolated like this:
 

@@ -4,16 +4,17 @@ from .local_file_interface import LocalFileInterface
 from .remote_file_interface import SSHFileInterface
 from app.utils.helpers import log_wrap
 
-class FileManagerService:
-    def __init__(self, server):
+class FileManager:
+    def __init__(self, server, executor):
         """
-        Initialize FileManagerService with a server object.
+        Initialize FileManager with a server object.
         
         Args:
             server (GameServer): Game server object to manage files for
         """
         self.server = server
         self._interface = None
+        self.executor = executor
         
     @property
     def interface(self):
@@ -25,7 +26,7 @@ class FileManagerService:
             if self.server.install_type == 'remote':
                 self._interface = SSHFileInterface(self.server)
             else:
-                self._interface = LocalFileInterface(self.server)
+                self._interface = LocalFileInterface(self.server, self.executor)
         return self._interface
     
     def read_file(self, file_path):

@@ -3,7 +3,7 @@ import getpass
 import base64
 
 from flask import current_app
-from ..user_module_service import UserModuleService
+#from ..user_module_service import UserModuleService
 
 from app.utils.helpers import log_wrap
 from .file_interface import FileInterface
@@ -13,9 +13,9 @@ class LocalFileInterface(FileInterface):
 
     USER = getpass.getuser()
 
-    def __init__(self, server):
+    def __init__(self, server, executor):
         super().__init__(server)
-        self.executor = UserModuleService()
+        self.executor = executor
 
     def read_file(self, file_path):
         current_app.logger.info(log_wrap("file_path", file_path))

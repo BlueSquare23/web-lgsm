@@ -260,6 +260,11 @@
 
 ## Version 1.8.7 Todos
 
+* [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
+  - I would get more control over specific package builds and would be platform independent.
+  - But then I'd have to use that to manage all the packages n'@ and people are
+    less familiar with these sorta 3rd party pkg managers.
+
 * [x] **Move config management stuff into its own class**
   - I'm making an effort to clean up the `utils.py` file.
   - First thing to do is take those ugly functions in the utils file and move

@@ -5,7 +5,7 @@ from app import cache
 from app.models import GameServer
 
 from .user_module_service import UserModuleService
-from .file_manager_service.file_manager_service import FileManagerService
+from app.managers import FileManager
 
 class TmuxSocketNameService:
 
@@ -40,7 +40,7 @@ class TmuxSocketNameService:
         socket_file_name = cache.get(cache_key)
 
         if socket_file_name == None:  # Aka cache empty
-            file_manager = FileManagerService(server)
+            file_manager = FileManager(server, UserModuleService())
             gs_id = file_manager.read_file(gs_id_file_path)
             if gs_id == None:
                 return None

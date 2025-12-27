@@ -11,7 +11,8 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
-from app.services import FileManagerService
+from app.managers import FileManager
+from app.services import UserModuleService
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()
@@ -50,7 +51,7 @@ def edit():
             server_id = download_form.server_id.data
             cfg_path = download_form.cfg_path.data
             server = GameServer.query.filter_by(id=server_id).first()
-            file_manager = FileManagerService(server)
+            file_manager = FileManager(server, UserModuleService())
 
             audit_log_event(current_user.id, f"User '{current_user.username}', downloaded config '{cfg_path}'")
             return file_manager.download_file(cfg_path)
@@ -69,7 +70,7 @@ def edit():
         current_app.logger.info(log_wrap("cfg_path", cfg_path))
         current_app.logger.info(log_wrap("server", server))
 
-        file_manager = FileManagerService(server)
+        file_manager = FileManager(server, UserModuleService())
         file_contents = file_manager.read_file(cfg_path)
 
         if file_contents == None:
@@ -98,7 +99,7 @@ def edit():
     cfg_path = upload_form.cfg_path.data
     new_file_contents = upload_form.file_contents.data
     server = GameServer.query.filter_by(id=server_id).first()
-    file_manager = FileManagerService(server)
+    file_manager = FileManager(server, UserModuleService())
 
     if file_manager.write_file(cfg_path, new_file_contents):
         flash("Cfg file updated!", category="success")

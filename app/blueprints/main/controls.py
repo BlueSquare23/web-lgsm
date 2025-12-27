@@ -12,7 +12,8 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import ControlService, CommandExecService, TmuxSocketNameService
+from app.services import ControlService, UserModuleService, ProcInfoService, CommandExecService, TmuxSocketNameService
+from app.managers import CfgManager
 from app import cache
 
 from app.config.config_manager import ConfigManager
@@ -89,8 +90,7 @@ def controls():
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
 
-            from app.services import CfgManagerService
-            cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
+            cfg_manager = CfgManager(UserModuleService(), ProcInfoService(), command_service)
             cfg_paths = cfg_manager.find_cfg_paths(server)
 
             if cfg_paths == "failed":
@@ -161,8 +161,8 @@ def controls():
     else:
         current_app.logger.info("Getting cfg_paths")
 
-        from app.services import CfgManagerService
-        cfg_manager = CfgManagerService('/opt/web-lgsm/utils/')
+#        cfg_manager = CfgManager()
+        cfg_manager = CfgManager(UserModuleService(), ProcInfoService(), command_service)
         cfg_paths = cfg_manager.find_cfg_paths(server)
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))

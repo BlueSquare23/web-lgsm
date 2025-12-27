@@ -7,16 +7,18 @@ from flask import current_app, flash
 from app.utils.paths import PATHS
 from app.config import ConfigManager
 
-from .user_module_service import UserModuleService
-from .proc_info_service.proc_info_service import ProcInfoService
-from .command_exec_service.command_exec_service import CommandExecService
+#from app.services import UserModuleService, ProcInfoService, CommandExecService
 
-class CfgManagerService:
+class CfgManager:
     USER = getpass.getuser()
 
-    def __init__(self, modules_dir=None):
-        self.modules_dir = modules_dir
-        self.executor = UserModuleService(self.modules_dir)
+# This is a dirty hack just injecting these dependencies. We need to have
+# better architectural separation between managers and services. But till
+# ProcInfo / CommandExec stuff is re-arched, this'll have to do.
+    def __init__(self, executor, proc_info_service, command_exec_service):
+        self.executor = executor
+        self.proc_info_service = proc_info_service
+        self.command_exec_service = command_exec_service
 
 
     def find_cfg_paths(self, server):
@@ -31,7 +33,7 @@ class CfgManagerService:
         args = [ server.install_path, valid_gs_cfgs ]
 
         kwargs = dict()
-        if server.username != CfgManagerService.USER:
+        if server.username != CfgManager.USER:
             kwargs = { 'as_user': server.username }
 
         return self.executor.call('find_cfg_paths', *args, **kwargs)
@@ -55,8 +57,8 @@ class CfgManagerService:
         ] + wanted[:-1]
 
         cmd_id = "find_cfg_paths"
-        success = CommandExecService(ConfigManager()).run_command(cmd, server, cmd_id)
-        proc_info = ProcInfoService().get_process(cmd_id)
+        success = self.command_exec_service(ConfigManager()).run_command(cmd, server, cmd_id)
+        proc_info = self.proc_info_service.get_process(cmd_id)
 
         # If the ssh connection itself fails return False.
         if not success:

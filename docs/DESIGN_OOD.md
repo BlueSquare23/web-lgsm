@@ -82,6 +82,23 @@ Instead, I say we embrace a Deleuzean Schizo-Architecture, where we do not
 color within the lines and instead hop from one domain to another borrowing
 ideas, as this schematic drift is inevitable anyways.
 
+### The Pieces 
+
+Services - Coordinates multiple pieces (main business logic)
+
+Managers - Manages the state of some resource (file, DB, API)
+
+Routes - Edge layer, calls services, that call managers
+
+Models - Data
+
+---
+
+Services should use Managers, but not the other way around. But tbh I'm still
+not sure how exactly to best decouple the two. Right now just injecting deps
+for managers that depend on services. But this is messy and a sign that further
+restructuring is needed.
+
 ### Diagramming
 
 We're going to use `mermaid` to make our class diagrams.

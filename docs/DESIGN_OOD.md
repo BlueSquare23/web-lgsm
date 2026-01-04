@@ -40,48 +40,6 @@ presentation layer only. Its becomes the outer most rim of the Clean Arch
 onion. Then DDD defines the core and we use Clean Arch principals to pull it
 all together.
 
-## A Schizo Architecture
-
-> "A process and not a goal, a production and not an expression."
-
-> The code of delirium or of desire proves to have an extraordinary fluidity."
-
-> It might be said that the schizophrenic passes from one code to the other,
-> but he deliberately scrabbles all the codes, by quickly shifting from one to
-> another, according to the questions asked to him, never giving the same
-> explanation from day to the next, never invoking the same in genealogy, never
-> recording the same event in the same way."
-
- -Gilles Deleuze, _Anti-Oedipus_
-
-We are not specialists and there are no boundaries. We are not bounded by
-profit and are free to impose our own world views. 
-
-Truth is at the end of the day 100% of users and even the majority of
-developers do not care. I could spend all the time in the world learning how to
-build a beautifully architected app that perfectly follows DDD and clean arch
-principals. But most people wouldn't give a shit.
-
-Instead what matters here is what turns out results. The problem is if we build
-it poorly, it wont work. It'll keep falling over on itself and I'll be stuck in
-re-arch hell for forever. That cannot be the way.
-
-I'm going to fork off my life process of continuing to learn about
-architectures, particularly DDD. However, we can't have that be a blocking
-process.
-
-Instead what we have to do is move forward with our existing code and re-arch
-on the fly. Meaning we need to do it _light_. Arch ideas are good for
-inspiration, but bad as dogma.
-
-We can admire uncle Bob's experience and learn from him overtime without having
-to do everything the right way the first time. After all, is that not the
-process of learning anything?
-
-Instead, I say we embrace a Deleuzean Schizo-Architecture, where we do not
-color within the lines and instead hop from one domain to another borrowing
-ideas, as this schematic drift is inevitable anyways.
-
 ### The Pieces 
 
 Services - Coordinates multiple pieces (main business logic)

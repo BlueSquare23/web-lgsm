@@ -7,7 +7,7 @@ from app.models import GameServer
 from .user_module_service import UserModuleService
 from app.managers import FileManager
 
-class TmuxSocketNameService:
+class TmuxSocketNameCache:
 
     def del_socket_name_cache(self, server_id):
         """

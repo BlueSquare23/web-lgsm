@@ -7,7 +7,7 @@ from flask_restful import Resource
 from app import db
 from app.utils import *
 from app.models import GameServer, Job
-from app.services import CronService, ProcInfoService
+from app.services import CronService, ProcInfoRegistry
 from app.config.config_manager import ConfigManager
 
 config = ConfigManager()
@@ -63,10 +63,10 @@ class GameServerDelete(Resource):
             db.session.commit()
 
         # Drop any saved proc_info objects.
-        ProcInfoService().remove_process(server_id)
+        ProcInfoRegistry().remove_process(server_id)
 
         # Log to ensure process was dropped.
-        current_app.logger.info(log_wrap("All processes", ProcInfoService().get_all_processes()))
+        current_app.logger.info(log_wrap("All processes", ProcInfoRegistry().get_all_processes()))
 
         # TODO: Refactor this now that config handling has been changed.
         if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):

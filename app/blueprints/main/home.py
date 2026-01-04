@@ -3,7 +3,7 @@ from flask import render_template, current_app
 
 from app.utils import *
 from app.models import GameServer
-from app.services import ProcInfoService
+from app.services import ProcInfoRegistry
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()
@@ -33,7 +33,7 @@ def home():
         current_app.logger.info(server.id)
 
     current_app.logger.debug(log_wrap("installed_servers", installed_servers))
-#    for proc_id, proc in ProcInfoService().get_all_processes().items():
+#    for proc_id, proc in ProcInfoRegistry().get_all_processes().items():
 #        current_app.logger.debug(log_wrap(proc_id, proc))
 
     return render_template(

@@ -17,7 +17,7 @@ from flask import (
 from app import db
 from app.utils import *
 from app.models import User, GameServer
-from app.services import ProcInfoService
+from app.services import ProcInfoRegistry
 from app.forms.views import AddForm
 
 # Constants.
@@ -28,7 +28,7 @@ from app.utils.paths import PATHS
 
 from app.config.config_manager import ConfigManager
 
-from app.services import CommandExecService
+from app.services import CommandExecutor
 
 from . import main_bp
 
@@ -38,7 +38,7 @@ from . import main_bp
 @login_required
 def install():
     config = ConfigManager()
-    command_service = CommandExecService(config)
+    command_service = CommandExecutor(config)
 
     # Check if user has permissions to install route.
     if not current_user.has_access("install"):
@@ -84,7 +84,7 @@ def install():
                 return redirect(url_for("main.install"))
 
             # Log proc info so can see what's going on.
-            proc_info = ProcInfoService().get_process(server.id)
+            proc_info = ProcInfoRegistry().get_process(server.id)
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
             if proc_info.pid:
@@ -180,7 +180,7 @@ def install():
     ]
 
 #    current_app.logger.info(log_wrap("cmd", cmd))
-#    current_app.logger.info(log_wrap("all processes", ProcInfoService().get_all_processes()))
+#    current_app.logger.info(log_wrap("all processes", ProcInfoRegistry().get_all_processes()))
 
     install_daemon = Thread(
         target=command_service.run_command,

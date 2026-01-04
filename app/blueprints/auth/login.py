@@ -19,7 +19,7 @@ from flask import (
 from app.forms.auth import LoginForm 
 from app.models import User
 from app.utils import validation_errors, audit_log_event
-from app.services import BlocklistService
+from app.services import Blocklist
 
 from . import auth_bp
 
@@ -34,7 +34,7 @@ def login():
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
-    blocklist = BlocklistService()
+    blocklist = Blocklist()
 
     ip = blocklist.get_client_ip(request)
 

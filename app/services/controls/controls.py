@@ -2,7 +2,7 @@ import json
 from .control import Control 
 from app.config.config_manager import ConfigManager
 
-class ControlService:
+class Controls:
     """
     Service class for handling control operations including loading controls from JSON,
     applying exemptions, and filtering based on user permissions.
@@ -11,7 +11,7 @@ class ControlService:
     def __init__(self, controls_file = "json/controls.json", 
                  exemptions_file = "json/control_exemptions.json"):
         """
-        Initialize the ControlService.
+        Initialize Controls.
 
         Args:
             controls_file (str): Path to the controls JSON file

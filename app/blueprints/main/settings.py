@@ -13,7 +13,7 @@ from app.utils import *
 from app.forms.views import SettingsForm
 
 from app.config.config_manager import ConfigManager
-from app.services import ControlService, CommandExecService
+from app.services import CommandExecutor
 
 from . import main_bp
 
@@ -24,7 +24,7 @@ from . import main_bp
 @login_required
 def settings():
     config = ConfigManager()
-    command_service = CommandExecService(config)
+    command_service = CommandExecutor(config)
 
     # Check if user has permissions to settings route.
     if not current_user.has_access("settings"):

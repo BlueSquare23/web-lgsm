@@ -24,8 +24,8 @@ class BaseCommandExecutor(CommandExecutor):
     def _setup_proc_info(self, cmd_id, create=True):
         """Setup process info object."""
         if not self.proc_info_service:
-            from app.services import ProcInfoService
-            self.proc_info_service = ProcInfoService()
+            from app.services import ProcInfoRegistry
+            self.proc_info_service = ProcInfoRegistry()
         
         proc_info = self.proc_info_service.get_process(cmd_id, create=create)
         

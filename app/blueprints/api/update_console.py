@@ -7,7 +7,7 @@ from flask_restful import Resource
 from app.config.config_manager import ConfigManager
 from app.utils import *
 from app.models import GameServer
-from app.services import ProcInfoService, CommandExecService, TmuxSocketNameService
+from app.services import ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache
 
 from . import api
 
@@ -15,7 +15,7 @@ from . import api
 
 class UpdateConsole(Resource):
     config = ConfigManager()
-    command_service = CommandExecService(config)
+    command_service = CommandExecutor(config)
 
     @login_required
     def post(self, server_id):
@@ -35,7 +35,7 @@ class UpdateConsole(Resource):
             )
             return response
 
-        tmux_socket = TmuxSocketNameService().get_tmux_socket_name(server)
+        tmux_socket = TmuxSocketNameCache().get_tmux_socket_name(server)
 
         cmd = [
             PATHS["tmux"],
@@ -55,7 +55,7 @@ class UpdateConsole(Resource):
             cmd = docker_cmd_build(server) + cmd
 
         command_service.run_command(cmd, server, server.id)
-        proc_info = ProcInfoService().get_process(server.id, create=True)
+        proc_info = ProcInfoRegistry().get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}

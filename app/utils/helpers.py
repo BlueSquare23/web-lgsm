@@ -69,15 +69,15 @@ def cancel_install(pid):
     Returns:
         bool: True if install canceled successfully, False otherwise.
     """
-    from app.services import ProcInfoService, CommandExecService
+    from app.services import ProcInfoRegistry, CommandExecutor
 
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of a game server's ID.
     cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
     cmd_id = 'cancel_install'
-    CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
-    proc_info = ProcInfoService().get_process(cmd_id)
+    CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
+    proc_info = ProcInfoRegistry().get_process(cmd_id)
 
     if proc_info == None:
         return False
@@ -200,7 +200,7 @@ def delete_server(server, remove_files, delete_user):
     Returns:
         Bool: True if deletion was successful, False if something went wrong.
     """
-    from app.services import ProcInfoService, CommandExecService
+    from app.services import ProcInfoRegistry, CommandExecutor
     if not remove_files:
         server.delete()
         flash(f"Game server, {server.install_name} deleted!")
@@ -224,7 +224,7 @@ def delete_server(server, remove_files, delete_user):
 
         if delete_user and server.username != USER:
             cmd = CONNECTOR_CMD + ["--delete", str(server.id)]
-            CommandExecService(ConfigManager()).run_command(cmd)
+            CommandExecutor(ConfigManager()).run_command(cmd)
 
     if server.install_type == "remote":
         if delete_user:
@@ -242,8 +242,8 @@ def delete_server(server, remove_files, delete_user):
 
         cmd = [PATHS["rm"], "-rf", server.install_path]
 
-        success = CommandExecService(ConfigManager()).run_command(cmd, server, server.id)
-        proc_info = ProcInfoService().get_process(server.id)
+        success = CommandExecutor(ConfigManager()).run_command(cmd, server, server.id)
+        proc_info = ProcInfoRegistry().get_process(server.id)
 
         # If the ssh connection itself fails return False.
         if not success or proc_info == None:
@@ -306,9 +306,8 @@ def valid_command(ctrl, server, current_user):
         bool: True if cmd is valid for user & game server, False otherwise.
     """
 
-    from app.services import ControlService
-    control_service = ControlService()
-    controls = control_service.get_controls(server, current_user)
+    from app.services import Controls
+    controls = Controls().get_controls(server, current_user)
     for control in controls:
         # Aka is valid control.
         if ctrl == control.short_ctrl:
@@ -371,13 +370,13 @@ def update_self():
              output.
     """
 
-    from app.services import ProcInfoService, CommandExecService
+    from app.services import ProcInfoRegistry, CommandExecutor
     update_cmd = ["./web-lgsm.py", "--auto"]
 
     cmd_id = "update_self"
-    CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
+    CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
 
-    proc_info = ProcInfoService().get_process(cmd_id)
+    proc_info = ProcInfoRegistry().get_process(cmd_id)
     if proc_info == None:
         return "Error: Something went wrong checking update status"
 
@@ -454,7 +453,7 @@ def clear_proc_info_post_install(server_id, app_context):
                                   logging in a thread.
     """
 
-    from app.services import ProcInfoService
+    from app.services import ProcInfoRegistry
     # App context needed for logging in threads.
     if app_context:
         app_context.push()
@@ -481,7 +480,7 @@ def clear_proc_info_post_install(server_id, app_context):
             # finished, clear out the old proc_info object.
             if server.install_finished and not server.install_failed:
                 current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
-                ProcInfoService().remove_process(server_id)
+                ProcInfoRegistry().remove_process(server_id)
                 return
 
         time.sleep(5)

@@ -3,7 +3,7 @@ import time
 import psutil
 import shutil
 
-class MonitoringService:
+class SystemMetrics:
     # Network stats class vars.
     prev_bytes_sent = psutil.net_io_counters().bytes_sent
     prev_bytes_recv = psutil.net_io_counters().bytes_recv
@@ -27,17 +27,17 @@ class MonitoringService:
         current_time = time.time()
     
         # Calculate the rate of bytes sent and received per second.
-        bytes_sent_rate = (current_bytes_sent - MonitoringService.prev_bytes_sent) / (
-            current_time - MonitoringService.prev_time
+        bytes_sent_rate = (current_bytes_sent - SystemMetrics.prev_bytes_sent) / (
+            current_time - SystemMetrics.prev_time
         )
-        bytes_recv_rate = (current_bytes_recv - MonitoringService.prev_bytes_recv) / (
-            current_time - MonitoringService.prev_time
+        bytes_recv_rate = (current_bytes_recv - SystemMetrics.prev_bytes_recv) / (
+            current_time - SystemMetrics.prev_time
         )
     
         # Update previous counters and timestamp.
-        MonitoringService.prev_bytes_sent = current_bytes_sent
-        MonitoringService.prev_bytes_recv = current_bytes_recv
-        MonitoringService.prev_time = current_time
+        SystemMetrics.prev_bytes_sent = current_bytes_sent
+        SystemMetrics.prev_bytes_recv = current_bytes_recv
+        SystemMetrics.prev_time = current_time
     
         return {"bytes_sent_rate": bytes_sent_rate, "bytes_recv_rate": bytes_recv_rate}
     

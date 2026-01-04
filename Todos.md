@@ -492,7 +492,7 @@
   - Need an easy way to see if we got a rule to access that game server user.
     Just going to parse stdout.
 
-* [ ] **!!!STOP!!!: Its time to step back and learn a bit more about Domain Driven Design**
+* [x] **!!!STOP!!!: Its time to step back and learn a bit more about Domain Driven Design**
   - See re-arch todo below, but tldr need a better way to organize all my new
     classes before things start getting too outta hand.
   - This code is still fresh and molten in its core, we need to reform and
@@ -502,7 +502,7 @@
     some tutorials, takes some notes, and build some practice projects before
     moving on.
 
-* [ ] **Do more rearchitecting, solve "Everything's a Service" problem.**
+* [x] **Do more rearchitecting, solve "Everything's a Service" problem.**
   - I fucked up. But it's cool I can save it.
   - I got so carried away turning code into classes that I kinda didn't think
     about how I was going to organize and name those functions.

@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-from app.services import ProcInfoService
+from app.services import ProcInfoRegistry
 
 from . import api
 
@@ -14,7 +14,7 @@ from . import api
 class CmdOutput(Resource):
     @login_required
     def get(self, server_id):
-        proc_service = ProcInfoService()
+        proc_service = ProcInfoRegistry()
 
         # Can't do anything if we don't have proc info vessel stored.
         if server_id not in proc_service.get_all_processes():

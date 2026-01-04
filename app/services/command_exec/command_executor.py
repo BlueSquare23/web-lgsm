@@ -4,7 +4,7 @@ from .remote_command_executor import SshCommandExecutor
 from app.utils.paths import PATHS
 from app.models import GameServer
 
-class CommandExecService:
+class CommandExecutor:
     """Service for command execution with dependency injection."""
     USER = getpass.getuser()
     
@@ -47,7 +47,7 @@ class CommandExecService:
             **kwargs: Additional executor-specific arguments
         
         Returns:
-            Process info or boolean result  (TODO: Make just bool, proc_info should all go in ProcInfoService singleton and fetched via IDs)
+            Process info or boolean result  (TODO: Make just bool, proc_info should all go in ProcInfoRegistry singleton and fetched via IDs)
         """
 
         args = {
@@ -68,7 +68,7 @@ class CommandExecService:
             args["server"] = server
 
         # Prepend sudo stuff for local non-same user installs.
-        if server.install_type == 'local' and server.username != CommandExecService.USER:
+        if server.install_type == 'local' and server.username != CommandExecutor.USER:
             args["cmd"] = [
                 PATHS["sudo"],
                 "-n",

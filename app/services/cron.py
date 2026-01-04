@@ -9,8 +9,8 @@ from app.utils.paths import PATHS
 from app import db
 
 # Has to be local import to avoid circular import
-from .proc_info_service.proc_info_service import ProcInfoService
-from .command_exec_service.command_exec_service import CommandExecService
+from .proc_info.proc_info_registry import ProcInfoRegistry
+from .command_exec.command_executor import CommandExecutor
 
 """
 Service class interface for interacting with system cron from API and jobs
@@ -26,7 +26,7 @@ class CronService:
     ]
 
     config = ConfigManager()
-    command_service = CommandExecService(config)
+    command_service = CommandExecutor(config)
 
     def __init__(self, server_id):
         self.server_id = server_id 
@@ -70,7 +70,7 @@ class CronService:
         cmd_id = f'add_job_{cronjob.id}'
         self.command_service.run_command(cmd, None, cmd_id)
 
-        proc_info = ProcInfoService().get_process(cmd_id)
+        proc_info = ProcInfoRegistry().get_process(cmd_id)
 
         if proc_info == None:
             return False
@@ -101,7 +101,7 @@ class CronService:
 
         cmd_id = f'delete_job_{cronjob.id}'
         self.command_service.run_command(cmd, None, cmd_id)
-        proc_info = ProcInfoService().get_process(cmd_id)
+        proc_info = ProcInfoRegistry().get_process(cmd_id)
 
         if proc_info == None:
             return False
@@ -132,7 +132,7 @@ class CronService:
 
         self.command_service.run_command(cmd, server, cmd_id)
 
-        proc_info = ProcInfoService().get_process(cmd_id)
+        proc_info = ProcInfoRegistry().get_process(cmd_id)
 
         return self.parse_cron_jobs("".join(proc_info.stdout), server.id)
 

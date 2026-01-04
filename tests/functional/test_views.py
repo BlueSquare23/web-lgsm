@@ -11,7 +11,7 @@ import subprocess
 import configparser
 
 from app.models import *
-from app.services.cron_service import CronService
+from app.services.cron import CronService
 from app import db
 from utils import *
 

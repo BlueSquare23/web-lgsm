@@ -1,4 +1,4 @@
-class BlocklistService:
+class Blocklist:
     """
     Singleton class for blocklist service. Keeps track of in mem list of
     blocked IPs for basic login page protection. Appends IPs to fail list when
@@ -11,11 +11,11 @@ class BlocklistService:
 
     def __new__(cls):
         if not hasattr(cls, 'instance'):
-            cls.instance = super(BlocklistService, cls).__new__(cls)
+            cls.instance = super(Blocklist, cls).__new__(cls)
         return cls.instance
 
     def is_blocked(self, ip):
-        if ip in BlocklistService.blocklist:
+        if ip in Blocklist.blocklist:
             return True
     
         return False
@@ -25,19 +25,19 @@ class BlocklistService:
         Add's IPs to failed list and if failed > max_fail times, adds to blocklist.
         """
         # Trim lists.
-        if len(BlocklistService.failed) >= 10000:
-            BlocklistService.failed.popleft()
+        if len(Blocklist.failed) >= 10000:
+            Blocklist.failed.popleft()
     
-        if len(BlocklistService.blocklist) >= 10000:
-            BlocklistService.blocklist.popleft()
+        if len(Blocklist.blocklist) >= 10000:
+            Blocklist.blocklist.popleft()
     
-        if ip in BlocklistService.allowlist:
+        if ip in Blocklist.allowlist:
             return
     
-        BlocklistService.failed.append(ip)
+        Blocklist.failed.append(ip)
     
-        if BlocklistService.failed.count(ip) > BlocklistService.max_fail:
-            BlocklistService.blocklist.append(ip)
+        if Blocklist.failed.count(ip) > Blocklist.max_fail:
+            Blocklist.blocklist.append(ip)
 
     def get_client_ip(self, request):
         """  

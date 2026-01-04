@@ -1,12 +1,12 @@
 import os
 import json
 
-from app.services import MonitoringService
+from app.services import SystemMetrics
 
-class TestMonitoringService:
+class TestSystemMetrics:
 
     def test_get_network_stats(self):
-        mon_service = MonitoringService()
+        mon_service = SystemMetrics()
         stats = mon_service.get_network_stats()
     
         assert isinstance(stats, dict)
@@ -17,7 +17,7 @@ class TestMonitoringService:
     
     
     def test_get_host_stats(self):
-        mon_service = MonitoringService()
+        mon_service = SystemMetrics()
         stats = mon_service.get_host_stats()
     
         assert isinstance(stats, dict)

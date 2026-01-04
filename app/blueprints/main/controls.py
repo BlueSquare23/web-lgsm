@@ -12,7 +12,7 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import ControlService, UserModuleService, ProcInfoService, CommandExecService, TmuxSocketNameService
+from app.services import Controls, UserModuleService, ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache
 from app.managers import CfgManager
 from app import cache
 
@@ -26,8 +26,8 @@ from . import main_bp
 @login_required
 def controls():
     config = ConfigManager()
-    controls_service = ControlService()
-    command_service = CommandExecService(config)
+    controls_service = Controls()
+    command_service = CommandExecutor(config)
 
     # Initialize forms
     send_cmd_form = SendCommandForm()
@@ -90,7 +90,7 @@ def controls():
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
 
-            cfg_manager = CfgManager(UserModuleService(), ProcInfoService(), command_service)
+            cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
             cfg_paths = cfg_manager.find_cfg_paths(server)
 
             if cfg_paths == "failed":
@@ -162,7 +162,7 @@ def controls():
         current_app.logger.info("Getting cfg_paths")
 
 #        cfg_manager = CfgManager()
-        cfg_manager = CfgManager(UserModuleService(), ProcInfoService(), command_service)
+        cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
         cfg_paths = cfg_manager.find_cfg_paths(server)
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
@@ -178,7 +178,7 @@ def controls():
 
     # Console option, use tmux capture-pane to get output.
     if short_ctrl == "c":
-        status_service = ServerStatusService()
+        status_service = ServerPowerState()
         active = status_service.get_status(server)
         if not active:
             flash("Server is Off! No Console Output!", category="error")
@@ -206,7 +206,7 @@ def controls():
             flash("Send command button disabled!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        status_service = ServerStatusService()
+        status_service = ServerPowerState()
         active = status_service.get_status(server)
         if not active:
             flash("Server is Off! Cannot send commands to console!", category="error")

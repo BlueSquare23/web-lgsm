@@ -4,11 +4,11 @@ from app.utils.helpers import log_wrap
 
 from app.config import ConfigManager
 
-from .tmux_sock_name_service import TmuxSocketNameService
-from .proc_info_service.proc_info_service import ProcInfoService
-from .command_exec_service.command_exec_service import CommandExecService
+from .tmux_socket_name_cache import TmuxSocketNameCache
+from .proc_info.proc_info_registry import ProcInfoRegistry
+from .command_exec.command_executor import CommandExecutor
 
-class ServerStatusService:
+class ServerPowerState:
 
     def get_status(self, server):
         """
@@ -23,7 +23,7 @@ class ServerStatusService:
             bool|None: True if game server is active, False if inactive, None if
                        indeterminate.
         """
-        socket = TmuxSocketNameService().get_tmux_socket_name(server)
+        socket = TmuxSocketNameCache().get_tmux_socket_name(server)
         if socket == None:
             return None
     
@@ -31,9 +31,9 @@ class ServerStatusService:
     
         cmd_id = "get_server_status:" + server.install_name
     
-        CommandExecService(ConfigManager()).run_command(cmd, server, cmd_id)
+        CommandExecutor(ConfigManager()).run_command(cmd, server, cmd_id)
     
-        proc_info = ProcInfoService().get_process(cmd_id)
+        proc_info = ProcInfoRegistry().get_process(cmd_id)
         current_app.logger.info(log_wrap("proc_info", proc_info))
     
         if proc_info == None:

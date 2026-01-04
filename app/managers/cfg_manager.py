@@ -7,8 +7,6 @@ from flask import current_app, flash
 from app.utils.paths import PATHS
 from app.config import ConfigManager
 
-#from app.services import UserModuleService, ProcInfoService, CommandExecService
-
 class CfgManager:
     USER = getpass.getuser()
 

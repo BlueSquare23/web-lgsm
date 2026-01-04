@@ -1,7 +1,7 @@
 import subprocess
 import uuid
 from flask import current_app
-from .command_executor import BaseCommandExecutor
+from .base_executor import BaseCommandExecutor
 
 class LocalCommandExecutor(BaseCommandExecutor):
     """Local command execution using subprocess.Popen."""

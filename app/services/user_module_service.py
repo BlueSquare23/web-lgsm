@@ -6,8 +6,8 @@ import os
 from flask import current_app
 
 from app.config import ConfigManager
-from .command_exec_service.command_exec_service import CommandExecService
-from .proc_info_service.proc_info_service import ProcInfoService
+from .command_exec.command_executor import CommandExecutor
+from .proc_info.proc_info_registry import ProcInfoRegistry
 
 class UserModuleService:
     """
@@ -46,8 +46,8 @@ class UserModuleService:
         ]
 
         cmd_id = 'user_module_service'
-        CommandExecService(ConfigManager()).run_command(cmd, None, cmd_id)
-        proc_info = ProcInfoService().get_process(cmd_id)
+        CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
+        proc_info = ProcInfoRegistry().get_process(cmd_id)
 
         if proc_info == None or proc_info.exit_status > 0:
             return {}

@@ -6,7 +6,7 @@ let previousStdErrput = [];
 
 var spinners = document.getElementById("spinners");
 
-/* NEW THEME
+/* OLD THEME */
 var term = new Terminal({
   theme: {
     foreground: textColor,
@@ -18,9 +18,9 @@ var term = new Terminal({
   cursorStyle: 'block',
   cursorBlink: false,
 });
-*/
 
 /* New Theme */
+/*
 const term = new Terminal({
     theme: {
         background: '#001100',
@@ -50,6 +50,7 @@ const term = new Terminal({
     cursorStyle: 'block',
     allowTransparency: true
 });
+*/
 
 term.open(document.getElementById('terminal'));
 

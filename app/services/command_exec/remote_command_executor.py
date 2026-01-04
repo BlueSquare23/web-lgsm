@@ -4,7 +4,7 @@ import time
 import os
 from functools import lru_cache
 from flask import current_app
-from .command_executor import BaseCommandExecutor
+from .base_executor import BaseCommandExecutor
 
 class SshCommandExecutor(BaseCommandExecutor):
     """SSH command execution using paramiko."""
@@ -66,8 +66,8 @@ class SshCommandExecutor(BaseCommandExecutor):
         if cmd_id is None:
             cmd_id = server.id
         
-        from app.services import ProcInfoService
-        proc_info = ProcInfoService().get_process(cmd_id, create=True)
+        from app.services import ProcInfoRegistry
+        proc_info = ProcInfoRegistry().get_process(cmd_id, create=True)
 
         if self.config.getboolean('settings', 'clear_output_on_reload'):
             proc_info.stdout.clear()

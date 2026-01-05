@@ -111,11 +111,16 @@
                 <h5 class="card-title text-white">{{full_name}}</h5>
                 {% set clean_name = full_name.replace(" ", "_") %}
                 {% set clean_name = clean_name.replace(" ", "_") %}
-                {% set install_path = '/home/' + script_name + '/GameServers/' + clean_name + '/' %}
-                {% set username = web_lgsm_user %}
+
+                {% if web_lgsm_user %}
+                  {% set username = web_lgsm_user %}
+                {% endif %}
+
                 {% if create_new_user %}
                   {% set username = script_name %}
                 {% endif %}
+
+                {% set install_path = '/home/' + username + '/GameServers/' + clean_name + '/' %}
 
                 <!-- Quick Install Form - Just assume they want defaults -->
                 <form method="POST" class="form-group mt-auto" action="/install">

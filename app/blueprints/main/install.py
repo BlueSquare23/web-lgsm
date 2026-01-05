@@ -94,10 +94,22 @@ def install():
                 else:
                     flash("Problem canceling installation!", category="error")
 
+        # For displaying Installing ServerName...
+        if server_id != None:
+            server = GameServer.query.filter_by(id=server_id).first()
+            if server == None:
+                flash(
+                    "Can't get details for server.",
+                    category="error",
+                )
+                return redirect(url_for("main.install"))
+
+            install_name = server.install_name
+
         return render_template(
             "install.html",
             user=current_user,
-            web_lgsm_user = USER,
+            web_lgsm_user=USER,
             servers=install_list,
             install_name=install_name,
             server_id=server_id,
@@ -203,6 +215,7 @@ def install():
     return render_template(
         "install.html",
         user=current_user,
+        web_lgsm_user=USER,
         servers=install_list,
         _config=config,
         install_name=install_name,

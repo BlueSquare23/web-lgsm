@@ -5,18 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v1.8.7 - unreleased]
+## [v1.8.7 - 2026-01-04]
 
 ### Added
 
-- Add new `CommandExecService` class for handling local and remote command execs.
-- Add new `ProcInfoService` singleton class for sharing `proc_info` objects.
-- Add new `BlocklistService` singleton class for handling login failure blocklist.
-- Add new `ControlService` class as service for interacting with controls data.
-- Add new `ConfigManager` class for handling main.conf ConfigParser stuff.
+- New form to edit server details before installation on install page.
+- Begin re-architecture efforts to enable continued app growth.
+- New new alt user management system to allow running as other users via
+  sudoers instead of over SSH.
 
 ### Changed
 
+- Use flask cache for tmux socket name caching now.
+- Restructured app directory to better house individual app components.
+- Broke up monolithic `views.py`, `auth.py`, and `utils.py` into modular components.
 - Change user permission structure (**BREAKING CHANGE!** :warning: See FAQ 13)
 - Rename "Command" to "Controls" through projects source (where applicable).
 

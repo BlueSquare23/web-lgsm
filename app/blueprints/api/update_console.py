@@ -54,7 +54,7 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        command_service.run_command(cmd, server, server.id)
+        UpdateConsole.command_service.run_command(cmd, server, server.id)
         proc_info = ProcInfoRegistry().get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:

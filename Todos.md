@@ -512,7 +512,7 @@
   - The code itself doesn't really need changed, I just have to figure out how
     to organize it in a logical reasonable way. 
 
-* [ ] **Wrap up v1.8.7 Release**
+* [x] **Wrap up v1.8.7 Release**
   - Okay this refactor job has been enough change for one release.
   - I'd love to keep adding more and expanding, but I gotta call it here, tuck
     in the corners and get another release out before I get too carried away.

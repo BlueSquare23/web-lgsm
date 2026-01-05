@@ -3,6 +3,7 @@ import time
 import json
 import pytest
 import psutil
+import getpass
 from flask import url_for, request
 from game_servers import game_servers
 import subprocess
@@ -11,18 +12,30 @@ import configparser
 from app.models import User, GameServer
 from utils import *
 
-def full_game_server_install(client, cancel=False):
+def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     response = client.get("/install")
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
 
+    # TODO: Replace this with info from test json vars. I was lazy and just hardcoded it.
+    install_data = {
+        "csrf_token": csrf_token,
+        "script_name": "mcserver",
+        "install_type": "local",
+        "install_path": f"/home/{username}/GameServers/Minecraft",
+        "install_name": "Minecraft",
+        "username": username,
+    }
+
     # Do an install.
     response = client.post(
         "/install",
-        data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Minecraft"},
+        data=install_data,
         follow_redirects=True,
     )
 
+    print(extract_alert_messages(response))
+#    debug_response(response)
     assert response.status_code == 200
     assert b"Installing" in response.data
 
@@ -287,7 +300,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','delete_user', True)
 
         # Test full install as new user.
-        full_game_server_install(client)
+        full_game_server_install(client, username='mcserver')
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -371,7 +384,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','install_create_new_user', False)
 
         # Test full install as existing user.
-        full_game_server_install(client)
+        full_game_server_install(client, username=getpass.getuser())
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -394,7 +407,7 @@ def test_install_cancel(db_session, client, authed_client, test_vars):
     with client:
 
         # Test full install as existing user.
-        full_game_server_install(client, cancel=True)
+        full_game_server_install(client, username='mcserver', cancel=True)
 
         server_id = get_server_id("Minecraft")
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)

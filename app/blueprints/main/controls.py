@@ -12,7 +12,7 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import Controls, UserModuleService, ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache
+from app.services import Controls, UserModuleService, ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache, ServerPowerState
 from app.managers import CfgManager
 from app import cache
 

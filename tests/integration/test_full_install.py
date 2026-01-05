@@ -339,7 +339,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
 
-        os.system('cat', 'logs/error.log')
+        os.system('cat logs/error.log')
 
         dir_path = "/home/mcserver"
         assert not os.path.exists(dir_path)

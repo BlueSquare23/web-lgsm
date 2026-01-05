@@ -102,7 +102,7 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
 
-    time.sleep(10)
+    time.sleep(15)
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")

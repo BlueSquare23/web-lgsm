@@ -119,6 +119,8 @@ def game_server_start_stop(client, server_id):
     toggle_send_cmd(True)
     time.sleep(1)
 
+    check_main_conf_bool('settings','send_cmd', True)
+
     # Test sending command to game server console
     response = client.post(
         "/controls",
@@ -131,6 +133,8 @@ def game_server_start_stop(client, server_id):
         },
         follow_redirects=True
     )
+
+    print(extract_alert_messages(response))
     assert response.status_code == 200
     # From flashed message
     assert b'Sending command to console' in response.data
@@ -331,6 +335,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         ):
             time.sleep(3)
 
+        time.sleep(3)
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
 

@@ -12,13 +12,16 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import Controls, UserModuleService, ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache, ServerPowerState
+from app.services import Controls, UserModuleService, ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache, ServerPowerState, SudoersService
 from app.managers import CfgManager
 from app import cache
 
 from app.config.config_manager import ConfigManager
 
 from . import main_bp
+
+# Constants.
+USER = getpass.getuser()
 
 ######### Controls Page #########
 
@@ -62,6 +65,13 @@ def controls():
         if not current_user.has_access("controls", server_id):
             flash("Your user does not have access to this server", category="error")
             return redirect(url_for("main.home"))
+
+        # Auto add sudoers rule for server if it doesn't have one, for backwards compat.
+        if server.install_type == 'local' and server.username != USER:
+            sudoers_service = SudoersService(server.username)
+            if not sudoers_service.has_access():
+                if not sudoers_service.add_user():
+                    flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{server.username}\n{USER} ALL=({server.username}) NOPASSWD: ALL")
 
         # Pull in controls list from controls.json file.
         controls_list = controls_service.get_controls(server.script_name, current_user)

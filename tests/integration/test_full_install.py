@@ -102,7 +102,7 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
 
-    time.sleep(5)
+    time.sleep(10)
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")
@@ -338,6 +338,8 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         time.sleep(3)
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
+
+        os.system('cat', 'logs/error.log')
 
         dir_path = "/home/mcserver"
         assert not os.path.exists(dir_path)

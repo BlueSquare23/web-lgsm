@@ -113,7 +113,7 @@ def game_server_start_stop(client, server_id):
 
     # Keep checking status till timeout.
     timeout = 60
-    run_time = 0
+    runtime = 0
     while True:
         response = client.get(f"/api/server-status/{server_id}")
         assert response.status_code == 200
@@ -124,13 +124,13 @@ def game_server_start_stop(client, server_id):
             break
 
         time.sleep(10)
-        run_time += 10
+        runtime += 10
 
-        if run_time > timeout:
+        if runtime > timeout:
             assert True == False  # Force fail timeout.
     
     # Cant win the race if you're asleep.
-    time.sleep(10)
+    time.sleep(5)
 
     response = client.get(f"/api/server-status/{server_id}")
     # Assert server status is on.
@@ -290,6 +290,29 @@ def console_output(client):
     # Just check that some stdout is coming through.
     assert len(resp_data['stdout']) > 0
 
+    time.sleep(10)
+
+    # Stop the server.
+    response = client.post(
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "control": 'sp',
+            "ctrl_form": "true",
+        },
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    time.sleep(45)
+
+    # Final check status indicator api, is off.
+    response = client.get(f"/api/server-status/{server_id}")
+    resp_dict = response.json
+    assert 'status' in resp_dict
+    assert resp_dict['status'] == False
+
 
 @pytest.mark.integration
 def test_install_newuser(db_session, client, authed_client, test_vars):
@@ -336,40 +359,24 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         game_server_start_stop(client, server_id)
         console_output(client)
 
-        # Refresh settings again after full server install and stuff.
+        # Refresh settings again after full server install cause paranoia. (probably unnecessary, am debugging rn)
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
         check_response(response, error_msg, resp_code, "main.settings")
+        time.sleep(1)
 
-        response = client.get(
-            "/controls",
-            data={
-                "csrf_token": csrf_token,
-                "server_id": server_id,
-                "control": 'sp',
-                "ctrl_form": "true",
-            },
-            follow_redirects=True
-        )
-        assert response.status_code == 200
+        check_main_conf_bool('settings','install_create_new_user', True)
+        check_main_conf_bool('settings','remove_files', True)
+        check_main_conf_bool('settings','delete_user', True)
 
-        # Run until "process_lock": false (aka proc stopped).
-        while (
-            b'"process_lock": true'
-            in client.get(f"/api/cmd-output/{server_id}").data
-        ):
-            time.sleep(3)
-
-        time.sleep(3)
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
 
-        print("##################### Error Log #####################")
-        os.system('cat logs/error.log')
+        time.sleep(15)  # Allow time for delete job to finish.
 
-        print("##################### Access Log #####################")
-        os.system('cat logs/access.log')
+        print("##################### Audit Log #####################")
+        os.system('cat logs/audit.log')
 
         print("##################### Home Dirs #####################")
         os.system('ls /home')

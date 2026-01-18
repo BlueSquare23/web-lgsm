@@ -38,6 +38,10 @@ jobs:
         run: |
           sudo -l
 
+      - name: DEBUG check sudoers file
+        run: |
+          sudo cat /etc/sudoers
+
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update

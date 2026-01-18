@@ -26,8 +26,10 @@ class LocalFileInterface(FileInterface):
             kwargs = { 'as_user': self.server.username }
 
         encoded = self.executor.call('read_file', *args, **kwargs)
-        if encoded == None:
+        if encoded == None or encoded == {}:
             return None
+
+        current_app.logger.info(log_wrap("encoded", encoded))
         
         return base64.b64decode(encoded).decode('utf-8', errors='ignore')
 

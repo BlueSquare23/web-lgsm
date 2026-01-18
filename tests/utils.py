@@ -87,6 +87,8 @@ def get_server_id(server_name):
     return server.id
 
 
+# This works because even if page has multiple forms, they're all going to use
+# the same csrf_token.
 def get_csrf_token(response):
     # Parse the HTML to get the CSRF token.
     html = response.data.decode()

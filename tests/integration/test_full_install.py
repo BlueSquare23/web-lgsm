@@ -36,6 +36,7 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
 
     print(extract_alert_messages(response))
 #    debug_response(response)
+
     assert response.status_code == 200
     assert b"Installing" in response.data
 
@@ -88,6 +89,7 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
+    print(csrf_token)
 
     # Test starting the server.
     response = client.post(
@@ -102,18 +104,27 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
 
-    time.sleep(15)
+    time.sleep(2)
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")
     assert response.status_code == 200
     print(response.get_data(as_text=True))
 
+    # Stay sleeping till command finishes.
     while (b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data):
         time.sleep(5)
 
     # Cant win the race if you're asleep.
     time.sleep(10)
+
+    response = client.get(f"/api/server-status/{server_id}")
+    # Assert server status is on.
+    assert response.status_code == 200
+    resp_dict = response.json
+    print(resp_dict)
+    assert "status" in resp_dict
+    assert resp_dict["status"] == True
 
     # Enable the send_cmd setting.
     toggle_send_cmd(True)
@@ -139,7 +150,7 @@ def game_server_start_stop(client, server_id):
     # From flashed message
     assert b'Sending command to console' in response.data
 
-    time.sleep(15)
+    time.sleep(5)
 
     print("######################## SEND COMMAND TO CONSOLE\n")
     # Sleep until process is finished.
@@ -196,8 +207,9 @@ def game_server_start_stop(client, server_id):
         x += 5
 
     # Final check status indicator api, is off.
-    resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
-    resp_dict = json.loads(resp)
+    response = client.get(f"/api/server-status/{server_id}")
+    resp_dict = response.json
+    assert 'status' in resp_dict
     assert resp_dict['status'] == False
 
 

@@ -111,10 +111,24 @@ def game_server_start_stop(client, server_id):
     assert response.status_code == 200
     print(response.get_data(as_text=True))
 
-    # Stay sleeping till command finishes.
-    while (b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data):
-        time.sleep(5)
+    # Keep checking status till timeout.
+    timeout = 60
+    run_time = 0
+    while True:
+        response = client.get(f"/api/server-status/{server_id}")
+        assert response.status_code == 200
+        resp_dict = response.json
+        assert "status" in resp_dict
 
+        if resp_dict["status"] == True:
+            break
+
+        time.sleep(10)
+        run_time += 10
+
+        if run_time > timeout:
+            assert True == False  # Force fail timeout.
+    
     # Cant win the race if you're asleep.
     time.sleep(10)
 
@@ -351,7 +365,17 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
 
+        print("##################### Error Log #####################")
         os.system('cat logs/error.log')
+
+        print("##################### Access Log #####################")
+        os.system('cat logs/access.log')
+
+        print("##################### Home Dirs #####################")
+        os.system('ls /home')
+
+        print("##################### Sudoers Rules #####################")
+        os.system('sudo -l')
 
         dir_path = "/home/mcserver"
         assert not os.path.exists(dir_path)

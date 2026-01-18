@@ -47,6 +47,19 @@ def check_main_conf_bool(section, option, enabled=True):
         assert test_config.getboolean(section, option) == False
 
 
+def edit_main_conf(section, option, value):
+    """
+    Edit something in the main.conf.local.
+    """
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
+    test_config[section][option] = value
+
+    with open("main.conf.local", "w") as configfile:
+        test_config.write(configfile)
+
+
 def toggle_cfg_editor(enable=False):
     """
     Toggle cfg_editor setting in config file.

@@ -336,6 +336,9 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
     }
 
     with client:
+        # DEBUGGING...
+        edit_main_conf('debug','debug', True)
+        edit_main_conf('debug','log_level', 'debug')
 
         # TODO: This should really be done via editing the conf directly, but
         # ehh this works for now.
@@ -373,7 +376,13 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
 
-        time.sleep(15)  # Allow time for delete job to finish.
+        time.sleep(20)  # Allow time for delete job to finish.
+
+        print("##################### Error Log #####################")
+        os.system('cat logs/error.log')
+
+        print("##################### Access Log #####################")
+        os.system('cat logs/access.log')
 
         print("##################### Audit Log #####################")
         os.system('cat logs/audit.log')

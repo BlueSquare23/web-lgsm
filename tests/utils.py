@@ -54,6 +54,10 @@ def edit_main_conf(section, option, value):
     test_config = configparser.ConfigParser()
     test_config.read("main.conf.local")
 
+    # Hack but whatever.
+    if isinstance(value, bool):
+        value = str(value)
+
     test_config[section][option] = value
 
     with open("main.conf.local", "w") as configfile:

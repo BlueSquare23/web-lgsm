@@ -336,9 +336,6 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
     }
 
     with client:
-        # DEBUGGING...
-        edit_main_conf('debug','debug', True)
-        edit_main_conf('debug','log_level', 'debug')
 
         # TODO: This should really be done via editing the conf directly, but
         # ehh this works for now.

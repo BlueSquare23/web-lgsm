@@ -36,8 +36,8 @@ jobs:
 
       - name: Install setuptools and python-pkg-resources for genbadge
         run: |
-          sudo apt update
-          sudo apt-get install python-setuptools python-pkg-resources
+          sudo apt-get update
+          sudo apt-get install python3-setuptools python3-pkg-resources
 
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |

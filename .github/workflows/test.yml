@@ -36,6 +36,7 @@ jobs:
 
       - name: Install setuptools and python-pkg-resources for genbadge
         run: |
+          sudo apt update
           sudo apt-get install python-setuptools python-pkg-resources
 
       - name: Install & Setup Java for Mockcraft Server Tests
@@ -52,8 +53,8 @@ jobs:
 
       - name: Run Pytest Tests
         run: |
-          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
-#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
+#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
+          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
 
       - name: Generate coverage report
         run: |

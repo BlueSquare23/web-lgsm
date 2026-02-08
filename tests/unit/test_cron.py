@@ -1,4 +1,4 @@
-from app.cron import CronService
+from app.services.cron import CronService
 from app.models import GameServer, Job
 
 class TestCronService:

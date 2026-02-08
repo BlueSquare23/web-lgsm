@@ -13,7 +13,7 @@ cd /path/to/web-lgsm
 
 Then run the script:
 ```
-./scripts/setup_systemd_service.sh
+./bin/setup_systemd_service.sh
 ```
 
 Using systemd to manage the app will ensure the web-lgsm is automatically

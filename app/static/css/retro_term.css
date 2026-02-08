@@ -1,0 +1,179 @@
+/* Base styles for CRT effect */
+.crt-terminal-container {
+    position: relative;
+    padding: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.2), 
+                inset 0 0 40px rgba(0, 255, 0, 0.1);
+    background-color: #0a0a0a;
+}
+
+/* CRT screen curvature effect */
+.crt-terminal-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        rgba(0, 20, 0, 0.2) 40%,
+        rgba(0, 20, 0, 0.4) 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Screen flicker effect */
+.crt-terminal-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 3;
+    animation: flicker 0.11s infinite;
+    opacity: 0.3;
+    border-radius: 8px;
+}
+
+/* Scanlines effect */
+#terminal {
+    position: relative;
+    background-color: #001100;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#terminal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* CRT glow effect */
+#terminal::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0, 255, 0, 0.25) 0%,
+        rgba(0, 255, 0, 0.15) 40%,
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+
+/* Screen curvature effect for the terminal itself */
+#terminal .xterm-viewport,
+#terminal .xterm-screen {
+    border-radius: 4px;
+}
+
+/* Animation for screen flicker */
+@keyframes flicker {
+    0% { opacity: 0.27861; }
+    5% { opacity: 0.34769; }
+    10% { opacity: 0.23604; }
+    15% { opacity: 0.90626; }
+    20% { opacity: 0.18128; }
+    25% { opacity: 0.83891; }
+    30% { opacity: 0.65583; }
+    35% { opacity: 0.67807; }
+    40% { opacity: 0.26559; }
+    45% { opacity: 0.84693; }
+    50% { opacity: 0.96019; }
+    55% { opacity: 0.08594; }
+    60% { opacity: 0.20313; }
+    65% { opacity: 0.71988; }
+    70% { opacity: 0.53455; }
+    75% { opacity: 0.37288; }
+    80% { opacity: 0.71428; }
+    85% { opacity: 0.70419; }
+    90% { opacity: 0.7003; }
+    95% { opacity: 0.36108; }
+    100% { opacity: 0.24387; }
+}
+
+/* Subtle pulsing glow animation */
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 40px rgba(0, 255, 0, 0.2), 
+                inset 0 0 40px rgba(0, 255, 0, 0.1); }
+    50% { box-shadow: 0 0 50px rgba(0, 255, 0, 0.3), 
+                inset 0 0 40px rgba(0, 255, 0, 0.15); }
+}
+
+/* Vignette effect */
+.crt-vignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 8px;
+    box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Bezel styling to complete the CRT look */
+.crt-bezel {
+    position: relative;
+    padding: 20px;
+    background: linear-gradient(to bottom, #333 0%, #111 100%);
+    border-radius: 12px;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Power indicator light */
+.power-light {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #00ff00;
+    box-shadow: 0 0 10px #00ff00;
+    z-index: 10;
+}
+
+/* Apply the pulsing animation to the container */
+.crt-terminal-container {
+    animation: pulse-glow 5s infinite ease-in-out;
+}

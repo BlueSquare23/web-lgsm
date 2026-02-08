@@ -1,0 +1,50 @@
+{
+  "start": {
+    "short_ctrl": "st",
+    "description": "Start the server."
+  },
+  "stop": {
+    "short_ctrl": "sp",
+    "description": "Stop the server."
+  },
+  "restart": {
+    "short_ctrl": "r",
+    "description": "Restart the server."
+  },
+  "monitor": {
+    "short_ctrl": "m",
+    "description": "Check server status and restart if crashed."
+  },
+  "test-alert": {
+    "short_ctrl": "ta",
+    "description": "Send a test alert."
+  },
+  "details": {
+    "short_ctrl": "dt",
+    "description": "Display server information."
+  },
+  "postdetails": {
+    "short_ctrl": "pd",
+    "description": "Post details to termbin.com (removing passwords)."
+  },
+  "update-lgsm": {
+    "short_ctrl": "ul",
+    "description": "Check and apply any LinuxGSM updates."
+  },
+  "update": {
+    "short_ctrl": "u",
+    "description": "Check and apply any server updates."
+  },
+  "backup": {
+    "short_ctrl": "b",
+    "description": "Create backup archives of the server."
+  },
+  "console": {
+    "short_ctrl": "c",
+    "description": "Access server console."
+  },
+  "send": {
+    "short_ctrl": "sd",
+    "description": "Send command to game server console."
+  }
+}

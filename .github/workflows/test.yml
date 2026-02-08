@@ -34,10 +34,6 @@ jobs:
           ./install.sh -d
           cp main.conf main.conf.local  # Setup local copy of conf for tests 
 
-      - name: Check sudo access
-        run: |
-          sudo -l
-
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update
@@ -53,6 +49,7 @@ jobs:
       - name: Run Pytest Tests
         run: |
           RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
+#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
 
       - name: Generate coverage report
         run: |

@@ -14,14 +14,14 @@
 
         <script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
 
-        <!-- Send game server cmd form hidden until openForm onclick -->
+        <!-- Send cmd game server form hidden until openForm onclick -->
         <div class="container bg-dark border border-white p-2 form-group form-popup rounded-3" id="send_cmd_form" style="color: white;">
           <button type="button" class="btn-close p-2 btn-close-white position-absolute top-0 end-0" aria-label="Close" onclick="document.getElementById('send_cmd_form').style.display = 'none'"></button>
           <form method="POST" class="form-group" id="send_cmd_form" action="/controls">
             {{ send_cmd_form.csrf_token }}
             {{ send_cmd_form.send_form(value='true') }}
             {{ send_cmd_form.server_id(value=server_id) }}
-            {{ send_cmd_form.command(value='sd') }}
+            {{ send_cmd_form.control(value='sd') }}
             <label for="cmd" class="pb-2" style="color: white;">Send Command</label>
             {{ send_cmd_form.send_cmd(class="form-control", title="Send cmd to running game server.", placeholder="Please Enter Command") }}
 
@@ -30,7 +30,7 @@
         </div>
 
         {% set parsed_json = user.permissions|from_json %}
-        {% if user.role == 'admin' or parsed_json.edit_cfgs %}
+        {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
           {% if cfg_paths|length %}
             <div class="row">
               <h2>Edit Config(s)</h2>
@@ -53,7 +53,7 @@
           <div class="row align-items-start">
             <div class="col">
               <div class="text-center">
-                <a href="{{ url_for('views.add', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                <a href="{{ url_for('main.add', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
                   Edit {{server_name|capitalize}} Settings
                 </a>
               </div>
@@ -61,7 +61,7 @@
           {% if show_jobs_edit %}
             <div class="col">
               <div class="text-center">
-                <a href="{{ url_for('views.jobs', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
+                <a href="{{ url_for('main.jobs', server_id=server_id) }}" role="button" class="text-center btn btn-outline-primary">
                   Edit {{server_name|capitalize}} Jobs
                 </a>
               </div>
@@ -76,11 +76,11 @@
         <h2>Server Controls for {{server_name|capitalize}}</h2>
         <hr />
 
-        {% for command in server_commands %}
-          {% if command.short_cmd == 'sd' %}
+        {% for control in server_controls %}
+          {% if control.short_ctrl == 'sd' %}
           <div class="row">
             <div class="col">
-              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_id}}', '{{command.short_cmd}}', 'send_cmd_form');">{{command.long_cmd}}</button>
+              <button id="send_cmd_btn" class="btn btn-outline-primary open-button" onclick="openForm('{{server_id}}', '{{control.short_ctrl}}', 'send_cmd_form');">{{control.long_ctrl}}</button>
             </div>
           {% else %}
           <div class="row">
@@ -89,14 +89,14 @@
                 {{ controls_form.csrf_token }}
                 {{ controls_form.ctrl_form(value='true') }}
                 {{ controls_form.server_id(value=server_id) }}
-                {{ controls_form.command(value=command.short_cmd) }}
+                {{ controls_form.control(value=control.short_ctrl) }}
 
-                <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{command.long_cmd}}" />
+                <input onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-primary" type="submit" value="{{control.long_ctrl}}" />
               </form>
             </div>
           {% endif %}
             <div class="col text-primary">
-              {{command.description}}
+              {{control.description}}
             </div>
           </div>
           <br />
@@ -108,9 +108,9 @@
       <!-- Set JS vars from Jinja vars. -->
       <script>
         let serverId = "{{ server_id }}";
-        let textColor = "{{ config_options.text_color }}";
+        let textColor = "{{ _config.get('aesthetic','text_color') }}";
       {# If show_stderr var True #}
-      {% if config_options.show_stderr is defined and config_options.show_stderr %}
+      {% if _config.get('settings','show_stderr') %}
         let showStderr = true;
       {% else %}
         let showStderr = false;
@@ -136,8 +136,8 @@
       <script src="/static/js/delete-btn.js"></script>
 
       <!-- TODO v1.9: Make config options display on page if debug.
-      {# if config_options.debug is defined and config_options.debug #}
-        <p>Config Options: {{config_options}}</p>
+      {# if config.getboolean('debug','debug') #}
+        <p>Config Options: {{_config}}</p>
       {# endif #}
       -->
 {% endblock %}

@@ -84,7 +84,7 @@ EOF
         [[ "${OPT[debug]}" == true ]] && debug="-d"
 
         sudo mkdir -p "$VENV_PATH/bin/"
-        sudo cp scripts/root_install.sh scripts/update.py uninstall.sh "$VENV_PATH/bin/"
+        sudo cp bin/root_install.sh bin/update.py uninstall.sh "$VENV_PATH/bin/"
         sudo chmod 750 "$VENV_PATH/bin/root_install.sh" "$VENV_PATH/bin/uninstall.sh"  "$VENV_PATH/bin/update.py"
         sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
@@ -101,7 +101,7 @@ EOF
     chmod 600 .secret
 
     echo -e "${GREEN}####### Updating Database...${RESET}"
-    /opt/web-lgsm/bin/flask --app app:main db upgrade
+    /opt/web-lgsm/bin/flask --app app:create_app db upgrade
 
     echo -e "${GREEN}####### Project Setup & Installation Complete!!!${RESET}"
     echo -e "${GREEN}Run the \`web-lgsm.py\` script to start the server.${RESET}"

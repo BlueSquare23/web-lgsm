@@ -30,39 +30,68 @@ def check_response(response, msg, resp_code, url):
     assert msg in response.data
 
 
-def check_main_conf(confstr):
+def check_main_conf_str(confstr):
     with open("main.conf.local", "r") as f:
         content = f.read()
 
     assert confstr in content
 
 
+def check_main_conf_bool(section, option, enabled=True):
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
+    if enabled:
+        assert test_config.getboolean(section, option) == True
+    else:
+        assert test_config.getboolean(section, option) == False
+
+
+def edit_main_conf(section, option, value):
+    """
+    Edit something in the main.conf.local.
+    """
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
+    # Hack but whatever.
+    if isinstance(value, bool):
+        value = str(value)
+
+    test_config[section][option] = value
+
+    with open("main.conf.local", "w") as configfile:
+        test_config.write(configfile)
+
+
 def toggle_cfg_editor(enable=False):
     """
     Toggle cfg_editor setting in config file.
     """
-    config = configparser.ConfigParser()
-    config.read("main.conf.local")
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
     if enable:
-        config['settings']['cfg_editor'] = 'yes'
+        test_config['settings']['cfg_editor'] = 'yes'
     else:
-        config['settings']['cfg_editor'] = 'no'
+        test_config['settings']['cfg_editor'] = 'no'
     with open("main.conf.local", "w") as configfile:
-        config.write(configfile)
+        test_config.write(configfile)
 
 
 def toggle_send_cmd(enable=False):
     """
     Toggle send_cmd setting in config file.
     """
-    config = configparser.ConfigParser()
-    config.read("main.conf.local")
+    test_config = configparser.ConfigParser()
+    test_config.read("main.conf.local")
+
     if enable:
-        config['settings']['send_cmd'] = 'yes'
+        test_config['settings']['send_cmd'] = 'yes'
     else:
-        config['settings']['send_cmd'] = 'no' 
+        test_config['settings']['send_cmd'] = 'no' 
     with open("main.conf.local", "w") as configfile:
-        config.write(configfile)
+        test_config.write(configfile)
 
 
 def check_install_finished(server_id):
@@ -75,6 +104,8 @@ def get_server_id(server_name):
     return server.id
 
 
+# This works because even if page has multiple forms, they're all going to use
+# the same csrf_token.
 def get_csrf_token(response):
     # Parse the HTML to get the CSRF token.
     html = response.data.decode()

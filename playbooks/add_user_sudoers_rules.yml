@@ -1,0 +1,39 @@
+---
+## Playbook required vars.
+# username 
+
+- name: Creates sudoers rules automatically for added game servers
+  hosts: localhost
+  become: true
+  connection: local
+  vars:
+    # Same user defaults to false, meaning default create new user.
+    same_user: false
+    setup: false
+  vars_files:
+    - vars/accepted_usernames.yml
+    - vars/web_lgsm_user.yml
+  pre_tasks:
+    - name: Load custom usernames if available
+      include_vars:
+        file: /usr/local/share/web-lgsm_custom_users.yml
+      ignore_errors: yes
+      register: custom_users_loaded
+    
+    - name: Combine username lists
+      set_fact:
+        accepted_usernames: "{{ accepted_usernames + (custom_usernames | default([])) }}"
+
+  tasks:
+    - name: Check if username is equal to web_lgsm_user
+      set_fact:
+        same_user: "{{ username == web_lgsm_user }}"
+
+    - name: Include sub tasks
+      include_tasks: "{{ item }}"
+      loop:
+        - tasks/validate_username.yml
+        - tasks/add_sudoers_rule.yml
+        - tasks/fix_sudoers_rule.yml
+
+...

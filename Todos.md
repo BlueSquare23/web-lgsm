@@ -79,14 +79,172 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Main Goals for v1.8 -> v1.9
+## Main Goals for v1.9 -> v1.10
+
+* [ ] **Revamp the interface design and layout**
+  - I'm not much of a front end guy. However, this project has simply come too
+    far with the original design / layout of the main pages and it needs an
+    overhaul.
+  - What I really want is a more web 2.0, discordesque design. 
+  - For example, one idea I had was a panel that comes out from the side with
+    different sections for navigating the app. Rather than the current "Other
+    Options" list on the home page.
+    - Then you could get to any page from any page and is a more comfortable
+      way people are used to navigating web apps.
+    - So would need to come up with an accordion of app's sorta hierarchy and
+      page structure. Something like this for example:
+      - Home Page
+        - Same Installed List, but more configurable settings for them
+          - Sort by user, Alpha, Custom Order.
+        - Stats
+        - Links
+      - GameServers
+        - Controls
+        - Jobs
+        - Configs
+        - Install
+        - Edit
+      - Settings
+        - App Settings
+        - User Settings
+    - That's just an example, I've also toyed around with the idea of the home
+      page having the terminal on it and then install or commands somehow both
+      display through that main single and only terminal. Like the apps built
+      around the central terminal device.
+      - I really like this idea but I have no idea how to impliment it.
+  - And yeah just overall learn some more CSS and put some more time into the
+    frontend of this app to really make it spiffy and nice.
+  - The frontend's kinda always been an after thought. Like oh shit I need an
+    interface let me put some buttons on a page real quick and tweak the
+    default bootstrap styling.
+    - And that works fine, but its nothing to write home about. I want this to
+      be spiffy and to shine.
+
+* [ ] **Improve overall design & documentation for project**
+  - I want to actually properly try to design, document, and build out parts of
+    this app. Full honest, I've never really done real software design before
+    and this app up until this point (2025) was build with nothing but loose design 
+    ideas and hopes and dreams.
+  - This lack of design has fucked me and hampered the future development of
+    this app. Oh well live and learn.
+  - Major goal moving forward is to properly think, read, test, mockup, design,
+    document, then build.
+
+* [x] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+  - This project has been poorly designed and modeled up until this point.
+  - I am now beginning the process of redesigning the project piecemeal while
+    maintaining functionality.
+  - What I really need to do is:
+    - Figure out what Objects I need
+    - Figure out what they need to do
+    - Figure out how they need to relate to each other
+    - Figure out how to get from here to there, bit by bit
+  - https://realpython.com/solid-principles-python/
+
+* [ ] **Validation logic should happen in the form classes**
+  - FlaskForm/Wtforms is our user input handling & validation layer.
+  - All user input coming into the app, even through the API should go through
+    a form class for valiation.
+
+* [x] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
+  - The idea here is twofold:
+    1. I want the app to have a mature api, where basically anything you can do
+       through the web, you can also do through a curl cmd.
+    2. I also want the app's route logic to still use things like Flask-WTF/WTForms validation.
+  - To accomplish this, I'm going to slowly transition existing routes to use
+    new service layer classes. New features will just be built this way from
+    the start. Old features will be transitioned over time.
+  - See new cron.py for example of `CronService` class to act as intermediary
+    between API and DB (model). 
+
+* [ ] **Reduce redundancies in disparate isomorphic representations of the same data**
+  - I have too many different representations of the same underlying data.
+    - There's the data in the DB.
+    - There's the data on disk, in flat json files.
+    - There's the data on disk about game server state.
+    - There's the data returned from game server commands.
+    - There's the validation of the data in the form classes.
+    - There's the validation of the data in the utils.
+    - There's data in the `processes_global.py` singleton in memory.
+    - Its all over the place.
+  - I think the idea of creating neutral service classes that can be used by
+    the API or by the Route code to talk to the DB is a good start.
+    - But part of me also wonders if its just more bloat.
+  - Basically, I can see the same shapes and imprints of those shapes all over.
+    But I have yet to come up with a good way to like bring all that together
+    under like the same class or something.
+  - I'm optimistic that as I redesign and make more things OOP, some of the old
+    poppycock-nonsense will naturally unfold.
+
+* [ ] **Enable remote install over ssh via ansible connector**
+  - From the very beginning when I first wrote the ansible connector I imagined
+    doing it not only locally but also to remote machines.
+  - So you can have your web interface setup on serverA and then install your
+    game on serverB.
+    - Right now you can manage them over ssh, but never got around to making
+      install over ssh work.
+
+* [ ] **Rethink main design to sandbox things even more**
+  - Right now the web -> db -> ansible connector as root way of administering
+    the system has me nervous.
+  - There's validation, there's sanitization. But the whole approach seems bad.
+    - Too much happening as root!
+  - I've waffled with this so much and decided on the connector script as a
+    necessaity to package up all the escalted dirty work in one script.
+  - But its overloaded and its data channels are too wide and I suspect leaky.
+    - A new approach is needed.
+  - Running as the new user through sudo maybe the preferable way over
+    backwardsass ssh to localhost approach.
+
+* [ ] **Get fully working shell interface through web terminal**
+  - This would be a direct passthrough to a live shell session running as the
+    user with stdin, stdout, stderr of the node xterm session plugged directly
+    into 0,1,2 of an underlying shell session running as the user for that game
+    server.
+  - Like many of other *spicy* features, this will ship DISABLED by default.
+  - Mainly I just kinda want to see if I can do it. 
+  - Would be dope if it could work as any user that web-lgsm has access to.
+
+* [ ] **Try to make draft version of pie in the sky custom command web-modules**
+  - So like users could define custom command modules and add them to the page
+    as specialized buttons or whatever to do the needful.
+
+* [ ] **Build (or otherwise integrate with existing) web based remote file browser / mod manager**
+  - Seems like the community wants an FTP-like web interface.
+  - Building this myself from scratch would take a ton of effort and time that
+    I don't really have tbh. Unless people are willing to be very patient.
+  - A better road would be to integrate someone else's existing web based file
+    browser into my project. There is one Flask extention for file browser I
+    saw but it sucks and I don't want to use it and I can't use it for over ssh :(
+  - So still no idea how to do this but might end up having to write it mostly
+    from scratch.
+
+* [ ] **Allow in app game server moves**
+  - This should be integrated with the in app file browser whenever I get to that. 
+
+* [ ] **Pythonify and Deshellify as much as possible**
+  - Too much of this app is misc bash code doing more than it should with
+    questionable validation / sanitization.
+  - I've always written it off as "Its all behind auth anyway" which is true,
+    but that's really not a great excuse. 
+  - I need to transition like everything besides the core web-lgsm scripts
+    themselves to be pure python and lock down all non-intentional leakage best
+    I can.
+  - This is going to take some core redesigns which I haven't had time to
+    experiment & come up with yet.
 
 * [ ] **Restructure application and build out proper API**
+  - [ ] Setup proper external API Keys for api auth only that can be used with
+    this app besides having to establish a session token first.
   - Ideally, the pages should just be an interface that communicate via rest-ish
     JSON to apps API endpoints.
   - Right now views routes / functions are handling waaayy tooo much logic. Whole
     apps functionality happens via views functions. All this should be
     happening via the app's API routes and just strung together by views logic.
+  - [ ] I've been doing so much by hand but it might be worth taking some time
+    to experiment with FastAPI to help me truly build out this API and swagger
+    docs.
+    - https://fastapi.tiangolo.com/
   
 * [ ] **Use Web Sockets for realtime communication**
   - The console for this thing is just some inefficient jquery contently making
@@ -100,91 +258,337 @@
   - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
-* [ ] **Improve overall design & documentation for project**
-  - I want to actually properly try to design, document, and build out parts of
-    this app. Full honest, I've never really done real software design before
-    and this app up until this point (2025) was build with nothing but loose design 
-    ideas and hopes and dreams.
-  - This lack of design has fucked me and hampered the future development of
-    this app. Oh well live and learn.
-  - Major goal moving forward is to properly think, read, test, mockup, design,
-    document, then build.
+## Version 1.9.0 Todos
 
-* [ ] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
-  - The idea here is twofold:
-    1. I want the app to have a mature api, where basically anything you can do
-       through the web, you can also do through a curl cmd.
-    2. I also want the app's route logic to still use things like Flask-WTF/WTForms validation.
-  - To accomplish this, I'm going to slowly transition existing routes to use
-    new service layer classes. New features will just be built this way from
-    the start. Old features will be transitioned over time.
+* [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
+  - I would get more control over specific package builds and would be platform independent.
+  - But then I'd have to use that to manage all the packages n'@ and people are
+    less familiar with these sorta 3rd party pkg managers.
 
-## Version 1.8.6 Todos
+* [x] **Move config management stuff into its own class**
+  - I'm making an effort to clean up the `utils.py` file.
+  - First thing to do is take those ugly functions in the utils file and move
+    them into their own class and update the app code and tests.
+  - [x] Then write some unit tests for the new class n'@.
 
-* [x] **Add optional TOTP 2fa for login page**
-  - This will be a toggle in the main.conf.
-    - Users can enable it but it wont be on by default.
-    - In the tug of war between security and liberty, liberty must prevail.
-      Otherwise, security has no purpose.
-  - How it should work, High Level:
-    - If enabled in main.conf, is mandatory. All users must set it up.
-    - If not already setup, on successful login will force user to set it up
-      before allowing them to login.
-    - Once setup for a user otp field on login page becomes required.
-    - After setup the only way to change otp settings is to login with otp, or
-      to have an admin reset it for you from users settings page.
-  - What we need:
-    - Database:
-      - Add `otp_secret` (bin string, 10 chars, base32 encoded) to User model
-        - `base64.b32encode(os.urandom(10)).decode('utf-8')`
-      - Add `otp_enabled` bool to track if users otp has been setup yet
-      - Add `backup_codes` list of hashed 2fa 1 time use backup codes.
-    - Routes:
-      - Tweak login, add otp field
-    - Forms:
-      - Tweak login form add otp code field
-  - Sources:
-    - https://github.com/miguelgrinberg/two-factor-auth-flask/blob/master/app.py
-    - https://blog.miguelgrinberg.com/post/two-factor-authentication-with-flask
-    - https://pypi.org/project/onetimepass/
-    - https://www.gitauharrison.com/articles/authentication/time-based-one-time-password-in-flask
+* [x] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
+  - I'm using flask extensions for logging and DB stuff, etc.
+  - This code is clogging up the main `__init__.py` and that things a mess.
+  - I know there's better ways to organize flask extension stuff, I've just
+    never really looked into it.
+  - Time to do that!
 
-* [x] **Add user totp reset via web-lgsm.py**
-  - If user forgets or loses their 2fa secret and needs to reset it, they'll
-    have to ssh into the server and run web-lgsm.py to reset it.
+* [x] **Break up apps blueprints into dir**
+```
+└── blueprints/
+     ├── main/
+     │     home.py
+     │     controls.py
+     │     settings.py
+     │     ...
+     ├── auth/
+     │     login.py
+     │     logout.py
+     │     two_factor.py
+     │     ...
+     └── api/
+           cron.py
+           console.py
+           ...
+```
+
+* [x] **Break up models into separate class files.**
+```
+└── models/
+    ├── __init__.py
+    ├── user.py
+    └── game_server.py
+    etc.
+```
+
+* [x] **Convert blocklist.py into blocklist_service.py class and make singleton**
+  - Right now just threw that in there quick and dirty as a module level singleton. 
+  - But with all the other restructures, needs its own class file made proper singleton n'@.
+
+* [x] **Make real singleton to hold proc_info objects**
+  - I've been using a module level singleton, but this sucks.
+  - Might as well just put it in a real class.
+
+* [x] **Experiment with alt architecture of system user management**
+  - SSH is great. But SSH to localhost is a dirty hack. A working dirty hack.
+    But still not ideal.
+  - I did this originally because its an easy way to handle user auth and
+    isolation. Also I wanted to add the ablity to admin remote machines so why
+    get 2 for 1.
+  - But as the project grows and I continue to re-architect other things, this
+    "solution" has become a hindrance.
+  - I need a different way to manage users on the system.
+  - **PROBLEM!**
+    - If I do it via sudo then I need to manage updating sudoers.d files again.
+      - Not terrible because I could just validate accepted users to give
+        access to and only allow create sudoers rules for those users. Template
+        it all, make it secure.
+      - But then also this isn't _Pythonic_
+        - Or perhaps could it be...
+    - So then real problem is, if we're not going to do it via some prebuild
+      access control mechanism like sudo, how tf are we going to do it?
+    - Option 1: **Root Daemon, Drop Privs**
+      - Yuck, I hate the idea of this already.
+    - Option 2: **Root Sudoers Script, Drop Privs**
+      - This is what we have already with the ansible connector.
+      - I'm not saying we overload the ansible connector with even more duties.
+        - Plus it'd be extreemly slow and not real time anymore to run it through
+          the connector.
+      - But this would be a new script using the same approach of user has
+        NOPASS access to run as root in order to drop privs, is what I mean.
+      - Thing is, this is also not very secure. I'm not even really happy with
+        the current design of the connector script. So the idea of building a
+        parallel channel that works the same way is not great...
+    - Option 3: **Magic Fairy Comes and does it for me!**
+      - I like this idea the best. Just then I don't have to do anything and
+        get to take all the credit!
+      - Problem is world too complex, nothing that simple.
+    - Option 4: **Ship python script to user, exec under their context via sudo**
+      - I'm liking this idea more and more. Basically install playbook would
+        setup not only the lgsm game server dir but also a web-lgsm dir as each
+        new system user.
+      - Then the python script would be invoked via sudo -u newuser still. But
+        it would be python -> shell -> python. Which imho is much better than
+        python -> shell + user input -> rce ya pwned.
+      - Actually, thinking about it, doesn't even need to be installed as that
+        user. Can be installed in system level dir and just that user has perms
+        to execute it.
+        - Yeah simplifies things a lot.
+      - The communication channel back could just be json.
+      - But how to send info hrrmm...
+        - Yeah client scripts wouldn't be able to access the DB as alt user so
+          they need to be sent any variable info the need.
+        - Well let's think a little bit more about what these system user client
+          scripts/functions/libs are going to need to do exactly...
+          - We're going to need one to read the game servers tmux socket file for
+            status indicators.
+          - One to edit crontab as the user (perhaps, have working version through connector, but its not great).
+          - One to run game server commands as new user (perhaps, might not need to wrap those tbh).
+          - One to find all config file paths for cfg editor.
+          - One for reading files as the user.
+          - One for writing files as the user.
+          - Potentially more for exploring files as the user in the future...
+        - So yeah they're going to need to be sent a lot of info.
+        - Which means I need a protocol / system that can do this. 
+        - Steps are:
+          - App runs script as user via sudo -u
+          - Data in via ??? (json?)
+          - Data out via ??? (json?)
+        - I kinda don't want to just use stdin and stdout because they're leaky,
+          unreliable, and I don't want to run long complicated commands via
+          subprocess.popen sudo -u. That's just ugly.
+        - So was thinking, maybe each user get's an API key or something, and
+          they can send data back via post to web app's API perhaps?
+        - But getting data back isn't really the problem. Its sending the data
+          in the first place, in a way that can be validated and locked down
+          made secure.
+          - Perhaps could do secure fetch via api or something, where client
+            code as new user gets url or id and fetches data via api first.
+        - But then that all sounds like overkill and I'd have to do api key
+          managment and stuff. Nahh I don't like via the web app api.
+        - Maybe there's some simple clever crytographic way I could sign the
+          data payloads or something so the client code knows this is a legit
+          request coming from web app. But tbh at this point not main prio,
+          since still better than existing ssh access to do whatever as other
+          users anyways.
+        - All this to me sounds like we need a new SysUserMgmtService class or
+          maybe multiple new classes.
+    - Going to use json sent via stdin and got via stdout
+      - I contemplated using domain sockets and having two daemons and even
+        built a little poc with a couple of scripts. But this is all overkill.
+      - Just Keep it simple stupid, json via normal input output streams.
+  - **PLAN/SOLUTION**
+    - New script & module that is meant to be run as alt system users via sudo -u.
+    - New step to install playbook to add sudoers rule for web-lgsm -> new user automatically.
+    - Remove old steps for adding ssh keys n'@.
+    - Remove old route code for creating new ssh keys for installs.
+    - Going to use json sent via stdin and got via stdout.
+
+* [x] **New Class for Command Execution Service**
+  - Before I get started with re-building the "run as other users" system, I
+    want to modularize the command executor service.
+  - So right now utils is bloated, blah blah blah.
+  - I think we can do this new cmd exec service in a clever way. We want it to
+    do both remote ssh execs, and local same user execs.
+  - So let's use dependency inversion!
+  - Instead of casing on if local or remote in method and branching there, lets
+    just pass in the cmd exec interface we need and it'll have the same methods
+    for if ssh or if local exec.
+
+* [x] **Integrate new CommandExecService into app code**
+  - I made them work via backward compat `utils.py` functions for right now so
+    wouldn't have to change rest of the route code.
+  - But obv goal is to now just call CommandExecService directly from route
+    code and ditch utils file for that.
+  - Many things can just be a find and replace for `run_command` but the
+    stuff in threads, might need to think abt little bit.
+
+* [x] **Add new shared modules dir setup to root_install.sh**
+
+* [x] **Rework install form to accept more options!!!**
+  - Users should be able to set other things via the install form!
+  - They should be able to set:
+    - `install_name`
+    - `install_path`
+    - `username`
+  - Not right away, but in the future:
+    - `install_type`
+    - `install_host`
+
+* [x] **Integrate new sudoers setup into install**
+  - Need to find and re-add the steps for editing sudoers rules to install playbook.
+
+* [x] **New Shared Modules Class(es)**
+  - Took me a long ass time but finally figure it out. I don't really need to
+    do that much special.
+  - I just need to push some classes up into a new `/opt/web-lgsm/shared` dir.
+    - These will be for code used by both the main app and the additional user stuff.
+
+* [x] **Continue breaking apart utils.py into service classes and adding methods to db classes**
+  - The `utils.py` file is the last big whale of a file that needs chopped up.
+  - This gives us an opportunity to do some basic redesigns in the process.
+    - There's a lot of stuff in the utils.py file that can be either turned
+      into new service classes, added to the existing database classes as
+      methods, or refactored away completely.
+    - There will still be some neutral true utils stuff remaining, but plan is
+      to significantly boil it down.
+    - See `docs/DESIGN_OOD.md` for more details about how.
+
+* [ ] **Write unit tests for new service layer classes before get too behind**
+  - Gotta write tests for ~these~ Basically everything in new services dir:
+    * [ ] `BlocklistService`
+    * [ ] `ControlsService`
+    * [ ] `ProcInfoService`
+
+* [x] **Make redirect to github on about page open in new tab.**
+
+* [x] **Add buy me a coffee link to about page author section**
+  - My buddies opinion is that it should be prominent on the page.
+  - I don't really care to much tbh, but I'll do it for him.
+
+* [x] **Need a secure way to add custom additional game server users to whitelist**
+  - Right now, customizations to the additional users whitelist will get blow
+    away on update.
+  - So need to add them _somewhere_ where they won't get uninstalled and will
+    automatically be imported.
+  - Decided to put customization here: `/usr/local/share/web-lgsm_custom_users.yml` 
+    - Then they'll survive updates and still be root only accessible.
+  - [x] Integrated into username whitelist check for install playbook!
+  - [x] Make some documentation about them.
+
+* [x] **Add cleanup sudoers rules on game server delete**
+  - Should be simple to just have the connector do this when running delete playbook.
+
+* [x] **On add form submit, run sudoers add with new info**
+  - This is going to need a new playbook that's basically just a sub set of the
+    install playbook but for setting up new sudoers rules.
+
+* [x] **Detect game servers that are missing sudoers rules somehow and if we can, add them automatically, otherwise throw warn flash to user.** 
+  - Need an easy way to see if we got a rule to access that game server user.
+    Just going to parse stdout.
+
+* [x] **!!!STOP!!!: Its time to step back and learn a bit more about Domain Driven Design**
+  - See re-arch todo below, but tldr need a better way to organize all my new
+    classes before things start getting too outta hand.
+  - This code is still fresh and molten in its core, we need to reform and
+    rehome it (change dir structure) just a bit more before bad habits get
+    ingrained.
+  - But before I can do that I need to learn more about DDD. I should watch
+    some tutorials, takes some notes, and build some practice projects before
+    moving on.
+
+* [x] **Do more rearchitecting, solve "Everything's a Service" problem.**
+  - I fucked up. But it's cool I can save it.
+  - I got so carried away turning code into classes that I kinda didn't think
+    about how I was going to organize and name those functions.
+    - Kinda an important part.
+  - But its cool, just gotta figure out a new model to use for organizing dirs
+    and rename some things, change some imports.
+  - The code itself doesn't really need changed, I just have to figure out how
+    to organize it in a logical reasonable way. 
+
+* [x] **Wrap up ~v1.8.7~ v1.9.0 Release**
+  - Okay this refactor job has been enough change for one release.
+  - I'd love to keep adding more and expanding, but I gotta call it here, tuck
+    in the corners and get another release out before I get too carried away.
+  - There's always more time for refactoring later, but with amount of work
+    I've done so far this release, time to call it and package the rest of it
+    up before adding more stuff on.
+
+## Version 1.8.x Todos
+
+* [ ] **Change docstrings to use Sphinx and look into auto generated readthedocs with it**
+  - I've been using a made up fake docstring format. Time to change that to be Sphinx.
+  - https://docs.python-guide.org/writing/documentation/#sphinx
+  - https://www.sphinx-doc.org/en/master/
+
+* [ ] **Add cool retro term style customization options**
+  - I played around with some css for adding cool term effects to the xterm.js
+    window. Would need a lot of integration to pass user prefs back to the
+    javascript code where they're set. So will play around with that more another
+    time.
+
+* [ ] **Sudo pass form again for when adding things that need edit as root**
+  - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
+  - So I need a pass, which means I need a form again to get a pass from the user for elevating privs.
+  - Specifically, for example when adding game servers manually, app will now need to edit sudoers rules.
+    - For game servers with default names no prob, can validate and add without auth. 
+    - But for new unique usernames, will need to add sudoers rules. Not going
+      to allow arbitrary sudoers rule username injection obv so will need sudo
+      path to auth and add unknown usernames to validation list first. Then
+      normal playbook to add sudoer rules for user.
 
 
-* [x] **Add proper password strength indicator to setup & user edit pages**
-  - I think this will be fun to make. It should just be mostly JS and won't
-    really have anything to do with the minimum pass requirements.
-  - It should also do some frontend validation to check if it meets the min
-    reqs. just as a helpful tip to user to not even let them submit an invalid
-    pass.
+* [ ] **Need way to add sudoers rules for legacy game server system users**
+  - Basically, once someone upgrades to this release (v1.8.7), it'll break
+    their old local non-same user game server installs.
+  - To fix this just need to detect hosts that don't have sudoers rules for yet
+    and prompt user to add them.
+  - For game servers in 
 
-* [x] **Build basic bruteforce login protection**
-  - I'm thinking a list of 10000 failed login IPs in memory that new get push
-    onto and old get shifted off from.
-  - Will need to fetch X-Forwarded-IP for revproxy setups.
-  - This is no replacement for fail2ban, users should still use fail2ban with a
-    403 -> real firewall ban rule in place.
 
-* [x] **Make work for python 3.13**
-  - Just had to update some pip reqs. 
+* [ ] **Cleanup render template calls with kwargs packing**
+  - I can just shove all the stuff in a kwargs dict before calling render
+    template. Would make things look nicer, easier to read.
 
-* [x] **Make sure pass reqs not enforced if change pass disabled on edit users page**
-  - Noticed this is blocking submits while doing some manual qa.
 
-* [x] **Add way to mark installs failed to front end**
-  - There are times where the install never gets marked finished because some
-    apt install fails or something. But the game server might still be totally
-    playable. So just make installed failed and still let users interact with
-    game server, cause it might actually be totally fine.
+* [ ] **Make web-lgsm.py update json work again for new game servers**
+  - I broke this when I added pictures. 
+  - [ ] Tbh whole json file needs restructured like this instead:
+```json
+[
+   "Assetto Corsa": {
+    "script": "acserver",
+    "name": "Assetto Corsa",
+    "img": "https://cdn.cloudflare.steamstatic.com/steam/apps/244210/header.jpg",
+   },
+   ...
+]
+```
 
-* [x] **Add tests for new totp 2fa page and authflow**
-  - [x] **Test setup responses enable 2fa**
-  - [x] **Test 2fa page content.**
-  - [x] **Test 2fa page responses.**
+* [x] **Remove custom tmux socket file name caching in favor of flask cache**
+  - I wrote the custom caching stuff before I was really using flask cache.
+  - Now I need to rip all that code out and replace it with buitin cache code.
+  - Not super urgent though cause old code works fine.
 
+* [ ] **Add reverse_proxy main.conf var to [server] section for setting name through rev proxy**
+  - [ ] Then pipe this var through to API where it get's hostname and if
+    `rev_proxy` name is set, use that instead.
+
+* [ ] **I need a public site for the project**
+  - Not only do I need to catch form posts for usage stats and crash reports,
+    but it'd be nice to have somewhere with all the links to be like yeah this
+    is legit.
+  - Basically can just be same as readme and about page.
+  - I'm thinking I just make a branch of the main flask app an spend a few
+    bucks on a .com.
+  - We can throw it up on my VPS at work its fine.
+  
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.
@@ -197,14 +601,22 @@
   - So thinking maybe after initial install & login form pops up that says "do
     you want to send anonymous usage stats?"
 
+* [ ] **Crash reports**
+  - This kinda goes along with the usage stats. Might not really be easy. Idk I
+    might have to look at gunicorn and see if there's something we can do to
+    catch 500's and send a stack trace and maybe some anonomized vars dump back
+    to me somehow. (Email sucks so prolly just post to a site I control)
+
 * [ ] **For install list do sort by alpha two columns header**
   - At the top of the install page, add some buttons to sort by alphabetical
     order for both columns.
   - Right now order is ascending by server short name.
 
-
-## Version 1.8.x Todos
-
+* [ ] **Change sort order of game servers on main page**
+  - User wants the ability to change the ordering of the GameServer items on
+    the home page.
+  - Either sort alphabetically or custom order.
+  - [Related Issue](https://github.com/BlueSquare23/web-lgsm/issues/55)
 
 * [ ] **Continue fixing up tests**
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
@@ -214,6 +626,9 @@
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
+
+
+## Version 1.8.x Todos
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something

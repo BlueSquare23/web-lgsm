@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.9.0 - 2026-02-08]
+
+### Added
+
+- New form to edit server details before installation on install page.
+- Begin re-architecture efforts to enable continued app growth.
+- New new alt user management system to allow running as other users via
+  sudoers instead of over SSH.
+
+### Changed
+
+- Use flask cache for tmux socket name caching now.
+- Restructured app directory to better house individual app components.
+- Broke up monolithic `views.py`, `auth.py`, and `utils.py` into modular components.
+- Change user permission structure (**BREAKING CHANGE!** :warning: See FAQ 13)
+- Rename "Command" to "Controls" through projects source (where applicable).
+
+### Fixed
+
+- Fix bug with npm install on Debian ([#discussion-60](https://github.com/BlueSquare23/web-lgsm/discussions/60)).
+- Fix bug with term not scaling on dynamic user resize.
+- Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
+
 ## [v1.8.6 - 2025-11-22]
 
 ### Added

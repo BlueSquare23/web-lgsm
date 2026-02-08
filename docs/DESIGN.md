@@ -22,7 +22,8 @@
 13. [Formatting & Linting](#13-formatting--linting)
 14. [Future Work](#14-future-work)
 15. [Contributing](#15-contributing)
-16. [References](#16-references)
+16. [Debugging](#16-debugging)
+17. [References](#17-references)
 
 ---
 
@@ -257,6 +258,38 @@ themselves are where the Act and Assert steps come in.
 Both of these things together mean that any one test should be able to be run
 in isolation and be self contained, and its passing or failing should not
 affect any other tests.
+
+### How to Run Tests
+
+First make sure to source the virtual environment:
+
+```bash
+source /opt/web-lgsm/bin/activate
+```
+
+To run a single test you can do it like this:
+
+```bash
+python3 -m pytest -vvv tests/functional/test_auth.py::test_2fa_responses
+```
+
+You can run a whole test file like this:
+
+```bash
+python3 -m pytest -vvv tests/functional/test_auth.py
+```
+
+If you want to run all the projects tests, you can use the `web-lgsm.py` script
+so the app resets itself after testing and also generates a coverage report for
+you.
+
+```bash
+# Regular test mode is only unit & functional tests
+./web-lgsm.py --test
+
+# Full test includes full install integration tests (takes longer)
+./web-lgsm.py --test_full
+```
 
 ### Coverage
 
@@ -643,6 +676,20 @@ for our form.
 ...
 ```
 
+
+### Debugging Form Submissions
+
+I always add a couple lines like these whenever I need to quickly checkout data
+coming from the frontend via a FlaskForm.
+
+```python
+    # Handle POSTs
+    from flask import jsonify
+    return jsonify(form.data)
+```
+
+That'll just dump the form data as json for quick inspection n'@.
+
 ---
 
 ## 13. Formatting & Linting
@@ -686,10 +733,38 @@ pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 ## 15. Contributing
 - **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+---
+
+## 16. Debugging
+- **Debugging Classes**:
+You can run the code from a class file isolated like this:
+
+```python
+from app import create_app
+from app.services import UserModuleService
+
+app = create_app()
+
+
+with app.app_context():
+
+    executor = UserModuleService('/home/blue/Projects/web-lgsm/app/utils/')
+    
+    result1 = executor.call('find_cfg_paths', '/home/blue/Projects/web-lgsm/GameServers/Minecraft/', ['common.cfg'])
+    
+    print(result1)
+    
+    result2 = executor.call('find_cfg_paths', '/home/bf1942server/GameServers/Battlefield_1942/', ['common.cfg'], as_user='bf1942server')
+    print(result2)
+```
+
+This will allow you to still have an app context for the logger and other
+things. But you'll be able to import and run just the parts of the module
+you're trying to test out. Just make sure you source the venv first!
 
 ---
 
-## 16. References
+## 17. References
 - **Links**:
   - [Docs](.)
   - [Youtube Tutorials](NOT FINISHED YET...)

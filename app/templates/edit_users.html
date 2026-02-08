@@ -132,25 +132,18 @@
                       <div class="row">
                         <!-- Non-admin permissions, disabled if Admin is checked -->
                         <div id="non-admin-permissions">
-                          <label><i><u>Basic Permissions</u></i></label><br />
+                          <label><i><u>Allowed to Pages</u></i></label><br />
+                          <button type="button" class="btn btn-outline-primary btn-sm mb-2" onclick="toggleAllRoutes()">All Pages</button>
       
-                          {{ form.install_servers(class="form-check-input") }}
-                          {{ form.install_servers.label }}<br />
-      
-                          {{ form.add_servers(class="form-check-input") }}
-                          {{ form.add_servers.label }}<br />
-      
-                          {{ form.mod_settings(class="form-check-input") }}
-                          {{ form.mod_settings.label }}<br />
-      
-                          {{ form.edit_cfgs(class="form-check-input") }}
-                          {{ form.edit_cfgs.label }}<br />
+                          <div class="form-check">
+                            {% for route in form.routes.choices %}
+                              <input class="form-check-input route-checkbox" type="checkbox" 
+                                     id="{{ route[0] }}" name="routes" 
+                                     value="{{ route[0] }}">
+                              <label class="form-check-label" for="control_{{ loop.index }}">{{ route[1] }}</label><br />
+                            {% endfor %}
+                          </div>
 
-                          {{ form.edit_jobs(class="form-check-input") }}
-                          {{ form.edit_jobs.label }}<br />
-      
-                          {{ form.delete_server(class="form-check-input") }}
-                          {{ form.delete_server.label }}<br />
                           <br />
       
                           <label><i><u>Allowed Controls</u></i></label><br />
@@ -209,6 +202,7 @@
       <script>
         const userRole = '{{user_role}}';
         const userPerms = JSON.parse({{user_permissions | tojson}});
+        console.log(userPerms);
       </script>
       <script src="/static/js/edit_user.js"></script>
 

@@ -3,6 +3,7 @@ import time
 import json
 import pytest
 import psutil
+import getpass
 from flask import url_for, request
 from game_servers import game_servers
 import subprocess
@@ -11,17 +12,30 @@ import configparser
 from app.models import User, GameServer
 from utils import *
 
-def full_game_server_install(client, cancel=False):
+def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     response = client.get("/install")
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
 
+    # TODO: Replace this with info from test json vars. I was lazy and just hardcoded it.
+    install_data = {
+        "csrf_token": csrf_token,
+        "script_name": "mcserver",
+        "install_type": "local",
+        "install_path": f"/home/{username}/GameServers/Minecraft",
+        "install_name": "Minecraft",
+        "username": username,
+    }
+
     # Do an install.
     response = client.post(
         "/install",
-        data={"csrf_token": csrf_token, "script_name": "mcserver", "full_name": "Minecraft"},
+        data=install_data,
         follow_redirects=True,
     )
+
+    print(extract_alert_messages(response))
+#    debug_response(response)
 
     assert response.status_code == 200
     assert b"Installing" in response.data
@@ -75,6 +89,7 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
+    print(csrf_token)
 
     # Test starting the server.
     response = client.post(
@@ -82,29 +97,54 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'st',
+            "control": 'st',
             "ctrl_form": 'true',
         },
         follow_redirects=True
     )
     assert response.status_code == 200
 
-    time.sleep(5)
+    time.sleep(2)
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")
     assert response.status_code == 200
     print(response.get_data(as_text=True))
 
-    while (b'"process_lock": true' in client.get(f"/api/cmd-output/{server_id}").data):
-        time.sleep(5)
+    # Keep checking status till timeout.
+    timeout = 60
+    runtime = 0
+    while True:
+        response = client.get(f"/api/server-status/{server_id}")
+        assert response.status_code == 200
+        resp_dict = response.json
+        assert "status" in resp_dict
 
+        if resp_dict["status"] == True:
+            break
+
+        time.sleep(10)
+        runtime += 10
+
+        if runtime > timeout:
+            assert True == False  # Force fail timeout.
+    
     # Cant win the race if you're asleep.
-    time.sleep(10)
+    time.sleep(5)
+
+    response = client.get(f"/api/server-status/{server_id}")
+    # Assert server status is on.
+    assert response.status_code == 200
+    resp_dict = response.json
+    print(resp_dict)
+    assert "status" in resp_dict
+    assert resp_dict["status"] == True
 
     # Enable the send_cmd setting.
     toggle_send_cmd(True)
     time.sleep(1)
+
+    check_main_conf_bool('settings','send_cmd', True)
 
     # Test sending command to game server console
     response = client.post(
@@ -112,17 +152,19 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'sd',
+            "control": 'sd',
             "send_cmd": 'test',
             "send_form": 'true',
         },
         follow_redirects=True
     )
+
+    print(extract_alert_messages(response))
     assert response.status_code == 200
     # From flashed message
     assert b'Sending command to console' in response.data
 
-    time.sleep(15)
+    time.sleep(5)
 
     print("######################## SEND COMMAND TO CONSOLE\n")
     # Sleep until process is finished.
@@ -147,7 +189,7 @@ def game_server_start_stop(client, server_id):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'sp',
+            "control": 'sp',
             "ctrl_form": "true",
         },
         follow_redirects=True
@@ -179,8 +221,9 @@ def game_server_start_stop(client, server_id):
         x += 5
 
     # Final check status indicator api, is off.
-    resp = client.get(f"/api/server-status/{server_id}").data.decode("utf8")
-    resp_dict = json.loads(resp)
+    response = client.get(f"/api/server-status/{server_id}")
+    resp_dict = response.json
+    assert 'status' in resp_dict
     assert resp_dict['status'] == False
 
 
@@ -199,7 +242,7 @@ def console_output(client):
         data={
             "csrf_token": csrf_token,
             "server_id": server_id,
-            "command": 'st',
+            "control": 'st',
             "ctrl_form": "true",
         },
         follow_redirects=True
@@ -247,6 +290,29 @@ def console_output(client):
     # Just check that some stdout is coming through.
     assert len(resp_data['stdout']) > 0
 
+    time.sleep(10)
+
+    # Stop the server.
+    response = client.post(
+        "/controls",
+        data={
+            "csrf_token": csrf_token,
+            "server_id": server_id,
+            "control": 'sp',
+            "ctrl_form": "true",
+        },
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    time.sleep(45)
+
+    # Final check status indicator api, is off.
+    response = client.get(f"/api/server-status/{server_id}")
+    resp_dict = response.json
+    assert 'status' in resp_dict
+    assert resp_dict['status'] == False
+
 
 @pytest.mark.integration
 def test_install_newuser(db_session, client, authed_client, test_vars):
@@ -279,47 +345,50 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = yes")
-        check_main_conf("remove_files = yes")
-        check_main_conf("delete_user = yes")
+        check_main_conf_bool('settings','install_create_new_user', True)
+        check_main_conf_bool('settings','remove_files', True)
+        check_main_conf_bool('settings','delete_user', True)
 
         # Test full install as new user.
-        full_game_server_install(client)
+        full_game_server_install(client, username='mcserver')
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
         console_output(client)
 
-        # Refresh settings again after full server install and stuff.
+        # Refresh settings again after full server install cause paranoia. (probably unnecessary, am debugging rn)
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
+        time.sleep(1)
 
-        response = client.get(
-            "/controls",
-            data={
-                "csrf_token": csrf_token,
-                "server_id": server_id,
-                "command": 'sp',
-                "ctrl_form": "true",
-            },
-            follow_redirects=True
-        )
-        assert response.status_code == 200
-
-        # Run until "process_lock": false (aka proc stopped).
-        while (
-            b'"process_lock": true'
-            in client.get(f"/api/cmd-output/{server_id}").data
-        ):
-            time.sleep(3)
+        check_main_conf_bool('settings','install_create_new_user', True)
+        check_main_conf_bool('settings','remove_files', True)
+        check_main_conf_bool('settings','delete_user', True)
 
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)
         assert response.status_code == 204
+
+        time.sleep(20)  # Allow time for delete job to finish.
+
+        print("##################### Error Log #####################")
+        os.system('cat logs/error.log')
+
+        print("##################### Access Log #####################")
+        os.system('cat logs/access.log')
+
+        print("##################### Audit Log #####################")
+        os.system('cat logs/audit.log')
+
+        print("##################### Home Dirs #####################")
+        os.system('ls /home')
+
+        print("##################### Sudoers Rules #####################")
+        os.system('sudo -l')
 
         dir_path = "/home/mcserver"
         assert not os.path.exists(dir_path)
@@ -365,13 +434,13 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         response = client.post(
             "/settings", data=settings_data, follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "views.settings")
+        check_response(response, error_msg, resp_code, "main.settings")
 
         # Check changes are reflected in main.conf.local.
-        check_main_conf("install_create_new_user = no")
+        check_main_conf_bool('settings','install_create_new_user', False)
 
         # Test full install as existing user.
-        full_game_server_install(client)
+        full_game_server_install(client, username=getpass.getuser())
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -394,7 +463,7 @@ def test_install_cancel(db_session, client, authed_client, test_vars):
     with client:
 
         # Test full install as existing user.
-        full_game_server_install(client, cancel=True)
+        full_game_server_install(client, username='mcserver', cancel=True)
 
         server_id = get_server_id("Minecraft")
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)

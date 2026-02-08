@@ -5,13 +5,14 @@ if (userRole == 'admin') {
 
 // Function to apply the user permissions to the form.
 function applyUserPermissions() {
-  // Check or uncheck basic permissions based on userPerms.
-  document.getElementById('install_servers').checked = userPerms.install_servers;
-  document.getElementById('add_servers').checked = userPerms.add_servers;
-  document.getElementById('mod_settings').checked = userPerms.mod_settings;
-  document.getElementById('edit_cfgs').checked = userPerms.edit_cfgs;
-  document.getElementById('edit_jobs').checked = userPerms.edit_jobs;
-  document.getElementById('delete_server').checked = userPerms.delete_server;
+
+  // Check the routes checkboxes.
+  const routeCheckboxes = document.querySelectorAll('.route-checkbox');
+  routeCheckboxes.forEach(checkbox => {
+    if (userPerms.routes.includes(checkbox.value)) {
+      checkbox.checked = true;
+    }
+  });
 
   // Check the controls checkboxes.
   const controlCheckboxes = document.querySelectorAll('.control-checkbox');
@@ -47,6 +48,13 @@ function togglePermissions() {
   nonAdminPermissions.querySelectorAll('button').forEach(button => {
       button.disabled = isAdmin;
   });
+}
+
+// Function to select/unselect all routes.
+function toggleAllRoutes() {
+  const allRouteCheckboxes = document.querySelectorAll('.route-checkbox');
+  const isChecked = Array.from(allRouteCheckboxes).every(checkbox => checkbox.checked);
+  allRouteCheckboxes.forEach(checkbox => checkbox.checked = !isChecked);
 }
 
 // Function to select/unselect all controls.

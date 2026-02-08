@@ -6,6 +6,7 @@ let previousStdErrput = [];
 
 var spinners = document.getElementById("spinners");
 
+/* OLD THEME */
 var term = new Terminal({
   theme: {
     foreground: textColor,
@@ -18,6 +19,39 @@ var term = new Terminal({
   cursorBlink: false,
 });
 
+/* New Theme */
+/*
+const term = new Terminal({
+    theme: {
+        background: '#001100',
+        foreground: textColor,
+        cursor: '#00ff00',
+        black: '#000000',
+        red: '#ff0000',
+        green: '#00ff00',
+        yellow: '#ffff00',
+        blue: '#0000ff',
+        magenta: '#ff00ff',
+        cyan: '#00ffff',
+        white: '#ffffff',
+        brightBlack: '#555555',
+        brightRed: '#ff5555',
+        brightGreen: '#55ff55',
+        brightYellow: '#ffff55',
+        brightBlue: '#5555ff',
+        brightMagenta: '#ff55ff',
+        brightCyan: '#55ffff',
+        brightWhite: '#ffffff'
+    },
+    fontSize: 14,
+    lineHeight: 1.2,
+    fontFamily: "'Courier New', monospace",
+    cursorBlink: false,
+    cursorStyle: 'block',
+    allowTransparency: true
+});
+*/
+
 term.open(document.getElementById('terminal'));
 
 var fitAddon = new FitAddon.FitAddon();
@@ -26,9 +60,16 @@ fitAddon.fit();
 
 term.write('\rWelcome to the web-lgsm!\n\r');
 
-// Handle window resize.
-window.addEventListener('resize', function() {
+// Handle term div resize.
+const resizeObserver = new ResizeObserver(entries => {
+  for (let entry of entries) {
     fitAddon.fit();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const div = document.getElementById('terminal');
+  if (div) resizeObserver.observe(div);
 });
 
 function refreshOutput(sId) {
@@ -119,5 +160,5 @@ if (typeof serverId === 'undefined' || serverId === null || !serverId) {
 } else {
   var interval = setInterval(function() {
     updateTerminal(serverId);
-  }, 500);
+  }, 1000);
 }

@@ -5,128 +5,99 @@ import logging
 from flask import Flask
 from pathlib import Path
 from dotenv import load_dotenv
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import MetaData
 from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask_migrate import Migrate
-from flask_caching import Cache
+
+# Import extensions
+from .extensions import db, login_manager, migrate, cache
 
 # Prevent creation of __pycache__. Pycache messes up auth.
 sys.dont_write_bytecode = True
 
 DB_NAME = "database.db"
 
-# Naming conventions for Flask-Migrate.
-convention = {
-    "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
-    "ck": "ck_%(table_name)s_%(constraint_name)s",
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s",
-}
-metadata = MetaData(naming_convention=convention)
-db = SQLAlchemy(metadata=metadata)
-
 env_path = Path(".") / ".secret"
 load_dotenv(dotenv_path=env_path)
 SECRET_KEY = os.environ["SECRET_KEY"]
 SWAGGER_URL = "/docs"
 API_URL = "/api/spec"
-cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
 
-def main():
-    # Setup logging.
+def setup_logging():
+    """Configure logging settings"""
     log_level_map = {
-        "info": logging.INFO,  # General operational info.
-        "warning": logging.WARNING,  # Warnings and above.
-        "debug": logging.DEBUG,  # Most verbose, debug info.
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "debug": logging.DEBUG,
     }
 
-    if "DEBUG" in os.environ:
-        # Get log_level from env var, default to info if none set.
-        log_level_str = os.getenv("LOG_LEVEL", "info").lower()
-        log_level = log_level_map.get(log_level_str, logging.INFO)
-        dictConfig(
-            {
-                "version": 1,
-                "formatters": {
-                    "default": {
-                        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-                    },
-                    "audit": {
-                        "format": "[%(asctime)s] AUDIT: %(message)s",
-                    }
+    # Get log_level from env var, default to info if none set.
+    log_level_str = os.getenv("LOG_LEVEL", "info").lower()
+    log_level = log_level_map.get(log_level_str, logging.INFO)
+
+    dictConfig(
+        {
+            "version": 1,
+            'disable_existing_loggers': False,
+            "formatters": {
+                "default": {
+                    "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
                 },
-                "handlers": {
-                    "wsgi": {
-                        "class": "logging.StreamHandler",
-                        "stream": "ext://flask.logging.wsgi_errors_stream",
-                        "formatter": "default",
-                    },
-                    "audit_file": {
-                        "class": "logging.FileHandler",
-                        "filename": "logs/audit.log",
-                        "formatter": "audit",
-                    }
+                "audit": {
+                    "format": "[%(asctime)s] AUDIT: %(message)s",
+                }
+            },
+            "handlers": {
+                "wsgi": {
+                    "class": "logging.StreamHandler",
+                    "stream": "ext://flask.logging.wsgi_errors_stream",
+                    "formatter": "default",
                 },
-                "loggers": {
-                    "audit": {
-                        "level": "INFO",
-                        "handlers": ["audit_file"],
-                        "propagate": False,
-                    }
+                "audit_file": {
+                    "class": "logging.FileHandler",
+                    "filename": "logs/audit.log",
+                    "formatter": "audit",
+                }
+            },
+            "loggers": {
+                "audit": {
+                    "level": "INFO",
+                    "handlers": ["audit_file"],
+                    "propagate": False,
                 },
-                "root": {
-                    "level": log_level,
-                    "handlers": ["wsgi"]
-                },
-            }
-        )
+            },
+            "root": {
+                "level": log_level,
+                "handlers": ["wsgi"]
+            },
+        }
+    )
 
     current_log_level = logging.getLogger().getEffectiveLevel()
-
-    # Print the human-readable log level name
     print(f"Root logger level: {logging.getLevelName(current_log_level)}")
 
-    # Initialize app.
-    app = Flask(__name__)
-    app.config["SECRET_KEY"] = SECRET_KEY
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
-    app.logger.removeHandler(default_handler)
-    app.audit_logger = logging.getLogger('audit')
-    migrate = Migrate(app, db, render_as_batch=True)
-    cache.init_app(app)
-    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
-
-    # Initialize DB.
+def register_extensions(app):
+    """Register Flask extensions with the app"""
     db.init_app(app)
-    migrate.init_app(app, db)
+    migrate.init_app(app, db, render_as_batch=True)
+    cache.init_app(app)
 
-    # Load models.
-    from .models import User
+    # Setup LoginManager
+    login_manager.login_view = "auth.login"
+    login_manager.login_message = None
+    login_manager.init_app(app)
 
-    # Pull in our views route(s).
-    from .views import views
+def register_blueprints(app):
+    """Register blueprints with the app"""
+    from .blueprints.main import main_bp
+    from .blueprints.auth import auth_bp
+    from .blueprints.api import api_bp
 
-    app.register_blueprint(views, url_prefix="/")
-
-    # Pull in our auth route(s).
-    from .auth import auth
-
-    app.register_blueprint(auth, url_prefix="/")
-
-    # Pull in our api route(s).
-    from .api import api_bp
-
+    app.register_blueprint(main_bp, url_prefix="/")
+    app.register_blueprint(auth_bp, url_prefix="/")
     app.register_blueprint(api_bp, url_prefix="/api")
 
-    # Create Swagger UI blueprint.
+    # Register Swagger UI blueprint
     swagger_ui = get_swaggerui_blueprint(
         SWAGGER_URL,
         API_URL,
@@ -147,27 +118,46 @@ def main():
             },
         },
     )
-
-    # Register Swagger UI blueprint
     app.register_blueprint(swagger_ui)
 
-    # Setup LoginManager.
-    login_manager = LoginManager()
-
-    # Redirect to auth.login if not already logged in.
-    login_manager.login_view = "auth.login"
-    login_manager.login_message = None
-    login_manager.init_app(app)
-
-    # Decorator to set up login session.
-    @login_manager.user_loader
-    def load_user(id):
-        return db.session.get(User, int(id))
-
-    # Filter for jinja2 json parsing for user permissions.
+def register_template_filters(app):
+    """Register custom template filters"""
     @app.template_filter("from_json")
     def from_json_filter(s):
         return json.loads(s)
 
-    return app
+def register_user_loader():
+    """Register the user loader for Flask-Login"""
+    from .models import User
 
+    @login_manager.user_loader
+    def load_user(id):
+        return db.session.get(User, int(id))
+
+def create_app():
+    """Application factory function"""
+    # Setup logging first
+    setup_logging()
+
+    # Initialize app
+    app = Flask(__name__)
+    app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+
+    # Remove default handler and add audit logger
+    app.logger.removeHandler(default_handler)
+    app.audit_logger = logging.getLogger('audit')
+
+    # Add Jinja2 extension
+    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
+
+    # Register everything
+    register_extensions(app)
+    register_blueprints(app)
+    register_template_filters(app)
+    register_user_loader()
+
+    return app

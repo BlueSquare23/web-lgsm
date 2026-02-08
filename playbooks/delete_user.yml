@@ -11,6 +11,16 @@
   vars_files:
     - vars/accepted_usernames.yml
     - vars/web_lgsm_user.yml
+  pre_tasks:
+    - name: Load custom usernames if available
+      include_vars:
+        file: /usr/local/share/web-lgsm_custom_users.yml
+      ignore_errors: yes
+      register: custom_users_loaded
+    
+    - name: Combine username lists
+      set_fact:
+        accepted_usernames: "{{ accepted_usernames + (custom_usernames | default([])) }}"
 
   tasks:
     - name: Check if username is equal to web_lgsm_user
@@ -33,5 +43,11 @@
         name: "{{ username }}"
         state: absent
         remove: yes
+      when: same_user is not defined or same_user == false
+
+    - name: Remove Sudoers Rule
+      file:
+        path: "/etc/sudoers.d/{{ web_lgsm_user }}-{{ username }}"
+        state: absent
       when: same_user is not defined or same_user == false
 ...

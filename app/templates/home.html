@@ -73,7 +73,7 @@
         </ul>
       {% endif %}
 
-      {% if config_options.show_stats %}
+      {% if _config.getboolean('aesthetic', 'show_stats', True) %}
         <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
         <div class="container bg-dark border border-white rounded-3" id="game-server-stats">
           <div class="row">
@@ -98,9 +98,9 @@
 
           <a href="/api/system-usage">View JSON</a>
           <script>
-            const userColor = "{{config_options.text_color}}";
-            const usedColor = "{{config_options.graphs_primary}}";
-            const freeColor = "{{config_options.graphs_secondary}}";
+            const userColor = "{{_config.get('aesthetic', 'text_color')}}";
+            const usedColor = "{{_config.get('aesthetic', 'graphs_primary')}}";
+            const freeColor = "{{_config.get('aesthetic', 'graphs_secondary')}}";
             const stats = document.getElementById('game-server-stats');
             const chevron = document.getElementById('chevron');
           </script>
@@ -113,7 +113,7 @@
         <script src="/static/js/graph-charts.js"></script>
         <script src="/static/js/toggle-stats.js"></script>
 
-        {% if config_options.show_barrel_roll %}
+        {% if _config.getboolean('aesthetic','show_barrel_roll') %}
           <!-- Mission Critical Barrel-Roll Code -->
           <script src="/static/js/do-a-barrel-roll.js"></script>
           <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
@@ -123,28 +123,25 @@
 
       <br>
 
-      {% if user.role != 'admin' and not parsed_json.install_servers and not parsed_json.add_servers %}
-      {% else %}
       <h2 style="color: white;">Other Options</h2>
       <div class="list-group border border-secondary">
-        {% if user.role == 'admin' or parsed_json.install_servers %}
+        {% if user.role == 'admin' or 'install' in parsed_json.routes %}
         <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.add_servers %}
+        {% if user.role == 'admin' or 'add' in parsed_json.routes %}
         <a href="/add" class="list-group-item list-group-item-action">Add or Edit Existing LGSM Installation Details</a>
         {% endif %}
         {% if user.is_authenticated and user.role == 'admin' %}
           <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.edit_jobs %}
+        {% if user.role == 'admin' or 'jobs' in parsed_json.routes %}
         <a href="/jobs" class="list-group-item list-group-item-action">Create or Edit Web-LGSM Jobs</a>
         {% endif %}
-        {% if user.role == 'admin' or parsed_json.audit %}
+        {% if user.role == 'admin' or 'audit' in parsed_json.routes %}
         <a href="/audit" class="list-group-item list-group-item-action">View Audit Log</a>
         {% endif %}
         <a href="/2fa_setup" class="list-group-item list-group-item-action">Setup Two Factor Auth</a>
       </div>
-      {% endif %}
 
       <br>
 

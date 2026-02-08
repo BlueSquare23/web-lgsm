@@ -9,7 +9,7 @@
 
         <div class="card mb-4">
           <div class="card-body bg-dark border border-white rounded">
-            <form method="GET" action="{{ url_for('views.audit') }}">
+            <form method="GET" action="{{ url_for('main.audit') }}">
               <div class="row g-3">
                 <!-- Per Page -->
                 <div class="text-white bg-dark col-md-4">
@@ -49,7 +49,7 @@
                   <i class="bi bi-search"></i> Search
                 </button>
                 <!-- Reset Button -->
-                    <a href="{{ url_for('views.audit') }}" class="btn btn-outline-danger">Reset Filters</a>
+                    <a href="{{ url_for('main.audit') }}" class="btn btn-outline-danger">Reset Filters</a>
                 </div>
               </div>
             </form>
@@ -90,7 +90,7 @@
             <!-- Previous Page -->
             {% set query_params = query_params.update({'page': pagination.prev_num}) or query_params %}
             <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('views.audit', **query_params) if pagination.has_prev else '#' }}" aria-label="Previous">
+              <a class="page-link" href="{{ url_for('main.audit', **query_params) if pagination.has_prev else '#' }}" aria-label="Previous">
                   <span aria-hidden="true">&laquo;</span>
               </a>
             </li>
@@ -100,7 +100,7 @@
               {% if page_num %}
                 {% set query_params = query_params.update({'page': page_num}) or query_params %}
                 <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('views.audit', **query_params) }}">{{ page_num }}</a>
+                    <a class="page-link" href="{{ url_for('main.audit', **query_params) }}">{{ page_num }}</a>
                 </li>
               {% else %}
                 <li class="page-item disabled">
@@ -112,7 +112,7 @@
             <!-- Next Page -->
             {% set query_params = query_params.update({'page': pagination.next_num}) or query_params %}
             <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for('views.audit', **query_params) if pagination.has_next else '#' }}" aria-label="Next">
+              <a class="page-link" href="{{ url_for('main.audit', **query_params) if pagination.has_next else '#' }}" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
               </a>
             </li>

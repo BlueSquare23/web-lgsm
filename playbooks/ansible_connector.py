@@ -80,15 +80,24 @@ def db_fetch(item_id, item_type='GameServer'):
 
 def validate_username(username):
     """Checks supplied username is in accepted usernames."""
-    yaml_file_path = os.path.join(PLAYBOOKS, "playbooks/vars/accepted_usernames.yml")
+    yaml_file_path_default = os.path.join(PLAYBOOKS, "playbooks/vars/accepted_usernames.yml")
+    yaml_file_path_custom = os.path.join(PLAYBOOKS, "../web-lgsm_custom_users.yml")
 
-    with open(yaml_file_path, "r") as file:
-        data = yaml.safe_load(file)
+    with open(yaml_file_path_default, "r") as file:
+        data_default = yaml.safe_load(file)
+
+    data_custom = dict()
+    if os.path.exists(yaml_file_path_custom):
+        with open(yaml_file_path_custom, "r") as file:
+            data_custom = yaml.safe_load(file)
 
     # Extract the accepted_usernames list.
-    accepted_usernames = data.get("accepted_usernames", [])
+    accepted_usernames = data_default.get("accepted_usernames", [])
+    custom_usernames = data_custom.get("custom_usernames", [])
 
-    if username not in accepted_usernames:
+    valid_users = accepted_usernames + custom_usernames
+
+    if username not in valid_users:
         print(" [!] Invalid user!")
         exit(77)
 
@@ -166,35 +175,6 @@ def post_install_cfg_fix(install_path):
     print("Configuration file common.cgf updated!")
 
 
-def append_new_authorized_key(server):
-    """
-    Add's server's SSH keyfile to new user's ~/.ssh/authorized_keys for new
-    servers installed as other users.
-
-    Args:
-        server (GameServer): The server to add the key for.
-
-    Returns:
-        None: Just does or dies.
-    """
-    if server.keyfile_path == '' or server.keyfile_path == None:
-        return
-
-    public_key_file = server.keyfile_path + '.pub'
-    home_dir = os.path.expanduser(f'~{server.username}')
-    ssh_dir = os.path.join(home_dir, '.ssh')
-    authorized_keys_file = os.path.join(ssh_dir, 'authorized_keys')
-
-    # Read in public key.
-    with open(public_key_file, 'r') as f:
-        public_key = f.read()
-
-    # Write new public key file.
-    with open(authorized_keys_file, 'a') as f:
-        f.write(public_key + '\n')
-        print('Appended public key to authorized_keys!')
-
-
 def run_install_new_game_server(server_id):
     """
     Wraps the invocation of the install_new_game_server.yml playbook
@@ -257,9 +237,6 @@ def run_install_new_game_server(server_id):
         except:
             mark_install_failed(server_id)
             exit()
-
-    # Post install ssh setup for different users.
-    append_new_authorized_key(server)
 
     # Mark finished with new session context.
     # Can't use app context in ansible connector.
@@ -411,11 +388,36 @@ def run_delete_user(server_id):
     exit()
 
 
+def run_add_sudoers(username):
+    """
+    Adds the sudoers rule for the supplied username.
+    """
+    ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
+    add_user_sudoers_rules_playbook_path = os.path.join(
+        PLAYBOOKS, "playbooks/add_user_sudoers_rules.yml"
+    )
+
+    cmd = [
+        "/usr/bin/sudo", "-n",
+        ansible_cmd_path,
+        add_user_sudoers_rules_playbook_path,
+        "-e",
+        f"username={username}",
+    ]
+
+    if O["dry"]:
+        print(cmd)
+        exit()
+
+    run_cmd(cmd)
+    exit()
+
+
 # Main.
 def main(argv):
     """Process getopts, loads json vars, runs appropriate playbook"""
     try:
-        opts, args = getopt.getopt(argv, "hni:x:c:d:", ["help", "dry", "install=", "cancel=", "cron=", "delete="])
+        opts, args = getopt.getopt(argv, "hni:x:c:d:u:", ["help", "dry", "install=", "cancel=", "cron=", "delete=", "user="])
     except getopt.GetoptError:
         print_help("Invalid option!")
 
@@ -444,6 +446,9 @@ def main(argv):
 
         if opt in ("-d", "--delete"):
             run_delete_user(arg)
+
+        if opt in ("-u", "--user"):
+            run_add_sudoers(arg)
 
 
     print(" [!] No action taken!")

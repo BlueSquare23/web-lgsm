@@ -7,22 +7,33 @@ import getpass
 import configparser
 from werkzeug.security import generate_password_hash
 
-from app import main
+from app import create_app
 from app.models import User, GameServer, Job
-from app.cron import CronService
+from app.services import CronService
 from utils import *
 
 
 @pytest.fixture
 def app():
-    app = main()
+    app = create_app()
     app.config.update({"TESTING": True})
     yield app
 
 
 @pytest.fixture
-def client(app):
+def reset(app):
     # Reset config file.
+    os.system('git restore main.conf')
+    shutil.copyfile("main.conf", "main.conf.local")
+
+    # Reset crontab.
+    os.system('crontab -r')
+
+
+@pytest.fixture
+def client(app, reset):
+    # Reset config file.
+    os.system('git restore main.conf')
     shutil.copyfile("main.conf", "main.conf.local")
     return app.test_client()
 
@@ -31,7 +42,7 @@ def client(app):
 def db_session(app):
     """Create a clean database with proper transaction isolation for each test."""
     with app.app_context():
-        from app.models import db
+        from app import db
 
         # Drop and create all tables fresh.
         db.drop_all()
@@ -60,20 +71,20 @@ def db_session(app):
 def test_vars():
     """Load vars once per test session"""
     with open("tests/test_vars.json", "r") as f:
-        config = json.load(f)
+        test_vars = json.load(f)
 
-    return config
+    return test_vars
 
 
 @pytest.fixture()
-def config():
+def test_config():
     """Load vars once per test session"""
     # Import config data.
-    config = configparser.ConfigParser()
+    test_config = configparser.ConfigParser()
     config_file = "main.conf.local"  # Local config override.
-    config.read(config_file)
+    test_config.read(config_file)
 
-    return config
+    return test_config
 
 
 @pytest.fixture()
@@ -160,12 +171,7 @@ def add_second_user_no_perms(db_session, setup_client, test_vars):
         password=generate_password_hash(test_vars["password"]),
         role="user",
         permissions=json.dumps({
-            "install_servers": False, 
-            "add_servers": False, 
-            "mod_settings": False, 
-            "edit_cfgs": False, 
-            "edit_jobs": False, 
-            "delete_server": False, 
+            "routes": [], 
             "controls": [], 
             "server_ids": []
         }),
@@ -203,12 +209,18 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
         password=generate_password_hash(test_vars["password"]),
         role="user",
         permissions=json.dumps({
-            "install_servers": True,
-            "add_servers": True,
-            "mod_settings": True,
-            "edit_cfgs": True,
-            "edit_jobs": True,
-            "delete_server": True,
+            "routes": [
+                "controls",
+                "install",
+                "add",
+                "settings",
+                "edit",
+                "jobs",
+                "delete",
+                "update-console", 
+                "cmd-output",
+                "server-statuses"
+            ],
             "controls": [
                 "start",
                 "stop",

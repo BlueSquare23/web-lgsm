@@ -1,25 +1,9 @@
 import pytest
 import os
 from werkzeug.datastructures import MultiDict
-from app.forms import (
-    LoginForm,
-    SetupForm,
-    AddForm,
-    SettingsForm,
-    UploadTextForm,
-    DownloadCfgForm,
-    SelectCfgForm,
-    ValidateID,
-    SendCommandForm,
-    ServerControlForm,
-    InstallForm,
-    EditUsersForm,
-    ServerExists,
-    ValidConfigFile,
-    VALID_HEX_COLOR,
-    BAD_CHARS,
-    BAD_CHARS_MSG
-)
+from app.forms.auth import *
+from app.forms.views import *
+from app.forms.helpers import *
 from app.models import GameServer
 
 
@@ -82,7 +66,7 @@ def test_add_form_valid_local(app, db_session, monkeypatch):
     def mock_get_servers():
         return ["gmodserver"]  # Only include the server we're testing
     
-    monkeypatch.setattr("app.forms.get_servers", mock_get_servers)
+    monkeypatch.setattr("app.forms.views.get_servers", mock_get_servers)
 
     # Create a test server in the database for the AnyOf validator
     test_server = GameServer(

@@ -89,11 +89,12 @@ import shutil
 import string
 import getpass
 import tarfile
+import random
 import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
-from app import db, main as appmain
-from app.models import User
+from app import db, create_app
+from app.models.user import User
 from app.utils import check_and_get_lgsmsh
 
 # Import config data.
@@ -195,7 +196,7 @@ def start_server():
             LOG_LEVEL,
             f"--bind={HOST}:{PORT}",
             "--daemon",
-            "app:main()",
+            "app:create_app()",
         ]
 
         cert = None
@@ -263,13 +264,13 @@ def start_server():
 
 def start_debug():
     """Starts the app in debug mode"""
-    from app import main
+    from app import create_app
     if DEBUG:
         os.environ["DEBUG"] = "YES"
 
     # For clean ctrl + c handling.
     signal.signal(signal.SIGINT, signalint_handler)
-    app = main()
+    app = create_app()
     app.run(debug=True, host=HOST, port=PORT)
 
 
@@ -401,7 +402,7 @@ def change_password():
 
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
-    lgsmsh = SCRIPTPATH + "/scripts/linuxgsm.sh"
+    lgsmsh = SCRIPTPATH + "/bin/linuxgsm.sh"
     check_and_get_lgsmsh(lgsmsh)
 
     servers_list = os.popen(f"{lgsmsh} list").read()
@@ -572,13 +573,19 @@ def run_tests():
         db_file = os.path.join(SCRIPTPATH, "app/database.db")
         db_backup = backup_file(db_file)
 
+    main_conf = 'main.conf'
     local_conf = 'main.conf.local'
     if os.path.exists(local_conf):
         local_conf_bak = backup_file(local_conf)
+        os.system(f"git restore {main_conf}")
+        shutil.copyfile(main_conf, local_conf)
 
     # Enable verbose even if disabled by default just for test printing.
     if not O["verbose"]:
         O["verbose"] = True
+
+    # Random chance they run in reverse 15% of the time.
+    probability = 0.15
 
     try:
         if O["test_full"]:
@@ -590,17 +597,28 @@ def run_tests():
                 # Then torch dir.
                 shutil.rmtree(mcdir)
 
-            cmd = "coverage run -m pytest -v tests/"
-            run_command_popen(cmd)
+            run_tests = "coverage run -m pytest --cache-clear -v tests/"
+
+            # Random chance tests get run in reverse order.
+            if random.random() < probability:
+                run_tests = "coverage run -m pytest --reverse --cache-clear -v tests/"
+                
+            run_command_popen(run_tests)
 
         else:
-            cmd = "coverage run -m pytest -vvv tests/ -m 'not integration'"
-            run_command_popen(cmd)
+            run_tests = "coverage run -m pytest --cache-clear -vvv tests/ -m 'not integration'"
+
+            # Random chance tests get run in reverse order.
+            if random.random() < probability:
+                run_tests = "coverage run -m pytest --reverse --cache-clear -vvv tests/ -m 'not integration'"
+
+            run_command_popen(run_tests)
 
     finally:
         if db_backup:
             shutil.move(db_backup, db_file)
 
+        os.system('crontab -r')  # Reset crontab
         shutil.move(local_conf_bak, local_conf)
         print("Restored database and main.conf.local")
 
@@ -749,7 +767,7 @@ def main(argv):
             return
         elif opt in ("-p", "--passwd"):
             # Technically, needs run in app context.
-            app = appmain()
+            app = create_app()
             with app.app_context():
                 change_password()
             return
@@ -764,7 +782,7 @@ def main(argv):
             add_valid_gs_user(arg)
             return
         elif opt in ("-P", "--reset_totp"):
-            app = appmain()
+            app = create_app()
             with app.app_context():
                 reset_totp()
             return
@@ -779,5 +797,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
 

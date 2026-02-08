@@ -53,8 +53,8 @@ jobs:
 
       - name: Run Pytest Tests
         run: |
-#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
           RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
+#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
 
       - name: Generate coverage report
         run: |
@@ -76,4 +76,3 @@ jobs:
         with:
           name: coverage-badge-${{ matrix.python-version }}
           path: coverage-badge.svg
-

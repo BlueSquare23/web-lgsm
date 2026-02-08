@@ -34,13 +34,9 @@ jobs:
           ./install.sh -d
           cp main.conf main.conf.local  # Setup local copy of conf for tests 
 
-      - name: Check sudo access
+      - name: Install setuptools and python-pkg-resources for genbadge
         run: |
-          sudo -l
-
-      - name: DEBUG check sudoers file
-        run: |
-          sudo cat /etc/sudoers
+          sudo apt-get install python-setuptools python-pkg-resources
 
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |

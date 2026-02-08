@@ -7,9 +7,9 @@ security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.9.0   | :white_check_mark: |
 | 1.8.6   | :white_check_mark: |
-| 1.8.5   | :white_check_mark: |
-| < 1.8.4 | :x:                |
+| < 1.8.5 | :x:                |
 
 ## Reporting a Vulnerability
 

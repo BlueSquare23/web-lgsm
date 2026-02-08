@@ -142,7 +142,7 @@ def add():
         )
 
     # TODO: Change this to use just type remote for flashing message about
-    # creating new key.
+    # creating new key. USE THIS INSTEAD: if server.install_type == "remote":
 # This is going away because will no longer be using ssh to admin local servers.
 #    if should_use_ssh(server) and new_server:
 #        keyfile = get_ssh_key_file(username, server.install_host)

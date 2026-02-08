@@ -105,23 +105,6 @@ def get_uid(username):
         return None
 
 
-def should_use_ssh(server):
-    """
-    Used to determine if SSH should be used for a particular server.
-
-    Args:
-        server (GameServer): Game server object to check.
-    Returns:
-        bool: True if should connect via ssh, false otherwise.
-    """
-    if server.install_type == "remote" or (
-        server.install_type == "local" and server.username != USER
-    ):
-        return True
-
-    return False
-
-
 def docker_cmd_build(server):
     """
     Builds docker cmd reused all over for given GameServer.

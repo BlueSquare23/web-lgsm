@@ -77,14 +77,10 @@ def controls():
         controls_list = controls_service.get_controls(server.script_name, current_user)
         current_app.logger.debug(controls_list)
 
-        if should_use_ssh(server):
+        if server.install_type == "remote":
             if not is_ssh_accessible(server.install_host):
-                if server.install_type == "remote":
-                    flash("Unable to access remote server over ssh!", category="error")
-                    return redirect(url_for("main.home"))
-                else:
-                    flash("Unable to access local install over ssh!", category="error")
-                    return redirect(url_for("main.home"))
+                flash("Unable to access remote server over ssh!", category="error")
+                return redirect(url_for("main.home"))
 
         elif server.install_type == "local" and not os.path.isdir(server.install_path):
             flash("No game server installation directory found!", category="error")

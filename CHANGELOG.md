@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix bug with npm install on Debian ([#discussion-60](https://github.com/BlueSquare23/web-lgsm/discussions/60)).
 - Fix bug with term not scaling on dynamic user resize.
 - Upgrade pip requirement `requests` to v2.32.5 (thanks dependabot!).
 

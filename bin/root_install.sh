@@ -132,7 +132,7 @@ else
     exit 1
 fi
 
-all_reqs_csv=$(grep 'all,' <<< "$apt_csv")
+all_reqs_csv=$(grep 'all,' <<< "$apt_csv" | sed 's/all,//g')
 all_reqs=$(tr ',' "\n" <<< "$all_reqs_csv")
 
 # Append lgsm requirements to web-lgsm apt reqs.
@@ -140,7 +140,7 @@ echo "$all_reqs" >> "$APT_REQS"
 
 # Install apt requirements!
 for req in $(cat "$APT_REQS"); do
-    if ! dpkg -l | grep -w "$req" &>/dev/null; then
+    if ! dpkg -s "$req" &>/dev/null; then
         echo -e "${GREEN}####### Installing \`$req\`...${RESET}"
         echo $req >> installed.log
         apt-get install -y $req

@@ -34,11 +34,6 @@ jobs:
           ./install.sh -d
           cp main.conf main.conf.local  # Setup local copy of conf for tests 
 
-      - name: Install setuptools and python-pkg-resources for genbadge
-        run: |
-          sudo apt-get update
-          sudo apt-get install python3-setuptools python3-pkg-resources
-
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update

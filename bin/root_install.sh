@@ -140,7 +140,7 @@ echo "$all_reqs" >> "$APT_REQS"
 
 # Install apt requirements!
 for req in $(cat "$APT_REQS"); do
-    if ! dpkg -s "$req" &>/dev/null; then
+    if ! dpkg-query -W --showformat='${db:Status-Status}\n' "$req" 2>/dev/null | grep -q '^installed$'; then
         echo -e "${GREEN}####### Installing \`$req\`...${RESET}"
         echo $req >> installed.log
         apt-get install -y $req

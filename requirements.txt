@@ -27,3 +27,4 @@ shortuuid==1.0.13
 onetimepass==1.0.1
 PyQRCode==1.2.1
 pytest-reverse==1.9.0
+setuptools==82.0.0

@@ -82,7 +82,7 @@ def controls():
                 flash("Unable to access remote server over ssh!", category="error")
                 return redirect(url_for("main.home"))
 
-        elif server.install_type == "local" and not os.path.isdir(server.install_path):
+        elif server.install_type == "local" and server.username == USER and not os.path.isdir(server.install_path):
             flash("No game server installation directory found!", category="error")
             return redirect(url_for("main.home"))
 

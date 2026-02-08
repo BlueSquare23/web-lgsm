@@ -8,5 +8,5 @@
   "cfg_dir": "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/",
   "cfg_path": "tests/test_data/Mockcraft/lgsm/config-lgsm/mcserver/common.cfg",
   "test_server_name": "mcserver",
-  "version": "1.8.7"
+  "version": "1.9.0"
 }

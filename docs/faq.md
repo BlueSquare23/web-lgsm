@@ -99,7 +99,7 @@ touch app/database.db
 flask --app app:main db upgrade
 ```
 
-13. Question: I just upgraded to v1.8.7+ and now my non-Admin web panel
+13. Question: I just upgraded to v1.9.0+ and now my non-Admin web panel
     users can't do anything and have no permissons! How do I fix?
     - Answer: Simply go to the Edit Users page as an admin and manually re-set
       the users permissions.

@@ -79,7 +79,7 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Main Goals for v1.8 -> v1.9
+## Main Goals for v1.9 -> v1.10
 
 * [ ] **Revamp the interface design and layout**
   - I'm not much of a front end guy. However, this project has simply come too
@@ -258,7 +258,7 @@
   - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
-## Version 1.8.7 Todos
+## Version 1.9.0 Todos
 
 * [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
   - I would get more control over specific package builds and would be platform independent.
@@ -512,7 +512,7 @@
   - The code itself doesn't really need changed, I just have to figure out how
     to organize it in a logical reasonable way. 
 
-* [x] **Wrap up v1.8.7 Release**
+* [x] **Wrap up ~v1.8.7~ v1.9.0 Release**
   - Okay this refactor job has been enough change for one release.
   - I'd love to keep adding more and expanding, but I gotta call it here, tuck
     in the corners and get another release out before I get too carried away.

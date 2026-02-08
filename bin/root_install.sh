@@ -36,6 +36,7 @@ fi
 
 cd $SCRIPTPATH
 mkdir -p $PLAYBOOKS_PATH
+touch "$SHARE_PATH/web-lgsm_custom_users.yml"
 
 # Could break system python if pip is run as root.
 if [[ "$EUID" -ne 0 ]]; then

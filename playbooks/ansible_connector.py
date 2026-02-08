@@ -92,7 +92,8 @@ def validate_username(username):
 
     # Extract the accepted_usernames list.
     accepted_usernames = data_default.get("accepted_usernames", [])
-    custom_usernames = data_custom.get("custom_usernames", [])
+    if data_custom:
+        custom_usernames = data_custom.get("custom_usernames", [])
 
     valid_users = accepted_usernames + custom_usernames
 

@@ -133,7 +133,7 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-* [x] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
   - This project has been poorly designed and modeled up until this point.
   - I am now beginning the process of redesigning the project piecemeal while
     maintaining functionality.
@@ -148,17 +148,6 @@
   - FlaskForm/Wtforms is our user input handling & validation layer.
   - All user input coming into the app, even through the API should go through
     a form class for valiation.
-
-* [x] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
-  - The idea here is twofold:
-    1. I want the app to have a mature api, where basically anything you can do
-       through the web, you can also do through a curl cmd.
-    2. I also want the app's route logic to still use things like Flask-WTF/WTForms validation.
-  - To accomplish this, I'm going to slowly transition existing routes to use
-    new service layer classes. New features will just be built this way from
-    the start. Old features will be transitioned over time.
-  - See new cron.py for example of `CronService` class to act as intermediary
-    between API and DB (model). 
 
 * [ ] **Reduce redundancies in disparate isomorphic representations of the same data**
   - I have too many different representations of the same underlying data.
@@ -423,9 +412,6 @@
   - https://www.sphinx-doc.org/en/master/
   - This might be the sort of thing I can get help with from an llm, but we'll see.
 
-* [x] **Need way to add sudoers rules for legacy game server system users**
-  - Already did this before last release.
-
 * [ ] **Cleanup render template calls with kwargs packing**
   - I can just shove all the stuff in a kwargs dict before calling render
     template. Would make things look nicer, easier to read.
@@ -462,28 +448,6 @@
   - But then allow people to put it where ever for their own purposes.
   - Write tests for this.
 
-* [x] **Allow multiple auto installs of same game server as new user, just increment
-  the name.**
-  - So first mcserver install would just be mcserver but then a second one the
-    user would be mcserver2, mcserver3, etc.
-  - Instead of doing this, I just added a form for users to enter their own
-    custom name and install path and username.
-
-* [x] **Make PATHS options configurable in main.conf**
-  - What I'm thinking is that the main.conf could have a section for [paths]
-    and then specific utils paths could be set in there and passed through to
-    the web app.
-    - For example:
-    ```
-    [paths]
-    cat = /bin/cat
-    ```
-  - [!] Might kinda be a security issue, have to think more about how to do
-    this safely. Maybe only allow paths under the user real PATH var...
-  - I kinda ended up doing this by refactoring the classes and now all the
-    paths are at least pulled from the same location so theoretically users
-    could reconfigure them easily if needed to.
-
 * [ ] **Make cfg editor work for `install_type` docker.**
   - Never got around to making this work for the v1.8 release. Just had too
     much stuff to get done so this got left out.
@@ -511,15 +475,6 @@
       requests to the controls endpoints easily to start / stop / restart etc.
     - However nothings in real REST format, can't do it in json, its all GET
       requests when it should be POST's if it were an api, etc.
-
-* [x] **Introduce more oop concepts to project / slowly transition to more oop.**
-  - [x] Modularize utils functions using SOLID principals.
-    - This whole project can be broken apart more. Too many functions don't
-      really make sense and are doing too much.
-    - Everything should just do one thing.
-  - Yeah re-architect project isn't finished yet but def started on this last
-    release.
-
 
 * [ ] **Build out support for Fedora, Rocky Linux, & AlmaLinux.**
   - These are all of the linuxes supported by the base lgsm project.

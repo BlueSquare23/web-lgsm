@@ -300,6 +300,31 @@
 * [ ] **Add collapsible sitemap accordion panel to righthand side**
   - Goal is get to any page from any page by opening up side panel and going
     into that section.
+  - Hypothetical Sitemap Layout Tree:
+```
+Home
+    GameServers
+        Edit GameServer Cfg File
+        Add or Edit GameServer Install Details
+        Edit GameServer Jobs
+        Install New GameServer
+        GameServer Controls
+    App
+        Settings
+    Admin
+        Edit Users
+        Audit
+    Auth
+        Setup 2FA
+        Logout
+    Misc
+        About
+        Changelog
+        Swagger Docs
+```
+  - That kinda doesn't work exactly cause like for game server pages you need
+    to specify what gameserver you're working with. But its roughly how things
+    are.
 
 * [ ] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
   - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55
@@ -318,6 +343,10 @@
     need to go through each one read it and check its info is still up to date.
 
 ### The Meat
+
+* [ ] **Fix the in app update!**
+  - I think this is still broken which sucks.
+  - You should be able to update the app from the web panel.
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 

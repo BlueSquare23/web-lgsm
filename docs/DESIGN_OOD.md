@@ -28,34 +28,91 @@ In sort its about what each layer of our code is doing.
 
 See more about this under the High Level Design section below.
 
-### Domain-Driven Design (DDD)
-
-Domain Driven Design is about how do we lay out and model where our code lives
-and group it related to the problem it is solving.
-
 ### Good-Ole MVC
 
 Under this new arrangement the classic MVC becomes relegated to the
 presentation layer only. Its becomes the outer most rim of the Clean Arch
-onion. Then DDD defines the core and we use Clean Arch principals to pull it
-all together.
+onion. Then Clean Arch defines the core and helps pull it all together.
 
-### The Pieces 
+### The Layers (the goal)
 
-Services - Coordinates multiple pieces (main business logic)
+A pragmatic Clean Architecture with 4 layers:
 
-Managers - Manages the state of some resource (file, DB, API)
+```
+┌──────────────────────────────┐
+│        Interface Layer       │  (Flask, blueprints, forms)
+├──────────────────────────────┤
+│       Application Layer      │  (Use cases)
+├──────────────────────────────┤
+│          Domain Layer        │  (Entities + interfaces)
+├──────────────────────────────┤
+│       Infrastructure Layer   │  (DB, filesystem, tmux, OS, etc)
+└──────────────────────────────┘
+```
 
-Routes - Edge layer, calls services, that call managers
+### A Slight Dirty Arch (Right Now)
 
-Models - Data
+I do not really want to rewrite and restructure absolutely everything just for
+the sake of "purity." Like end of the day, 99.9999% of people do not care about
+the app's architecture.
 
----
+So what we need is to borrow some ideas from Clean Arch to help clean
+things up. But what exactly?
 
-Services should use Managers, but not the other way around. But tbh I'm still
-not sure how exactly to best decouple the two. Right now just injecting deps
-for managers that depend on services. But this is messy and a sign that further
-restructuring is needed.
+Well idea No.1 is:
+
+#### Separation of Concerns / Dependency Graph
+
+A good software application is like an ogre. Here's our apps current dependency graph.
+
+```
+     v-----Controllers (aka Routes) 
+     M       |       |    
+     o       |       v    
+     d <-----+-----Validators (aka WTForms) 
+     e       |       |    
+     l       v       v    
+     s <-----Services / Managers
+
+```
+
+The astute among you may realize that a bit of a mess.
+
+Everything is talking to the DB. Controllers and services are still tightly
+coupled. The layers are not clearly defined and its begging to create more
+circular import problems.
+
+What I'd like it to be:
+
+```
+  Controllers (aka Routes)
+          |
+          v
+  Use Cases (Application)
+          |
+          v
+  Entities (Domain)
+          ^
+          |
+  Infrastructure (DB, filesystem, tmux, OS, etc)
+```
+
+### The Only Rule That Matters
+
+> Dependencies always point inward.
+
+```
+interface -> application -> domain
+infrastructure -> domain
+```
+
+Domain depends on nothing.
+
+Application depends only on domain.
+
+Interface depends on application (never on infrastructure directly).
+
+Infrastructure depends only on domain (to implement interfaces).
 
 ### Diagramming
 
@@ -136,63 +193,43 @@ Now here's the thing, the app is not currently (Dec 2025) setup to work like
 this, nor does it need to follow this like gospel. Its just guidelines for an
 arch that is simple, extensible, and clean.
 
+### Everything's A Service
 
-
-## I NEED TO RENAME AND REORGANIZE THINGS:
+> [!NOTE]
+> I NEED TO RENAME AND REORGANIZE THINGS:
 
 So I accidentally ended up naming everything a "Service." This is bad and I
 already hate it. The word doesn't mean anything if everything's using it.
 
-Both Deepseek and ChatGPT recommended I use a domain specific grouping.
+I need to break things up more and looks like clean arch is the way to do it.
 
-### ChatGPT's Advice
 
-Naming rules that prevent “Service Hell”
+## The Road to Cleaning This All Up!
 
-When creating a new class, ask one question:
+Taking the current app's structure and converting it to a clean architecture
+isn't going to happen over night.
 
-“What would break if I replaced this with a stub?”
+Things will need to be Broken apart and re-assembled using ports and adapters.
+We will need to figure out application usecases, domain entities, and
+repositories from our existing code. I suspect much of our existing code is
+going to end up in the infrastructure dir.
 
-Business rules break → Service
+But what really matters here for clean arch is a clean separation of the layers.
 
-Data consistency breaks → Manager
+Our "controller" (aka blueprints routes) get's flattened out to become our
+"Interface" layer. The interface layer depends only on the application layer
+(previously our service layer). Our application layer we define use cases.
+Those use cases depend on our domain layer entities and interfaces. And then at
+the very bottom is our infrastructure layer that depends only on domain
+entities.
 
-OS interaction breaks → Infrastructure
-
-Implementation swap breaks → Adapter
-
-Nothing breaks → Utility
-
-If you can’t answer → it’s probably doing too much.
-
-Final reassurance
-
-What you did is not a mistake—it’s a normal phase:
-
-    “Everything becomes a Service right before architecture starts to make sense.”
-
-The fact that you’re uncomfortable with it means your instincts are good.
-
-### Deepseek's Advice
-
-Quick Rules of Thumb
-
-    Use "Service" when: Coordinating multiple components, business workflow
-
-    Use "Manager" when: Managing lifecycle/state of a specific resource
-
-    Use "Handler" when: Processing specific requests/events
-
-    Use "Repository" when: Direct data access
-
-    Use "Client" when: External system communication
-
-    Use "Helper/Util" when: Pure functions, utilities
+## Misc Other Notes
 
 ### Main Problems
 
 * [ ] **The utils.py file is bloated, unorganized, and untestable!**
   - Needs broken up into a bunch of different classes!
+  - [x] This is 80% done, but now overall arch needs established, see clean arch notes above.
 
  [x] **Apps module code needs to be re-organized**
   - Take for example the `forms.py` file. Too many classes all in one file.
@@ -203,6 +240,16 @@ Quick Rules of Thumb
 * [ ] **Module code needs separated and decoupled from app scripts**
   - Things are too tightly linked and interfaces need made standard and generic.
   - Need to embrace polymorphism.
+
+### Additional Problems
+
+* [ ] **We're using Flask Sqlalchemy, so ORM is dependant on framework**
+  - Since our ORM is dependant on our web framework, we're kinda locked into
+    the existing database classes and using the ORM to access them.
+  - This is fine for the timebeing, but if we do want to eventually lean more
+    into DDD (with model class simply becoming a DTO and each domain having
+    their own entity objects) then we'll be forced to abandon flask sqlalchemy.
+  - Or we house the ORM calls in a Repositories, but that just seems silly.
 
 ### Breaking Up `utils.py`
 
@@ -244,7 +291,7 @@ Installation Management Group (~3-5 functions)
     clear_proc_info_post_install, installation-related functions
 ```
 
-### Application Architecture
+### Current Messy Application Architecture
 
 We're now using a layered architecture with a separation between presentation,
 business logic, and data access layers.
@@ -268,6 +315,9 @@ classes, the database, and the core route code.
 If you look at the version 1.8.6 release you'll see the app's code is still
 mainly housed in just a few files. This was becoming too disorganized and a
 limitation on growth. So instead, we've now broken things up a lot more.
+
+> [!NOTE]
+> THIS IS ALL SUBJECT TO CHANGE SOON!
 
 ```
 app/
@@ -306,6 +356,9 @@ interface that is either local or remote or docker and have it just do the
 necessary thing.
 
 ### Service Container
+
+Second thought, I might abandon this idea. We'll see if it fits in after clean
+arch re-shuffling. Good thing I never got around to adding it!
 
 We're passing the individual services through a `ServicesContainer` object for
 ease of use. (Pseudo code below, not implemented yet...)

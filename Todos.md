@@ -272,7 +272,15 @@
         if I could just figure out how to better lay out all the pieces.
     - Managers shouldn't depend on services, but right now they do depend on
       services. So I'm using dep inversion. But that's nasty and I don't like
-      any of that.
+      any of that. And its kinda just a word soup anyways with servics vs
+      managers not really meaning much.
+  - Solution:
+    - A Clean Arch Transition: I'm going to go feature by feature and convert
+      them to be clean arch.
+    - Probably going to start small till I get what I'm doing and then will do
+      all the bigger stuff too.
+    - This will give us a clear dependency graph and a skeleton we can use to
+      continue the project's growth.
 
 * [ ] **Do a basic security audit, identify and patch holes, and improve validation**
   - Okay there's plenty of things about this app and codebase that are _suss_.
@@ -325,6 +333,20 @@ Home
   - That kinda doesn't work exactly cause like for game server pages you need
     to specify what gameserver you're working with. But its roughly how things
     are.
+  - Notes for Nick:
+```
+So we're using Bootstrap 5.3:
+https://getbootstrap.com/docs/5.3/getting-started/introduction/
+
+I think you should be able to use this Accordion stuff they have.
+https://getbootstrap.com/docs/5.3/components/accordion/
+
+And then wrap that accordion in a collapsible side thing. And maybe that open / close button into the existing navbar.
+https://getbootstrap.com/docs/5.3/components/collapse/#horizontal
+
+If you need any icons, we're also using bootstrap icons, so you can just use any of these css classes like this <i class="bi bi-0-circle"></i>
+https://icons.getbootstrap.com/
+```
 
 * [ ] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
   - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55

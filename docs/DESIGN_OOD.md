@@ -114,6 +114,8 @@ Interface depends on application (never on infrastructure directly).
 
 Infrastructure depends only on domain (to implement interfaces).
 
+![Clean Architecture Layers](images/clean_arch_layers.png)
+
 ### Diagramming
 
 We're going to use `mermaid` to make our class diagrams.

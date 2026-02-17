@@ -1,6 +1,6 @@
 ```mermaid
 ---
-title: app
+title: web-lgsm
 ---
 classDiagram
     class AddForm {
@@ -15,6 +15,10 @@ classDiagram
     }
 
     class Audit {
+        - \_\_init__(self, id, user_id, username, message, date_created) None
+    }
+
+    class AuditModel {
         + Any id
         + Any user_id
         + Any message
@@ -24,10 +28,46 @@ classDiagram
         - \_\_str__(self) str
     }
 
-    class CmdDescriptor {
+    class AuditRepository {
+        + add(self, audit)
+        + list(self, page, per_page, user_id, search)
+        + count(self)
+        + delete_oldest(self, number_to_delete)
+    }
+
+    class CommandExecutor {
+        + Any USER
+        - \_\_init__(self, config) None
+        + get_local_executor(self)
+        + get_ssh_executor(self)
+        + get_executor(self, server_type, **kwargs)
+        + run_command(self, cmd, server, cmd_id, app_context, timeout, **kwargs)
+    }
+
+    class BaseCommandExecutor {
         - \_\_init__(self) None
-        - \_\_str__(self) str
-        - \_\_repr__(self) str
+        - \_setup_proc_info(self, cmd_id, create)
+        - \_process_output_line(self, line, output_type, proc_info)
+        - \_log_wrap(self, stream_type, message)
+        - \_process_raw_output(self, raw_line, proc_info, output_type)
+    }
+
+    class Blocklist {
+        + int max_fail
+        + list allowlist
+        + list blocklist
+        + list failed
+        - \_\_new__(cls)
+        + is_blocked(self, ip)
+        + add_failed(self, ip)
+        + get_client_ip(self, request)
+    }
+
+    class CfgManager {
+        + Any USER
+        - \_\_init__(self, executor, proc_info_service, command_exec_service) None
+        + find_cfg_paths(self, server)
+        + find_cfg_paths_ssh(self, server, valid_gs_cfgs)
     }
 
     class CmdOutput {
@@ -43,7 +83,45 @@ classDiagram
         - \_\_call__(self, form, field)
     }
 
+    class ConfigManager {
+        + Any \_DEFAULTS
+        - \_\_init__(self) None
+        + reload(self)
+        + get(self, section, option, fallback)
+        - \_get_default(self, section, option)
+        + getboolean(self, section, option, fallback)
+        + getint(self, section, option, fallback)
+        - \_\_getitem__(self, section)
+        + set(self, section, option, value, immediate)
+        + batch_update(self)
+        - \_write_config(self)
+    }
+
+    class Container {
+        + audit_repository(self)
+        + log_audit_event(self)
+        + list_audit_logs(self)
+    }
+
+    class Control {
+        - \_\_init__(self) None
+        - \_\_str__(self) str
+        - \_\_repr__(self) str
+    }
+
+    class Controls {
+        - \_\_init__(self, controls_file, exemptions_file) None
+        + load_data(self)
+        + get_controls(self, server, current_user)
+        - \_filter_controls_by_permissions(self, controls_dict, current_user)
+        + get_all_controls(self)
+        + get_control_by_long_name(self, long_ctrl)
+    }
+
     class CronService {
+        + list CONNECTOR_CMD
+        + Any config
+        + Any command_service
         - \_\_init__(self, server_id) None
         + edit_job(self, job)
         + delete_job(self, job_id, del_db_entry)
@@ -65,14 +143,24 @@ classDiagram
         + Any password2
         + Any is_admin
         + Any enable_otp
-        + Any install_servers
-        + Any add_servers
-        + Any mod_settings
-        + Any edit_cfgs
-        + Any edit_jobs
-        + Any delete_server
+        + list route_choices
+        + Any routes
         + Any controls
         + Any server_ids
+    }
+
+    class FileInterface {
+        - \_\_init__(self, server) None
+        + read_file(self, file_path)
+        + write_file(self, file_path, content)
+    }
+
+    class FileManager {
+        - \_\_init__(self, server, executor) None
+        + interface(self)
+        + read_file(self, file_path)
+        + write_file(self, file_path, content)
+        + download_file(self, file_path)
     }
 
     class GameServer {
@@ -96,14 +184,6 @@ classDiagram
         + delete(self, server_id)
     }
 
-    class InstallForm {
-        + Any servers
-        + list short_names
-        + list long_names
-        + Any script_name
-        + Any full_name
-    }
-
     class Job {
         + Any id
         + Any server_id
@@ -125,6 +205,29 @@ classDiagram
         + Any job_id
     }
 
+    class ListAuditLogs {
+        - \_\_init__(self, audit_repository) None
+        + execute(self, page, per_page, user_id, search)
+    }
+
+    class LocalCommandExecutor {
+        - \_\_init__(self, config) None
+        + run(self, cmd, cmd_id, app_context, timeout)
+        + get_output(self, proc, proc_info, output_type)
+    }
+
+    class LocalFileInterface {
+        + Any USER
+        - \_\_init__(self, server, executor) None
+        + read_file(self, file_path)
+        + write_file(self, file_path, content)
+    }
+
+    class LogAuditEvent {
+        - \_\_init__(self, audit_repository, logger) None
+        + execute(self, user_id, message)
+    }
+
     class LoginForm {
         + Any username
         + Any password
@@ -140,17 +243,37 @@ classDiagram
         + delete(self, server_id, job_id)
     }
 
+    class ModCurrentUser {
+        - \_\_init__(self, role, permissions) None
+    }
+
     class OTPSetupForm {
         + None user_id
         + Any otp_code
         + Any submit
     }
 
-    class ProcInfoVessel {
+    class ProcInfo {
         - \_\_init__(self) None
         + toJSON(self)
         - \_\_str__(self) str
         - \_\_repr__(self) str
+    }
+
+    class ProcInfoRegistry {
+        + Any processes
+        - \_\_new__(cls)
+        + get_all_processes(self)
+        + add_process(self, server_id, proc_info)
+        + get_process(self, server_id, create)
+        + remove_process(self, server_id)
+    }
+
+    class SSHFileInterface {
+        - \_get_ssh_key_file(self, user, host)
+        - \_get_ssh_client(self, hostname, username, key_filename)
+        + read_file(self, file_path)
+        + write_file(self, file_path, content)
     }
 
     class SelectCfgForm {
@@ -161,7 +284,7 @@ classDiagram
     class SendCommandForm {
         + Any send_form
         + Any server_id
-        + Any command
+        + Any control
         + Any send_cmd
         + Any submit
     }
@@ -169,13 +292,17 @@ classDiagram
     class ServerControlForm {
         + Any ctrl_form
         + Any server_id
-        + Any command
+        + Any control
         + Any submit
     }
 
     class ServerExists {
         - \_\_init__(self, message) None
         - \_\_call__(self, form, field)
+    }
+
+    class ServerPowerState {
+        + get_status(self, server)
     }
 
     class ServerStatus {
@@ -194,7 +321,7 @@ classDiagram
         + Any show_stderr
         + Any clear_output_on_reload
         + Any show_stats
-        + Any purge_tmux_cache
+        + Any purge_cache
         + Any update_weblgsm
         + Any submit
     }
@@ -209,11 +336,81 @@ classDiagram
         + validate_password2(self, field)
     }
 
+    class SqlAlchemyAuditRepository {
+        + add(self, audit)
+        + count(self)
+        + delete_oldest(self, number_to_delete)
+        + list(self, page, per_page, user_id, search)
+    }
+
+    class SshCommandExecutor {
+        - \_\_init__(self, config) None
+        - \_get_ssh_key_file(self, user, host)
+        - \_get_ssh_client(self, hostname, username, key_filename)
+        + run(self, cmd, cmd_id, app_context, timeout, server)
+        + get_output(self, proc, proc_info, output_type)
+        - \_read_ssh_output(self, channel, proc_info)
+        - \_process_ssh_chunk(self, chunk, proc_info, output_type)
+    }
+
+    class SudoersService {
+        + list CONNECTOR_CMD
+        - \_\_init__(self, username) None
+        + has_access(self)
+        + add_user(self)
+    }
+
+    class SystemMetrics {
+        + Any prev_bytes_sent
+        + Any prev_bytes_recv
+        + Any prev_time
+        - \_\_init__(self) None
+        + get_network_stats(self)
+        + get_host_stats(self)
+    }
+
     class SystemUsage {
         + get(self)
     }
 
+    class TestConfigManager {
+        + create_test_config(self, content)
+        + cleanup_test_config(self)
+        + test_init_with_defaults(self)
+        + test_get_with_default_fallback(self)
+        + test_get_with_custom_fallback(self)
+        + test_getboolean(self)
+        + test_getint(self)
+        + test_set_method(self)
+        + test_section_access(self)
+        + test_nonexistent_section(self)
+        + test_batch_update_context(self)
+        + test_reload_method(self)
+        + teardown_method(self)
+    }
+
+    class TestCronService {
+        + test_create_job(self, db_session, client, add_mock_server)
+        + test_delete_job(self, db_session, client, add_mock_server)
+        + test_parse_cron_jobs_empty_input(self)
+        + test_parse_cron_jobs_with_valid_job(self)
+        + test_parse_cron_jobs_wrong_server(self)
+        + test_edit_existing_job(self, db_session, add_mock_server)
+    }
+
+    class TestSystemMetrics {
+        + test_get_network_stats(self)
+        + test_get_host_stats(self)
+    }
+
+    class TmuxSocketNameCache {
+        + del_socket_name_cache(self, server_id)
+        + get_tmux_socket_name(self, server)
+    }
+
     class UpdateConsole {
+        + Any config
+        + Any command_service
         + post(self, server_id)
     }
 
@@ -239,6 +436,12 @@ classDiagram
         - \_\_init__(self, **kwargs) None
         + get_totp_uri(self)
         + verify_totp(self, token)
+        + has_access(self, route, server_id)
+    }
+
+    class UserModuleService {
+        - \_\_init__(self, module_dir) None
+        + call(self, func_name, *args, as_user, **kwargs)
     }
 
     class ValidConfigFile {
@@ -266,6 +469,8 @@ classDiagram
 
     OTPSetupForm --|> flask_wtf.FlaskForm
 
+    EditUsersForm --|> flask_wtf.FlaskForm
+
     AddForm --|> flask_wtf.FlaskForm
 
     ColorField --|> wtforms.StringField
@@ -284,11 +489,17 @@ classDiagram
 
     ServerControlForm --|> flask_wtf.FlaskForm
 
-    InstallForm --|> flask_wtf.FlaskForm
-
-    EditUsersForm --|> flask_wtf.FlaskForm
-
     JobsForm --|> flask_wtf.FlaskForm
+
+    SqlAlchemyAuditRepository --|> app.domain.repositories.audit_repo.AuditRepository
+
+    AuditModel --|> app.db.Model
+
+    SshCommandExecutor --|> BaseCommandExecutor
+
+    BaseCommandExecutor ..|> CommandExecutor
+
+    LocalCommandExecutor --|> BaseCommandExecutor
 
     ManageCron --|> flask_restful.Resource
 
@@ -296,19 +507,21 @@ classDiagram
 
     ServerStatus --|> flask_restful.Resource
 
-    SystemUsage --|> flask_restful.Resource
-
     CmdOutput --|> flask_restful.Resource
 
     GameServerDelete --|> flask_restful.Resource
 
-    Audit --|> app.db.Model
+    SystemUsage --|> flask_restful.Resource
+
+    LocalFileInterface --|> FileInterface
+
+    SSHFileInterface --|> FileInterface
+
+    GameServer --|> app.db.Model
 
     Job --|> app.db.Model
 
     User --|> app.db.Model
 
     User --|> flask_login.UserMixin
-
-    GameServer --|> app.db.Model
 ```

@@ -1,43 +1,42 @@
 from flask_login import login_required, current_user
 from flask import render_template, request
 
-from app.models import Audit, User
+from app.container import container
+from app.models import User
 
 from . import main_bp
 
-######### Audit Route #########
+# TODO: This page needs a proper Flask-Wtform and input validation!!!
+ 
+########## Audit Route #########
 
 @main_bp.route("/audit", methods=["GET"])
 @login_required
 def audit():
-    # NOTE: We don't care about CSRF protection for this page since its
-    # readonly. 
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     user_id = request.args.get('user_id')
     search = request.args.get('search')
 
-    query = Audit.query.order_by(Audit.date_created.desc())
+    use_case = container.list_audit_logs()
 
-    if user_id:
-        query = query.filter(Audit.user_id == user_id)
+    all_audit_events, pagination = use_case.execute(
+        page=page,
+        per_page=per_page,
+        user_id=user_id,
+        search=search,
+    )
 
-    if search:
-        query = query.filter(Audit.message.ilike(f'%{search}%'))
-
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    all_audit_events = pagination.items
-
-    # Get all users for the dropdown.
+    # fetch users normally for now
+    # TODO: Eventually make User access clean arch as well
     all_users = User.query.order_by(User.username).all()
 
     return render_template(
-        'audit.html', 
+        'audit.html',
         user=current_user,
         pagination=pagination,
         all_audit_events=all_audit_events,
         all_users=all_users
     )
-
 

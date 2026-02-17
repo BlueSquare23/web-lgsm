@@ -366,6 +366,13 @@ https://icons.getbootstrap.com/
 
 ### The Meat
 
+* [ ] **This shouldn't be fatal, `install.sh` MAKE FIX!**
+```
+####### Installing Web-LGSM Ansible Connector...
+####### Setting up Share Modules Dir...
+mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
+```
+
 * [ ] **Fix the in app update!**
   - I think this is still broken which sucks.
   - You should be able to update the app from the web panel.

@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 from functools import lru_cache
 
-from app.models import GameServer, Audit
+from app.models import GameServer
 from app import db
 from app import cache
 from app.config.config_manager import ConfigManager
@@ -491,16 +491,18 @@ def validation_errors(form):
 
 
 def audit_log_event(user_id, message):
-    """
-    Helper function to create new audit log entries. Adds new messages to
-    database and logs them using custom audit_logger.
-    """
-    audit_entry = Audit(
-        user_id=user_id,
-        message=message
-    )
-    db.session.add(audit_entry)
-    db.session.commit()
-
-    current_app.audit_logger.info(message)
+    pass
+#def audit_log_event(user_id, message):
+#    """
+#    Helper function to create new audit log entries. Adds new messages to
+#    database and logs them using custom audit_logger.
+#    """
+#    audit_entry = Audit(
+#        user_id=user_id,
+#        message=message
+#    )
+#    db.session.add(audit_entry)
+#    db.session.commit()
+#
+#    current_app.audit_logger.info(message)
 

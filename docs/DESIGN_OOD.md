@@ -223,6 +223,39 @@ Those use cases depend on our domain layer entities and interfaces. And then at
 the very bottom is our infrastructure layer that depends only on domain
 entities.
 
+## A Transition Plan
+
+We're going to look at the example of how I converted the app's Audit stuff to
+use a clean arch setup. This will serve as a useful template for converting other
+more complex features in the future.
+
+This is a high level overview of the transition roadmap. For more details on
+this particular conversion, see the commit [COMMIT_HASH_HERE] and [detailed
+breakdown linked here](./more_arch_notes.md).
+
+Basically, here's the process.
+
+1. Create new domain entity called Audit in `app/domain/entities/audit.py`
+2. Define a blank repository interface in `app/domain/repositories/audit_repo.py`
+3. Move SQLAlchemy Model to `app/infrastructure/persistence/models/audit_model.py` and remove event listener.
+4. Create new infrastructure repo to interface with DB model in `app/infrastructure/persistence/audit_repository.py`
+5. Create some new use cases for `log_event.py` and `list_audit_logs.py` in `app/application/use_cases/audit/`
+6. Tweak audit blueprint to remove old calls to old audit DB model
+7. Create new `app/container.py` to wrap up new audit usecases and repository
+9. Replace old `audit_log_event` func calls with new `container.log_audit_event().execute()` calls
+
+What this accomplishes:
+
+* It moves access to the Sqlite model into the `SqlAlchemyAuditRepository`
+  - That's the only layer that talks directly to the DB now (for AuditModel).
+* Separated DB representation for Application Entity.
+  - Now the DB model is not the same thing of that entity object we work with in the app.
+* Created repository interfaces for passing data from entity to persistent DB.
+* Introduced use cases to hold business rules.
+  - In audit case allowed me to move rules out of db model upward into application layer.
+* Defined a clear unidirectional dependingly graph.
+  - Dependencies all point inward.
+
 ## Misc Other Notes
 
 ### Main Problems

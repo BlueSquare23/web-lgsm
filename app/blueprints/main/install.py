@@ -29,6 +29,7 @@ from app.utils.paths import PATHS
 from app.config.config_manager import ConfigManager
 
 from app.services import CommandExecutor
+from app.container import container
 
 from . import main_bp
 
@@ -210,7 +211,7 @@ def install():
     )
     clear_daemon.start()
 
-    audit_log_event(current_user.id, f"User '{current_user.username}', installed game server '{server.install_name}'")
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', installed game server '{server.install_name}'")
 
     return render_template(
         "install.html",

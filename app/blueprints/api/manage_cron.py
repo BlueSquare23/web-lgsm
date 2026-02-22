@@ -89,7 +89,6 @@ class ManageCron(Resource):
             'schedule': cron_expression,
         }
 
-#        if cron.edit_job(job):
         if container.update_cron_job().execute(**job):
             return {'success':'job updated'}, 201
         else:
@@ -105,10 +104,8 @@ class ManageCron(Resource):
         if not valid:
             return resp
 
-#        cron = CronService(server_id)
-#        if cron.delete_job(job_id):
         if container.delete_cron_job().execute(job_id):
-            audit_log_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
+            container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
             return '', 204
 
         return {'error':'unable to remove job'}, 500

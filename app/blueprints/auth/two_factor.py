@@ -9,7 +9,7 @@ from flask import render_template, redirect, url_for, request, flash
 from app import db
 from app.forms.auth import OTPSetupForm
 from app.models import User
-from app.utils import validation_errors, audit_log_event
+from app.utils import validation_errors
 
 from . import auth_bp
 

@@ -17,6 +17,7 @@ from app.managers import CfgManager
 from app import cache
 
 from app.config.config_manager import ConfigManager
+from app.container import container
 
 from . import main_bp
 
@@ -221,7 +222,7 @@ def controls():
         cmd = [script_path, short_ctrl, send_cmd]
 
         flash("Sending command to console")
-        audit_log_event(current_user.id, f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
+        container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
 
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
@@ -244,7 +245,7 @@ def controls():
                 long_ctrl = control.long_ctrl
                 break
 
-        audit_log_event(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
+        container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
 
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd

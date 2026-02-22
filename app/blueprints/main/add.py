@@ -16,6 +16,7 @@ from app.utils import *
 from app.models import GameServer, User
 from app.forms.views import ValidateID, AddForm
 from app.services import SudoersService
+from app.container import container
 
 # Constants.
 USER = getpass.getuser()
@@ -188,7 +189,7 @@ def add():
                 flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{username}\n{USER} ALL=({username}) NOPASSWD: ALL")
 
     flash("Game server added!")
-    audit_log_event(current_user.id, f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")
     return redirect(url_for("main.home"))
 
 

@@ -58,7 +58,6 @@ def jobs():
             server_id = request.args.get("server_id")
             server = GameServer.query.filter_by(id=server_id).first()
             server_name = server.install_name
-#            cron = CronService(server_id)
 
             jobs_list = container.list_cron_jobs().execute(server_id)
             current_app.logger.info(log_wrap("jobs_list", jobs_list))
@@ -122,10 +121,7 @@ def jobs():
         }
         current_app.logger.debug(log_wrap("job", job))
 
-#        cron = CronService(form.server_id.data)
-
-        # TODO: Consider renaming this to edit. Just because infra calls this
-        # create doesn't me we have to up here in interface layer land.
+#        if container.update_cron_job().execute(**job):   # Hrrrmm... why doesn't this work...
         if container.update_cron_job().execute(
                 job_id=form.job_id.data,
                 schedule=form.cron_expression.data,
@@ -133,11 +129,9 @@ def jobs():
                 server_id=form.server_id.data,
                 comment=form.comment.data,
             ):
-#        if container.update_cron_job().execute(**job):   # Hrrrmm... why doesn't this work...
-#        if cron.edit_job(job):
             flash("Cronjob updated successfully!", category="success")
             server = GameServer.query.filter_by(id=form.server_id.data).first()
-            audit_log_event(current_user.id, f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
+            container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
             current_app.logger.info(log_wrap("request.form", request.form))
 
             return redirect(url_for("main.jobs", server_id=form.server_id.data))

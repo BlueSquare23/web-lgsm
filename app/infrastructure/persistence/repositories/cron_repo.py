@@ -42,6 +42,7 @@ class SqlAlchemyCronRepository(CronRepository):
         if model == None:
             return None
 
+        # Convert model object to Job entity.
         data = {
             'job_id': model.id,
             'server_id': model.server_id,
@@ -49,15 +50,19 @@ class SqlAlchemyCronRepository(CronRepository):
             'command': model.command,
             'comment': model.comment,
         }
-
         job = Job(**data)
 
         return job
 
     def delete(self, job_id):
         cronjob = CronModel.query.filter_by(id=job_id).first()
+
+        if not cronjob:
+            return False
+
         db.session.delete(cronjob)
         db.session.commit()
+        return True
 
     def list(self):
         raise NotImplementedError

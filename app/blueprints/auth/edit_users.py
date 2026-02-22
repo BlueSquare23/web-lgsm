@@ -87,7 +87,6 @@ def edit_users():
 
             db.session.delete(user_ident)
             db.session.commit()
-#            audit_log_event(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
             container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
             flash(f"User {selected_user} deleted!")
             return redirect(url_for("auth.edit_users"))
@@ -229,7 +228,6 @@ def edit_users():
 
         db.session.add(new_user)
         db.session.commit()
-#        audit_log_event(current_user.id, f"User '{current_user.username}', created new user '{username}'")
 
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
@@ -244,7 +242,6 @@ def edit_users():
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
         db.session.commit()
-#        audit_log_event(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
@@ -257,7 +254,6 @@ def edit_users():
     user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
     db.session.commit()
-#    audit_log_event(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))

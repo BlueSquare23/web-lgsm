@@ -1,7 +1,7 @@
 from flask_login import logout_user, login_required, current_user
 from flask import redirect, url_for, flash
 
-from app.utils import audit_log_event
+from app.container import container
 
 from . import auth_bp
 
@@ -11,7 +11,7 @@ from . import auth_bp
 @auth_bp.route("/logout")
 @login_required
 def logout():
-    audit_log_event(current_user.id, f"User '{current_user.username}' logged out")
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}' logged out")
     logout_user()
     flash("Logged out!", category="success")
     return redirect(url_for("auth.login"))

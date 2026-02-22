@@ -15,6 +15,8 @@ from app.managers import FileManager
 from app.services import UserModuleService
 
 from app.config.config_manager import ConfigManager
+from app.container import container
+
 config = ConfigManager()
 
 from . import main_bp
@@ -53,7 +55,7 @@ def edit():
             server = GameServer.query.filter_by(id=server_id).first()
             file_manager = FileManager(server, UserModuleService())
 
-            audit_log_event(current_user.id, f"User '{current_user.username}', downloaded config '{cfg_path}'")
+            container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', downloaded config '{cfg_path}'")
             return file_manager.download_file(cfg_path)
 
         # Convert raw get args into select_form args.
@@ -103,7 +105,7 @@ def edit():
 
     if file_manager.write_file(cfg_path, new_file_contents):
         flash("Cfg file updated!", category="success")
-        audit_log_event(current_user.id, f"User '{current_user.username}', edited '{cfg_path}'")
+        container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', edited '{cfg_path}'")
     else:
         flash("Error writing to cfg file!", category="error")
 

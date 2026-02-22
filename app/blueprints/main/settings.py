@@ -139,7 +139,6 @@ def settings():
         return redirect(url_for("main.settings"))
 
     flash("Settings Updated!")
-#    audit_log_event(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
     container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
     return redirect(url_for("main.settings"))
 

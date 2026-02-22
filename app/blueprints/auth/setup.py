@@ -16,7 +16,8 @@ from flask import (
 from app import db
 from app.forms.auth import SetupForm
 from app.models import User
-from app.utils import validation_errors, audit_log_event
+from app.utils import validation_errors
+from app.container import container
 
 from . import auth_bp
 
@@ -59,7 +60,7 @@ def setup():
 
     flash("User created!")
     login_user(new_user, remember=True)
-    audit_log_event(new_user.id, f"New user '{username}' created")
+    container.log_audit_event().execute(new_user.id,  f"New user '{username}' created")
 
     if enable_otp:
         return redirect(url_for("auth.two_factor_setup"))

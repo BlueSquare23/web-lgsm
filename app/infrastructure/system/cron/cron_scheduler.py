@@ -55,6 +55,9 @@ class CronScheduler:
     def delete(self, job):
         """
         Delete cronjob entries from the system crontab.
+
+        Returns:
+            Bool: True if could delete, False otherwise.
         """
         # Remove job from system crontab.
         cmd = CronScheduler.CONNECTOR_CMD + ["--cron", job.job_id, "--delete", job.server_id]
@@ -63,13 +66,13 @@ class CronScheduler:
         self.command_service.run_command(cmd, None, cmd_id)
         proc_info = ProcInfoRegistry().get_process(cmd_id)
 
-        print(proc_info.stderr)
-
         if proc_info == None:
             return False
 
         if proc_info.exit_status > 0:
             return False
+
+        return True
 
 
     def list(self, server_id):

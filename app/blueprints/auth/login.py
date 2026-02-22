@@ -18,8 +18,9 @@ from flask import (
 
 from app.forms.auth import LoginForm 
 from app.models import User
-from app.utils import validation_errors, audit_log_event
+from app.utils import validation_errors
 from app.services import Blocklist
+from app.container import container
 
 from . import auth_bp
 
@@ -78,7 +79,7 @@ def login():
         if not user.otp_setup:
             login_user(user, remember=True, duration=four_weeks_delta)
             confirm_login()
-            audit_log_event(user.id, f"User '{username}' logged in")
+            container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
             flash("Please setup two factor authentication!", category="success")
             return redirect(url_for("auth.two_factor_setup"))
 
@@ -90,7 +91,7 @@ def login():
     flash("Logged in!", category="success")
     login_user(user, remember=True, duration=four_weeks_delta)
     confirm_login()
-    audit_log_event(user.id, f"User '{username}' logged in")
+    container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
     return redirect(url_for("main.home"))
 
 

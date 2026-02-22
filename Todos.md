@@ -387,7 +387,23 @@ https://icons.getbootstrap.com/
   - Only thing I'm nervous about is all the interaction with still non-clean
     CmdService stuff. But we'll clean that up in time and update the infra
     accordingly.
-    
+
+* [ ] **Figure out how logger fits into clean architecture**
+  - It'd be really nice to get more info out of some of these deeper errors to
+    help catch bugs and because I don't totally know what I'm doing yet.
+  - But it feels wrong to push the normal logger down into those.
+  - I mean I rarely even put the logger in utils functions when I still had a
+    million of those.
+  - I could be wrong, but the logger seems like an interface layer thing.
+  - So then how the heck do I get info outta those lower layers?
+  - For now I've just been using good old fashion `print('fart')` but I need to
+    figure this out.
+
+* [ ] **Figure out how exception handling fits into clean architecture**
+  - From what I read online, each layer should catch exceptions and repackage
+    them for higher layers to keep clean seperation.
+  - For example, instead of letting database errors bubble up through the
+    layers, catch them and re-raise as `SqlAlchemyRepositoryError`.
 
 * [ ] **Remove cron stuff from ansible connector**
   - Now that we have the new user module service (soon to be refactored under

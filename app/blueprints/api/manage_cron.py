@@ -7,11 +7,11 @@ from cron_converter import Cron
 from werkzeug.datastructures import MultiDict
 
 from app.utils import *
-from app.models import Job
-from app.services import CronService
 from app.forms.views import ValidateID
 
 from . import api
+
+from app.container import container
 
 ######### API Cron Manager #########
 
@@ -42,8 +42,7 @@ class ManageCron(Resource):
         if not valid:
             return resp
 
-        cron = CronService(server_id)
-        jobs_list = cron.list_jobs()
+        jobs_list = container.list_cron_jobs().execute()
 
         if job_id:
             for job in jobs_list:
@@ -64,7 +63,7 @@ class ManageCron(Resource):
             return resp
 
         data = request.json
-        cron = CronService(server_id)
+#        cron = CronService(server_id)
 
         command = data.get('command')
         custom = data.get('custom')
@@ -83,14 +82,15 @@ class ManageCron(Resource):
             command = f"custom: {custom}"
 
         job = {
-            'expression': cron_expression,
-            'command': command,
-            'server_id': server_id,
             'job_id': job_id,
+            'server_id': server_id,
+            'command': command,
             'comment': comment,
+            'schedule': cron_expression,
         }
 
-        if cron.edit_job(job):
+#        if cron.edit_job(job):
+        if container.update_cron_job().execute(**job):
             return {'success':'job updated'}, 201
         else:
             return {'error':'problem updating job'}, 500
@@ -105,8 +105,9 @@ class ManageCron(Resource):
         if not valid:
             return resp
 
-        cron = CronService(server_id)
-        if cron.delete_job(job_id):
+#        cron = CronService(server_id)
+#        if cron.delete_job(job_id):
+        if container.delete_cron_job().execute(job_id):
             audit_log_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
             return '', 204
 

@@ -6,13 +6,15 @@ from flask_restful import Resource
 
 from app import db
 from app.utils import *
-from app.models import GameServer, Job
-from app.services import CronService, ProcInfoRegistry
+from app.models import GameServer
+from app.services import ProcInfoRegistry
 from app.config.config_manager import ConfigManager
 
 config = ConfigManager()
 
 from . import api
+
+from app.container import container
 
 ######### API GameServer Delete #########
 
@@ -57,10 +59,9 @@ class GameServerDelete(Resource):
 
         if len(jobs_list) > 0:
             for job in jobs_list:
-                cronjob = Job.query.filter_by(id=job["job_id"]).first()
+#                cronjob = Job.query.filter_by(id=job["job_id"]).first()
+                container.delete_cron_job().execute(job_id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
                 # Remove job from DB.
-                db.session.delete(cronjob)
-            db.session.commit()
 
         # Drop any saved proc_info objects.
         ProcInfoRegistry().remove_process(server_id)

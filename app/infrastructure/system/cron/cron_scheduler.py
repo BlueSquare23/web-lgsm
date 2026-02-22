@@ -3,21 +3,23 @@ import shortuuid
 
 from cron_converter import Cron
 
-from app.config.config_manager import ConfigManager
-from app.models import GameServer, Job
 from app.utils.paths import PATHS
 from app import db
 
-# Has to be local import to avoid circular import
-from .proc_info.proc_info_registry import ProcInfoRegistry
-from .command_exec.command_executor import CommandExecutor
+# TODO: All the below systems need clean arch refactored. For right now, cron
+# is an early service that's getting the clean arch treatment, so leaving be.
+# But will need cleaned up moving forward!
+from app.config.config_manager import ConfigManager
+from app.models import GameServer
 
-"""
-Service class interface for interacting with system cron from API and jobs
-route.
-"""
+from app.services.proc_info.proc_info_registry import ProcInfoRegistry
+from app.services.command_exec.command_executor import CommandExecutor
 
-class CronService:
+class CronScheduler:
+    """
+    Infrastructure layer class for interacting with the systems crontab via the
+    ansible connector.
+    """
     CONNECTOR_CMD = [
         PATHS["sudo"],
         "-n",
@@ -28,49 +30,18 @@ class CronService:
     config = ConfigManager()
     command_service = CommandExecutor(config)
 
-    def __init__(self, server_id):
-        self.server_id = server_id 
-
-
-    def edit_job(self, job):
+    def update(self, job):
         """
-        Updates / Create job in database and wraps invocation of ansible
-        connector for cron job edits.
-
-        Args:
-            job (dict): Job to create.
-
-        Returns:
-            bool: True if job created successfully, False otherwise.
+        Updates / Create job in system crontab.
         """
-        cronjob = Job.query.filter_by(id=job["job_id"]).first()
-        newjob = False
-
-        # First, add/update job in database.
-        if cronjob == None:
-            newjob = True
-            cronjob = Job()
-        else:
-            # If existing job, del old job first. Inefficient, but keeps state
-            # clean. 
-            self.delete_job(cronjob.id, del_db_entry=False)
-
-        cronjob.server_id = job["server_id"]
-        cronjob.command = job["command"]
-        cronjob.comment = job["comment"]
-        cronjob.expression = job["expression"]
-
-        if newjob:
-            db.session.add(cronjob)
-        db.session.commit()
-
         # Then, add job to system crontab for user via connector.
-        cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id]
+        cmd = CronScheduler.CONNECTOR_CMD + ["--cron", job.job_id]
 
-        cmd_id = f'add_job_{cronjob.id}'
+        cmd_id = f'add_job_{job.job_id}'
         self.command_service.run_command(cmd, None, cmd_id)
 
         proc_info = ProcInfoRegistry().get_process(cmd_id)
+        print(proc_info.stderr)
 
         if proc_info == None:
             return False
@@ -81,27 +52,18 @@ class CronService:
         return True
 
 
-    def delete_job(self, job_id, del_db_entry=True):
+    def delete(self, job):
         """
-        Delete cronjob entries from DB & system crontab.
-
-        Args:
-            job_id (str(shortuuid)): Id of job to delete.
-            del_db_entry (bool): Should delete or keep database entry for job.
-                                 Used for edit_job to purge old job from crontab first. 
-        Returns:
-            bool: True if job removed successfully, False otherwise.
+        Delete cronjob entries from the system crontab.
         """
-        cronjob = Job.query.filter_by(id=job_id).first()
-        if cronjob == None:
-            return False
-
         # Remove job from system crontab.
-        cmd = CronService.CONNECTOR_CMD + ["--cron", cronjob.id, "--delete", self.server_id]
+        cmd = CronScheduler.CONNECTOR_CMD + ["--cron", job.job_id, "--delete", job.server_id]
 
-        cmd_id = f'delete_job_{cronjob.id}'
+        cmd_id = f'delete_job_{job.job_id}'
         self.command_service.run_command(cmd, None, cmd_id)
         proc_info = ProcInfoRegistry().get_process(cmd_id)
+
+        print(proc_info.stderr)
 
         if proc_info == None:
             return False
@@ -109,26 +71,22 @@ class CronService:
         if proc_info.exit_status > 0:
             return False
 
-        if not del_db_entry:
-            return True
 
-        # Remove job from DB.
-        db.session.delete(cronjob)
-        db.session.commit()
-        return True
-
-
-    def list_jobs(self):
+    def list(self, server_id):
         """
         Used for getting list of jobs for associated game server.
 
         Returns:
             list: Passthrough to parse_cron_jobs().
         """
-        server = GameServer.query.filter_by(id=self.server_id).first()
+        # TODO: UGH... I forgot I made this whole thing per game server. So for now
+        # keeping this as is. I don't think its terrible because it is going from
+        # infra -> infra layer. But ideally no db stuff should be happening in
+        # this class! Will get there as I refactor more.
+        server = GameServer.query.filter_by(id=server_id).first()
 
         cmd_id = 'list_jobs'
-        cmd = ['crontab', '-l']
+        cmd = [PATHS['crontab'], '-l']
 
         self.command_service.run_command(cmd, server, cmd_id)
 
@@ -198,6 +156,5 @@ class CronService:
             current_comment = None
 
         return jobs
-
 
 

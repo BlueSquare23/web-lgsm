@@ -26,7 +26,8 @@ APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT
 # Import db classes from app.
 sys.path.append(APP_PATH)
 from app import db
-from app.models import GameServer, Job
+from app.models import GameServer
+from app.infrastructure.persistence.models.cron_model import CronModel
 
 # Global options hash.
 O = {"dry": False, "delete": False}
@@ -53,22 +54,22 @@ def print_help(msg=None):
 
 def db_fetch(item_id, item_type='GameServer'):
     """
-    Connects to app's DB and returns either GameServer or Job object that
+    Connects to app's DB and returns either GameServer or CronModel object that
     matches item_id.
 
     Args:
-        item_id (str): Id of GameServer|Job obj to fetch.
-        item_type (str): Type of object to fetch. Either GameServer or Job.
+        item_id (str): Id of GameServer|CronModel obj to fetch.
+        item_type (str): Type of object to fetch. Either GameServer or CronModel.
     Returns:
-        GameServer|Job: GameServer or Job object matching ID.
+        GameServer|CronModel: GameServer or CronModel object matching ID.
     """
     engine = create_engine('sqlite:///app/database.db')
     
     # Use new db session context.
     # Can't use app context in ansible connector.
     with Session(engine) as session:
-        if item_type == 'Job':
-            item = session.get(Job, item_id)
+        if item_type == 'CronModel':
+            item = session.get(CronModel, item_id)
         else:
             item = session.get(GameServer, item_id)
 
@@ -319,7 +320,7 @@ def run_cron_edit(job_id):
     Args:
         job_id (str(shortuuid)): Id of job to edit.
     """
-    job = db_fetch(job_id, 'Job')
+    job = db_fetch(job_id, 'CronModel')
     server = db_fetch(job.server_id)
 
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
@@ -345,7 +346,7 @@ def run_cron_edit(job_id):
         "-e",
         f"job='{job_str}'",
         "-e",
-        f"schedule='{job.expression}'",
+        f"schedule='{job.schedule}'",
         "-e",
         f"state='{state}'",
     ]

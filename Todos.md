@@ -366,6 +366,34 @@ https://icons.getbootstrap.com/
 
 ### The Meat
 
+* [x] **Redo cron as clean arch**
+  - [x] We need an abstraction in the core. Aka domain layer `Cron` domain entity class.
+  - [x] We need a `CronRepository` in the domain layer too.
+  - [x] In the application layer we need to define some Usecases.
+  - Aka these need converted to cron use case classes:
+    - [x] `list`
+    - [x] `delete`
+    - [x] `create`
+    - [?] `edit` - The app sorta presents this as a different use case, but its
+      the same form, same validation, same thing if its creating brand new or
+      editing existing, still needs all the same info. So for now not making an
+      identical usecase.
+  - [x] Probably we can reuse a lot of existing code for the Infrastructure layer,
+    but it will need split.
+    - [x] We can put the mysql stuff in one class like the SqlAlchemyAuditRepo` stuff
+    - [x] Then the system cli cron stuff will need to be split out.
+  - [x] Container Wiring needs updated to pull everything together.
+  - [x] Route code will need updates to use new calls!
+  - Only thing I'm nervous about is all the interaction with still non-clean
+    CmdService stuff. But we'll clean that up in time and update the infra
+    accordingly.
+    
+
+* [ ] **Remove cron stuff from ansible connector**
+  - Now that we have the new user module service (soon to be refactored under
+    clean arch), we can just use that to run cron commands as alt users more
+    securely without having to become root.
+
 * [ ] **This shouldn't be fatal, `install.sh` MAKE FIX!**
 ```
 ####### Installing Web-LGSM Ansible Connector...

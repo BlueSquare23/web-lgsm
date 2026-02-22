@@ -13,13 +13,16 @@ from flask import (
 from app.utils import *
 from app.models import GameServer
 from app.forms.views import ValidateID, JobsForm
-from app.services import CronService, Controls
+from app.services import Controls
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()
 controls = Controls()
 
 from . import main_bp
+
+from app.container import container
+
 
 ######### Jobs Route #########
 
@@ -55,8 +58,10 @@ def jobs():
             server_id = request.args.get("server_id")
             server = GameServer.query.filter_by(id=server_id).first()
             server_name = server.install_name
-            cron = CronService(server_id)
-            jobs_list = cron.list_jobs()
+#            cron = CronService(server_id)
+
+            jobs_list = container.list_cron_jobs().execute(server_id)
+            current_app.logger.info(log_wrap("jobs_list", jobs_list))
 
             server_dict = server.__dict__
             del(server_dict["_sa_instance_state"])
@@ -109,16 +114,27 @@ def jobs():
                 command = f"custom: {form.custom.data}"
 
         job = {
-            'expression': form.cron_expression.data,
+            'job_id': form.job_id.data,
+            'schedule': form.cron_expression.data,
             'command': command,
             'server_id': form.server_id.data,
-            'job_id': form.job_id.data,
             'comment': form.comment.data,
         }
         current_app.logger.debug(log_wrap("job", job))
 
-        cron = CronService(form.server_id.data)
-        if cron.edit_job(job):
+#        cron = CronService(form.server_id.data)
+
+        # TODO: Consider renaming this to edit. Just because infra calls this
+        # create doesn't me we have to up here in interface layer land.
+        if container.update_cron_job().execute(
+                job_id=form.job_id.data,
+                schedule=form.cron_expression.data,
+                command=command,
+                server_id=form.server_id.data,
+                comment=form.comment.data,
+            ):
+#        if container.update_cron_job().execute(**job):   # Hrrrmm... why doesn't this work...
+#        if cron.edit_job(job):
             flash("Cronjob updated successfully!", category="success")
             server = GameServer.query.filter_by(id=form.server_id.data).first()
             audit_log_event(current_user.id, f"User '{current_user.username}', edited cronjob for '{server.install_name}'")

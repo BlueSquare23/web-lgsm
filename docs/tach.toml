@@ -1,0 +1,463 @@
+interfaces = []
+exclude = [
+    "**/*__pycache__",
+    "**/*egg-info",
+    "**/docs",
+    "**/tests",
+    "**/venv",
+]
+source_roots = [
+    ".",
+]
+
+[[modules ]]
+path = "app.domain"
+depends_on = []
+
+[[modules ]]
+path = "app.extensions"
+depends_on = []
+
+[[modules ]]
+path = "app.container"
+depends_on = [ "app.infrastructure.system.cron.cron_scheduler", "app.infrastructure.persistence.repositories.cron_repo", "app.application.use_cases.cron.update_cron_job", "app.application.use_cases.audit.list_audit_logs", "app.application.use_cases.audit.log_event", "app.application.use_cases.cron.list_cron_jobs", "app.infrastructure.persistence.repositories.audit_repo", "app.application.use_cases.cron.delete_cron_job"]
+
+[[modules ]]
+path = "app"
+depends_on = ["app.extensions", "app.blueprints.main", "app.models", "app.blueprints.auth", "app.blueprints.api"]
+
+[[modules ]]
+path = "app.managers"
+depends_on = [ "app.managers.cfg_manager", "app.managers.file_manager.file_manager"]
+
+[[modules ]]
+path = "app.services"
+depends_on = ["app.services.tmux_socket_name_cache", "app.services.blocklist", "app.services.system_metrics", "app.services.sudoers_service", "app.services.user_module_service", "app.services.server_power_state", "app.services.command_exec.command_executor", "app.services.controls.controls", "app.services.proc_info.proc_info_registry"]
+
+[[modules ]]
+path = "app.forms"
+depends_on = []
+
+[[modules ]]
+path = "app.config"
+depends_on = ["app.config.config_manager"]
+
+[[modules ]]
+path = "app.application"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure"
+depends_on = []
+
+[[modules ]]
+path = "app.models"
+depends_on = ["app.models.game_server", "app.models.user"]
+
+[[modules ]]
+path = "app.static"
+depends_on = []
+
+[[modules ]]
+path = "app.templates"
+depends_on = []
+
+[[modules ]]
+path = "app.utils"
+depends_on = ["app.utils.helpers", "app.utils.paths"]
+
+[[modules ]]
+path = "app.blueprints"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth"
+depends_on = [ "app.blueprints.auth.login", "app.blueprints.auth.logout", "app.blueprints.auth.edit_users", "app.blueprints.auth.setup", "app.blueprints.auth.two_factor"]
+
+[[modules ]]
+path = "app.forms.helpers"
+depends_on = ["app.models"]
+
+[[modules ]]
+path = "app.forms.views"
+depends_on = ["app.forms.helpers", "app.utils"]
+
+[[modules ]]
+path = "app.blueprints.main"
+depends_on = [ "app.blueprints.main.changelog", "app.blueprints.main.about", "app.blueprints.main.home", "app.blueprints.main.jobs", "app.blueprints.main.spec", "app.blueprints.main.controls", "app.blueprints.main.install", "app.blueprints.main.settings", "app.blueprints.main.audit", "app.blueprints.main.add", "app.blueprints.main.edit"]
+
+[[modules ]]
+path = "json"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared"
+depends_on = ["app.utils.shared.write_file", "app.utils.shared.find_cfg_paths", "app.utils.shared.read_file"]
+
+[[modules ]]
+path = "app.services.system_metrics"
+depends_on = []
+
+[[modules ]]
+path = "app.services.controls"
+depends_on = []
+
+[[modules ]]
+path = "app.services.sudoers_service"
+depends_on = [ "app.utils.paths", "app.services.command_exec.command_executor", "app.config.config_manager", "app.services.proc_info.proc_info_registry"]
+
+[[modules ]]
+path = "app.blueprints.api"
+depends_on = [ "app.blueprints.api.game_server_delete", "app.blueprints.api.server_status", "app.blueprints.api.manage_cron", "app.blueprints.api.update_console", "app.blueprints.api.cmd_output", "app.blueprints.api.system_usage"]
+
+[[modules ]]
+path = "app.infrastructure.persistence"
+depends_on = []
+
+[[modules ]]
+path = "app.models.user"
+depends_on = ["app"]
+
+[[modules ]]
+path = "app.services.command_exec"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases"
+depends_on = []
+
+[[modules ]]
+path = "app.services.user_module_service"
+depends_on = [ "app.config", "app.services.command_exec.command_executor", "app.services.proc_info.proc_info_registry"]
+
+[[modules ]]
+path = "tests"
+depends_on = []
+
+[[modules ]]
+path = "migrations"
+depends_on = []
+
+[[modules ]]
+path = "app.models.game_server"
+depends_on = ["app"]
+
+[[modules ]]
+path = "app.forms.auth"
+depends_on = ["app.models", "app.forms.helpers"]
+
+[[modules ]]
+path = "bin"
+depends_on = []
+
+[[modules ]]
+path = "web-lgsm"
+depends_on = ["app.models.user", "app.utils", "app"]
+
+[[modules ]]
+path = "app.managers.cfg_manager"
+depends_on = ["app.config", "app.utils.paths"]
+
+[[modules ]]
+path = "output"
+depends_on = []
+
+[[modules ]]
+path = "app.services.server_power_state"
+depends_on = [ "app.utils.paths", "app.utils.helpers", "app.config", "app.services.tmux_socket_name_cache", "app.services.proc_info.proc_info_registry", "app.services.command_exec.command_executor"]
+
+[[modules ]]
+path = "app.managers.file_manager"
+depends_on = []
+
+[[modules ]]
+path = "playbooks"
+depends_on = ["app", "app.models", "app.infrastructure.persistence.models.cron_model"]
+
+[[modules ]]
+path = "app.services.blocklist"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.paths"
+depends_on = []
+
+[[modules ]]
+path = "docker-setup"
+depends_on = []
+
+[[modules ]]
+path = "docs"
+depends_on = []
+
+[[modules ]]
+path = "GameServers"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.repositories"
+depends_on = []
+
+[[modules ]]
+path = "app.services.proc_info"
+depends_on = []
+
+[[modules ]]
+path = "app.services.tmux_socket_name_cache"
+depends_on = ["app.managers", "app.models", "app.services.user_module_service", "app"]
+
+[[modules ]]
+path = "app.utils.helpers"
+depends_on = ["app.utils.paths", "app", "app.services", "app.models", "app.config.config_manager"]
+
+[[modules ]]
+path = "app.domain.entities"
+depends_on = []
+
+[[modules ]]
+path = "logs"
+depends_on = []
+
+[[modules ]]
+path = "app.managers.file_manager.remote_file_interface"
+depends_on = ["app.utils.helpers", "app.managers.file_manager.file_interface"]
+
+[[modules ]]
+path = "app.blueprints.api.specs"
+depends_on = []
+
+[[modules ]]
+path = "app.services.command_exec.remote_command_executor"
+depends_on = ["app.services.command_exec.base_executor", "app.services"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.cron_repo"
+depends_on = ["app.domain.repositories.cron_repo", "app.domain.entities.job", "app.infrastructure.persistence.models.cron_model", "app"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.models"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth.two_factor"
+depends_on = ["app.utils", "app.blueprints.auth", "app.forms.auth", "app", "app.models"]
+
+[[modules ]]
+path = "app.blueprints.main.about"
+depends_on = ["app.blueprints.main", "app.config.config_manager"]
+
+[[modules ]]
+path = "app.blueprints.api.cmd_output"
+depends_on = ["app.utils", "app.services", "app.blueprints.api"]
+
+[[modules ]]
+path = "app.application.use_cases.cron.delete_cron_job"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth.logout"
+depends_on = ["app.blueprints.auth", "app.container"]
+
+[[modules ]]
+path = "app.domain.repositories.cron_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.api.update_console"
+depends_on = ["app.services", "app.blueprints.api", "app.utils", "app.models", "app.config.config_manager"]
+
+[[modules ]]
+path = "app.blueprints.main.audit"
+depends_on = ["app.container", "app.blueprints.main", "app.models"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth.edit_users"
+depends_on = ["app.container", "app.blueprints.auth", "app.forms.auth", "app.utils", "app", "app.models"]
+
+[[modules ]]
+path = "app.application.use_cases.cron.update_cron_job"
+depends_on = ["app.domain.entities.job"]
+
+[[modules ]]
+path = "app.application.use_cases.audit"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.install"
+depends_on = ["app.container", "app.utils", "app.models", "app.blueprints.main", "app", "app.services", "app.config.config_manager", "app.utils.paths", "app.forms.views"]
+
+[[modules ]]
+path = "app.application.use_cases.audit.list_audit_logs"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.jobs"
+depends_on = ["app.forms.views", "app.utils", "app.config.config_manager", "app.services", "app.blueprints.main", "app.models", "app.container"]
+
+[[modules ]]
+path = "app.blueprints.main.add"
+depends_on = ["app.container", "app.blueprints.main", "app.models", "app", "app.utils", "app.services", "app.forms.views"]
+
+[[modules ]]
+path = "app.services.proc_info.proc_info"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.home"
+depends_on = ["app.models", "app.services", "app.utils", "app.blueprints.main", "app.config.config_manager"]
+
+[[modules ]]
+path = "app.config.config_manager"
+depends_on = ["app.config.defaults"]
+
+[[modules ]]
+path = "app.application.use_cases.cron.list_cron_jobs"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth.setup"
+depends_on = ["app.container", "app.blueprints.auth", "app.models", "app.forms.auth", "app", "app.utils"]
+
+[[modules ]]
+path = "app.domain.entities.job"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.spec"
+depends_on = ["app.blueprints.main"]
+
+[[modules ]]
+path = "app.blueprints.api.manage_cron"
+depends_on = ["app.blueprints.api", "app.forms.views", "app.container", "app.utils"]
+
+[[modules ]]
+path = "app.config.defaults"
+depends_on = []
+
+[[modules ]]
+path = "app.managers.file_manager.file_interface"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.auth.login"
+depends_on = ["app.container", "app.forms.auth", "app.models", "app.blueprints.auth", "app.services", "app.utils"]
+
+[[modules ]]
+path = "app.domain.repositories.audit_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.managers.file_manager.file_manager"
+depends_on = ["app.utils.helpers", "app.managers.file_manager.local_file_interface", "app.managers.file_manager.remote_file_interface"]
+
+[[modules ]]
+path = "app.blueprints.main.edit"
+depends_on = ["app.services", "app.blueprints.main", "app.models", "app.config.config_manager", "app.forms.views", "app.utils", "app.container", "app.managers"]
+
+[[modules ]]
+path = "app.managers.file_manager.local_file_interface"
+depends_on = ["app.utils.helpers", "app.managers.file_manager.file_interface"]
+
+[[modules ]]
+path = "app.services.command_exec.base_executor"
+depends_on = ["app.services"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.audit_model"
+depends_on = ["app"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.cron_model"
+depends_on = ["app"]
+
+[[modules ]]
+path = "app.infrastructure.system.cron.cron_scheduler"
+depends_on = ["app.models", "app.services.proc_info.proc_info_registry", "app.services.command_exec.command_executor", "app.config.config_manager", "app.utils.paths", "app"]
+
+[[modules ]]
+path = "app.application.use_cases.cron"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.settings"
+depends_on = ["app.utils", "app.config.config_manager", "app.forms.views", "app.container", "app.blueprints.main", "app.services"]
+
+[[modules ]]
+path = "app.services.controls.controls"
+depends_on = ["app.services.controls.control", "app.config.config_manager"]
+
+[[modules ]]
+path = "app.blueprints.api.system_usage"
+depends_on = ["app.services", "app.blueprints.api"]
+
+[[modules ]]
+path = "app.services.proc_info.proc_info_registry"
+depends_on = ["app.services.proc_info.proc_info"]
+
+[[modules ]]
+path = "app.utils.shared.cli"
+depends_on = ["app.utils.shared.find_cfg_paths", "app.utils.shared.write_file", "app.utils.shared.read_file"]
+
+[[modules ]]
+path = "app.utils.shared.read_file"
+depends_on = []
+
+[[modules ]]
+path = "app.services.command_exec.local_command_executor"
+depends_on = ["app.services.command_exec.base_executor"]
+
+[[modules ]]
+path = "app.application.use_cases.audit.log_event"
+depends_on = ["app.domain.entities.audit"]
+
+[[modules ]]
+path = "app.utils.shared.find_cfg_paths"
+depends_on = []
+
+[[modules ]]
+path = "app.services.controls.control"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.main.changelog"
+depends_on = ["app.utils", "app.blueprints.main"]
+
+[[modules ]]
+path = "app.services.command_exec.command_executor"
+depends_on = ["app.services.command_exec.remote_command_executor", "app.utils.paths", "app.models", "app.services.command_exec.local_command_executor"]
+
+[[modules ]]
+path = "app.blueprints.main.controls"
+depends_on = ["app.container", "app.forms.views", "app.models", "app.blueprints.main", "app.utils", "app.managers", "app.config.config_manager", "app", "app.services"]
+
+[[modules ]]
+path = "app.blueprints.api.server_status"
+depends_on = ["app.utils", "app.models", "app.services", "app.blueprints.api"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.audit_repo"
+depends_on = ["app", "app.infrastructure.persistence.models.audit_model", "app.domain.repositories.audit_repo", "app.domain.entities.audit"]
+
+[[modules ]]
+path = "app.domain.entities.audit"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared.write_file"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.cron"
+depends_on = []
+
+[[modules ]]
+path = "app.blueprints.api.game_server_delete"
+depends_on = ["app.utils", "app", "app.blueprints.api", "app.config.config_manager", "app.models", "app.services", "app.container"]

@@ -63,7 +63,8 @@ Well idea No.1 is:
 
 #### Separation of Concerns / Dependency Graph
 
-A good software application is like an ogre. Here's our apps current dependency graph.
+A good software application is like an ogre. Here's our apps current layers
+dependency graph, roughly speaking.
 
 ```
      v-----Controllers (aka Routes) 
@@ -116,7 +117,10 @@ Infrastructure depends only on domain (to implement interfaces).
 
 ![Clean Architecture Layers](images/clean_arch_layers.png)
 
-### Diagramming
+
+## Tooling
+
+### Class Diagrams
 
 We're going to use `mermaid` to make our class diagrams.
 
@@ -137,6 +141,39 @@ pymermaider . --extend-exclude "**/static/*"
 NOTE: This project has not been built with a great deal of care toward OOD up
 until this point (dev-v1.8.7, Nov. 2025). You see that fact reflected in the
 current pretty flat and boring state of the projects class diagram.
+
+### Dependency Graphing
+
+We're using a tool called `tach` to auto generate some dependency graphs to
+help us better understand existing relationships.
+
+https://docs.gauge.sh/
+
+https://docs.gauge.sh/getting-started/introduction/#commands
+
+How to generate a tach graph.
+
+```
+# Install tach
+sudo -E /opt/web-lgsm/bin/python3 -m pip install tach
+
+# Tach init, then select everything
+tach init
+
+# Run tach sync to "set boundries" (no idea what that means but they tell you to do it)
+tach sync
+
+# Generate local graph
+tach show
+
+# Display graph in tach webui
+tach show --web
+```
+
+I don't know how long these links stay live for but here's one I generated
+recently.
+
+https://app.gauge.sh/show?uid=6821ab70-fef5-48c6-bffe-1d5f4f3b6a67
 
 ### Where to go from here...
 

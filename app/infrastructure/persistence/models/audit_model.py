@@ -16,12 +16,13 @@ class AuditModel(db.Model):
         unique=True,  # Ensure uniqueness
         nullable=False,  # Ensure not null
     )
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.String(36), db.ForeignKey('user_model.id'), nullable=True)
     message = db.Column(db.String(150))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
     # Relationship to access the User directly
-    user = db.relationship('User', backref='auditmodel')
+    user = db.relationship('UserModel', backref='audit_model')
+
 
     def __repr__(self):
         return f"<Audit(id={self.id}, user_id='{self.user_id}', message='{self.message}', date_created='{self.date_created}')>"

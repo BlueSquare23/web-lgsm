@@ -25,8 +25,10 @@ from wtforms import (
     SelectMultipleField,
 )
 
-from app.models import User, GameServer
+from app.models import GameServer
 from .helpers import ValidateOTPCode
+
+from app.container import container
 
 USERNAME = getpass.getuser()
 
@@ -80,12 +82,7 @@ class ValidateOTPCode:
         if not hasattr(form, 'user_id') or not form.user_id:
             raise ValidationError("User ID is required for OTP validation")
 
-        user = User.query.filter_by(id=form.user_id).first()
-
-        if not user:
-            raise ValidationError("User not found")
-
-        if not user.verify_totp(field.data):
+        if not container.verify_user_totp.execute(form.user_id, field.data):
             raise ValidationError(self.message)
 
 

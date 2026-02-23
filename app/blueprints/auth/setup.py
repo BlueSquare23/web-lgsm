@@ -15,7 +15,6 @@ from flask import (
 
 from app import db
 from app.forms.auth import SetupForm
-from app.models import User
 from app.utils import validation_errors
 from app.container import container
 
@@ -26,7 +25,7 @@ from . import auth_bp
 @auth_bp.route("/setup", methods=["GET", "POST"])
 def setup():
     # If already a user added, disable the setup route.
-    if User.query.first() != None:
+    if container.list_users().execute():
         flash("User already added. Please sign in!", category="error")
         return redirect(url_for("auth.login"))
 
@@ -47,16 +46,17 @@ def setup():
     enable_otp = form.enable_otp.data
 
     # Add the new_user to the database, then redirect home.
-    new_user = User(
-        username=username,
-        password=generate_password_hash(password, method="pbkdf2:sha256"),
-        role="admin",
-        permissions=json.dumps({"admin": True}),
-        otp_enabled=enable_otp,
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    db.session.refresh(new_user)
+    new_user = {
+        'username': username,
+        'password': generate_password_hash(password, method="pbkdf2:sha256"),
+        'role': "admin",
+        'permissions': json.dumps({"admin": True}),
+        'otp_enabled': enable_otp,
+    }
+#    db.session.add(new_user)
+#    db.session.commit()
+#    db.session.refresh(new_user)
+    container.update_user().execute(**new_user)
 
     flash("User created!")
     login_user(new_user, remember=True)

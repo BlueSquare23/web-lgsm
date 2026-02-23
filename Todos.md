@@ -291,7 +291,8 @@
   - Mostly right now I'm concerned with things slipping past validation, and
     with the amount of shell code that should really be python. If we can cut
     those things down, we gain a lot more security.
-  - Also some pip requirements need updated.
+  - [ ] Also some pip requirements need updated.
+  - **NOTE:** _This should happen after the main bulk of the rearch cleanup otherwise we're just security testing and patching code that's about to be changed._
 
 * [ ] **Find way to detect available server controls on a per server basis**
   - I'm thinking the existing `json/controls.json` file isn't going to cut it anymore.
@@ -366,7 +367,12 @@ https://icons.getbootstrap.com/
 
 ### The Meat
 
-* [x] **Redo cron as clean arch**
+* [ ] **Address CodeQL Alerts**
+  - https://github.com/BlueSquare23/web-lgsm/runs/62909674268
+  - Yeah I know accepting keys blindly is bad, but need to do more research to
+    see what we can really do about it.
+
+* [x] **Redo Cron as clean arch**
   - [x] We need an abstraction in the core. Aka domain layer `Cron` domain entity class.
   - [x] We need a `CronRepository` in the domain layer too.
   - [x] In the application layer we need to define some Usecases.
@@ -380,13 +386,64 @@ https://icons.getbootstrap.com/
       identical usecase.
   - [x] Probably we can reuse a lot of existing code for the Infrastructure layer,
     but it will need split.
-    - [x] We can put the mysql stuff in one class like the SqlAlchemyAuditRepo` stuff
+    - [x] We can put the mysql stuff in one class like the `SqlAlchemyAuditRepo` stuff
     - [x] Then the system cli cron stuff will need to be split out.
   - [x] Container Wiring needs updated to pull everything together.
   - [x] Route code will need updates to use new calls!
   - Only thing I'm nervous about is all the interaction with still non-clean
     CmdService stuff. But we'll clean that up in time and update the infra
     accordingly.
+
+* [ ] **Redo User as clean arch**
+  - Building from the middle outward!
+  - Domain Layer
+    - [x] We need a `User` domain entity.
+    - [x] We need a `UserRepository` repo parent class as well.
+  - Application Layer
+    - [x] We need to identify and convert route code, utils, and User related
+      access code into usecases.
+    - All the usual suspects to start with:
+      - [x] `get(user_id):`
+      - [x] `update(user):`
+      - [x] `list():`
+      - [x] `delete(user_id):`
+      - [x] `get_totp_uri(user_id):`
+      - [x] `verify_totp(user_id, token):`
+      - [x] `has_access(user_id, route, server_id=None):`
+  - Infrastructure Layer
+    - [x] We need to move the existing User model into `infrastructure/persistence/models/user_model.py` and rename to `UserModel`
+    - [x] We need to create an `SqlAlchemyUserModel` class in `infrastructure/persistence/repositories/user_repo.py` and define access methods for usecases
+  - Wiring
+    - [x] We need to wire it all through the `container.py`
+  - Interface Layer
+    - [x] We need to replace the calls in route code to use new usecases instead of direct DB access.
+  - [ ] **Figure out how to get auth stuff into app now.
+    - I'm kinda dumb. I just refactored all this only to realize after the fact
+      that I cant use the domain entity User object for auth stuff cause its
+      missing all the auth stuff that comes with sqlalchmey and usermixin.
+    - So I kinda fucked myself...
+    - Cause under clean arch, route code shouldn't use the DB object directly. But
+      like that's how all the flask route `@login_required` decoraters work,
+      that's how the `current_user.is_active` or `current_user.is_authenticated` works...
+    - So maybe as a compromise, I'll just let the main `app/__init__.py` use
+      the real flask sqlalchemy model object.
+      - And then we can do like a boundry context layer or something for
+        translating that from route code into domain entity reprsentation of a
+        user.
+
+* [ ] **Redo GameServer as clean arch**
+  - This is going to be a lot...
+  - Most of the apps usecases are tied to GameServer in some way
+
+* [ ] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
+  - Aka convert existing route code db calls into clean arch.
+  - Right now I still have the classic OG problem of the route code doing too much.
+  - Basically, a ton of the current routecode sorta things can happen in application/usecases
+  - This will thin out the routes and make the connection to the DB clean arch.
+
+* [ ] **Reorganize blueprints & other interface layer stuff into app/interface dir**
+  - This will be easier to do after other stuff is cleaned up because then
+    should mostly just be renaming imports, I think...
 
 * [ ] **Figure out how logger fits into clean architecture**
   - It'd be really nice to get more info out of some of these deeper errors to
@@ -400,10 +457,18 @@ https://icons.getbootstrap.com/
     figure this out.
 
 * [ ] **Figure out how exception handling fits into clean architecture**
+  - https://www.geeksforgeeks.org/python/define-custom-exceptions-in-python/
+  - https://blog.miguelgrinberg.com/post/the-ultimate-guide-to-error-handling-in-python
+  - https://codesignal.com/learn/courses/clean-code-with-modules-and-packages/lessons/introduction-to-exception-handling-in-python
   - From what I read online, each layer should catch exceptions and repackage
     them for higher layers to keep clean seperation.
   - For example, instead of letting database errors bubble up through the
     layers, catch them and re-raise as `SqlAlchemyRepositoryError`.
+  - Make sure exceptions have enough context to understand underlying issue.
+  - Don't rely on exceptions to transmit messages as a part of core logic.
+    - By definition they are they exception, not the rule. They are not business logic.
+  - For not its not super high priority, but there will probably be cases where
+    it comes up.
 
 * [ ] **Remove cron stuff from ansible connector**
   - Now that we have the new user module service (soon to be refactored under

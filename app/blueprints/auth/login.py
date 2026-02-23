@@ -17,7 +17,6 @@ from flask import (
 )
 
 from app.forms.auth import LoginForm 
-from app.models import User
 from app.utils import validation_errors
 from app.services import Blocklist
 from app.container import container
@@ -31,7 +30,8 @@ def login():
     # Create LoginForm.
     form = LoginForm()
 
-    if User.query.first() == None:
+    if not container.list_users().execute():
+#    if User.query.first() == None:
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
@@ -55,7 +55,8 @@ def login():
     otp_code = form.otp_code.data
 
     # Check login info.
-    user = User.query.filter_by(username=username).first()
+#    user = User.query.filter_by(username=username).first()
+    user = container.query_user().execute('username', username)
     if user == None:
         blocklist.add_failed(ip)
         flash("Incorrect Username or Password!", category="error")
@@ -68,6 +69,11 @@ def login():
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
+
+    # AHHHH FUCK!
+    # I just realized a huge problem with all of this so far...
+    # If I'm using the domain entity for user now instead of the sql alchemy
+    # object, its not going to have auth stuff. :facepalm:
     if current_user.is_authenticated:
         logout_user()
 

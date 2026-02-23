@@ -126,13 +126,16 @@ def register_template_filters(app):
     def from_json_filter(s):
         return json.loads(s)
 
+# TODO: NO BAD THIS ISN'T GOING TO WORK BECAUSE IT BREAKS AUTH STUFF TO USE
+# DOMAIN ENTITY INSTEAD OF SQL ALCHEMY OBJ DIRECTLY. SO NEED TO REVERT THESE
+# CHANGES, USE MODEL DIRECTLY AND FIND A COMPROMISE.
 def register_user_loader():
     """Register the user loader for Flask-Login"""
-    from .models import User
+    from .container import container
 
     @login_manager.user_loader
     def load_user(id):
-        return db.session.get(User, int(id))
+        return container.get_user().execute(int(id))
 
 def create_app():
     """Application factory function"""

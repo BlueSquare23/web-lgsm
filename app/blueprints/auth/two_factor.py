@@ -8,8 +8,8 @@ from flask import render_template, redirect, url_for, request, flash
 
 from app import db
 from app.forms.auth import OTPSetupForm
-from app.models import User
 from app.utils import validation_errors
+from app.container import container
 
 from . import auth_bp
 
@@ -21,17 +21,18 @@ from . import auth_bp
 @auth_bp.route("/2fa_setup", methods=["GET", "POST"])
 @login_required
 def two_factor_setup():
-    user = User.query.filter_by(username=current_user.username).first()
-    if user is None:
-        return redirect(url_for("logout"))
 
-    # Setup otp_secret if doesn't already exist (for legacy user compat).
-    if user.otp_secret is None:
-        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
-        db.session.commit()
+# Not sure what to do with this yet. Might just remove it. 2fa is still pretty
+# new. But theoretically, if they've upgraded and clicked this page before
+# they'll have a key. I think maybe I should get rid of this here and just
+# ensure the user does have a key in a lower layer.
+#    # Setup otp_secret if doesn't already exist (for legacy user compat).
+#    if user.otp_secret is None:
+#        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+#        db.session.commit()
 
     form = OTPSetupForm()
-    form.user_id = user.id
+    form.user_id = current_user.id
 
     if request.method == "GET":
         # Format the secret for easier manual entry (add spaces every 4 characters).
@@ -50,8 +51,10 @@ def two_factor_setup():
         return redirect(url_for("auth.two_factor_setup"))
     
     flash("Two factor enabled successfully!", category="success")
-    user.otp_setup = True
-    db.session.commit()
+#    user.otp_setup = True
+#    db.session.commit()
+    current_user.otp_setup = True
+    container.update_user.execute(**current_user.__dict__)
     return redirect(url_for("main.home"))
 
 
@@ -60,12 +63,8 @@ def two_factor_setup():
 @auth_bp.route('/qrcode')
 @login_required
 def qrcode():
-    user = User.query.filter_by(username=current_user.username).first()
-    if user is None:
-        return redirect(url_for("logout"))
-
     # Render qrcode, no caching.
-    url = pyqrcode.create(user.get_totp_uri())
+    url = pyqrcode.create(container.get_totp_uri.execute(current_user.id))
     stream = BytesIO()
     url.svg(stream, scale=3)
     return stream.getvalue(), 200, {

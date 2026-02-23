@@ -16,7 +16,7 @@ from flask import (
 
 from app import db
 from app.utils import *
-from app.models import User, GameServer
+from app.models import GameServer
 from app.services import ProcInfoRegistry
 from app.forms.views import AddForm
 
@@ -177,11 +177,15 @@ def install():
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
-        user_ident = User.query.filter_by(username=current_user.username).first()
-        user_perms = json.loads(user_ident.permissions)
+#        user_ident = User.query.filter_by(username=current_user.username).first()
+#        user_perms = json.loads(user_ident.permissions)
+#        user_perms["server_ids"].append(server_id)
+#        user_ident.permissions = json.dumps(user_perms)
+#        db.session.commit()
+        user_perms = json.loads(current_user.permissions)
         user_perms["server_ids"].append(server_id)
-        user_ident.permissions = json.dumps(user_perms)
-        db.session.commit()
+        current_user.permissions = json.dumps(user_perms)
+        container.update_user.execute(**current_user.__dict__)
 
     cmd = [
         PATHS["sudo"],
@@ -191,9 +195,6 @@ def install():
         "--install",
         str(server_id),
     ]
-
-#    current_app.logger.info(log_wrap("cmd", cmd))
-#    current_app.logger.info(log_wrap("all processes", ProcInfoRegistry().get_all_processes()))
 
     install_daemon = Thread(
         target=command_service.run_command,

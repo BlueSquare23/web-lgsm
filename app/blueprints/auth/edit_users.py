@@ -13,7 +13,7 @@ from flask import (
 
 from app import db
 from app.forms.auth import EditUsersForm
-from app.models import User, GameServer
+from app.models import GameServer
 from app.utils import validation_errors, log_wrap
 
 from app.container import container
@@ -46,7 +46,8 @@ def edit_users():
         "send",
     ]
 
-    all_users = User.query.all()
+#    all_users = User.query.all()
+    all_users = container.list_users().execute()
     form = EditUsersForm()
 
     # Dynamically set the choices for the SelectMultipleFields.
@@ -65,7 +66,8 @@ def edit_users():
         # api route for delete user, button triggers js fetch req DELETE to API.
         delete = request.args.get("delete")
 
-        user_ident = User.query.filter_by(username=selected_user).first()
+#        user_ident = User.query.filter_by(username=selected_user).first()
+        user_ident = container.query_user().execute('username', selected_user)
         if user_ident == None and selected_user != "newuser":
             return redirect(url_for("auth.edit_users", username="newuser"))
 
@@ -160,7 +162,8 @@ def edit_users():
 
     user_ident = None
     if selected_user != "newuser":
-        user_ident = User.query.filter_by(username=username).first()
+#        user_ident = User.query.filter_by(username=username).first()
+        user_ident = container.query_user().execute('username', username)
         if user_ident == None:
             flash("Invalid user selected!", category="error")
             return redirect(url_for("auth.edit_users"))
@@ -214,20 +217,21 @@ def edit_users():
 
     if selected_user == "newuser":
         # Add the new_user to the database, then redirect home.
-        new_user = User(
-            username=username,
-            password=generate_password_hash(password1, method="pbkdf2:sha256"),
-            role=role,
-            permissions=json.dumps(permissions),
-            otp_enabled=enable_otp,
-        )
+        new_user = {
+            'username': username,
+            'password': generate_password_hash(password1, method="pbkdf2:sha256"),
+            'role': role,
+            'permissions': json.dumps(permissions),
+            'otp_enabled': enable_otp,
+        }
 
         # Reset otp setup
         if not enable_otp:
-            new_user.otp_setup = False
+            new_user['otp_setup'] = False
 
-        db.session.add(new_user)
-        db.session.commit()
+        container.edit_user().execute(**new_user)
+#        db.session.add(new_user)
+#        db.session.commit()
 
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
@@ -241,7 +245,8 @@ def edit_users():
         user_ident.password = generate_password_hash(password1, method="pbkdf2:sha256")
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
-        db.session.commit()
+#        db.session.commit()
+        container.update_user().execute(**user_ident.__dict__)
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
@@ -253,7 +258,8 @@ def edit_users():
     user_ident.role = role
     user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
-    db.session.commit()
+#    db.session.commit()
+    container.update_user().execute(**user_ident.__dict__)
     container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))

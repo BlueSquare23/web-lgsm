@@ -2,7 +2,6 @@ from flask_login import login_required, current_user
 from flask import render_template, request
 
 from app.container import container
-from app.models import User
 
 from . import main_bp
 
@@ -28,9 +27,8 @@ def audit():
         search=search,
     )
 
-    # fetch users normally for now
-    # TODO: Eventually make User access clean arch as well
-    all_users = User.query.order_by(User.username).all()
+#    all_users = User.query.order_by(User.username).all()
+    all_users = container.list_users().execute()
 
     return render_template(
         'audit.html',

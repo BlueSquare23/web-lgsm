@@ -94,7 +94,7 @@ import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, create_app
-from app.models.user import User
+from app.infrastructure.persistence.models.user_model import UserModel
 from app.utils import check_and_get_lgsmsh
 
 # Import config data.
@@ -386,8 +386,12 @@ def change_password():
         print(f"Error: {message}")
         return
 
+    # TODO: For now the web-lgsm script connecting directly to the DB to do
+    # this is fine. But eventually, we can make this an app usecase too and
+    # have the script use the infrastructure interface to do user stuff.
+
     # Find the user in the database
-    user = User.query.filter_by(username=username).first()
+    user = UserModel.query.filter_by(username=username).first()
 
     if user is None:
         print("Error: User not found!")
@@ -631,8 +635,12 @@ def add_valid_gs_user(gs_user):
 def reset_totp():
     username = input("Enter username: ")
 
+    # TODO: For now the web-lgsm script connecting directly to the DB to do
+    # this is fine. But eventually, we can make this an app usecase too and
+    # have the script use the infrastructure interface to do user stuff.
+
     # Find the user in the database
-    user = User.query.filter_by(username=username).first()
+    user = UserModel.query.filter_by(username=username).first()
 
     if user is None:
         print("Error: User not found!")

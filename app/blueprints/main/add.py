@@ -13,7 +13,7 @@ from flask import (
 
 from app import db
 from app.utils import *
-from app.models import GameServer, User
+from app.models import GameServer
 from app.forms.views import ValidateID, AddForm
 from app.services import SudoersService
 from app.container import container
@@ -172,14 +172,14 @@ def add():
 
     # Update web user's permissions to give access to new game server after adding it.
     if current_user.role != "admin":
-        user_ident = User.query.filter_by(username=current_user.username).first()
-        user_perms = json.loads(user_ident.permissions)
+#        user_ident = User.query.filter_by(username=current_user.username).first()
+        user_perms = json.loads(current_user.permissions)
         user_perms["server_ids"].append(server.id)
-        user_ident.permissions = json.dumps(user_perms)
+        current_user.permissions = json.dumps(user_perms)
         current_app.logger.info(
             log_wrap("Updated User Permissions:", user_ident.permissions)
         )
-        db.session.commit()
+        container.edit_user.execute(**current_user.__dict__)
 
     # Auto add sudoers rule for server.
     if install_type == 'local' and username != USER:

@@ -99,16 +99,31 @@ class SqlAlchemyUserRepository(UserRepository):
         return all_users
 
 
-    def get_totp_uri(self):
+    def to_domain(self, model):
+        """
+        Converts sqlalchemy model object into domain layer representation.
+        Even though this is basically just a get, its nice to have an explicit
+        wrapper name to provide context.
+        """
+        model = UserModel.query.filter_by(id=model.id).first()
+        if not model:
+            return None
+
+        return self.get(model.id)
+
+
+    def get_totp_uri(self, user_id):
+        user = self.get(user_id)
         return 'otpauth://totp/Web-LGSM:{0}?secret={1}&issuer=Web-LGSM' \
-            .format(self.username, self.otp_secret)
+            .format(user.username, user.otp_secret)
 
 
-    def verify_totp(self, token):
-        return onetimepass.valid_totp(token, self.otp_secret)
+    def verify_totp(self, user_id, token):
+        user = self.get(user_id)
+        return onetimepass.valid_totp(token, user.otp_secret)
 
 
-    def has_access(self, route, server_id=None):
+    def has_access(self, user_id, route, server_id=None):
         """
         Check's if user has permissions to access various routes.
     
@@ -121,8 +136,12 @@ class SqlAlchemyUserRepository(UserRepository):
             bool: True if user has appropriate perms, False otherwise.
     
         """
+        user = self.get(user_id)
+        if not user:
+            return False
+
         # Admins can always do anything.
-        if self.role == "admin":
+        if user.role == "admin":
             return True
 
         valid_routes = ["install", "edit", "add", "delete", "settings", "controls",
@@ -130,7 +149,7 @@ class SqlAlchemyUserRepository(UserRepository):
 
         assert route in valid_routes, f"Invalid route: {route}"
 
-        user_perms = json.loads(self.permissions)
+        user_perms = json.loads(user.permissions)
 
         # Does user have access to server_id?
         if server_id:

@@ -28,7 +28,7 @@ def settings():
     command_service = CommandExecutor(config)
 
     # Check if user has permissions to settings route.
-    if not current_user.has_access("settings"):
+    if not container.check_user_access().execute(current_user.id, "settings"):
         flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 

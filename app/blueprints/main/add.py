@@ -29,7 +29,7 @@ from . import main_bp
 @login_required
 def add():
     # Check if user has permissions to add route.
-    if not current_user.has_access("add"):
+    if not container.check_user_access().execute(current_user.id, "add"):
         flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 

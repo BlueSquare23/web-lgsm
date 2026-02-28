@@ -19,7 +19,7 @@ class UpdateConsole(Resource):
 
     @login_required
     def post(self, server_id):
-        if not current_user.has_access("update-console"):
+        if not container.check_user_access().execute(current_user.id, "update-console"):
             resp_dict = {"Error": "Permission denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

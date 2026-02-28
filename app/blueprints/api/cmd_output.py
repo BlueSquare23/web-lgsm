@@ -9,6 +9,8 @@ from app.services import ProcInfoRegistry
 
 from . import api
 
+from app.container import container
+
 ######### API CMD Output #########
 
 class CmdOutput(Resource):
@@ -24,7 +26,7 @@ class CmdOutput(Resource):
             )
             return response
 
-        if not current_user.has_access("cmd-output", server_id):
+        if not container.check_user_access().execute(current_user.id, "cmd-output", server_id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

@@ -39,7 +39,7 @@ class GameServerDelete(Resource):
             config.set('settings', 'delete_user', False)
 
         # Check if user has permissions to delete route & server.
-        if not current_user.has_access("delete", server_id):
+        if not container.check_user_access().execute(current_user.id, "delete", server_id):
             resp_dict = {
                 "Error": f"Insufficient permission to delete {server.install_name}"
             }
@@ -52,15 +52,13 @@ class GameServerDelete(Resource):
         current_app.logger.info(server)
 
         # Delete cronjobs for server from DB.
-        cron = CronService(server.id)
-        jobs_list = cron.list_jobs()
+        jobs_list = container.list_cron_jobs().execute(server.id)
 
         current_app.logger.info(log_wrap("job_list", jobs_list))
 
         if len(jobs_list) > 0:
             for job in jobs_list:
-#                cronjob = Job.query.filter_by(id=job["job_id"]).first()
-                container.delete_cron_job().execute(job_id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
+                container.delete_cron_job().execute(job.id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
                 # Remove job from DB.
 
         # Drop any saved proc_info objects.

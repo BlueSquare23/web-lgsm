@@ -32,7 +32,7 @@ def jobs():
     global config
 
     # Check if user has permissions to jobs route.
-    if not current_user.has_access("jobs"):
+    if not container.check_user_access().execute(current_user.id, "jobs"):
         flash(f"Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 

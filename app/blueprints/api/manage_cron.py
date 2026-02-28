@@ -17,7 +17,7 @@ from app.container import container
 
 class ManageCron(Resource):
     def check_perms(self):
-        if not current_user.has_access("jobs"):
+        if not container.check_user_access().execute(current_user.id, "jobs"):
             resp_dict = { "Error": f"Insufficient permission" }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
@@ -32,6 +32,8 @@ class ManageCron(Resource):
 
         return (True, None)
 
+    # TODO: This works for now. But eventually just add usecase for get_job
+    # from the repository and do this that way instead.
     @login_required
     def get(self, server_id, job_id=None):
         allowed, resp = self.check_perms()
@@ -42,12 +44,12 @@ class ManageCron(Resource):
         if not valid:
             return resp
 
-        jobs_list = container.list_cron_jobs().execute()
+        jobs_list = container.list_cron_jobs().execute(server_id)
 
         if job_id:
             for job in jobs_list:
-                if job['server_id'] == server_id and job['job_id'] == job_id:
-                    return jsonify(job)
+                if job.server_id == server_id and job.job_id == job_id:
+                    return jsonify(job.__dict__)
             return ('Not found', 404)
 
         return jsonify(jobs_list)

@@ -82,7 +82,7 @@ class ValidateOTPCode:
         if not hasattr(form, 'user_id') or not form.user_id:
             raise ValidationError("User ID is required for OTP validation")
 
-        if not container.verify_user_totp.execute(form.user_id, field.data):
+        if not container.verify_user_totp().execute(form.user_id, field.data):
             raise ValidationError(self.message)
 
 

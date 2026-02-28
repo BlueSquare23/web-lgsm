@@ -126,16 +126,18 @@ def register_template_filters(app):
     def from_json_filter(s):
         return json.loads(s)
 
-# TODO: NO BAD THIS ISN'T GOING TO WORK BECAUSE IT BREAKS AUTH STUFF TO USE
-# DOMAIN ENTITY INSTEAD OF SQL ALCHEMY OBJ DIRECTLY. SO NEED TO REVERT THESE
-# CHANGES, USE MODEL DIRECTLY AND FIND A COMPROMISE.
+# NOTE: This is the only place in the infra layer that we're using an sqlalch
+# model directly. This violates clean arch principals, but tbh is too much of a
+# pia to rewrite. As a result, you the programmer should use the
+# `container.to_user.execute()` method to translate current_user object to a
+# domain layer object.
 def register_user_loader():
     """Register the user loader for Flask-Login"""
-    from .container import container
+    from .infrastructure.persistence.models.user_model import UserModel
 
     @login_manager.user_loader
     def load_user(id):
-        return container.get_user().execute(int(id))
+        return db.session.get(UserModel, int(id))
 
 def create_app():
     """Application factory function"""

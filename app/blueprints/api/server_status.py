@@ -11,6 +11,7 @@ from app.services import ServerPowerState
 
 from . import api
 
+from app.container import container
 
 ######### API Server Statuses #########
 
@@ -25,7 +26,7 @@ class ServerStatus(Resource):
             )
             return response
 
-        if not current_user.has_access("server-statuses", server.id):
+        if not container.check_user_access().execute(current_user.id, "server-statuses", server.id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"

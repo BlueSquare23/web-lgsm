@@ -417,7 +417,7 @@ https://icons.getbootstrap.com/
     - [x] We need to wire it all through the `container.py`
   - Interface Layer
     - [x] We need to replace the calls in route code to use new usecases instead of direct DB access.
-  - [ ] **Figure out how to get auth stuff into app now.
+  - [x] **Figure out how to get auth stuff into app now.
     - I'm kinda dumb. I just refactored all this only to realize after the fact
       that I cant use the domain entity User object for auth stuff cause its
       missing all the auth stuff that comes with sqlalchmey and usermixin.
@@ -430,6 +430,13 @@ https://icons.getbootstrap.com/
       - And then we can do like a boundry context layer or something for
         translating that from route code into domain entity reprsentation of a
         user.
+
+* [ ] **Eventually figure out cleaner pattern(s) for container stuff**
+  - Right now container is easy and since what I'm mainly worried about is
+    refactoring the app code, then a conatiner with same interface for
+    accessing all usecases is fine right now.
+  - But I know it could be made a little bit more cleaver and usable.
+  - Probably could have some factory stuff producing the needful.
 
 * [ ] **Redo GameServer as clean arch**
   - This is going to be a lot...

@@ -218,16 +218,15 @@ def edit_users():
     if selected_user == "newuser":
         # Add the new_user to the database, then redirect home.
         new_user = {
+            'id': None,
             'username': username,
             'password': generate_password_hash(password1, method="pbkdf2:sha256"),
             'role': role,
             'permissions': json.dumps(permissions),
             'otp_enabled': enable_otp,
+            'otp_secret': None,
+            'otp_setup': False,
         }
-
-        # Reset otp setup
-        if not enable_otp:
-            new_user['otp_setup'] = False
 
         container.edit_user().execute(**new_user)
 #        db.session.add(new_user)
@@ -246,7 +245,7 @@ def edit_users():
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
 #        db.session.commit()
-        container.update_user().execute(**user_ident.__dict__)
+        container.edit_user().execute(**user_ident.__dict__)
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
@@ -259,7 +258,7 @@ def edit_users():
     user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
 #    db.session.commit()
-    container.update_user().execute(**user_ident.__dict__)
+    container.edit_user().execute(**user_ident.__dict__)
     container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))

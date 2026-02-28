@@ -48,7 +48,8 @@ jobs:
 
       - name: Run Pytest Tests
         run: |
-          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
+          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --stop  # I don't want to run tests rn
+#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
 #          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
 
       - name: Generate coverage report

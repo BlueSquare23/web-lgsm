@@ -25,7 +25,7 @@ class UserModel(db.Model, UserMixin):
 
     # TODO: I think this should be moved into SqlAlchemyUserRepository, still thinking about it...
     def __init__(self, **kwargs):
-        super(User, self).__init__(**kwargs)
+        super(UserModel, self).__init__(**kwargs)
         if self.otp_secret is None:
             # generate a random secret
             self.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')

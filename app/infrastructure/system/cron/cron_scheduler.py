@@ -12,6 +12,7 @@ from app import db
 from app.config.config_manager import ConfigManager
 from app.models import GameServer
 
+from app.domain.entities.job import Job
 from app.services.proc_info.proc_info_registry import ProcInfoRegistry
 from app.services.command_exec.command_executor import CommandExecutor
 
@@ -140,13 +141,14 @@ class CronScheduler:
             # Validate with cron-converter.
             try:
                 Cron(schedule)  # This should raise a ValueError if invalid.
-                job = {
+                kwargs = {
                     'schedule': schedule,
                     'command': command,
                     'server_id': current_server_id,
                     'job_id': current_job_id,
                     'comment': current_comment,
                 }
+                job = Job(**kwargs)
 
                 if current_server_id == target_uuid:
                     jobs.append(job)

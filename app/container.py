@@ -18,6 +18,7 @@ from app.application.use_cases.cron.list_cron_jobs import ListCronJobs
 
 # User
 from app.infrastructure.persistence.repositories.user_repo import SqlAlchemyUserRepository
+from app.application.use_cases.user.to_user import ToUser
 from app.application.use_cases.user.list_users import ListUsers
 from app.application.use_cases.user.get_user import GetUser
 from app.application.use_cases.user.query_user import QueryUser
@@ -83,6 +84,11 @@ class Container:
         )
 
     ## User
+
+    def to_user(self):
+        return ToUser(
+            user_repository=self.user_repository(),
+        )
 
     def list_users(self):
         return ListUsers(

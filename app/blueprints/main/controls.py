@@ -63,7 +63,7 @@ def controls():
         jobs_edit = True if server.install_type == 'local' else False
 
         # Check if user has permissions to game server for controls route.
-        if not current_user.has_access("controls", server_id):
+        if not container.check_user_access().execute(current_user.id, "controls", server_id):
             flash("Your user does not have access to this server", category="error")
             return redirect(url_for("main.home"))
 
@@ -158,7 +158,7 @@ def controls():
         return redirect(url_for("main.controls", server_id=server_id))
 
     # Check if user has permissions to game server for controls route.
-    if not current_user.has_access("controls", server_id):
+    if not container.check_user_access().execute(current_user.id, "controls", server_id):
         flash("Your user does not have access to this server", category="error")
         return redirect(url_for("main.home"))
 

@@ -42,7 +42,7 @@ def install():
     command_service = CommandExecutor(config)
 
     # Check if user has permissions to install route.
-    if not current_user.has_access("install"):
+    if not container.check_user_access().execute(current_user.id, "install"):
         flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 

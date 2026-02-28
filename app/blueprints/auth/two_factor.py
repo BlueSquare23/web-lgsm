@@ -31,6 +31,7 @@ def two_factor_setup():
 #        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
 #        db.session.commit()
 
+    user = container.to_user().execute(current_user)
     form = OTPSetupForm()
     form.user_id = current_user.id
 
@@ -51,10 +52,9 @@ def two_factor_setup():
         return redirect(url_for("auth.two_factor_setup"))
     
     flash("Two factor enabled successfully!", category="success")
-#    user.otp_setup = True
-#    db.session.commit()
-    current_user.otp_setup = True
-    container.update_user.execute(**current_user.__dict__)
+    user.otp_setup = True
+    user.otp_enabled = True
+    container.edit_user().execute(**user.__dict__)
     return redirect(url_for("main.home"))
 
 
@@ -64,7 +64,7 @@ def two_factor_setup():
 @login_required
 def qrcode():
     # Render qrcode, no caching.
-    url = pyqrcode.create(container.get_totp_uri.execute(current_user.id))
+    url = pyqrcode.create(container.get_user_totp_uri().execute(current_user.id))
     stream = BytesIO()
     url.svg(stream, scale=3)
     return stream.getvalue(), 200, {

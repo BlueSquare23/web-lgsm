@@ -2,7 +2,7 @@ import os
 import getpass
 
 from app import cache
-from app.models import GameServer
+#from app.models import GameServer
 
 from .user_module_service import UserModuleService
 from app.managers import FileManager
@@ -30,7 +30,8 @@ class TmuxSocketNameCache:
             str: Returns the socket name for game server. None if can't get socket
                  name.
         """
-        assert isinstance(server, GameServer), "server is not an instance of GameServer"
+# TODO: Update this, I like this but we've refactored things to be clean arch and don't know where this assert fits in yet.
+#        assert isinstance(server, GameServer), "server is not an instance of GameServer"
 
         gs_id_file_path = os.path.join(
             server.install_path, f"lgsm/data/{server.script_name}.uid"

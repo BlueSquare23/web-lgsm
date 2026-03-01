@@ -19,7 +19,6 @@ from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
 from functools import lru_cache
 
-from app.models import GameServer
 from app import db
 from app import cache
 from app.config.config_manager import ConfigManager
@@ -137,11 +136,14 @@ def get_running_installs():
     threads = threading.enumerate()
     # Get all active threads.
     running_install_threads = dict()
+    from app.container import container
 
     for thread in threads:
         if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
             server_id = thread.name.replace("web_lgsm_install_", "")
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServerModel.query.filter_by(id=server_id).first()
+
+            server = container.get_game_server().execute(server_id)
 
             # Check game server exists.
             if server:
@@ -171,6 +173,8 @@ def normalize_path(path):
     return path
 
 
+# TODO: Turn this into a method on infrastructure layer system adapter. That's
+# where this belongs.
 def delete_server(server, remove_files, delete_user):
     """
     Does the actual deletions for the /delete route.
@@ -184,8 +188,10 @@ def delete_server(server, remove_files, delete_user):
         Bool: True if deletion was successful, False if something went wrong.
     """
     from app.services import ProcInfoRegistry, CommandExecutor
+    from app.container import container
     if not remove_files:
-        server.delete()
+#        server.delete()
+        container.delete_game_server().execute(server.id)
         flash(f"Game server, {server.install_name} deleted!")
         return True
 
@@ -436,6 +442,7 @@ def clear_proc_info_post_install(server_id, app_context):
                                   logging in a thread.
     """
 
+    from app.container import container
     from app.services import ProcInfoRegistry
     # App context needed for logging in threads.
     if app_context:
@@ -453,7 +460,9 @@ def clear_proc_info_post_install(server_id, app_context):
 
         # Aka install finished or died.
         if server_id not in all_installs:
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServerModel.query.filter_by(id=server_id).first()
+
+            server = container.get_game_server().execute(server_id)
 
             # Rare edge case if server deleted before thread dies.
             if server == None:

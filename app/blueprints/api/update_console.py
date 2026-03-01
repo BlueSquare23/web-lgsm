@@ -6,10 +6,12 @@ from flask_restful import Resource
 
 from app.config.config_manager import ConfigManager
 from app.utils import *
-from app.models import GameServer
+#from app.models import GameServer
 from app.services import ProcInfoRegistry, CommandExecutor, TmuxSocketNameCache
 
 from . import api
+
+from app.container import container
 
 ######### API Update Console #########
 
@@ -27,7 +29,8 @@ class UpdateConsole(Resource):
             return response
 
         # Check that the submitted server exists in db.
-        server = GameServer.query.filter_by(id=server_id).first()
+#        server = GameServer.query.filter_by(id=server_id).first()
+        server = container.get_game_server().execute(server_id)
         if server == None:
             resp_dict = {"Error": "Supplied server does not exist!"}
             response = Response(

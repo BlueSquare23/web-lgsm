@@ -13,7 +13,6 @@ from flask import (
 
 from app import db
 from app.forms.auth import EditUsersForm
-from app.models import GameServer
 from app.utils import validation_errors, log_wrap
 
 from app.container import container
@@ -29,7 +28,8 @@ def edit_users():
         flash("Only Admins are allowed to edit users!", category="error")
         return redirect(url_for("main.home"))
 
-    installed_servers = GameServer.query.all()
+#    installed_servers = GameServer.query.all()
+    installed_servers = container.list_game_servers().execute()
     all_server_ids = [server.id for server in installed_servers]
     all_controls = [
         "start",

@@ -2,13 +2,14 @@ from flask_login import login_required, current_user
 from flask import render_template, current_app
 
 from app.utils import *
-from app.models import GameServer
 from app.services import ProcInfoRegistry
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()
 
 from . import main_bp
+
+from app.container import container
 
 ######### Home Page #########
 
@@ -28,7 +29,8 @@ def home():
         log_wrap("current_user.permissions", current_user.permissions)
     )
 
-    installed_servers = GameServer.query.all()
+#    installed_servers = GameServerModel.query.all()
+    installed_servers = container.list_game_servers().execute()
     for server in installed_servers:
         current_app.logger.info(server.id)
 

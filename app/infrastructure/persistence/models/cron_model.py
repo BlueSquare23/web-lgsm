@@ -11,14 +11,14 @@ class CronModel(db.Model):
         unique=True,  # Ensure uniqueness
         nullable=False,  # Ensure not null
     )
-    server_id = db.Column(db.String(36), db.ForeignKey('game_server.id'), nullable=False)
+    server_id = db.Column(db.String(36), db.ForeignKey('game_server_model.id'), nullable=False)
     command = db.Column(db.String(150))
     comment = db.Column(db.String(150))
     schedule = db.Column(db.String(150))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
     # Relationship to access the GameServer directly
-    game_server = db.relationship('GameServer', backref='jobs')
+    game_server = db.relationship('GameServerModel', backref='cron_model')
 
     def __repr__(self):
         return f"<CronModel(id={self.id}, server_id='{self.server_id}', command='{self.command}', comment='{self.comment}', expression='{self.expression}', date_created='{self.date_created}')>"

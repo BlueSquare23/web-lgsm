@@ -10,7 +10,8 @@ from app import db
 # is an early service that's getting the clean arch treatment, so leaving be.
 # But will need cleaned up moving forward!
 from app.config.config_manager import ConfigManager
-from app.models import GameServer
+#from app.models import GameServer
+from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 
 from app.domain.entities.job import Job
 from app.services.proc_info.proc_info_registry import ProcInfoRegistry
@@ -87,7 +88,9 @@ class CronScheduler:
         # keeping this as is. I don't think its terrible because it is going from
         # infra -> infra layer. But ideally no db stuff should be happening in
         # this class! Will get there as I refactor more.
-        server = GameServer.query.filter_by(id=server_id).first()
+#        server = GameServer.query.filter_by(id=server_id).first()
+        repo = SqlAlchemyGameServerRepository()
+        server = repo.get(server_id)
 
         cmd_id = 'list_jobs'
         cmd = [PATHS['crontab'], '-l']

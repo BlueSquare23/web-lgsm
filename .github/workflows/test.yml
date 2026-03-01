@@ -51,24 +51,24 @@ jobs:
           RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --stop  # I don't want to run tests rn
 #          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test_full
 #          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
-
-      - name: Generate coverage report
-        run: |
-          /opt/web-lgsm/bin/coverage html
-          /opt/web-lgsm/bin/coverage xml
-          
-      - name: Upload coverage report as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report-${{ matrix.python-version }}
-          path: htmlcov
-
-      - name: Generate coverage badge
-        run: |
-          /opt/web-lgsm/bin/genbadge coverage -i coverage.xml
-
-      - name: Upload badge
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-badge-${{ matrix.python-version }}
-          path: coverage-badge.svg
+#
+#      - name: Generate coverage report
+#        run: |
+#          /opt/web-lgsm/bin/coverage html
+#          /opt/web-lgsm/bin/coverage xml
+#          
+#      - name: Upload coverage report as artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: coverage-report-${{ matrix.python-version }}
+#          path: htmlcov
+#
+#      - name: Generate coverage badge
+#        run: |
+#          /opt/web-lgsm/bin/genbadge coverage -i coverage.xml
+#
+#      - name: Upload badge
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: coverage-badge-${{ matrix.python-version }}
+#          path: coverage-badge.svg

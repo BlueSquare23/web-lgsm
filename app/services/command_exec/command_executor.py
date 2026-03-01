@@ -2,7 +2,7 @@ import getpass
 from .local_command_executor import LocalCommandExecutor
 from .remote_command_executor import SshCommandExecutor
 from app.utils.paths import PATHS
-from app.models import GameServer
+#from app.models import GameServer
 
 class CommandExecutor:
     """Service for command execution with dependency injection."""
@@ -62,7 +62,8 @@ class CommandExecutor:
             executor = self.get_local_executor()
             return executor.run(**args)
 
-        assert isinstance(server, GameServer), "server is not an instance of GameServer"
+# TODO: Update this
+#        assert isinstance(server, GameServer), "server is not an instance of GameServer"
         executor = self.get_executor(server.install_type)
         if server.install_type == 'remote':
             args["server"] = server

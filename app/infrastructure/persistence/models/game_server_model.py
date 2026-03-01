@@ -2,7 +2,7 @@ import uuid
 
 from app import db
 
-class GameServer(db.Model):
+class GameServerModel(db.Model):
     # Use UUIDs for game server IDs.
     id = db.Column(
         db.String(36),

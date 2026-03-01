@@ -9,7 +9,7 @@ from flask import (
 )
 
 from app.utils import *
-from app.models import GameServer
+#from app.models import GameServer
 from app.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
 from app.managers import FileManager
 from app.services import UserModuleService
@@ -52,7 +52,8 @@ def edit():
 
             server_id = download_form.server_id.data
             cfg_path = download_form.cfg_path.data
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServer.query.filter_by(id=server_id).first()
+            server = container.get_game_server().execute(server_id)
             file_manager = FileManager(server, UserModuleService())
 
             container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', downloaded config '{cfg_path}'")
@@ -66,7 +67,8 @@ def edit():
 
         server_id = select_form.server_id.data
         cfg_path = select_form.cfg_path.data
-        server = GameServer.query.filter_by(id=server_id).first()
+#        server = GameServer.query.filter_by(id=server_id).first()
+        server = container.get_game_server().execute(server_id)
 
         current_app.logger.info(log_wrap("server_id", server_id))
         current_app.logger.info(log_wrap("cfg_path", cfg_path))
@@ -100,7 +102,8 @@ def edit():
     server_id = upload_form.server_id.data
     cfg_path = upload_form.cfg_path.data
     new_file_contents = upload_form.file_contents.data
-    server = GameServer.query.filter_by(id=server_id).first()
+#    server = GameServer.query.filter_by(id=server_id).first()
+    server = container.get_game_server().execute(server_id)
     file_manager = FileManager(server, UserModuleService())
 
     if file_manager.write_file(cfg_path, new_file_contents):

@@ -16,7 +16,7 @@ from flask import (
 
 from app import db
 from app.utils import *
-from app.models import GameServer
+#from app.models import GameServer
 from app.services import ProcInfoRegistry
 from app.forms.views import AddForm
 
@@ -68,7 +68,8 @@ def install():
         server_id = request.args.get("server_id")
         cancel = request.args.get("cancel")
         if server_id != None and cancel == "true":
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServer.query.filter_by(id=server_id).first()
+            server = container.get_game_server().execute(server_id)
             if server == None:
                 flash(
                     "Problem canceling installation! Game server id not found.",
@@ -97,7 +98,8 @@ def install():
 
         # For displaying Installing ServerName...
         if server_id != None:
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServer.query.filter_by(id=server_id).first()
+            server = container.get_game_server().execute(server_id)
             if server == None:
                 flash(
                     "Can't get details for server.",
@@ -141,9 +143,9 @@ def install():
     # Just to be doubly sure.
     install_name = install_name.replace(" ", "_")
     install_name = install_name.replace(":", "")
-
     
-    db_details = {
+    game_server = {
+        "id": None,
         "install_name": install_name,
         "install_path": install_path,
         "install_type": install_type,
@@ -151,27 +153,35 @@ def install():
         "username": username
     }
 
-    install_exists = GameServer.query.filter_by(**db_details).first()
+# TODO: Think about rewriting query usecase to support being used in this way.
+# Because I like this but currently query_game_server only accepts one key value pair.
+#    install_exists = GameServer.query.filter_by(**db_details).first()
 
-    current_app.logger.debug(log_wrap('install_exists', install_exists))
+#    current_app.logger.debug(log_wrap('install_exists', install_exists))
 
-    if install_exists:
-        flash("An installation with those details already exits.", category="error")
+#    if install_exists:
+#        flash("An installation with those details already exits.", category="error")
+#        return redirect(url_for("main.install"))
+
+    # Add server to DB.
+    server_id = container.edit_game_server().execute(**game_server)
+    if not server_id:
+        flash("Problem adding installation details to database", category="error")
         return redirect(url_for("main.install"))
 
-    server = GameServer(**db_details)
-    server.is_container = False
-    server.install_host = "127.0.0.1"
-    server.install_finished = False
-    server.keyfile_path = ""
-
-    current_app.logger.info(log_wrap("server", server))
-
-    # Add the install to the database.
-    db.session.add(server)
-    db.session.commit()
-
-    server_id = GameServer.query.filter_by(**db_details).first().id
+#    server = GameServer(**db_details)
+#    server.is_container = False
+#    server.install_host = "127.0.0.1"
+#    server.install_finished = False
+#    server.keyfile_path = ""
+#
+#    current_app.logger.info(log_wrap("server", server))
+#
+#    # Add the install to the database.
+#    db.session.add(server)
+#    db.session.commit()
+#
+#    server_id = GameServer.query.filter_by(**db_details).first().id
 
     current_app.logger.info(log_wrap("server_id", server_id))
 
@@ -198,7 +208,7 @@ def install():
 
     install_daemon = Thread(
         target=command_service.run_command,
-        args=(cmd, None, server.id, current_app.app_context()),
+        args=(cmd, None, server_id, current_app.app_context()),
         daemon=True,
         name=f"web_lgsm_install_{server_id}",
     )
@@ -212,7 +222,7 @@ def install():
     )
     clear_daemon.start()
 
-    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', installed game server '{server.install_name}'")
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', installed game server '{install_name}'")
 
     return render_template(
         "install.html",

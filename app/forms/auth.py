@@ -25,7 +25,6 @@ from wtforms import (
     SelectMultipleField,
 )
 
-from app.models import GameServer
 from .helpers import ValidateOTPCode
 
 from app.container import container
@@ -54,7 +53,8 @@ class ServerExists:
         self.message = message
 
     def __call__(self, form, field):
-        server = GameServer.query.filter_by(id=field.data).first()
+#        server = GameServer.query.filter_by(id=field.data).first()
+        server = container.get_game_server().execute(field.data)
         if server is None:
             raise ValidationError(self.message)
 

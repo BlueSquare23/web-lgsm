@@ -394,7 +394,7 @@ https://icons.getbootstrap.com/
     CmdService stuff. But we'll clean that up in time and update the infra
     accordingly.
 
-* [ ] **Redo User as clean arch**
+* [x] **Redo User as clean arch**
   - Building from the middle outward!
   - Domain Layer
     - [x] We need a `User` domain entity.
@@ -417,7 +417,7 @@ https://icons.getbootstrap.com/
     - [x] We need to wire it all through the `container.py`
   - Interface Layer
     - [x] We need to replace the calls in route code to use new usecases instead of direct DB access.
-  - [x] **Figure out how to get auth stuff into app now.
+  - [x] **Figure out how to get auth stuff into app now.**
     - I'm kinda dumb. I just refactored all this only to realize after the fact
       that I cant use the domain entity User object for auth stuff cause its
       missing all the auth stuff that comes with sqlalchmey and usermixin.
@@ -431,22 +431,28 @@ https://icons.getbootstrap.com/
         translating that from route code into domain entity reprsentation of a
         user.
 
-* [ ] **Eventually figure out cleaner pattern(s) for container stuff**
-  - Right now container is easy and since what I'm mainly worried about is
-    refactoring the app code, then a conatiner with same interface for
-    accessing all usecases is fine right now.
-  - But I know it could be made a little bit more cleaver and usable.
-  - Probably could have some factory stuff producing the needful.
-
 * [ ] **Redo GameServer as clean arch**
-  - This is going to be a lot...
-  - Most of the apps usecases are tied to GameServer in some way
+  - We need:
+  - [x] **Domain Entity**
+  - [x] **Domain Repository Port**
+  - [x] **Application Usecases**
+  - [x] **Infrastructure Repository Adapter**
+  - [ ] **Infrastructure System Adapter(s)**
+  - [x] **Container Wiring**
+  - [x] **Interface Route Code**
 
 * [ ] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
   - Aka convert existing route code db calls into clean arch.
   - Right now I still have the classic OG problem of the route code doing too much.
   - Basically, a ton of the current routecode sorta things can happen in application/usecases
   - This will thin out the routes and make the connection to the DB clean arch.
+
+* [ ] **Eventually figure out cleaner pattern(s) for container stuff**
+  - Right now container is easy and since what I'm mainly worried about is
+    refactoring the app code, then a conatiner with same interface for
+    accessing all usecases is fine right now.
+  - But I know it could be made a little bit more cleaver and usable.
+  - Probably could have some factory stuff producing the needful.
 
 * [ ] **Reorganize blueprints & other interface layer stuff into app/interface dir**
   - This will be easier to do after other stuff is cleaned up because then

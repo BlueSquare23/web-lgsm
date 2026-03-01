@@ -28,6 +28,13 @@ from app.application.use_cases.user.delete_user import DeleteUser
 from app.application.use_cases.user.get_user_totp_uri import GetUserTotpUri
 from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
 
+# GameServer
+from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
+from app.application.use_cases.game_server.list_game_servers import ListGameServers
+from app.application.use_cases.game_server.get_game_server import GetGameServer
+from app.application.use_cases.game_server.query_game_server import QueryGameServer
+from app.application.use_cases.game_server.edit_game_server import EditGameServer
+from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
 
 class Container:
 
@@ -41,6 +48,9 @@ class Container:
 
     def user_repository(self):
         return SqlAlchemyUserRepository()
+
+    def game_server_repository(self):
+        return SqlAlchemyGameServerRepository()
 
 
     # ---- System Interfaces ----
@@ -130,6 +140,32 @@ class Container:
             user_repository=self.user_repository(),
         )
 
+    ## GameServer
+
+    def list_game_servers(self):
+        return ListGameServers(
+            game_server_repository=self.game_server_repository(),
+        )
+
+    def get_game_server(self):
+        return GetGameServer(
+            game_server_repository=self.game_server_repository(),
+        )
+
+    def query_game_server(self):
+        return QueryGameServer(
+            game_server_repository=self.game_server_repository(),
+        )
+
+    def edit_game_server(self):
+        return EditGameServer(
+            game_server_repository=self.game_server_repository(),
+        )
+
+    def delete_game_server(self):
+        return DeleteGameServer(
+            game_server_repository=self.game_server_repository(),
+        )
 
 # One global container instance to rule them all!
 container = Container()

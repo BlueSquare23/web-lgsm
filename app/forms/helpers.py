@@ -2,9 +2,10 @@
 
 import os
 import json
-from app.models import GameServer
 
 from wtforms.validators import ValidationError
+
+from app.container import container
 
 # Only open read in the accepted_cfgs.json at app startup (is static).
 with open("json/accepted_cfgs.json", "r") as gs_cfgs:
@@ -18,7 +19,8 @@ class ServerExists:
         self.message = message
 
     def __call__(self, form, field):
-        server = GameServer.query.filter_by(id=field.data).first()
+#        server = GameServer.query.filter_by(id=field.data).first()
+        server = container.get_game_server().execute(field.data)
         if server is None:
             raise ValidationError(self.message)
 

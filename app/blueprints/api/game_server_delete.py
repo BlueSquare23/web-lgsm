@@ -6,7 +6,7 @@ from flask_restful import Resource
 
 from app import db
 from app.utils import *
-from app.models import GameServer
+#from app.models import GameServer
 from app.services import ProcInfoRegistry
 from app.config.config_manager import ConfigManager
 
@@ -22,7 +22,8 @@ class GameServerDelete(Resource):
     @login_required
     def delete(self, server_id):
         global config
-        server = GameServer.query.filter_by(id=server_id).first()
+#        server = GameServer.query.filter_by(id=server_id).first()
+        server = container.get_game_server().execute(server_id)
         if server == None:
             resp_dict = {"Error": "Server not found!"}
             response = Response(

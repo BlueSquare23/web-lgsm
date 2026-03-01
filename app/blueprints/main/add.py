@@ -13,7 +13,6 @@ from flask import (
 
 from app import db
 from app.utils import *
-from app.models import GameServer
 from app.forms.views import ValidateID, AddForm
 from app.services import SudoersService
 from app.container import container
@@ -35,7 +34,7 @@ def add():
 
     server_json = None
     status_code = 200
-    game_servers = GameServer.query.all()
+    game_servers = container.list_game_servers().execute()
     form = AddForm()
 
     if request.method == "GET":
@@ -48,9 +47,10 @@ def add():
                 return redirect(url_for("main.home"))
 
             server_id = request.args.get("server_id")
-            server = GameServer.query.filter_by(id=server_id).first()
+#            server = GameServer.query.filter_by(id=server_id).first()
+            server = container.get_game_server().execute(server_id)
             server = server.__dict__
-            del(server["_sa_instance_state"])
+#            del(server["_sa_instance_state"])
             server_json = json.dumps(server)
             current_app.logger.info(log_wrap("server_json", server_json))
 
@@ -68,26 +68,34 @@ def add():
         return redirect(url_for("main.add"))
 
     # Process form submissions.
-    server_id = form.server_id.data
-    install_name = form.install_name.data
-    install_path = form.install_path.data
-    script_name = form.script_name.data
+
+#    if server_id == '' or server_id == None:
+#        new_server = True
+#        server = GameServer()
+#    else:
+#        new_server = False
+#        server = GameServer.query.filter_by(id=server_id).first()
+
+    # Set default form username if none provided.
     username = form.username.data
-    install_type = form.install_type.data
-    install_host = form.install_host.data
-
-    if server_id == '' or server_id == None:
-        new_server = True
-        server = GameServer()
-    else:
-        new_server = False
-        server = GameServer.query.filter_by(id=server_id).first()
-
-    server.install_finished = True  # All server adds/edits are auto marked finished.
-
-    # Set default user if none provided.
-    if username == None or username == "":
+    if not username:
         username = USER
+
+    server = {
+        'server_id': form.server_id.data,
+        'install_name': form.install_name.data,
+        'install_path': form.install_path.data,
+        'script_name': form.script_name.data,
+        'username': username,
+        'install_type': form.install_type.data,
+        'install_host': form.install_host.data,
+        'install_finished': True,  # All server adds/edits are auto marked finished.
+    }
+
+    # Does the server already exist?
+    new_server = True
+    if container.get_game_server().execute(server['server_id']):
+        new_server = False
 
     # Log & set GameServer obj vars after most of the validation is done.
     current_app.logger.info(log_wrap("server_id", server_id))
@@ -98,14 +106,8 @@ def add():
     current_app.logger.info(log_wrap("install_type", install_type))
     current_app.logger.info(log_wrap("install_host", install_host))
 
-    server.install_name = install_name
-    server.install_path = install_path
-    server.script_name = script_name
-    server.username = username
-    server.install_type = install_type
-
-    if install_type == "remote":
-        if install_host == None or install_host == "":
+    if server['install_type'] == 'remote':
+        if not server['install_host']: 
             flash("Missing required form field(s)!", category="error")
             return render_template("add.html",
                     user=current_user,
@@ -114,7 +116,7 @@ def add():
                     form=form
                 ), 400
 
-        if not is_ssh_accessible(install_host):
+        if not is_ssh_accessible(server['install_host']):
             flash("Server does not appear to be SSH accessible!", category="error")
             return render_template("add.html",
                     user=current_user,
@@ -123,18 +125,14 @@ def add():
                     form=form
                 ), 400
 
-        server.install_type = "remote"
-        server.install_host = install_host
+    if server['install_type'] == 'local':
+        server['install_host'] = '127.0.0.1'
 
-    if install_type == "local":
-        server.install_type = "local"
-        server.install_host = "127.0.0.1"
-
-        if get_uid(username) == None:
+        if get_uid(server['username']) == None:
             flash("User not found on system!", category="error")
             return redirect(url_for("main.add"))
 
-    if install_type == "docker" and new_server:
+    if server['install_type'] == 'docker' and new_server:
         flash(
             f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
         )
@@ -155,20 +153,23 @@ def add():
 #            f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
 #        )
 
-    if new_server:
-        db.session.add(server)
 
-    db.session.commit()
+    container.edit_game_server().execute(**server)
 
-    db_details = {
-        "install_name": install_name,
-        "install_path": install_path,
-        "install_type": install_type,
-        "script_name": script_name,
-        "username": username
-    }
-
-    server = GameServer.query.filter_by(install_name=install_name).first()
+#    if new_server:
+#        db.session.add(server)
+#
+#    db.session.commit()
+#
+#    db_details = {
+#        "install_name": install_name,
+#        "install_path": install_path,
+#        "install_type": install_type,
+#        "script_name": script_name,
+#        "username": username
+#    }
+#
+#    server = GameServer.query.filter_by(install_name=install_name).first()
 
     # Update web user's permissions to give access to new game server after adding it.
     if current_user.role != "admin":
@@ -179,10 +180,11 @@ def add():
         current_app.logger.info(
             log_wrap("Updated User Permissions:", user_ident.permissions)
         )
+        # TODO: Clean this up I don't like passing from current user cause its an sql alch model. Also does this even work?
         container.edit_user.execute(**current_user.__dict__)
 
     # Auto add sudoers rule for server.
-    if install_type == 'local' and username != USER:
+    if server['install_type'] == 'local' and server['username'] != USER:
         sudoers_service = SudoersService(username)
         if not sudoers_service.has_access():
             if not sudoers_service.add_user():

@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-from app.models import GameServer
+#from app.models import GameServer
 
 from app.services import ServerPowerState
 
@@ -18,7 +18,8 @@ from app.container import container
 class ServerStatus(Resource):
     @login_required
     def get(self, server_id):
-        server = GameServer.query.filter_by(id=server_id).first()
+#        server = GameServer.query.filter_by(id=server_id).first()
+        server = container.get_game_server().execute(server_id)
         if server == None:
             resp_dict = {"Error": "Invalid id"}
             response = Response(

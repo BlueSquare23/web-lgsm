@@ -26,7 +26,7 @@ APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT
 # Import db classes from app.
 sys.path.append(APP_PATH)
 from app import db
-from app.models import GameServer
+from app.infrastructure.persistence.models.game_server_model import GameServerModel
 from app.infrastructure.persistence.models.cron_model import CronModel
 
 # Global options hash.
@@ -52,16 +52,16 @@ def print_help(msg=None):
     exit()
 
 
-def db_fetch(item_id, item_type='GameServer'):
+def db_fetch(item_id, item_type='GameServerModel'):
     """
-    Connects to app's DB and returns either GameServer or CronModel object that
+    Connects to app's DB and returns either GameServerModel or CronModel object that
     matches item_id.
 
     Args:
-        item_id (str): Id of GameServer|CronModel obj to fetch.
-        item_type (str): Type of object to fetch. Either GameServer or CronModel.
+        item_id (str): Id of GameServerModel|CronModel obj to fetch.
+        item_type (str): Type of object to fetch. Either GameServerModel or CronModel.
     Returns:
-        GameServer|CronModel: GameServer or CronModel object matching ID.
+        GameServerModel|CronModel: GameServerModel or CronModel object matching ID.
     """
     engine = create_engine('sqlite:///app/database.db')
     
@@ -71,7 +71,7 @@ def db_fetch(item_id, item_type='GameServer'):
         if item_type == 'CronModel':
             item = session.get(CronModel, item_id)
         else:
-            item = session.get(GameServer, item_id)
+            item = session.get(GameServerModel, item_id)
 
         if item == None:
             print("Error: No server with ID found.")
@@ -143,7 +143,7 @@ def mark_install_failed(server_id):
     # Can't use app context in ansible connector.
     engine = create_engine('sqlite:///app/database.db')
     with Session(engine) as session:
-        server = session.get(GameServer, server_id)
+        server = session.get(GameServerModel, server_id)
         server.install_finished = True
         server.install_failed = True
         session.commit()
@@ -181,7 +181,7 @@ def run_install_new_game_server(server_id):
     Wraps the invocation of the install_new_game_server.yml playbook
 
     Args:
-        server_id (uuid): Id of GameServer to install.
+        server_id (uuid): Id of GameServerModel to install.
     """
     server = db_fetch(server_id)
 
@@ -243,7 +243,7 @@ def run_install_new_game_server(server_id):
     # Can't use app context in ansible connector.
     engine = create_engine('sqlite:///app/database.db')
     with Session(engine) as session:
-        server = session.get(GameServer, server_id)
+        server = session.get(GameServerModel, server_id)
         server.install_finished = True
         server.install_failed = False
         session.commit()

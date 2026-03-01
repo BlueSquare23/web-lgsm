@@ -14,7 +14,6 @@ from flask import (
     current_app,
 )
 
-from app import db
 from app.utils import *
 #from app.models import GameServer
 from app.services import ProcInfoRegistry
@@ -145,7 +144,6 @@ def install():
     install_name = install_name.replace(":", "")
     
     game_server = {
-        "id": None,
         "install_name": install_name,
         "install_path": install_path,
         "install_type": install_type,
@@ -153,15 +151,11 @@ def install():
         "username": username
     }
 
-# TODO: Think about rewriting query usecase to support being used in this way.
-# Because I like this but currently query_game_server only accepts one key value pair.
-#    install_exists = GameServer.query.filter_by(**db_details).first()
-
-#    current_app.logger.debug(log_wrap('install_exists', install_exists))
-
-#    if install_exists:
-#        flash("An installation with those details already exits.", category="error")
-#        return redirect(url_for("main.install"))
+    # If install already exists.
+    if container.query_game_server().execute(**game_server):
+        current_app.logger.debug(log_wrap('Install Already Exists!', game_server))
+        flash("An installation with those details already exits!", category="error")
+        return redirect(url_for("main.install"))
 
     # Add server to DB.
     server_id = container.edit_game_server().execute(**game_server)
@@ -169,29 +163,10 @@ def install():
         flash("Problem adding installation details to database", category="error")
         return redirect(url_for("main.install"))
 
-#    server = GameServer(**db_details)
-#    server.is_container = False
-#    server.install_host = "127.0.0.1"
-#    server.install_finished = False
-#    server.keyfile_path = ""
-#
-#    current_app.logger.info(log_wrap("server", server))
-#
-#    # Add the install to the database.
-#    db.session.add(server)
-#    db.session.commit()
-#
-#    server_id = GameServer.query.filter_by(**db_details).first().id
-
     current_app.logger.info(log_wrap("server_id", server_id))
 
     # Update web user's permissions to give access to new game server post install.
     if current_user.role != "admin":
-#        user_ident = User.query.filter_by(username=current_user.username).first()
-#        user_perms = json.loads(user_ident.permissions)
-#        user_perms["server_ids"].append(server_id)
-#        user_ident.permissions = json.dumps(user_perms)
-#        db.session.commit()
         user_perms = json.loads(current_user.permissions)
         user_perms["server_ids"].append(server_id)
         current_user.permissions = json.dumps(user_perms)

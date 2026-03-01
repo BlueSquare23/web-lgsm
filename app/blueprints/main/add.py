@@ -11,7 +11,6 @@ from flask import (
     current_app,
 )
 
-from app import db
 from app.utils import *
 from app.forms.views import ValidateID, AddForm
 from app.services import SudoersService
@@ -47,10 +46,8 @@ def add():
                 return redirect(url_for("main.home"))
 
             server_id = request.args.get("server_id")
-#            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
             server = server.__dict__
-#            del(server["_sa_instance_state"])
             server_json = json.dumps(server)
             current_app.logger.info(log_wrap("server_json", server_json))
 
@@ -67,22 +64,14 @@ def add():
         validation_errors(form)
         return redirect(url_for("main.add"))
 
-    # Process form submissions.
-
-#    if server_id == '' or server_id == None:
-#        new_server = True
-#        server = GameServer()
-#    else:
-#        new_server = False
-#        server = GameServer.query.filter_by(id=server_id).first()
-
     # Set default form username if none provided.
     username = form.username.data
     if not username:
         username = USER
 
+    # Process form submissions.
     server = {
-        'server_id': form.server_id.data,
+        'id': form.server_id.data,
         'install_name': form.install_name.data,
         'install_path': form.install_path.data,
         'script_name': form.script_name.data,
@@ -94,17 +83,11 @@ def add():
 
     # Does the server already exist?
     new_server = True
-    if container.get_game_server().execute(server['server_id']):
+    if container.get_game_server().execute(server['id']):
         new_server = False
 
     # Log & set GameServer obj vars after most of the validation is done.
-    current_app.logger.info(log_wrap("server_id", server_id))
-    current_app.logger.info(log_wrap("install_name", install_name))
-    current_app.logger.info(log_wrap("install_path", install_path))
-    current_app.logger.info(log_wrap("script_name", script_name))
-    current_app.logger.info(log_wrap("username", username))
-    current_app.logger.info(log_wrap("install_type", install_type))
-    current_app.logger.info(log_wrap("install_host", install_host))
+    current_app.logger.info(log_wrap("server", server))
 
     if server['install_type'] == 'remote':
         if not server['install_host']: 
@@ -140,40 +123,14 @@ def add():
             f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
         )
 
-    # TODO: Change this to use just type remote for flashing message about
-    # creating new key. USE THIS INSTEAD: if server.install_type == "remote":
-# This is going away because will no longer be using ssh to admin local servers.
-#    if should_use_ssh(server) and new_server:
-#        keyfile = get_ssh_key_file(username, server.install_host)
-#        if keyfile == None:
-#            flash(f"Problem generating new ssh keys!", category="error")
-#            return redirect(url_for("main.add"))
-#
-#        flash(
-#            f"Add this public key: {keyfile}.pub to the remote server's ~{username}/.ssh/authorized_keys file!"
-#        )
-
+    # TODO: For remote installs, generate an SSH key as part of add step.
+    # Should probably even make form take existing SSH key file path as arg for
+    # remote installs.
 
     container.edit_game_server().execute(**server)
 
-#    if new_server:
-#        db.session.add(server)
-#
-#    db.session.commit()
-#
-#    db_details = {
-#        "install_name": install_name,
-#        "install_path": install_path,
-#        "install_type": install_type,
-#        "script_name": script_name,
-#        "username": username
-#    }
-#
-#    server = GameServer.query.filter_by(install_name=install_name).first()
-
     # Update web user's permissions to give access to new game server after adding it.
     if current_user.role != "admin":
-#        user_ident = User.query.filter_by(username=current_user.username).first()
         user_perms = json.loads(current_user.permissions)
         user_perms["server_ids"].append(server.id)
         current_user.permissions = json.dumps(user_perms)
@@ -191,7 +148,7 @@ def add():
                 flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{username}\n{USER} ALL=({username}) NOPASSWD: ALL")
 
     flash("Game server added!")
-    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', added game server '{install_name}' with server_id {server.id}")
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', added game server '{server['install_name']}' with server_id {server['id']}")
     return redirect(url_for("main.home"))
 
 

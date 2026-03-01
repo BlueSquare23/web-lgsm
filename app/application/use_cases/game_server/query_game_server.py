@@ -6,6 +6,6 @@ class QueryGameServer:
     def __init__(self, game_server_repository):
         self.game_server_repository = game_server_repository
 
-    def execute(self, key, value):
-        return self.game_server_repository.query(key, value)
+    def execute(self, **kwargs):
+        return self.game_server_repository.query(**kwargs)
 

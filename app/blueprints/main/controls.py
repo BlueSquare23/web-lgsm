@@ -43,8 +43,7 @@ def controls():
         server_name = request.args.get("server")
         if server_name:
             current_app.logger.info(log_wrap("server_name", server_name))
-#            server = GameServer.query.filter_by(install_name=server_name).first()
-            server = container.query_game_server().execute('install_name', server_name)
+            server = container.query_game_server().execute({'install_name': server_name})
             current_app.logger.info(log_wrap("server", server))
             if server == None:
                 flash("Invalid game server name!", category="error")
@@ -59,7 +58,6 @@ def controls():
             return redirect(url_for("main.home"))
 
         server_id = request.args.get("server_id")
-#        server = GameServer.query.filter_by(id=server_id).first()
         server = container.get_game_server().execute(server_id)
         current_app.logger.info(log_wrap("server_id", server_id))
         jobs_edit = True if server.install_type == 'local' else False
@@ -147,7 +145,6 @@ def controls():
         flash("Invalid form submission!", category="error")
         return redirect(url_for("main.controls", server_id=server_id))
 
-#    server = GameServer.query.filter_by(id=server_id).first()
     server = container.get_game_server().execute(server_id)
     current_app.logger.info(log_wrap("server_id", server_id))
 

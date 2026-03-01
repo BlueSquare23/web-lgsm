@@ -431,17 +431,19 @@ https://icons.getbootstrap.com/
         translating that from route code into domain entity reprsentation of a
         user.
 
-* [ ] **Redo GameServer as clean arch**
+* [x] **Redo GameServer as clean arch**
   - We need:
   - [x] **Domain Entity**
   - [x] **Domain Repository Port**
   - [x] **Application Usecases**
-  - [x] **Infrastructure Repository Adapter**
+  - [x] **Infrastructure SqlAlch Repository Adapter**
   - [ ] **Infrastructure System Adapter(s)**
+    - We need these for install and delete. Will need some additional use cases to go along with them.
+    - Just a thin layer for interacting with ansi connector using domain object.
   - [x] **Container Wiring**
   - [x] **Interface Route Code**
 
-* [ ] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
+* [x] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
   - Aka convert existing route code db calls into clean arch.
   - Right now I still have the classic OG problem of the route code doing too much.
   - Basically, a ton of the current routecode sorta things can happen in application/usecases

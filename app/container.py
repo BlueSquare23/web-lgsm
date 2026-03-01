@@ -30,6 +30,7 @@ from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
 
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
+from app.infrastructure.system.game_server.game_server_manager import GameServerManager
 from app.application.use_cases.game_server.list_game_servers import ListGameServers
 from app.application.use_cases.game_server.get_game_server import GetGameServer
 from app.application.use_cases.game_server.query_game_server import QueryGameServer
@@ -58,6 +59,8 @@ class Container:
     def cron_scheduler(self):
         return CronScheduler()
 
+    def game_server_manager(self):
+        return GameServerManager()
 
     # ---- Use Cases ----
 
@@ -165,6 +168,7 @@ class Container:
     def delete_game_server(self):
         return DeleteGameServer(
             game_server_repository=self.game_server_repository(),
+            game_server_manager=self.game_server_manager(),
         )
 
 # One global container instance to rule them all!

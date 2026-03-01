@@ -1,4 +1,5 @@
 import os
+import uuid
 import json
 import base64
 import onetimepass
@@ -11,6 +12,9 @@ from app import db
 class SqlAlchemyGameServerRepository(GameServerRepository):
 
     def add(self, game_server):
+        if not game_server.id:
+            game_server.id = str(uuid.uuid4())
+
         model = GameServerModel(
             id = game_server.id,
             install_name = game_server.install_name,
@@ -69,9 +73,9 @@ class SqlAlchemyGameServerRepository(GameServerRepository):
         return game_server
 
 
-    def query(self, key, value):
+    def query(self, **kwargs):
         """Get GameServer entity by key value"""
-        model = GameServerModel.query.filter_by(**{key: value}).first()
+        model = GameServerModel.query.filter_by(**kwargs).first()
 
         if model == None:
             return None

@@ -11,6 +11,9 @@ from app import db
 class SqlAlchemyUserRepository(UserRepository):
 
     def add(self, user):
+        if not user.otp_secret:
+            user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
+
         model = UserModel(
             id = user.id,
             username = user.username,

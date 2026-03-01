@@ -44,8 +44,3 @@ class GameServerModel(db.Model):
             + f"Type: {self.install_type}, Host: {self.install_host}, Finished: {self.install_finished}, Keyfile Path: {self.keyfile_path})"
         )
 
-    def delete(self):
-        """Removes the GameServer entry from the database."""
-        db.session.delete(self)
-        db.session.commit()
-

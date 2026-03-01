@@ -69,7 +69,9 @@ class GameServerDelete(Resource):
         current_app.logger.info(log_wrap("All processes", ProcInfoRegistry().get_all_processes()))
 
         # TODO: Refactor this now that config handling has been changed.
-        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
+#        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
+
+        if not container.delete_game_server().execute(server.id, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
             resp_dict = {
                 "Error": "Problem deleting server, see error logs for more details."
             }

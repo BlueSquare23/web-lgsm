@@ -6,7 +6,6 @@ from io import BytesIO
 from flask_login import login_required, current_user
 from flask import render_template, redirect, url_for, request, flash
 
-from app import db
 from app.forms.auth import OTPSetupForm
 from app.utils import validation_errors
 from app.container import container
@@ -21,15 +20,6 @@ from . import auth_bp
 @auth_bp.route("/2fa_setup", methods=["GET", "POST"])
 @login_required
 def two_factor_setup():
-
-# Not sure what to do with this yet. Might just remove it. 2fa is still pretty
-# new. But theoretically, if they've upgraded and clicked this page before
-# they'll have a key. I think maybe I should get rid of this here and just
-# ensure the user does have a key in a lower layer.
-#    # Setup otp_secret if doesn't already exist (for legacy user compat).
-#    if user.otp_secret is None:
-#        user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
-#        db.session.commit()
 
     user = container.to_user().execute(current_user)
     form = OTPSetupForm()

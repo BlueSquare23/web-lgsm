@@ -87,8 +87,7 @@ def edit_users():
                 )
                 return redirect(url_for("auth.edit_users"))
 
-            db.session.delete(user_ident)
-            db.session.commit()
+            container.delete_user().execute(user_ident.id)
             container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
             flash(f"User {selected_user} deleted!")
             return redirect(url_for("auth.edit_users"))
@@ -229,8 +228,6 @@ def edit_users():
         }
 
         container.edit_user().execute(**new_user)
-#        db.session.add(new_user)
-#        db.session.commit()
 
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
@@ -244,7 +241,6 @@ def edit_users():
         user_ident.password = generate_password_hash(password1, method="pbkdf2:sha256")
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
-#        db.session.commit()
         container.edit_user().execute(**user_ident.__dict__)
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
@@ -257,7 +253,6 @@ def edit_users():
     user_ident.role = role
     user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
-#    db.session.commit()
     container.edit_user().execute(**user_ident.__dict__)
     container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")

@@ -13,7 +13,6 @@ from flask import (
     flash,
 )
 
-from app import db
 from app.forms.auth import SetupForm
 from app.utils import validation_errors
 from app.container import container
@@ -53,9 +52,6 @@ def setup():
         'permissions': json.dumps({"admin": True}),
         'otp_enabled': enable_otp,
     }
-#    db.session.add(new_user)
-#    db.session.commit()
-#    db.session.refresh(new_user)
     container.update_user().execute(**new_user)
 
     flash("User created!")

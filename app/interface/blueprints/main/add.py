@@ -12,7 +12,7 @@ from flask import (
 )
 
 from app.utils import *
-from app.forms.views import ValidateID, AddForm
+from app.interface.forms.views import ValidateID, AddForm
 from app.services import SudoersService
 from app.container import container
 

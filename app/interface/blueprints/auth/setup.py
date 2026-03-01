@@ -13,7 +13,7 @@ from flask import (
     flash,
 )
 
-from app.forms.auth import SetupForm
+from app.interface.forms.auth import SetupForm
 from app.utils import validation_errors
 from app.container import container
 

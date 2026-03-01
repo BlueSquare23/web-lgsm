@@ -17,7 +17,7 @@ from flask import (
 from app.utils import *
 #from app.models import GameServer
 from app.services import ProcInfoRegistry
-from app.forms.views import AddForm
+from app.interface.forms.views import AddForm
 
 # Constants.
 CWD = os.getcwd()

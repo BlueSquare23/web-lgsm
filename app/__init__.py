@@ -89,9 +89,9 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register blueprints with the app"""
-    from .blueprints.main import main_bp
-    from .blueprints.auth import auth_bp
-    from .blueprints.api import api_bp
+    from .interface.blueprints.main import main_bp
+    from .interface.blueprints.auth import auth_bp
+    from .interface.blueprints.api import api_bp
 
     app.register_blueprint(main_bp, url_prefix="/")
     app.register_blueprint(auth_bp, url_prefix="/")
@@ -145,7 +145,7 @@ def create_app():
     setup_logging()
 
     # Initialize app
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="interface/templates", static_folder='interface/static')
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

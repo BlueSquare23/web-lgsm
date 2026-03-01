@@ -10,7 +10,7 @@ from flask import (
 )
 
 from app.utils import *
-from app.forms.views import SettingsForm
+from app.interface.forms.views import SettingsForm
 
 from app.config.config_manager import ConfigManager
 from app.services import CommandExecutor

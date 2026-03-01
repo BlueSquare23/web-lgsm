@@ -16,7 +16,7 @@ from flask import (
     current_app,
 )
 
-from app.forms.auth import LoginForm 
+from app.interface.forms.auth import LoginForm 
 from app.utils import validation_errors
 from app.services import Blocklist
 from app.container import container

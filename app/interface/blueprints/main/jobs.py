@@ -11,7 +11,7 @@ from flask import (
 )
 
 from app.utils import *
-from app.forms.views import ValidateID, JobsForm
+from app.interface.forms.views import ValidateID, JobsForm
 from app.services import Controls
 
 from app.config.config_manager import ConfigManager

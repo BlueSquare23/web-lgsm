@@ -10,7 +10,7 @@ from flask import (
 
 from app.utils import *
 #from app.models import GameServer
-from app.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
+from app.interface.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
 from app.managers import FileManager
 from app.services import UserModuleService
 

@@ -5,8 +5,6 @@ from .tmux_socket_name_cache import TmuxSocketNameCache
 from .sudoers_service import SudoersService
 
 from .controls.controls import Controls
-from .proc_info.proc_info_registry import ProcInfoRegistry
-from .command_exec.command_executor import CommandExecutor
 
 # Defines import *
-__all__ = ['Controls', 'ProcInfoRegistry', 'CommandExecutor', 'UserModuleService', 'ServerPowerState', 'TmuxSocketNameCache', 'SudoersService']
+__all__ = ['Controls', 'UserModuleService', 'ServerPowerState', 'TmuxSocketNameCache', 'SudoersService']

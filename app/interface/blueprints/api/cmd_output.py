@@ -5,7 +5,6 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-from app.services import ProcInfoRegistry
 
 from . import api
 
@@ -16,7 +15,6 @@ from app.container import container
 class CmdOutput(Resource):
     @login_required
     def get(self, server_id):
-        proc_service = ProcInfoRegistry()
 
         # Can't do anything if we don't have proc info vessel stored.
         if server_id not in proc_service.get_all_processes():
@@ -33,7 +31,8 @@ class CmdOutput(Resource):
             )
             return response
 
-        proc_info = proc_service.get_process(server_id, create=True)
+        proc_info = container.get_process().execute(server.id, create=True)
+
 
         # Returns json for used by ajax code on /controls route.
         response = Response(proc_info.toJSON(), status=200, mimetype="application/json")

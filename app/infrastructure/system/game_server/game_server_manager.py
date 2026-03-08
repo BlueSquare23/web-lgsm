@@ -1,7 +1,9 @@
 import re
 import getpass
 
-from app.services import ProcInfoRegistry, CommandExecutor
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+
+from app.services import  CommandExecutor
 from app.config import ConfigManager
 from app.utils.paths import PATHS
 
@@ -93,7 +95,7 @@ class GameServerManager:
             cmd = [PATHS["rm"], "-rf", server.install_path]
 
             success = CommandExecutor(ConfigManager()).run_command(cmd, server, server.id)
-            proc_info = ProcInfoRegistry().get_process(server.id)
+            proc_info = InMemProcInfoRepository().get(server.id)
 
             # If the ssh connection itself fails return False.
             if not success or proc_info == None:

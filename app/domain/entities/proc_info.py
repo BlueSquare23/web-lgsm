@@ -3,7 +3,7 @@ import json
 class ProcInfo:
     """
     Class used to create objects that hold information about processes launched
-    via the subprocess Popen wrapper.
+    via the subprocess Popen wrapper in infra layer.
     """
 
     def __init__(self):
@@ -27,8 +27,8 @@ class ProcInfo:
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def __str__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+        return f"ProcInfo(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
 
     def __repr__(self):
-        return f"ProcInfoVessel(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
+        return f"ProcInfo(stdout='{self.stdout}', stderr='{self.stderr}', server_id='{self.server_id}', process_lock='{self.process_lock}', pid='{self.pid}', exit_status='{self.exit_status}')"
 

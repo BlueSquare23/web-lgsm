@@ -1,27 +1,23 @@
-from .proc_info import ProcInfo
+from app.domain.entities.proc_info import ProcInfo
+from app.domain.repositories.proc_info_repo import ProcInfoRepository
 
-class ProcInfoRegistry:
+class InMemProcInfoRepository(ProcInfoRepository):
     """
     This singleton is used to access a shared dictionary of proc_info objects,
-    allowing app to share info about the same processes between api and main
-    views/routes.
+    allowing app to share info about the same processes between application layers.
     """
     # Holds ProcInfo objects.
     processes = dict()
 
     def __new__(cls):
         if not hasattr(cls, 'instance'):
-            cls.instance = super(ProcInfoRegistry, cls).__new__(cls)
+            cls.instance = super(InMemProcInfoRepository, cls).__new__(cls)
         return cls.instance
 
-    def get_all_processes(self):
-        """
-        Get'em all
-        """
-        return ProcInfoRegistry.processes
+    def list(self):
+        return InMemProcInfoRepository.processes
 
-
-    def add_process(self, server_id, proc_info):
+    def add(self, server_id, proc_info):
         """
         Adds a new proc_info object to shared dictionary.
 
@@ -33,11 +29,11 @@ class ProcInfoRegistry:
         # Sets server_id for proc_info object automatically since we can.
         proc_info.server_id = server_id
 
-        ProcInfoRegistry.processes[server_id] = proc_info
+        InMemProcInfoRepository.processes[server_id] = proc_info
 
         return proc_info
 
-    def get_process(self, server_id, create=False):
+    def get(self, server_id, create=False):
         """
         Fetches existing proc_info object from dictionary by server_id.
 
@@ -50,15 +46,15 @@ class ProcInfoRegistry:
             proc_info (ProcInfoVessel): Returns proc_info object in dictionary,
             else returns None.
         """
-        if server_id not in list(ProcInfoRegistry.processes.keys()):
+        if server_id not in list(InMemProcInfoRepository.processes.keys()):
             if not create:
                 return None
 
             self.add_process(server_id, proc_info=ProcInfo())
 
-        return ProcInfoRegistry.processes[server_id]
+        return InMemProcInfoRepository.processes[server_id]
 
-    def remove_process(self, server_id):
+    def remove(self, server_id):
         """
         Removes any existing proc_info object from dictionary by server_id.
 
@@ -66,6 +62,6 @@ class ProcInfoRegistry:
             server_id (int): ID in database for GameServer object this process is
                              associated with.
         """
-        if server_id in ProcInfoRegistry.processes:
-            del ProcInfoRegistry.processes[server_id]
+        if server_id in InMemProcInfoRepository.processes:
+            del InMemProcInfoRepository.processes[server_id]
 

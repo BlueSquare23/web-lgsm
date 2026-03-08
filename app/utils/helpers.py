@@ -68,7 +68,8 @@ def cancel_install(pid):
     Returns:
         bool: True if install canceled successfully, False otherwise.
     """
-    from app.services import ProcInfoRegistry, CommandExecutor
+    from app.container import container
+    from app.services import CommandExecutor
 
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of a game server's ID.
@@ -76,7 +77,7 @@ def cancel_install(pid):
 
     cmd_id = 'cancel_install'
     CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
-    proc_info = ProcInfoRegistry().get_process(cmd_id)
+    proc_info = container.get_process.execute(cmd_id)
 
     if proc_info == None:
         return False
@@ -141,8 +142,6 @@ def get_running_installs():
     for thread in threads:
         if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
             server_id = thread.name.replace("web_lgsm_install_", "")
-#            server = GameServerModel.query.filter_by(id=server_id).first()
-
             server = container.get_game_server().execute(server_id)
 
             # Check game server exists.
@@ -261,13 +260,14 @@ def update_self():
              output.
     """
 
-    from app.services import ProcInfoRegistry, CommandExecutor
+    from app.container import container
+    from app.services import CommandExecutor
     update_cmd = ["./web-lgsm.py", "--auto"]
 
     cmd_id = "update_self"
     CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
 
-    proc_info = ProcInfoRegistry().get_process(cmd_id)
+    proc_info = container.get_process().execute(cmd_id)
     if proc_info == None:
         return "Error: Something went wrong checking update status"
 
@@ -345,7 +345,6 @@ def clear_proc_info_post_install(server_id, app_context):
     """
 
     from app.container import container
-    from app.services import ProcInfoRegistry
     # App context needed for logging in threads.
     if app_context:
         app_context.push()
@@ -374,7 +373,7 @@ def clear_proc_info_post_install(server_id, app_context):
             # finished, clear out the old proc_info object.
             if server.install_finished and not server.install_failed:
                 current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
-                ProcInfoRegistry().remove_process(server_id)
+                container.remove_process().execute(server_id)
                 return
 
         time.sleep(5)

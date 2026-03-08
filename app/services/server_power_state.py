@@ -4,8 +4,9 @@ from app.utils.helpers import log_wrap
 
 from app.config import ConfigManager
 
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+
 from .tmux_socket_name_cache import TmuxSocketNameCache
-from .proc_info.proc_info_registry import ProcInfoRegistry
 from .command_exec.command_executor import CommandExecutor
 
 class ServerPowerState:
@@ -33,7 +34,7 @@ class ServerPowerState:
     
         CommandExecutor(ConfigManager()).run_command(cmd, server, cmd_id)
     
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
         current_app.logger.info(log_wrap("proc_info", proc_info))
     
         if proc_info == None:

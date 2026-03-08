@@ -474,6 +474,14 @@ https://icons.getbootstrap.com/
   - [x] Create usecases and wire them up through container.
   - [x] Replace routecode calls to new use cases.
 
+* [x] **Convert ProcInfo to proper domain obj + repo aka use clean arch**
+  - [x] Move `proc_info` object into domain entity. 
+  - [x] Create domain layer repo skel.
+  - [x] Move ProcInfoRegistry into infrastructure layer ProcInfoRepository.
+    - In this case its an in mem repository. But same as any other sql, file, etc.
+  - [x] Create usecases and wire them up through container.
+  - [x] Replace routecode calls to new use cases.
+
 * [ ] **Figure out how logger fits into clean architecture**
   - It'd be really nice to get more info out of some of these deeper errors to
     help catch bugs and because I don't totally know what I'm doing yet.

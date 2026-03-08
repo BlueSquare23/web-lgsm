@@ -2,7 +2,6 @@ from flask_login import login_required, current_user
 from flask import render_template, current_app
 
 from app.utils import *
-from app.services import ProcInfoRegistry
 
 from app.config.config_manager import ConfigManager
 config = ConfigManager()
@@ -29,14 +28,11 @@ def home():
         log_wrap("current_user.permissions", current_user.permissions)
     )
 
-#    installed_servers = GameServerModel.query.all()
     installed_servers = container.list_game_servers().execute()
     for server in installed_servers:
         current_app.logger.info(server.id)
 
     current_app.logger.debug(log_wrap("installed_servers", installed_servers))
-#    for proc_id, proc in ProcInfoRegistry().get_all_processes().items():
-#        current_app.logger.debug(log_wrap(proc_id, proc))
 
     return render_template(
         "home.html",

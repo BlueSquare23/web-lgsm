@@ -15,8 +15,6 @@ from flask import (
 )
 
 from app.utils import *
-#from app.models import GameServer
-from app.services import ProcInfoRegistry
 from app.interface.forms.views import AddForm
 
 # Constants.
@@ -85,7 +83,8 @@ def install():
                 return redirect(url_for("main.install"))
 
             # Log proc info so can see what's going on.
-            proc_info = ProcInfoRegistry().get_process(server.id)
+            proc_info = container.get_process().execute(server.id)
+
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
             if proc_info.pid:

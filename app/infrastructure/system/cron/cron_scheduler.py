@@ -10,11 +10,10 @@ from app import db
 # is an early service that's getting the clean arch treatment, so leaving be.
 # But will need cleaned up moving forward!
 from app.config.config_manager import ConfigManager
-#from app.models import GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
 from app.domain.entities.job import Job
-from app.services.proc_info.proc_info_registry import ProcInfoRegistry
 from app.services.command_exec.command_executor import CommandExecutor
 
 class CronScheduler:
@@ -42,7 +41,7 @@ class CronScheduler:
         cmd_id = f'add_job_{job.job_id}'
         self.command_service.run_command(cmd, None, cmd_id)
 
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
         print(proc_info.stderr)
 
         if proc_info == None:
@@ -66,7 +65,7 @@ class CronScheduler:
 
         cmd_id = f'delete_job_{job.job_id}'
         self.command_service.run_command(cmd, None, cmd_id)
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if proc_info == None:
             return False
@@ -84,11 +83,6 @@ class CronScheduler:
         Returns:
             list: Passthrough to parse_cron_jobs().
         """
-        # TODO: UGH... I forgot I made this whole thing per game server. So for now
-        # keeping this as is. I don't think its terrible because it is going from
-        # infra -> infra layer. But ideally no db stuff should be happening in
-        # this class! Will get there as I refactor more.
-#        server = GameServer.query.filter_by(id=server_id).first()
         repo = SqlAlchemyGameServerRepository()
         server = repo.get(server_id)
 
@@ -97,7 +91,7 @@ class CronScheduler:
 
         self.command_service.run_command(cmd, server, cmd_id)
 
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
 
         return self.parse_cron_jobs("".join(proc_info.stdout), server.id)
 

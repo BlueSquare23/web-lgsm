@@ -7,7 +7,6 @@ from flask_restful import Resource
 from app import db
 from app.utils import *
 #from app.models import GameServer
-from app.services import ProcInfoRegistry
 from app.config.config_manager import ConfigManager
 
 config = ConfigManager()
@@ -63,10 +62,10 @@ class GameServerDelete(Resource):
                 # Remove job from DB.
 
         # Drop any saved proc_info objects.
-        ProcInfoRegistry().remove_process(server_id)
+        container.remove_process().execute(server_id)
 
         # Log to ensure process was dropped.
-        current_app.logger.info(log_wrap("All processes", ProcInfoRegistry().get_all_processes()))
+        current_app.logger.info(log_wrap("All processes", container.list_processes().execute()))
 
         # TODO: Refactor this now that config handling has been changed.
 #        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):

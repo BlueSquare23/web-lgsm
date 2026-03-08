@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+
 class CommandExecutor(ABC):
     """Abstract base class for command execution."""
     
@@ -19,15 +21,14 @@ class BaseCommandExecutor(CommandExecutor):
     
     def __init__(self):
         self.config = None  # Will be injected
-        self.proc_info_service = None  # Will be injected
+        self.proc_info_repo = None  # Will be injected
         
     def _setup_proc_info(self, cmd_id, create=True):
         """Setup process info object."""
-        if not self.proc_info_service:
-            from app.services import ProcInfoRegistry
-            self.proc_info_service = ProcInfoRegistry()
+        if not self.proc_info_repo:
+            self.proc_info_repo = InMemProcInfoRepository()
         
-        proc_info = self.proc_info_service.get_process(cmd_id, create=create)
+        proc_info = self.proc_info_repo.get(cmd_id, create=create)
         
         if self.config.getboolean('settings', 'clear_output_on_reload'):
             proc_info.stdout.clear()
@@ -37,7 +38,8 @@ class BaseCommandExecutor(CommandExecutor):
     
     def _process_output_line(self, line, output_type, proc_info):
         """Process a single line of output."""
-        from flask import current_app
+# TODO: Figure out how to pipe logger info here. Shouldn't be pulling it via current_app. That's flask interface layer.
+#        from flask import current_app
         
         # Add the newlines for optional old-style setting.
         if self.config.getboolean('settings', 'end_in_newlines'):
@@ -47,11 +49,11 @@ class BaseCommandExecutor(CommandExecutor):
         if output_type == "stdout":
             proc_info.stdout.append(line)
             log_msg = self._log_wrap("stdout", line.replace("\n", ""))
-            current_app.logger.debug(log_msg)
+#            current_app.logger.debug(log_msg)
         else:
             proc_info.stderr.append(line)
             log_msg = self._log_wrap("stderr", line.replace("\n", ""))
-            current_app.logger.debug(log_msg)
+#            current_app.logger.debug(log_msg)
     
     def _log_wrap(self, stream_type, message):
         """Wrapper for logging (assuming this exists somewhere)."""

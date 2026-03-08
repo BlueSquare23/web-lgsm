@@ -4,6 +4,9 @@ import time
 import os
 from functools import lru_cache
 from flask import current_app
+
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+
 from .base_executor import BaseCommandExecutor
 
 class SshCommandExecutor(BaseCommandExecutor):
@@ -66,8 +69,7 @@ class SshCommandExecutor(BaseCommandExecutor):
         if cmd_id is None:
             cmd_id = server.id
         
-        from app.services import ProcInfoRegistry
-        proc_info = ProcInfoRegistry().get_process(cmd_id, create=True)
+        proc_info = InMemProcInfoRepository().get(cmd_id, create=True)
 
         if self.config.getboolean('settings', 'clear_output_on_reload'):
             proc_info.stdout.clear()

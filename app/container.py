@@ -46,6 +46,13 @@ from app.application.use_cases.blocklist.add_failed import AddFailedBlocklist
 from app.infrastructure.system.metrics.system_metrics import SystemMetrics
 from app.application.use_cases.metrics.get_host_stats import GetHostStats
 
+# Processes
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+from app.application.use_cases.processes.get_process import GetProcess
+from app.application.use_cases.processes.list_processes import ListProcesses
+from app.application.use_cases.processes.add_process import AddProcess
+from app.application.use_cases.processes.remove_process import RemoveProcess
+
 class Container:
 
     # ---- Repositories ----
@@ -64,6 +71,9 @@ class Container:
 
     def in_mem_blocklist_repository(self):
         return InMemBlocklistRepository()
+
+    def in_mem_process_repository(self):
+        return InMemProcInfoRepository()
 
     # ---- System Interfaces ----
 
@@ -202,6 +212,28 @@ class Container:
     def get_host_stats(self):
         return GetHostStats(
             system_metrics=self.system_metrics(),
+        )
+
+    ## Processes
+
+    def get_process(self):
+        return GetProcess(
+            process_repository=self.in_mem_process_repository()
+        )
+
+    def list_processes(self):
+        return ListProcesses(
+            process_repository=self.in_mem_process_repository()
+        )
+
+    def add_process(self):
+        return AddProcess(
+            process_repository=self.in_mem_process_repository()
+        )
+
+    def remove_process(self):
+        return RemoveProcess(
+            process_repository=self.in_mem_process_repository()
         )
 
 # One global container instance to rule them all!

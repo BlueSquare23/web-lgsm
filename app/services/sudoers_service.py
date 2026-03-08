@@ -1,7 +1,8 @@
 from app.utils.paths import PATHS
 from app.config.config_manager import ConfigManager
 
-from .proc_info.proc_info_registry import ProcInfoRegistry
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+
 from .command_exec.command_executor import CommandExecutor
 
 
@@ -27,7 +28,7 @@ class SudoersService():
         cmd = [PATHS['sudo'], '-n', '-l']
         cmd_id = 'check_sudo_access'
         success = self.command_service.run_command(cmd, None, cmd_id)
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if not success or proc_info == None:
             return False
@@ -45,7 +46,7 @@ class SudoersService():
         cmd = SudoersService.CONNECTOR_CMD + ["--user", self.username]
         cmd_id = f'add_sudoers_rule_{self.username}'
         self.command_service.run_command(cmd, None, cmd_id)
-        proc_info = ProcInfoRegistry().get_process(cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if proc_info == None:
             return False

@@ -42,6 +42,9 @@ from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
 from app.application.use_cases.blocklist.check_blocked import IsBlockedBlocklist
 from app.application.use_cases.blocklist.add_failed import AddFailedBlocklist
 
+# SystemMetrics
+from app.infrastructure.system.metrics.system_metrics import SystemMetrics
+from app.application.use_cases.metrics.get_host_stats import GetHostStats
 
 class Container:
 
@@ -69,6 +72,9 @@ class Container:
 
     def game_server_manager(self):
         return GameServerManager()
+
+    def system_metrics(self):
+        return SystemMetrics()
 
     # ---- Use Cases ----
 
@@ -189,6 +195,13 @@ class Container:
     def is_blocked_blocklist(self):
         return IsBlockedBlocklist(
             blocklist_repository=self.in_mem_blocklist_repository(),
+        )
+
+    ## SystemMetrics
+
+    def get_host_stats(self):
+        return GetHostStats(
+            system_metrics=self.system_metrics(),
         )
 
 # One global container instance to rule them all!

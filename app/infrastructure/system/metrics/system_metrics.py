@@ -9,9 +9,6 @@ class SystemMetrics:
     prev_bytes_recv = psutil.net_io_counters().bytes_recv
     prev_time = time.time()
 
-    def __init__(self):
-        pass
-
     def get_network_stats(self):
         """
         Gets bytes in/out per second. Stores last got values in globals. Used by

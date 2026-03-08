@@ -1,5 +1,4 @@
 # Export as pkg for easy import statements.
-from .blocklist import Blocklist
 from .system_metrics import SystemMetrics
 from .user_module_service import UserModuleService
 from .server_power_state import ServerPowerState
@@ -11,4 +10,4 @@ from .proc_info.proc_info_registry import ProcInfoRegistry
 from .command_exec.command_executor import CommandExecutor
 
 # Defines import *
-__all__ = ['Blocklist', 'Controls', 'ProcInfoRegistry', 'SystemMetrics', 'CommandExecutor', 'UserModuleService', 'ServerPowerState', 'TmuxSocketNameCache', 'SudoersService']
+__all__ = ['Controls', 'ProcInfoRegistry', 'SystemMetrics', 'CommandExecutor', 'UserModuleService', 'ServerPowerState', 'TmuxSocketNameCache', 'SudoersService']

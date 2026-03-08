@@ -437,7 +437,7 @@ https://icons.getbootstrap.com/
   - [x] **Domain Repository Port**
   - [x] **Application Usecases**
   - [x] **Infrastructure SqlAlch Repository Adapter**
-  - [ ] **Infrastructure System Adapter(s)**
+  - [x] **Infrastructure System Adapter(s)**
     - We need these for install and delete. Will need some additional use cases to go along with them.
     - Just a thin layer for interacting with ansi connector using domain object.
   - [x] **Container Wiring**
@@ -456,9 +456,17 @@ https://icons.getbootstrap.com/
   - But I know it could be made a little bit more cleaver and usable.
   - Probably could have some factory stuff producing the needful.
 
-* [ ] **Reorganize blueprints & other interface layer stuff into app/interface dir**
+* [x] **Reorganize blueprints & other interface layer stuff into app/interface dir**
   - This will be easier to do after other stuff is cleaned up because then
     should mostly just be renaming imports, I think...
+
+* [x] **Convert blocklist to use clean arch**
+  - This is the first "service" I'm converting to be clean architecture.
+  - [x] Remove request specific parts into interface layer.
+  - [x] Move rest into infrastructure layer repository.
+    - In this case its an in mem repository. But same as any other sql, file, etc.
+  - [x] Create usecases and wire them up through container.
+  - [x] Replace routecode calls to new use cases.
 
 * [ ] **Figure out how logger fits into clean architecture**
   - It'd be really nice to get more info out of some of these deeper errors to
@@ -488,7 +496,7 @@ https://icons.getbootstrap.com/
 * [ ] **Remove cron stuff from ansible connector**
   - Now that we have the new user module service (soon to be refactored under
     clean arch), we can just use that to run cron commands as alt users more
-    securely without having to become root.
+    securely and faster without having to become root.
 
 * [ ] **This shouldn't be fatal, `install.sh` MAKE FIX!**
 ```

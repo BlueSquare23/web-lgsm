@@ -37,6 +37,12 @@ from app.application.use_cases.game_server.query_game_server import QueryGameSer
 from app.application.use_cases.game_server.edit_game_server import EditGameServer
 from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
 
+# Blocklist
+from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
+from app.application.use_cases.blocklist.check_blocked import IsBlockedBlocklist
+from app.application.use_cases.blocklist.add_failed import AddFailedBlocklist
+
+
 class Container:
 
     # ---- Repositories ----
@@ -53,6 +59,8 @@ class Container:
     def game_server_repository(self):
         return SqlAlchemyGameServerRepository()
 
+    def in_mem_blocklist_repository(self):
+        return InMemBlocklistRepository()
 
     # ---- System Interfaces ----
 
@@ -169,6 +177,18 @@ class Container:
         return DeleteGameServer(
             game_server_repository=self.game_server_repository(),
             game_server_manager=self.game_server_manager(),
+        )
+
+    ## Blocklist
+
+    def add_failed_blocklist(self):
+        return AddFailedBlocklist(
+            blocklist_repository=self.in_mem_blocklist_repository(),
+        )
+
+    def is_blocked_blocklist(self):
+        return IsBlockedBlocklist(
+            blocklist_repository=self.in_mem_blocklist_repository(),
         )
 
 # One global container instance to rule them all!

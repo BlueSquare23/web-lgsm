@@ -17,8 +17,8 @@ from flask import (
 )
 
 from app.interface.forms.auth import LoginForm 
+from app.interface.http.client_ip import get_client_ip
 from app.utils import validation_errors
-from app.services import Blocklist
 from app.container import container
 
 from . import auth_bp
@@ -31,15 +31,12 @@ def login():
     form = LoginForm()
 
     if not container.list_users().execute():
-#    if User.query.first() == None:
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
-    blocklist = Blocklist()
+    ip = get_client_ip(request)
 
-    ip = blocklist.get_client_ip(request)
-
-    if blocklist.is_blocked(ip):
+    if container.is_blocked_blocklist().execute(ip):
         return 'Access denied', 403
 
     if request.method == "GET":
@@ -55,25 +52,19 @@ def login():
     otp_code = form.otp_code.data
 
     # Check login info.
-#    user = User.query.filter_by(username=username).first()
     user = container.query_user().execute('username', username)
     if user == None:
-        blocklist.add_failed(ip)
+        container.add_failed_blocklist().execute(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
     current_app.logger.info(user)
 
     if not check_password_hash(user.password, password):
-        blocklist.add_failed(ip)
+        container.add_failed_blocklist().execute(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
-
-    # AHHHH FUCK!
-    # I just realized a huge problem with all of this so far...
-    # If I'm using the domain entity for user now instead of the sql alchemy
-    # object, its not going to have auth stuff. :facepalm:
     if current_user.is_authenticated:
         logout_user()
 
@@ -90,7 +81,7 @@ def login():
             return redirect(url_for("auth.two_factor_setup"))
 
         if not user.verify_totp(otp_code):
-            blocklist.add_failed(ip)
+            container.add_failed_blocklist().execute(ip)
             flash("Invalid otp 2fa code!", category="error")
             return render_template("login.html", user=current_user, form=form), 403
 

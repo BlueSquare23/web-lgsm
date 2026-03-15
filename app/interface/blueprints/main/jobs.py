@@ -12,9 +12,6 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, JobsForm
-from app.services import Controls
-
-controls = Controls()
 
 from . import main_bp
 
@@ -66,7 +63,7 @@ def jobs():
             current_app.logger.info(log_wrap("server_json", server_json))
 
             # Pull in controls list from controls.json file.
-            controls_list = controls.get_controls(server.script_name, current_user)
+            controls_list = container.list_controls().execute(server.script_name, current_user)
 
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [ctrl.long_ctrl for ctrl in controls_list]

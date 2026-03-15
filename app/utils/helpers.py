@@ -192,8 +192,8 @@ def valid_command(ctrl, server, current_user):
         bool: True if cmd is valid for user & game server, False otherwise.
     """
 
-    from app.services import Controls
-    controls = Controls().get_controls(server, current_user)
+    from app.container import container
+    controls = container.list_controls().execute(server, current_user)
     for control in controls:
         # Aka is valid control.
         if ctrl == control.short_ctrl:

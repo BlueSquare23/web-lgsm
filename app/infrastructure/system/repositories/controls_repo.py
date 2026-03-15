@@ -1,8 +1,9 @@
 import json
-from .control import Control 
+
+from app.domain.entities.control import Control 
 from app.infrastructure.system.config.config_manager import ConfigManager
 
-class Controls:
+class ControlsRepository(Control):
     """
     Service class for handling control operations including loading controls from JSON,
     applying exemptions, and filtering based on user permissions.
@@ -43,13 +44,13 @@ class Controls:
             print(f"Problem reading control json files: {e}")
             return False
 
-    def get_controls(self, server, current_user):
+    def list(self, server, user):
         """
         Get filtered list of controls for the specified server and user.
 
         Args:
             server (str): Name of game server to get controls for
-            current_user (LocalProxy): Currently logged in flask user object
+            user (User): User domain object for current flask user
 
         Returns:
             List[Control]: List of control objects for server
@@ -70,15 +71,15 @@ class Controls:
                 controls_dict.pop(exempt_ctrl, None)
 
         # Filter controls based on user permissions
-        return self._filter_controls_by_permissions(controls_dict, current_user)
+        return self._filter_controls_by_permissions(controls_dict, user)
 
-    def _filter_controls_by_permissions(self, controls_dict, current_user):
+    def _filter_controls_by_permissions(self, controls_dict, user):
         """
         Filter controls based on user role and permissions.
 
         Args:
             controls_dict (dict): Dictionary of controls to filter
-            current_user (LocalProxy): Currently logged in flask user object
+            user (User): User domain object for current flask user
 
         Returns:
             List[Control]: Filtered list of control objects
@@ -87,15 +88,15 @@ class Controls:
 
         # Load user permissions if not admin
         user_perms = {}
-        if current_user.role != "admin":
+        if user.role != "admin":
             try:
-                user_perms = json.loads(current_user.permissions)
+                user_perms = json.loads(user.permissions)
             except (json.JSONDecodeError, AttributeError):
                 user_perms = {}
 
         for long_ctrl, ctrl_data in controls_dict.items():
             # Skip if non-admin user doesn't have permission for this control
-            if current_user.role != "admin":
+            if user.role != "admin":
                 if long_ctrl not in user_perms.get("controls", []):
                     continue
 
@@ -108,45 +109,3 @@ class Controls:
 
         return controls
 
-    def get_all_controls(self):
-        """
-        Get all controls without any filtering.
-
-        Returns:
-            List[Control]: List of all control objects
-        """
-        if not self.load_data():
-            return []
-
-        controls = []
-        for long_ctrl, ctrl_data in self._controls_data.items():
-            ctrl = Control()
-            ctrl.long_ctrl = long_ctrl
-            ctrl.short_ctrl = ctrl_data.get("short_ctrl", "")
-            ctrl.description = ctrl_data.get("description", "")
-            controls.append(ctrl)
-
-        return controls
-
-    def get_control_by_long_name(self, long_ctrl):
-        """
-        Get a specific control by its long name.
-
-        Args:
-            long_ctrl (str): Long control name to search for
-
-        Returns:
-            Optional[Control]: Command object if found, None otherwise
-        """
-        if not self.load_data():
-            return None
-
-        ctrl_data = self._controls_data.get(long_ctrl)
-        if not ctrl_data:
-            return None
-
-        ctrl = Control()
-        ctrl.long_ctrl = long_ctrl
-        ctrl.short_ctrl = ctrl_data.get("short_ctrl", "")
-        ctrl.description = ctrl_data.get("description", "")
-        return ctrl

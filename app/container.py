@@ -79,6 +79,10 @@ from app.infrastructure.system.file_system.file_manager import FileManager
 from app.application.use_cases.file_system.read_file import ReadFile
 from app.application.use_cases.file_system.write_file import WriteFile 
 
+# Controls
+from app.infrastructure.system.repositories.controls_repo import ControlsRepository
+from app.application.use_cases.controls.list_controls import ListControls
+
 class Container:
 
     # ---- Repositories ----
@@ -100,6 +104,9 @@ class Container:
 
     def in_mem_process_repository(self):
         return InMemProcInfoRepository()
+
+    def controls_repository(self):
+        return ControlsRepository()
 
     # ---- System Interfaces ----
 
@@ -322,6 +329,13 @@ class Container:
     def write_file(self):
         return WriteFile(
             file_manager=self.file_manager()
+        )
+
+    ## Controls
+
+    def list_controls(self):
+        return ListControls(
+            controls_repository=self.controls_repository()
         )
 
 # One global container instance to rule them all!

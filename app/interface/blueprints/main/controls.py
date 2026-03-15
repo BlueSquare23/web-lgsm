@@ -11,7 +11,7 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import Controls,  TmuxSocketNameCache, ServerPowerState, SudoersService
+from app.services import TmuxSocketNameCache, ServerPowerState, SudoersService
 from app import cache
 
 from app.container import container
@@ -26,7 +26,6 @@ USER = getpass.getuser()
 @main_bp.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
-    controls_service = Controls()
     config = container.get_template_config().execute()
 
     # Initialize forms
@@ -71,7 +70,7 @@ def controls():
                     flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{server.username}\n{USER} ALL=({server.username}) NOPASSWD: ALL")
 
         # Pull in controls list from controls.json file.
-        controls_list = controls_service.get_controls(server.script_name, current_user)
+        controls_list = container.list_controls().execute(server.script_name, current_user)
         current_app.logger.debug(controls_list)
 
         if server.install_type == "remote":
@@ -167,7 +166,7 @@ def controls():
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in controls list from controls.json file.
-    controls_list = controls_service.get_controls(server.script_name, current_user)
+    controls_list = container.list_controls().execute(server.script_name, current_user)
 
     if not controls_list:
         flash("Error loading controls.json file!", category="error")

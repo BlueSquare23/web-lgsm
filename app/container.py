@@ -83,6 +83,11 @@ from app.application.use_cases.file_system.write_file import WriteFile
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
 from app.application.use_cases.controls.list_controls import ListControls
 
+# Sudoers
+from app.infrastructure.system.user.sudoers_service import SudoersService
+from app.application.use_cases.sudoers.check_sudoers_access import CheckSudoersAccess
+from app.application.use_cases.sudoers.add_sudoers_rul import AddSudoersRule
+
 class Container:
 
     # ---- Repositories ----
@@ -130,6 +135,9 @@ class Container:
 
     def file_manager(self):
         return FileManager()
+
+    def sudoers_service(self):
+        return SudoersService()
 
     # ---- Use Cases ----
 
@@ -337,6 +345,19 @@ class Container:
         return ListControls(
             controls_repository=self.controls_repository()
         )
+
+    ## Sudoers
+
+    def check_sudoers_access(self):
+        return CheckSudoersAccess(
+            sudoers_service=self.sudoers_service()
+        )
+
+    def add_sudoers_rule(self):
+        return AddSudoersRule(
+            sudoers_service=self.sudoers_service()
+        )
+
 
 # One global container instance to rule them all!
 container = Container()

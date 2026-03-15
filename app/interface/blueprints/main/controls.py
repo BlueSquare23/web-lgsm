@@ -11,7 +11,7 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import TmuxSocketNameCache, ServerPowerState, SudoersService
+from app.services import TmuxSocketNameCache, ServerPowerState
 from app import cache
 
 from app.container import container
@@ -64,9 +64,8 @@ def controls():
 
         # Auto add sudoers rule for server if it doesn't have one, for backwards compat.
         if server.install_type == 'local' and server.username != USER:
-            sudoers_service = SudoersService(server.username)
-            if not sudoers_service.has_access():
-                if not sudoers_service.add_user():
+            if not container.check_sudoers_access().execute(username):
+                if not container.add_sudoers_rule().execute(username):
                     flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{server.username}\n{USER} ALL=({server.username}) NOPASSWD: ALL")
 
         # Pull in controls list from controls.json file.

@@ -4,7 +4,6 @@ from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoR
 
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
-
 class SudoersService():
     """
     Class for interacting with web-lgsm system USER sudoers rules.

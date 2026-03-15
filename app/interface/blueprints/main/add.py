@@ -13,7 +13,6 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, AddForm
-from app.services import SudoersService
 from app.container import container
 
 # Constants.
@@ -142,9 +141,9 @@ def add():
 
     # Auto add sudoers rule for server.
     if server['install_type'] == 'local' and server['username'] != USER:
-        sudoers_service = SudoersService(username)
-        if not sudoers_service.has_access():
-            if not sudoers_service.add_user():
+        # Check if system user has sudoers access to alt game server user.
+        if not container.check_sudoers_access().execute(username):
+            if not container.add_sudoers_rule().execute(username):
                 flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{username}\n{USER} ALL=({username}) NOPASSWD: ALL")
 
     flash("Game server added!")

@@ -3,9 +3,6 @@ from flask import render_template, current_app
 
 from app.utils import *
 
-from app.config.config_manager import ConfigManager
-config = ConfigManager()
-
 from . import main_bp
 
 from app.container import container
@@ -20,6 +17,7 @@ def home():
 # route logger, where I can just say route, pass it current_app and it'll log
 # everything I care about seeing for that route.
 
+    config = container.get_template_config().execute()
     current_app.logger.debug(log_wrap("config text_color", config.get('aesthetic','text_color')))
 
     current_app.logger.debug(log_wrap("current_user.username", current_user.username))

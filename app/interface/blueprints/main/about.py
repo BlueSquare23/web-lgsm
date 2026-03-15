@@ -1,10 +1,7 @@
 from flask_login import login_required, current_user
 from flask import render_template
 
-# Needs config for text_color.
-from app.config.config_manager import ConfigManager
-config = ConfigManager()
-
+from app.container import container
 from . import main_bp
 
 ######### About Page #########
@@ -12,7 +9,7 @@ from . import main_bp
 @main_bp.route("/about", methods=["GET"])
 @login_required
 def about():
-    global config
+    config = container.get_template_config().execute()
     return render_template(
         "about.html", user=current_user, _config=config
     )

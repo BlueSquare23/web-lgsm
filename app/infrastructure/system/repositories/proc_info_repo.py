@@ -50,7 +50,7 @@ class InMemProcInfoRepository(ProcInfoRepository):
             if not create:
                 return None
 
-            self.add_process(server_id, proc_info=ProcInfo())
+            self.add(server_id, proc_info=ProcInfo())
 
         return InMemProcInfoRepository.processes[server_id]
 

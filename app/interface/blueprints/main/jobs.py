@@ -14,8 +14,6 @@ from app.utils import *
 from app.interface.forms.views import ValidateID, JobsForm
 from app.services import Controls
 
-from app.config.config_manager import ConfigManager
-config = ConfigManager()
 controls = Controls()
 
 from . import main_bp
@@ -28,7 +26,7 @@ from app.container import container
 @main_bp.route("/jobs", methods=["GET", "POST"])
 @login_required
 def jobs():
-    global config
+    config = container.get_template_config().execute()
 
     # Check if user has permissions to jobs route.
     if not container.check_user_access().execute(current_user.id, "jobs"):

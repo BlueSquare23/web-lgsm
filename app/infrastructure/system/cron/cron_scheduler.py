@@ -9,12 +9,11 @@ from app import db
 # TODO: All the below systems need clean arch refactored. For right now, cron
 # is an early service that's getting the clean arch treatment, so leaving be.
 # But will need cleaned up moving forward!
-from app.config.config_manager import ConfigManager
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
 from app.domain.entities.job import Job
-from app.services.command_exec.command_executor import CommandExecutor
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
 class CronScheduler:
     """
@@ -28,8 +27,7 @@ class CronScheduler:
         PATHS["ansible_connector"],
     ]
 
-    config = ConfigManager()
-    command_service = CommandExecutor(config)
+    command_service = CommandExecutor()
 
     def update(self, job):
         """

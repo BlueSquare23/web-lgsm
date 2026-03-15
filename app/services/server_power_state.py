@@ -2,12 +2,10 @@ from flask import current_app
 from app.utils.paths import PATHS
 from app.utils.helpers import log_wrap
 
-from app.config import ConfigManager
-
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
 from .tmux_socket_name_cache import TmuxSocketNameCache
-from .command_exec.command_executor import CommandExecutor
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
 class ServerPowerState:
 
@@ -32,7 +30,7 @@ class ServerPowerState:
     
         cmd_id = "get_server_status:" + server.install_name
     
-        CommandExecutor(ConfigManager()).run_command(cmd, server, cmd_id)
+        CommandExecutor().run_command(cmd, server, cmd_id)
     
         proc_info = InMemProcInfoRepository().get(cmd_id)
         current_app.logger.info(log_wrap("proc_info", proc_info))

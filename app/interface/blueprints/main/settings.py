@@ -12,8 +12,6 @@ from flask import (
 from app.utils import *
 from app.interface.forms.views import SettingsForm
 
-from app.config.config_manager import ConfigManager
-from app.services import CommandExecutor
 from app.container import container
 
 from . import main_bp
@@ -24,8 +22,6 @@ from . import main_bp
 @main_bp.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
-    config = ConfigManager()
-    command_service = CommandExecutor(config)
 
     # Check if user has permissions to settings route.
     if not container.check_user_access().execute(current_user.id, "settings"):
@@ -37,22 +33,22 @@ def settings():
 
     if request.method == "GET":
         # Set form defaults.
-        form.text_color.default = config.get('aesthetic','text_color')
-        form.graphs_primary.default = config.get('aesthetic','graphs_primary')
-        form.graphs_secondary.default = config.get('aesthetic','graphs_secondary')
-        form.terminal_height.default = config.getint('aesthetic','terminal_height')
-        form.delete_user.default = str(config.getboolean('settings','delete_user')).lower()
-        form.remove_files.default = str(config.getboolean('settings','remove_files')).lower()
+        form.text_color.default = container.get_config().execute('aesthetic','text_color')
+        form.graphs_primary.default = container.get_config().execute('aesthetic','graphs_primary')
+        form.graphs_secondary.default = container.get_config().execute('aesthetic','graphs_secondary')
+        form.terminal_height.default = container.getint_config().execute('aesthetic','terminal_height')
+        form.delete_user.default = str(container.getboolean_config().execute('settings','delete_user')).lower()
+        form.remove_files.default = str(container.getboolean_config().execute('settings','remove_files')).lower()
         form.install_new_user.default = str(
-            config.getboolean('settings','install_create_new_user')
+            container.getboolean_config().execute('settings','install_create_new_user')
         ).lower()
-        form.newline_ending.default = str(config.getboolean('settings','end_in_newlines')).lower()
-        form.show_stderr.default = str(config.getboolean('settings','show_stderr')).lower()
+        form.newline_ending.default = str(container.getboolean_config().execute('settings','end_in_newlines')).lower()
+        form.show_stderr.default = str(container.getboolean_config().execute('settings','show_stderr')).lower()
         form.clear_output_on_reload.default = str(
-            config.getboolean('settings','clear_output_on_reload')
+            container.getboolean_config().execute('settings','clear_output_on_reload')
         ).lower()
         # BooleanFields handle setting default differently from RadioFields.
-        if config.getboolean('aesthetic','show_stats'):
+        if container.getboolean_config().execute('aesthetic','show_stats'):
             form.show_stats.default = "true"
         form.process()  # Required to apply form changes.
 
@@ -60,7 +56,7 @@ def settings():
             "settings.html",
             user=current_user,
             system_user=USER,
-            _config=config,
+#            _config=config,  # Not sure what todo about this yet
             form=form,
         )
 
@@ -130,7 +126,7 @@ def settings():
 
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=command_service.run_command,
+            target=container.run_command().execute,
             args=(cmd, None, str(uuid.uuid4()), current_app.app_context()),
             daemon=True,
             name="restart",

@@ -1,39 +1,41 @@
 import getpass
+
+from app.utils.paths import PATHS
+from app.infrastructure.system.config import ConfigManager
+
 from .local_command_executor import LocalCommandExecutor
 from .remote_command_executor import SshCommandExecutor
-from app.utils.paths import PATHS
-#from app.models import GameServer
 
 class CommandExecutor:
     """Service for command execution with dependency injection."""
     USER = getpass.getuser()
     
-    def __init__(self, config):
+    def __init__(self, config=ConfigManager()):
         self.config = config
         self._executors = {}
     
-    def get_local_executor(self):
+    def _get_local_executor(self):
         """Get local command executor."""
         if 'local' not in self._executors:
             self._executors['local'] = LocalCommandExecutor(self.config)
         return self._executors['local']
     
-    def get_ssh_executor(self):
+    def _get_ssh_executor(self):
         """Get SSH command executor."""
         if 'ssh' not in self._executors:
             self._executors['ssh'] = SshCommandExecutor(self.config)
         return self._executors['ssh']
     
-    def get_executor(self, server_type='local', **kwargs):
+    def _get_executor(self, server_type='local', **kwargs):
         """Get executor based on server type."""
         if server_type == 'local':
-            return self.get_local_executor()
+            return self._get_local_executor()
         elif server_type == 'remote':
-            return self.get_ssh_executor()
+            return self._get_ssh_executor()
         else:
             raise ValueError(f"Unknown server type: {server_type}")
     
-    def run_command(self, cmd, server=None, cmd_id=None, app_context=False, 
+    def run(self, cmd, server=None, cmd_id=None, app_context=False, 
                    timeout=None, **kwargs):
         """
         Unified command execution interface.
@@ -59,12 +61,12 @@ class CommandExecutor:
         }
 
         if server is None:
-            executor = self.get_local_executor()
+            executor = self._get_local_executor()
             return executor.run(**args)
 
 # TODO: Update this
 #        assert isinstance(server, GameServer), "server is not an instance of GameServer"
-        executor = self.get_executor(server.install_type)
+        executor = self._get_executor(server.install_type)
         if server.install_type == 'remote':
             args["server"] = server
 

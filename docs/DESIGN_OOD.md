@@ -503,5 +503,11 @@ fetch this info and not have to care about if server is remote, local
 same-user, or local non-same-user.
 
 
+## The container.py - Composition Root
 
+The composition root is really the key concept here. It's the one place in the
+entire application that's allowed to know about everything. All the concrete
+types, all the factories, all the wiring. It's dirty by design so everything
+else can stay clean. Think of it as the place where all the abstraction debt
+gets paid.
 

@@ -14,10 +14,7 @@ from app.interface.forms.views import UploadTextForm, DownloadCfgForm, SelectCfg
 from app.managers import FileManager
 from app.services import UserModuleService
 
-from app.config.config_manager import ConfigManager
 from app.container import container
-
-config = ConfigManager()
 
 from . import main_bp
 
@@ -26,7 +23,6 @@ from . import main_bp
 @main_bp.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit():
-    global config
     # NOTE: The abbreviation cfg will be used to refer to any lgsm game server
     # specific config files. Whereas, the word config will be used to refer to
     # any web-lgsm config info.
@@ -35,7 +31,7 @@ def edit():
         flash("Your user does not have access to this page!", category="error")
         return redirect(url_for("main.home"))
 
-    if not config.getboolean('settings','cfg_editor'):
+    if not container.getboolean_config().execute('settings','cfg_editor'):
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("main.home"))
 

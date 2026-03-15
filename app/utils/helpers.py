@@ -21,9 +21,6 @@ from functools import lru_cache
 
 from app import db
 from app import cache
-from app.config.config_manager import ConfigManager
-
-config = ConfigManager()
 
 # Constants.
 CWD = os.getcwd()
@@ -69,14 +66,13 @@ def cancel_install(pid):
         bool: True if install canceled successfully, False otherwise.
     """
     from app.container import container
-    from app.services import CommandExecutor
 
     # NOTE: For the --cancel option on the ansible connector script we pass in
     # the pid of the running install, instead of a game server's ID.
     cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
 
     cmd_id = 'cancel_install'
-    CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
+    container.run_command().execute(cmd, None, cmd_id)
     proc_info = container.get_process.execute(cmd_id)
 
     if proc_info == None:
@@ -261,11 +257,10 @@ def update_self():
     """
 
     from app.container import container
-    from app.services import CommandExecutor
     update_cmd = ["./web-lgsm.py", "--auto"]
 
     cmd_id = "update_self"
-    CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
+    container.run_command().execute(cmd, None, cmd_id)
 
     proc_info = container.get_process().execute(cmd_id)
     if proc_info == None:

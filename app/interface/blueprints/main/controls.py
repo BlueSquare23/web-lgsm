@@ -12,11 +12,9 @@ from flask import (
 from app.utils import *
 #from app.models import GameServer
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import Controls, UserModuleService, CommandExecutor, TmuxSocketNameCache, ServerPowerState, SudoersService
-from app.managers import CfgManager
+from app.services import Controls, UserModuleService, TmuxSocketNameCache, ServerPowerState, SudoersService
 from app import cache
 
-from app.config.config_manager import ConfigManager
 from app.container import container
 
 from . import main_bp
@@ -29,9 +27,8 @@ USER = getpass.getuser()
 @main_bp.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
-    config = ConfigManager()
     controls_service = Controls()
-    command_service = CommandExecutor(config)
+    config = container.get_template_config().execute()
 
     # Initialize forms
     send_cmd_form = SendCommandForm()
@@ -91,14 +88,18 @@ def controls():
         cache_key = f"cfg_paths_{server_id}"
         cfg_paths = cache.get(cache_key)
 
-        if not config.getboolean("settings","cfg_editor"):
+        if not container.getboolean_config().execute("settings","cfg_editor"):
             cfg_paths = []
 
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
 
-            cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
-            cfg_paths = cfg_manager.find_cfg_paths(server)
+
+# TODO: FIGURE THIS OUT
+#            cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
+#            cfg_paths = cfg_manager.find_cfg_paths(server)
+
+            cfg_paths = []
 
             if cfg_paths == "failed":
                 flash("Error reading accepted_cfgs.json!", category="error")
@@ -168,11 +169,13 @@ def controls():
     else:
         current_app.logger.info("Getting cfg_paths")
 
+# TODO: FIGURE THIS OUT
+    cfg_path = []
 #        cfg_manager = CfgManager()
-        cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
-        cfg_paths = cfg_manager.find_cfg_paths(server)
+#        cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
+#        cfg_paths = cfg_manager.find_cfg_paths(server)
 
-    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
+#    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in controls list from controls.json file.
     controls_list = controls_service.get_controls(server.script_name, current_user)
@@ -228,7 +231,7 @@ def controls():
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=command_service.run_command,
+            target=container.run_command().execute,
             args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="ConsoleCMD",
@@ -251,7 +254,7 @@ def controls():
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=command_service.run_command,
+            target=container.run_command().execute,
             args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="Command",

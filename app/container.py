@@ -53,6 +53,19 @@ from app.application.use_cases.processes.list_processes import ListProcesses
 from app.application.use_cases.processes.add_process import AddProcess
 from app.application.use_cases.processes.remove_process import RemoveProcess
 
+# Command
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
+from app.application.use_cases.command.run_cmd import RunCommand
+
+# Config
+from app.infrastructure.system.config.config_manager import ConfigManager
+from app.application.use_cases.config.get_config import GetConfig
+from app.application.use_cases.config.get_template_config import GetTemplateConfig
+from app.application.use_cases.config.getboolean_config import GetBoolConfig
+from app.application.use_cases.config.getint_config import GetIntConfig
+from app.application.use_cases.config.set_config import SetConfig
+
+
 class Container:
 
     # ---- Repositories ----
@@ -85,6 +98,12 @@ class Container:
 
     def system_metrics(self):
         return SystemMetrics()
+
+    def command_executor(self):
+        return CommandExecutor()
+
+    def config_manager(self):
+        return ConfigManager()
 
     # ---- Use Cases ----
 
@@ -235,6 +254,40 @@ class Container:
         return RemoveProcess(
             process_repository=self.in_mem_process_repository()
         )
+
+    ## Command
+    def run_command(self):
+        return RunCommand(
+            command_executor=self.command_executor()
+        )
+
+    ## Config
+
+    def get_template_config(self):
+        return GetTemplateConfig(
+            config_manager=self.config_manager()
+        )
+
+    def get_config(self):
+        return GetConfig(
+            config_manager=self.config_manager()
+        )
+
+    def getboolean_config(self):
+        return GetBoolConfig(
+            config_manager=self.config_manager()
+        )
+
+    def getint_config(self):
+        return GetIntConfig(
+            config_manager=self.config_manager()
+        )
+
+    def set_config(self):
+        return SetConfig(
+            config_manager=self.config_manager()
+        )
+
 
 # One global container instance to rule them all!
 container = Container()

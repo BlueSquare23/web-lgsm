@@ -8,8 +8,7 @@ from flask import current_app
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
-from app.config import ConfigManager
-from .command_exec.command_executor import CommandExecutor
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
 class UserModuleService:
     """
@@ -48,7 +47,7 @@ class UserModuleService:
         ]
 
         cmd_id = 'user_module_service'
-        CommandExecutor(ConfigManager()).run_command(cmd, None, cmd_id)
+        CommandExecutor().run(cmd, None, cmd_id)
         proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if proc_info == None or proc_info.exit_status > 0:

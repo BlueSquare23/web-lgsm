@@ -4,10 +4,9 @@ from flask import Response
 from flask_login import login_required, current_user
 from flask_restful import Resource
 
-from app.config.config_manager import ConfigManager
 from app.utils import *
 #from app.models import GameServer
-from app.services import CommandExecutor, TmuxSocketNameCache
+from app.services import TmuxSocketNameCache
 
 from . import api
 
@@ -16,8 +15,6 @@ from app.container import container
 ######### API Update Console #########
 
 class UpdateConsole(Resource):
-    config = ConfigManager()
-    command_service = CommandExecutor(config)
 
     @login_required
     def post(self, server_id):
@@ -56,7 +53,7 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        UpdateConsole.command_service.run_command(cmd, server, server.id)
+        container.run_command().execute(cmd, server, server.id)
         proc_info = container.get_process().execute(server.id, create=True)
 
         if proc_info.exit_status > 0:

@@ -23,9 +23,6 @@ USER = getpass.getuser()
 VENV = "/opt/web-lgsm/"
 from app.utils.paths import PATHS
 
-from app.config.config_manager import ConfigManager
-
-from app.services import CommandExecutor
 from app.container import container
 
 from . import main_bp
@@ -35,8 +32,7 @@ from . import main_bp
 @main_bp.route("/install", methods=["GET", "POST"])
 @login_required
 def install():
-    config = ConfigManager()
-    command_service = CommandExecutor(config)
+    config = container.get_template_config().execute()
 
     # Check if user has permissions to install route.
     if not container.check_user_access().execute(current_user.id, "install"):
@@ -181,7 +177,7 @@ def install():
     ]
 
     install_daemon = Thread(
-        target=command_service.run_command,
+        target=container.run_command().execute,
         args=(cmd, None, server_id, current_app.app_context()),
         daemon=True,
         name=f"web_lgsm_install_{server_id}",

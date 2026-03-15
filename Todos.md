@@ -482,6 +482,17 @@ https://icons.getbootstrap.com/
   - [x] Create usecases and wire them up through container.
   - [x] Replace routecode calls to new use cases.
 
+* [x] **Convert CommandExecutor (aka run_command) to use clean arch**
+  - [x] Move CommandExecutor into infrastructure layer.
+  - [x] Create usecase for run and wire it up through container.
+  - [x] Replace routecode calls to new use case.
+
+* [x] **Convert ConfigManager to use clean arch**
+  - [x] Move ConfigManager into infrastructure layer.
+  - [x] Create usecase for run and wire it up through container.
+  - [x] Replace routecode calls to new use case.
+
+
 * [ ] **Figure out how logger fits into clean architecture**
   - It'd be really nice to get more info out of some of these deeper errors to
     help catch bugs and because I don't totally know what I'm doing yet.
@@ -536,6 +547,9 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
    ...
 ]
 ```
+
+* [ ] **Look into Arbor impact analysis engine**
+  - https://github.com/Anandb71/arbor
 
 * [ ] **I need a public site for the project**
   - Not only do I need to catch form posts for usage stats and crash reports,

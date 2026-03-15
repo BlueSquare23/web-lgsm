@@ -7,9 +7,6 @@ from flask_restful import Resource
 from app import db
 from app.utils import *
 #from app.models import GameServer
-from app.config.config_manager import ConfigManager
-
-config = ConfigManager()
 
 from . import api
 
@@ -20,8 +17,6 @@ from app.container import container
 class GameServerDelete(Resource):
     @login_required
     def delete(self, server_id):
-        global config
-#        server = GameServer.query.filter_by(id=server_id).first()
         server = container.get_game_server().execute(server_id)
         if server == None:
             resp_dict = {"Error": "Server not found!"}
@@ -35,8 +30,8 @@ class GameServerDelete(Resource):
         # NOTE: For everyone's safety, if config options are incongruous, default
         # to safer keep user, keep files option. (ie. If delete_user is True and
         # remove_files is False, default to keep user.
-        if config.getboolean('settings', 'delete_user') and not config.getboolean('settings', 'remove_files'):
-            config.set('settings', 'delete_user', False)
+        if container.getboolean_config().execute('settings', 'delete_user') and not container.getboolean_config().execute('settings', 'remove_files'):
+            container.set_config().execute('settings', 'delete_user', False)
 
         # Check if user has permissions to delete route & server.
         if not container.check_user_access().execute(current_user.id, "delete", server_id):
@@ -70,7 +65,7 @@ class GameServerDelete(Resource):
         # TODO: Refactor this now that config handling has been changed.
 #        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
 
-        if not container.delete_game_server().execute(server.id, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
+        if not container.delete_game_server().execute(server.id, container.getboolean_config().execute('settings','remove_files'), container.getboolean().execute('settings','delete_user')):
             resp_dict = {
                 "Error": "Problem deleting server, see error logs for more details."
             }

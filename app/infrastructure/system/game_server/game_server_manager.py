@@ -2,9 +2,8 @@ import re
 import getpass
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
-from app.services import  CommandExecutor
-from app.config import ConfigManager
 from app.utils.paths import PATHS
 
 
@@ -76,7 +75,7 @@ class GameServerManager:
 
             if delete_user and server.username != GameServerManager.USER:
                 cmd = GameServerManager.CONNECTOR_CMD + ["--delete", str(server.id)]
-                CommandExecutor(ConfigManager()).run_command(cmd)
+                CommandExecutor().run_command(cmd)
 
         if server.install_type == "remote":
 #            if delete_user:
@@ -94,7 +93,7 @@ class GameServerManager:
 
             cmd = [PATHS["rm"], "-rf", server.install_path]
 
-            success = CommandExecutor(ConfigManager()).run_command(cmd, server, server.id)
+            success = CommandExecutor().run_command(cmd, server, server.id)
             proc_info = InMemProcInfoRepository().get(server.id)
 
             # If the ssh connection itself fails return False.

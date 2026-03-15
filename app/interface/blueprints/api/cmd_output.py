@@ -17,7 +17,7 @@ class CmdOutput(Resource):
     def get(self, server_id):
 
         # Can't do anything if we don't have proc info vessel stored.
-        if server_id not in proc_service.get_all_processes():
+        if server_id not in container.list_processes().execute():
             resp_dict = {"Error": "eer never heard of em"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
@@ -31,7 +31,7 @@ class CmdOutput(Resource):
             )
             return response
 
-        proc_info = container.get_process().execute(server.id, create=True)
+        proc_info = container.get_process().execute(server_id, create=True)
 
 
         # Returns json for used by ajax code on /controls route.

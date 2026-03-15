@@ -1,6 +1,6 @@
 import json
 from .control import Control 
-from app.config.config_manager import ConfigManager
+from app.infrastructure.system.config.config_manager import ConfigManager
 
 class Controls:
     """

@@ -41,6 +41,7 @@ from app.infrastructure.system.game_server.game_server_manager import GameServer
 from app.infrastructure.system.game_server.cfg_manager import CfgManager
 from app.application.use_cases.game_server.list_game_servers import ListGameServers
 from app.application.use_cases.game_server.get_game_server import GetGameServer
+from app.application.use_cases.game_server.get_game_server_power_state import GetGameServerPowerState
 from app.application.use_cases.game_server.query_game_server import QueryGameServer
 from app.application.use_cases.game_server.edit_game_server import EditGameServer
 from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
@@ -86,7 +87,11 @@ from app.application.use_cases.controls.list_controls import ListControls
 # Sudoers
 from app.infrastructure.system.user.sudoers_service import SudoersService
 from app.application.use_cases.sudoers.check_sudoers_access import CheckSudoersAccess
-from app.application.use_cases.sudoers.add_sudoers_rul import AddSudoersRule
+from app.application.use_cases.sudoers.add_sudoers_rule import AddSudoersRule
+
+# Tmux
+from app.infrastructure.system.game_server.tmux_socket_name_cache import TmuxSocketNameCache
+from app.application.use_cases.tmux.get_tmux_socket_name import GetTmuxSocketName
 
 class Container:
 
@@ -138,6 +143,9 @@ class Container:
 
     def sudoers_service(self):
         return SudoersService()
+
+    def tmux_socket_cache_handler(self):
+        return TmuxSocketNameCache()
 
     # ---- Use Cases ----
 
@@ -230,6 +238,11 @@ class Container:
     def get_game_server(self):
         return GetGameServer(
             game_server_repository=self.game_server_repository(),
+        )
+
+    def get_game_server_power_state(self):
+        return GetGameServerPowerState(
+            game_server_manager=self.game_server_manager(),
         )
 
     def query_game_server(self):
@@ -358,6 +371,14 @@ class Container:
             sudoers_service=self.sudoers_service()
         )
 
+    ## Tmux
+
+    def get_tmux_socket_name(self):
+        return GetTmuxSocketName(
+            tmux_socket_cache_handler=self.tmux_socket_cache_handler()
+        )
+
 
 # One global container instance to rule them all!
 container = Container()
+

@@ -11,7 +11,6 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import TmuxSocketNameCache, ServerPowerState
 from app import cache
 
 from app.container import container
@@ -64,8 +63,8 @@ def controls():
 
         # Auto add sudoers rule for server if it doesn't have one, for backwards compat.
         if server.install_type == 'local' and server.username != USER:
-            if not container.check_sudoers_access().execute(username):
-                if not container.add_sudoers_rule().execute(username):
+            if not container.check_sudoers_access().execute(server.username):
+                if not container.add_sudoers_rule().execute(server.username):
                     flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{server.username}\n{USER} ALL=({server.username}) NOPASSWD: ALL")
 
         # Pull in controls list from controls.json file.
@@ -175,8 +174,7 @@ def controls():
 
     # Console option, use tmux capture-pane to get output.
     if short_ctrl == "c":
-        status_service = ServerPowerState()
-        active = status_service.get_status(server)
+        active = container.get_game_server_power_state().execute(server)
         if not active:
             flash("Server is Off! No Console Output!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
@@ -203,8 +201,7 @@ def controls():
             flash("Send command button disabled!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        status_service = ServerPowerState()
-        active = status_service.get_status(server)
+        active = container.get_game_server_power_state(server)
         if not active:
             flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))

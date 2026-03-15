@@ -5,8 +5,6 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-#from app.models import GameServer
-from app.services import TmuxSocketNameCache
 
 from . import api
 
@@ -34,7 +32,7 @@ class UpdateConsole(Resource):
             )
             return response
 
-        tmux_socket = TmuxSocketNameCache().get_tmux_socket_name(server)
+        tmux_socket = container.get_tmux_socket_name.execute(server)
 
         cmd = [
             PATHS["tmux"],

@@ -99,9 +99,8 @@ def edit():
     new_file_contents = upload_form.file_contents.data
 #    server = GameServer.query.filter_by(id=server_id).first()
     server = container.get_game_server().execute(server_id)
-    file_manager = FileManager(server, UserModuleService())
 
-    if file_manager.write_file(cfg_path, new_file_contents):
+    if container.write_file().execute(server, cfg_path, new_file_contents):
         flash("Cfg file updated!", category="success")
         container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', edited '{cfg_path}'")
     else:

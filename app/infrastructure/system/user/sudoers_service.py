@@ -18,11 +18,10 @@ class SudoersService():
         PATHS["ansible_connector"],
     ]
 
-    def __init__(self, username):
-        self.username = username
+    def __init__(self):
         self.command_service = CommandExecutor()
 
-    def has_access(self):
+    def has_access(self, username):
         cmd = [PATHS['sudo'], '-n', '-l']
         cmd_id = 'check_sudo_access'
         success = self.command_service.run(cmd, None, cmd_id)
@@ -32,17 +31,18 @@ class SudoersService():
             return False
 
         for line in proc_info.stdout:
-            if f'({self.username}) NOPASSWD: ALL' in line:
+            if f'({username}) NOPASSWD: ALL' in line:
                 return True
 
         return False
 
-    def add_user(self):
+    def add_user(self, username):
         """
         Run playbook to add sudoers users.
         """
-        cmd = SudoersService.CONNECTOR_CMD + ["--user", self.username]
-        cmd_id = f'add_sudoers_rule_{self.username}'
+
+        cmd = SudoersService.CONNECTOR_CMD + ["--user", username]
+        cmd_id = f'add_sudoers_rule_{username}'
         self.command_service.run(cmd, None, cmd_id)
         proc_info = InMemProcInfoRepository().get(cmd_id)
 

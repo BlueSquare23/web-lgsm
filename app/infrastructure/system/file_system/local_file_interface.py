@@ -17,7 +17,7 @@ class LocalFileInterface(FileInterface):
         super().__init__(server)
         self.executor = executor
 
-    def read_file(self, file_path):
+    def read(self, file_path):
         current_app.logger.info(log_wrap("file_path", file_path))
         args = [ file_path ]
 
@@ -34,7 +34,7 @@ class LocalFileInterface(FileInterface):
         return base64.b64decode(encoded).decode('utf-8', errors='ignore')
 
     
-    def write_file(self, file_path, content):
+    def write(self, file_path, content):
         current_app.logger.info(log_wrap("file_path", file_path))
 
         # Encode the str to bytes.

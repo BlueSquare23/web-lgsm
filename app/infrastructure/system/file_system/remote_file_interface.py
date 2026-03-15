@@ -58,7 +58,7 @@ class SSHFileInterface(FileInterface):
             client.close()
             raise
 
-    def read_file(self, file_path):
+    def read(self, file_path):
         current_app.logger.info(log_wrap("file_path", file_path))
         pub_key_file = self._get_ssh_key_file(self.server.username, self.server.install_host)
         hostname = self.server.install_host
@@ -76,7 +76,7 @@ class SSHFileInterface(FileInterface):
             current_app.logger.debug(e)
             return None
     
-    def write_file(self, file_path, content):
+    def write(self, file_path, content):
         current_app.logger.info(log_wrap("file_path", file_path))
         pub_key_file = self._get_ssh_key_file(self.server.username, self.server.install_host)
         hostname = self.server.install_host

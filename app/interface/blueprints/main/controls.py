@@ -10,9 +10,8 @@ from flask import (
 )
 
 from app.utils import *
-#from app.models import GameServer
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
-from app.services import Controls, UserModuleService, TmuxSocketNameCache, ServerPowerState, SudoersService
+from app.services import Controls,  TmuxSocketNameCache, ServerPowerState, SudoersService
 from app import cache
 
 from app.container import container
@@ -93,14 +92,9 @@ def controls():
 
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
+            cfg_paths = container.find_cfg_paths().execute(server)
 
-
-# TODO: FIGURE THIS OUT
-#            cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
-#            cfg_paths = cfg_manager.find_cfg_paths(server)
-
-            cfg_paths = []
-
+            # Wtf, I don't remember this return "failed" but whatever..
             if cfg_paths == "failed":
                 flash("Error reading accepted_cfgs.json!", category="error")
                 cfg_paths = []
@@ -168,14 +162,9 @@ def controls():
         cfg_paths = []
     else:
         current_app.logger.info("Getting cfg_paths")
+        cfg_paths = container.find_cfg_paths().execute(server)
 
-# TODO: FIGURE THIS OUT
-    cfg_path = []
-#        cfg_manager = CfgManager()
-#        cfg_manager = CfgManager(UserModuleService(), ProcInfoRegistry(), command_service)
-#        cfg_paths = cfg_manager.find_cfg_paths(server)
-
-#    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
+    current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in controls list from controls.json file.
     controls_list = controls_service.get_controls(server.script_name, current_user)

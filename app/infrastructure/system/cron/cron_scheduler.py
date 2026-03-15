@@ -37,7 +37,7 @@ class CronScheduler:
         cmd = CronScheduler.CONNECTOR_CMD + ["--cron", job.job_id]
 
         cmd_id = f'add_job_{job.job_id}'
-        self.command_service.run_command(cmd, None, cmd_id)
+        self.command_service.run(cmd, None, cmd_id)
 
         proc_info = InMemProcInfoRepository().get(cmd_id)
         print(proc_info.stderr)
@@ -62,7 +62,7 @@ class CronScheduler:
         cmd = CronScheduler.CONNECTOR_CMD + ["--cron", job.job_id, "--delete", job.server_id]
 
         cmd_id = f'delete_job_{job.job_id}'
-        self.command_service.run_command(cmd, None, cmd_id)
+        self.command_service.run(cmd, None, cmd_id)
         proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if proc_info == None:
@@ -87,7 +87,7 @@ class CronScheduler:
         cmd_id = 'list_jobs'
         cmd = [PATHS['crontab'], '-l']
 
-        self.command_service.run_command(cmd, server, cmd_id)
+        self.command_service.run(cmd, server, cmd_id)
 
         proc_info = InMemProcInfoRepository().get(cmd_id)
 

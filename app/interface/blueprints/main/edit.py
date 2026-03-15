@@ -11,8 +11,6 @@ from flask import (
 from app.utils import *
 #from app.models import GameServer
 from app.interface.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
-from app.managers import FileManager
-from app.services import UserModuleService
 
 from app.container import container
 
@@ -50,10 +48,12 @@ def edit():
             cfg_path = download_form.cfg_path.data
 #            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
-            file_manager = FileManager(server, UserModuleService())
+#TODO: Fix this! Make http layer util for download.
+#            file_manager = FileManager(server, UserModuleService())
 
             container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', downloaded config '{cfg_path}'")
-            return file_manager.download_file(cfg_path)
+            return {}
+#            return file_manager.download_file(cfg_path)
 
         # Convert raw get args into select_form args.
         select_form = SelectCfgForm(request.args)
@@ -70,8 +70,7 @@ def edit():
         current_app.logger.info(log_wrap("cfg_path", cfg_path))
         current_app.logger.info(log_wrap("server", server))
 
-        file_manager = FileManager(server, UserModuleService())
-        file_contents = file_manager.read_file(cfg_path)
+        file_contents = container.read_file().execute(server, cfg_path)
 
         if file_contents == None:
             flash("Error reading file!", category="error")

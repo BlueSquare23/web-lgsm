@@ -4,8 +4,8 @@ import getpass
 from app import cache
 #from app.models import GameServer
 
-from .user_module_service import UserModuleService
-from app.managers import FileManager
+from app.infrastructure.system.user.user_module_service import UserModuleService
+from app.infrastructure.system.file_system.file_manager import FileManager
 
 class TmuxSocketNameCache:
 
@@ -41,8 +41,8 @@ class TmuxSocketNameCache:
         socket_file_name = cache.get(cache_key)
 
         if socket_file_name == None:  # Aka cache empty
-            file_manager = FileManager(server, UserModuleService())
-            gs_id = file_manager.read_file(gs_id_file_path)
+            file_manager = FileManager()
+            gs_id = file_manager.read(server, gs_id_file_path)
             if gs_id == None:
                 return None
 

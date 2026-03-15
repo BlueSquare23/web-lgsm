@@ -1,4 +1,11 @@
-# Wiring code, pull in layers for main app.
+""" 
+Wiring code, pull in layers for use in interface code via dep inversion.
+
+This is the composition root. Its the one place in the entire application
+that's allowed to know about everything. All the concrete implementations, all
+the repositories, all the wiring. It's "dirty" by design so everything else can
+stay clean. Think of it as the place where all the abstraction debt gets paid.
+"""
 
 from flask import current_app
 
@@ -31,11 +38,13 @@ from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.game_server.game_server_manager import GameServerManager
+from app.infrastructure.system.game_server.cfg_manager import CfgManager
 from app.application.use_cases.game_server.list_game_servers import ListGameServers
 from app.application.use_cases.game_server.get_game_server import GetGameServer
 from app.application.use_cases.game_server.query_game_server import QueryGameServer
 from app.application.use_cases.game_server.edit_game_server import EditGameServer
 from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
+from app.application.use_cases.game_server.find_cfg_paths import FindGameServerCfgPaths
 
 # Blocklist
 from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
@@ -65,6 +74,10 @@ from app.application.use_cases.config.getboolean_config import GetBoolConfig
 from app.application.use_cases.config.getint_config import GetIntConfig
 from app.application.use_cases.config.set_config import SetConfig
 
+# Files
+from app.infrastructure.system.file_system.file_manager import FileManager
+from app.application.use_cases.file_system.read_file import ReadFile
+from app.application.use_cases.file_system.write_file import WriteFile 
 
 class Container:
 
@@ -104,6 +117,12 @@ class Container:
 
     def config_manager(self):
         return ConfigManager()
+
+    def cfg_manager(self):
+        return CfgManager()
+
+    def file_manager(self):
+        return FileManager()
 
     # ---- Use Cases ----
 
@@ -214,6 +233,11 @@ class Container:
             game_server_manager=self.game_server_manager(),
         )
 
+    def find_cfg_paths(self):
+        return FindGameServerCfgPaths(
+            cfg_manager=self.cfg_manager(),
+        )
+
     ## Blocklist
 
     def add_failed_blocklist(self):
@@ -288,6 +312,17 @@ class Container:
             config_manager=self.config_manager()
         )
 
+    ## File System
+
+    def read_file(self):
+        return ReadFile(
+            file_manager=self.file_manager()
+        )
+
+    def write_file(self):
+        return WriteFile(
+            file_manager=self.file_manager()
+        )
 
 # One global container instance to rule them all!
 container = Container()

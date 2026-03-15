@@ -5,19 +5,19 @@ import json
 from flask import current_app, flash
 
 from app.utils.paths import PATHS
-from app.config import ConfigManager
+
+from app.infrastructure.system.command_executor.command_executor import CommandExecutor
+from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+from app.infrastructure.system.user.user_module_service import UserModuleService 
+
 
 class CfgManager:
     USER = getpass.getuser()
 
-# This is a dirty hack just injecting these dependencies. We need to have
-# better architectural separation between managers and services. But till
-# ProcInfo / CommandExec stuff is re-arched, this'll have to do.
-    def __init__(self, executor, proc_info_service, command_exec_service):
+    def __init__(self, executor=UserModuleService(), proc_info_service=InMemProcInfoRepository(), command_exec_service=CommandExecutor()):
         self.executor = executor
         self.proc_info_service = proc_info_service
         self.command_exec_service = command_exec_service
-
 
     def find_cfg_paths(self, server):
         cfg_whitelist = open("json/accepted_cfgs.json", "r")
@@ -55,7 +55,7 @@ class CfgManager:
         ] + wanted[:-1]
 
         cmd_id = "find_cfg_paths"
-        success = self.command_exec_service(ConfigManager()).run_command(cmd, server, cmd_id)
+        success = self.command_exec_service().run_command(cmd, server, cmd_id)
         proc_info = self.proc_info_service.get_process(cmd_id)
 
         # If the ssh connection itself fails return False.

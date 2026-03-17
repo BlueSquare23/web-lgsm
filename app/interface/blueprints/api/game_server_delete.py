@@ -65,7 +65,7 @@ class GameServerDelete(Resource):
         # TODO: Refactor this now that config handling has been changed.
 #        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
 
-        if not container.delete_game_server().execute(server.id, container.getboolean_config().execute('settings','remove_files'), container.getboolean().execute('settings','delete_user')):
+        if not container.delete_game_server().execute(server.id, container.getboolean_config().execute('settings','remove_files'), container.getboolean_config().execute('settings','delete_user')):
             resp_dict = {
                 "Error": "Problem deleting server, see error logs for more details."
             }
@@ -74,8 +74,8 @@ class GameServerDelete(Resource):
             )
             return response
 
-        delete_user = str(config.getboolean('settings','delete_user'))
-        remove_files = str(config.getboolean('settings','remove_files'))
+        delete_user = str(container.getboolean_config().execute('settings','delete_user'))
+        remove_files = str(container.getboolean_config().execute('settings','remove_files'))
         container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
 
         return "", 204

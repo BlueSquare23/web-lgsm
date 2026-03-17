@@ -15,7 +15,6 @@ from flask import (
 
 from app.interface.forms.auth import SetupForm
 from app.interface.forms.validation_errors import validation_errors
-from app.utils import validation_errors
 from app.container import container
 
 from . import auth_bp

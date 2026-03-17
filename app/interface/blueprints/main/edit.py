@@ -1,3 +1,6 @@
+import os
+import io
+
 from flask_login import login_required, current_user
 from flask import (
     render_template,
@@ -6,6 +9,7 @@ from flask import (
     url_for,
     redirect,
     current_app,
+    send_file,
 )
 
 from app.utils import *
@@ -39,7 +43,10 @@ def edit():
 
     if request.method == "GET":
         current_app.logger.debug(request.args.keys())
+
         if "download_submit" in request.args.keys():
+            current_app.logger.info("HIT DOWNLOAD PAGE!")
+
             download_form = DownloadCfgForm(request.args)
             if not download_form.validate():
                 validation_errors(download_form)
@@ -47,14 +54,27 @@ def edit():
 
             server_id = download_form.server_id.data
             cfg_path = download_form.cfg_path.data
-#            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
-#TODO: Fix this! Make http layer util for download.
-#            file_manager = FileManager(server, UserModuleService())
 
             container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', downloaded config '{cfg_path}'")
-            return {}
 #            return file_manager.download_file(cfg_path)
+
+            file_contents = container.read_file().execute(server, cfg_path)
+
+            if file_contents is None:
+                flash("Problem retrieving file contents", category="error")
+                return redirect(url_for("main.home"))
+
+            filename = os.path.basename(cfg_path)
+
+            file_like_object = io.BytesIO(file_contents.encode("utf-8"))
+
+            return send_file(
+                file_like_object,
+                as_attachment=True,
+                download_name=filename,
+                mimetype="text/plain",
+            )
 
         # Convert raw get args into select_form args.
         select_form = SelectCfgForm(request.args)

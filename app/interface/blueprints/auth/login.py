@@ -19,7 +19,6 @@ from flask import (
 from app.interface.forms.auth import LoginForm 
 from app.interface.forms.validation_errors import validation_errors
 from app.interface.http.client_ip import get_client_ip
-from app.utils import validation_errors
 from app.container import container
 
 from . import auth_bp

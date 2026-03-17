@@ -115,6 +115,7 @@ def update_self():
         return "Web LGSM Upgraded! Restarting momentarily..."
 
 
+# TODO: Give this the clean arch treatment
 def is_ssh_accessible(hostname):
     """
     Checks if a hostname/IP has an accessible SSH server on port 22.

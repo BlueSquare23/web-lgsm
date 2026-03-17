@@ -8,7 +8,6 @@ from flask import render_template, redirect, url_for, request, flash
 
 from app.interface.forms.auth import OTPSetupForm
 from app.interface.forms.validation_errors import validation_errors
-from app.utils import validation_errors
 from app.container import container
 
 from . import auth_bp

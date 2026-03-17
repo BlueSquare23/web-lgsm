@@ -79,6 +79,7 @@ from app.application.use_cases.config.get_template_config import GetTemplateConf
 from app.application.use_cases.config.getboolean_config import GetBoolConfig
 from app.application.use_cases.config.getint_config import GetIntConfig
 from app.application.use_cases.config.set_config import SetConfig
+from app.application.use_cases.config.batch_update_config import BatchUpdateConfig
 
 # Files
 from app.infrastructure.system.file_system.file_manager import FileManager
@@ -376,6 +377,11 @@ class Container:
 
     def set_config(self):
         return SetConfig(
+            config_manager=self.config_manager()
+        )
+
+    def batch_update_config(self):
+        return BatchUpdateConfig(
             config_manager=self.config_manager()
         )
 

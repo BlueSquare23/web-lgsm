@@ -31,6 +31,7 @@ def settings():
 
     # Create SettingsForm.
     form = SettingsForm()
+    config = container.get_template_config().execute()
 
     if request.method == "GET":
         # Set form defaults.
@@ -57,7 +58,7 @@ def settings():
             "settings.html",
             user=current_user,
             system_user=USER,
-#            _config=config,  # Not sure what todo about this yet
+            _config=config,  # Not sure what todo about this yet
             form=form,
         )
 
@@ -103,7 +104,7 @@ def settings():
         cache.clear()
 
     # Batch update config via context handler.
-    with config.batch_update() as config:
+    with container.batch_update_config().execute() as config:
         config.set('aesthetic', 'text_color', text_color_pref)
         config.set('settings',  'delete_user', user_del_pref)
         config.set('settings',  'remove_files', file_pref)

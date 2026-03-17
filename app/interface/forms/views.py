@@ -26,8 +26,9 @@ from wtforms import (
     HiddenField,
 )
 
-from app.utils import get_servers
 from .helpers import ServerExists, ValidConfigFile
+
+from app.container import container
 
 USERNAME = getpass.getuser()
 
@@ -106,7 +107,10 @@ class AddForm(FlaskForm):
         ],
     )
 
-    servers = [script for script, tup in get_servers().items()]
+    installable = container.list_installable_game_servers().execute()
+    servers = {}
+    if installable:
+        servers = [script for script, tup in installable.items()]
 
     script_name = StringField(
         "LGSM script name",

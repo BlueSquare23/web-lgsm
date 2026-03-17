@@ -149,30 +149,3 @@ class GameServerManager:
     
         return True
 
-    def cancel_install(pid):
-        """ 
-        Calls the ansible playbook connector to kill running installs upon request.
-
-        Args:
-            pid (int): Process ID or running install to cancel.
-
-        Returns:
-            bool: True if install canceled successfully, False otherwise.
-        """
-
-        # NOTE: For the --cancel option on the ansible connector script we pass in
-        # the pid of the running install, instead of a game server's ID.
-        cmd = GameServerManager.CONNECTOR_CMD + ["--cancel", str(pid)]
-
-        cmd_id = 'cancel_install'
-        CommandExecutor().run(cmd, None, cmd_id)
-        proc_info = InMemProcInfoRepository().get(cmd_id)
-
-        if proc_info == None:
-            return False
-
-        if proc_info.exit_status > 0:
-            return False
-
-        return True
-

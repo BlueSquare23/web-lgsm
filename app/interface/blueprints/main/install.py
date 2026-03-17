@@ -40,7 +40,7 @@ def install():
         return redirect(url_for("main.home"))
 
     # Pull in install server list from game_servers.json file.
-    install_list = get_servers()
+    install_list = container.list_installable_game_servers().execute()
     if not install_list:
         flash("Error loading game_servers.json file!", category="error")
         return redirect(url_for("main.home"))
@@ -53,7 +53,7 @@ def install():
     container.check_and_get_lgsmsh().execute(f"bin/{lgsmsh}")
 
     # Check if any installs are currently running.
-    running_installs = get_running_installs()
+    running_installs = container.list_running_game_server_installs().execute()
 
     form = AddForm()
 

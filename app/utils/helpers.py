@@ -92,56 +92,6 @@ def docker_cmd_build(server):
     ]
 
 
-def get_running_installs():
-    """
-    Gets list of running install thread names, if any are currently running.
-
-    Returns:
-        dict: Mapping of observed running threads for game server IDs to game
-              server names.
-    """
-    threads = threading.enumerate()
-    # Get all active threads.
-    running_install_threads = dict()
-    from app.container import container
-
-    for thread in threads:
-        if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
-            server_id = thread.name.replace("web_lgsm_install_", "")
-            server = container.get_game_server().execute(server_id)
-
-            # Check game server exists.
-            if server:
-                running_install_threads[server_id] = server.install_name
-
-    return running_install_threads
-
-
-def get_servers():
-    """
-    Turns data in games_servers.json into servers list for install route.
-
-    Returns:
-        dict: Dictionary mapping short server names to long server names.
-    """
-
-    # Try except in case problem with json files.
-    try:
-        with open("json/game_servers.json", "r") as file:
-            json_data = json.load(file)
-
-        return {
-            key: (value1, value2)
-            for key, value1, value2 in zip(
-                json_data["servers"],
-                json_data["server_names"],
-                json_data["app_imgs"]
-            )
-        }
-    except:
-        # Return empty dict triggers error. In python empty dict == False.
-        return {}
-
 
 # TODO/NOTE: This can stay for now, but its on the chopping block. This
 # validation should now be handled by flask-wtf/wtforms classes. Once I get

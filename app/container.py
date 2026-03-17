@@ -38,6 +38,7 @@ from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.game_server.game_server_manager import GameServerManager
+from app.infrastructure.system.game_server.install_manager import GameServerInstallManager
 from app.infrastructure.system.game_server.cfg_manager import CfgManager
 from app.application.use_cases.game_server.list_game_servers import ListGameServers
 from app.application.use_cases.game_server.get_game_server import GetGameServer
@@ -47,6 +48,8 @@ from app.application.use_cases.game_server.edit_game_server import EditGameServe
 from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
 from app.application.use_cases.game_server.find_cfg_paths import FindGameServerCfgPaths
 from app.application.use_cases.game_server.cancel_game_server_install import CancelGameServerInstall
+from app.application.use_cases.game_server.list_running_installs import ListRunningGameServerInstalls
+from app.application.use_cases.game_server.list_installable import ListInstallableGameServers
 
 # Blocklist
 from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
@@ -130,6 +133,9 @@ class Container:
 
     def game_server_manager(self):
         return GameServerManager()
+
+    def game_server_install_manager(self):
+        return GameServerInstallManager()
 
     def system_metrics(self):
         return SystemMetrics()
@@ -278,7 +284,17 @@ class Container:
 
     def cancel_game_server_install(self):
         return CancelGameServerInstall(
-            game_server_manager=self.game_server_manager(),
+            install_manager=self.game_server_install_manager(),
+        )
+
+    def list_installable_game_servers(self):
+        return ListInstallableGameServers(
+            install_manager=self.game_server_install_manager(),
+        )
+
+    def list_running_game_server_installs(self):
+        return ListRunningGameServerInstalls(
+            install_manager=self.game_server_install_manager(),
         )
 
     ## Blocklist

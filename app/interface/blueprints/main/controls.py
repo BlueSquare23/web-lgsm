@@ -11,6 +11,7 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.validation_errors import validation_errors
+from app.interface.forms.valid_command import valid_command
 from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app import cache
 

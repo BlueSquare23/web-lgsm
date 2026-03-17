@@ -186,7 +186,7 @@ def install():
     install_daemon.start()
 
     clear_daemon = Thread(
-        target=clear_proc_info_post_install,
+        target=container.clear_install_buffer_output().execute(),
         args=(server_id, current_app.app_context()),
         daemon=True,
         name=f"clear_install_{server_id}",

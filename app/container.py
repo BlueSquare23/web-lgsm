@@ -50,6 +50,7 @@ from app.application.use_cases.game_server.find_cfg_paths import FindGameServerC
 from app.application.use_cases.game_server.cancel_game_server_install import CancelGameServerInstall
 from app.application.use_cases.game_server.list_running_installs import ListRunningGameServerInstalls
 from app.application.use_cases.game_server.list_installable import ListInstallableGameServers
+from app.application.use_cases.game_server.clean_install_buffer_output import ClearInstallBufferOutput
 
 # Blocklist
 from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
@@ -282,6 +283,8 @@ class Container:
             cfg_manager=self.cfg_manager(),
         )
 
+    ## GameServer Installs
+
     def cancel_game_server_install(self):
         return CancelGameServerInstall(
             install_manager=self.game_server_install_manager(),
@@ -294,6 +297,11 @@ class Container:
 
     def list_running_game_server_installs(self):
         return ListRunningGameServerInstalls(
+            install_manager=self.game_server_install_manager(),
+        )
+
+    def clear_install_buffer_output(self):
+        return ClearInstallBufferOutput(
             install_manager=self.game_server_install_manager(),
         )
 

@@ -43,7 +43,6 @@ class GameServerInstallManager:
             )
         }
 
-
     def cancel(self, pid):
         """ 
         Calls the ansible playbook connector to kill running installs upon request.
@@ -82,17 +81,63 @@ class GameServerInstallManager:
         threads = threading.enumerate()
         # Get all active threads.
         running_install_threads = dict()
-    
+
         for thread in threads:
             if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
                 server_id = thread.name.replace("web_lgsm_install_", "")
                 if not server_id:
                     continue
                 server = SqlAlchemyGameServerRepository.get(server_id)
-    
+
                 # Check game server exists.
                 if server:
                     running_install_threads[server_id] = server.install_name
-    
+
         return running_install_threads
+
+    def clear_proc_info_post_install(self, server_id, app_context):
+        """
+        Clears the stdout & stderr buffers for proc_info after install finishes.
+        Does so by checking running install threads, if thread for ID is gone from
+        running list and game server install marked finished, clear buffers.
+    
+        Args:
+            server_id (str): UUID for game server.
+            app_context (AppContext): Optional Current app context needed for
+                                      logging in a thread.
+        """
+
+        # App context needed for logging in threads.
+        if app_context:
+            app_context.push()
+
+        max_lifetime = 3600  # 1 Hour TTL
+        runtime = 0
+
+        # Little buffer to make sure install daemon thread starts first.
+        time.sleep(5)
+
+#TODO: Sort out logger call, I need a standardized way to do them. I don't like this passing in current app to infra layer.
+        current_app.logger.info("<CLEAR DAEMON> - Starting clear thread")
+
+        while runtime < max_lifetime:
+            all_installs = get_running_installs()
+
+            # Aka install finished or died.
+            if server_id not in all_installs:
+                server = SqlAlchemyGameServerRepository.get(server_id)
+    
+                # Rare edge case if server deleted before thread dies.
+                if server == None:
+                    return
+
+                # If install thread not running anymore and install marked
+                # finished, clear out the old proc_info object.
+                if server.install_finished and not server.install_failed:
+                    current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
+                    InMemProcInfoRepository.remove(server_id)
+                    return
+
+            time.sleep(5)
+            runtime += 5
 

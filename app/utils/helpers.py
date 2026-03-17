@@ -17,7 +17,6 @@ import threading
 
 from datetime import datetime, timedelta
 from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
-from functools import lru_cache
 
 from app import db
 from app import cache
@@ -32,12 +31,6 @@ CONNECTOR_CMD = [
     "/opt/web-lgsm/bin/python",
     PATHS["ansible_connector"],
 ]
-
-# Network stats globals.
-prev_bytes_sent = psutil.net_io_counters().bytes_sent
-prev_bytes_recv = psutil.net_io_counters().bytes_recv
-prev_time = time.time()
-
 
 def log_wrap(item_name, item):
     """
@@ -201,54 +194,6 @@ def read_changelog():
 
     except Exception as e:
         return f"Problem reading CHANGELOG.md: {e}"
-
-
-def clear_proc_info_post_install(server_id, app_context):
-    """
-    Clears the stdout & stderr buffers for proc_info after install finishes.
-    Does so by checking running install threads, if thread for ID is gone from
-    running list and game server install marked finished, clear buffers.
-
-    Args:
-        server_id (str): UUID for game server.
-        app_context (AppContext): Optional Current app context needed for
-                                  logging in a thread.
-    """
-
-    from app.container import container
-    # App context needed for logging in threads.
-    if app_context:
-        app_context.push()
-
-    max_lifetime = 3600  # 1 Hour TTL
-    runtime = 0
-
-    # Little buffer to make sure install daemon thread starts first.
-    time.sleep(5)
-    current_app.logger.info("<CLEAR DAEMON> - Starting clear thread")
-
-    while runtime < max_lifetime:
-        all_installs = get_running_installs()
-
-        # Aka install finished or died.
-        if server_id not in all_installs:
-#            server = GameServerModel.query.filter_by(id=server_id).first()
-
-            server = container.get_game_server().execute(server_id)
-
-            # Rare edge case if server deleted before thread dies.
-            if server == None:
-                return
-
-            # If install thread not running anymore and install marked
-            # finished, clear out the old proc_info object.
-            if server.install_finished and not server.install_failed:
-                current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
-                container.remove_process().execute(server_id)
-                return
-
-        time.sleep(5)
-        runtime += 5
 
 
 def validation_errors(form):

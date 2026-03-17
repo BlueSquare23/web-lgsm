@@ -11,6 +11,7 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import SettingsForm
+from app.interface.forms.validation_errors import validation_errors
 
 from app.container import container
 

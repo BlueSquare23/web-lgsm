@@ -13,6 +13,7 @@ from flask import (
 
 from app import db
 from app.interface.forms.auth import EditUsersForm
+from app.interface.forms.validation_errors import validation_errors
 from app.utils import validation_errors, log_wrap
 
 from app.container import container

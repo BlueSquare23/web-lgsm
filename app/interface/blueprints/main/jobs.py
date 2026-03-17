@@ -12,6 +12,7 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, JobsForm
+from app.interface.forms.validation_errors import validation_errors
 
 from . import main_bp
 

@@ -11,6 +11,7 @@ from flask import (
 from app.utils import *
 #from app.models import GameServer
 from app.interface.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
+from app.interface.forms.validation_errors import validation_errors
 
 from app.container import container
 

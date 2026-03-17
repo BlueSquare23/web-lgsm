@@ -13,6 +13,8 @@ from flask import (
 
 from app.utils import *
 from app.interface.forms.views import ValidateID, AddForm
+from app.interface.forms.validation_errors import validation_errors
+
 from app.container import container
 
 # Constants.

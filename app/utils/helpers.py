@@ -54,36 +54,6 @@ def log_wrap(item_name, item):
     return log_msg
 
 
-
-def cancel_install(pid):
-    """
-    Calls the ansible playbook connector to kill running installs upon request.
-
-    Args:
-        pid (int): Process ID or running install to cancel.
-
-    Returns:
-        bool: True if install canceled successfully, False otherwise.
-    """
-    from app.container import container
-
-    # NOTE: For the --cancel option on the ansible connector script we pass in
-    # the pid of the running install, instead of a game server's ID.
-    cmd = CONNECTOR_CMD + ["--cancel", str(pid)]
-
-    cmd_id = 'cancel_install'
-    container.run_command().execute(cmd, None, cmd_id)
-    proc_info = container.get_process.execute(cmd_id)
-
-    if proc_info == None:
-        return False
-
-    if proc_info.exit_status > 0:
-        return False
-
-    return True
-
-
 def get_uid(username):
     """
     Translates a username to a uid using pwd module.

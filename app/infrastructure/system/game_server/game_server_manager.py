@@ -80,7 +80,7 @@ class GameServerManager:
 
             if delete_user and server.username != GameServerManager.USER:
                 cmd = GameServerManager.CONNECTOR_CMD + ["--delete", str(server.id)]
-                CommandExecutor().run_command(cmd)
+                CommandExecutor().run(cmd)
 
         if server.install_type == "remote":
 #            if delete_user:
@@ -98,7 +98,7 @@ class GameServerManager:
 
             cmd = [PATHS["rm"], "-rf", server.install_path]
 
-            success = CommandExecutor().run_command(cmd, server, server.id)
+            success = CommandExecutor().run(cmd, server, server.id)
             proc_info = InMemProcInfoRepository().get(server.id)
 
             # If the ssh connection itself fails return False.
@@ -136,7 +136,7 @@ class GameServerManager:
     
         cmd_id = "get_server_status:" + server.install_name
     
-        CommandExecutor().run_command(cmd, server, cmd_id)
+        CommandExecutor().run(cmd, server, cmd_id)
     
         proc_info = InMemProcInfoRepository().get(cmd_id)
         current_app.logger.info(log_wrap("proc_info", proc_info))
@@ -147,5 +147,32 @@ class GameServerManager:
         if proc_info.exit_status > 0:
             return False
     
+        return True
+
+    def cancel_install(pid):
+        """ 
+        Calls the ansible playbook connector to kill running installs upon request.
+
+        Args:
+            pid (int): Process ID or running install to cancel.
+
+        Returns:
+            bool: True if install canceled successfully, False otherwise.
+        """
+
+        # NOTE: For the --cancel option on the ansible connector script we pass in
+        # the pid of the running install, instead of a game server's ID.
+        cmd = GameServerManager.CONNECTOR_CMD + ["--cancel", str(pid)]
+
+        cmd_id = 'cancel_install'
+        CommandExecutor().run(cmd, None, cmd_id)
+        proc_info = InMemProcInfoRepository().get(cmd_id)
+
+        if proc_info == None:
+            return False
+
+        if proc_info.exit_status > 0:
+            return False
+
         return True
 

@@ -84,7 +84,7 @@ def install():
             current_app.logger.info(log_wrap("proc_info", proc_info))
 
             if proc_info.pid:
-                success = cancel_install(proc_info.pid)
+                success = container.cancel_game_server_install().execute(proc_info.pid)
                 if success:
                     flash("Installation Canceled!")
                 else:
@@ -139,6 +139,7 @@ def install():
     install_name = install_name.replace(":", "")
     
     game_server = {
+        "id": None,  # New game server dont have IDs yet.
         "install_name": install_name,
         "install_path": install_path,
         "install_type": install_type,

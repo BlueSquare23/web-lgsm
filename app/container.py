@@ -46,6 +46,7 @@ from app.application.use_cases.game_server.query_game_server import QueryGameSer
 from app.application.use_cases.game_server.edit_game_server import EditGameServer
 from app.application.use_cases.game_server.delete_game_server import DeleteGameServer
 from app.application.use_cases.game_server.find_cfg_paths import FindGameServerCfgPaths
+from app.application.use_cases.game_server.cancel_game_server_install import CancelGameServerInstall
 
 # Blocklist
 from app.infrastructure.security.blocklist_repo import InMemBlocklistRepository
@@ -273,6 +274,11 @@ class Container:
     def find_cfg_paths(self):
         return FindGameServerCfgPaths(
             cfg_manager=self.cfg_manager(),
+        )
+
+    def cancel_game_server_install(self):
+        return CancelGameServerInstall(
+            game_server_manager=self.game_server_manager(),
         )
 
     ## Blocklist

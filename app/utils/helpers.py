@@ -202,50 +202,6 @@ def valid_command(ctrl, server, current_user):
     return False
 
 
-def get_lgsmsh(lgsmsh):
-    """
-    Function for pulling down the latest linuxgsm.sh script from their URL when
-    needed. Fakes wget's user agent to get requests to work.
-
-    Args:
-        lgsmsh (str): Path to linuxgsm.sh script file (aka web-lgsm/scripts/).
-
-    Returns:
-        None: Just fetches latest file if needed, returns nothing.
-    """
-    try:
-        headers = {"User-Agent": "Wget/1.20.3 (linux-gnu)"}
-        response = requests.get("https://linuxgsm.sh", headers=headers)
-        with open(lgsmsh, "wb") as f:
-            f.write(response.content)
-        os.chmod(lgsmsh, 0o755)
-    except Exception as e:
-        # For debug.
-        current_app.logger.debug(e)
-
-    current_app.logger.info("Latest linuxgsm.sh script fetched!")
-
-
-def check_and_get_lgsmsh(lgsmsh):
-    """
-    Checks if linuxgsm.sh already exists and if not, gets it. Also checks if
-    current version is older than 3 weeks old and if so get's a fresh copy.
-
-    Args:
-        lgsmsh (str): Path to linuxgsm.sh script file (aka web-lgsm/scripts/).
-
-    Returns:
-        None: Just fetches latest file if needed, returns nothing.
-    """
-    if not os.path.isfile(lgsmsh):
-        get_lgsmsh(lgsmsh)
-        return
-
-    three_weeks_in_seconds = 1814400
-    if int(time.time() - os.path.getmtime(lgsmsh)) > three_weeks_in_seconds:
-        get_lgsmsh(lgsmsh)
-
-
 def update_self():
     """
     Runs the web-lgsm self updates. Just wraps invocation of web-lgsm.py --auto

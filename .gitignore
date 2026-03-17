@@ -6,7 +6,7 @@
 *.pem
 *.bak
 linuxgsm.sh
-lgsm
+./lgsm
 venv
 __pycache__
 Mockcraft

@@ -95,7 +95,8 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, create_app
 from app.infrastructure.persistence.models.user_model import UserModel
-from app.utils import check_and_get_lgsmsh
+#from app.infrastructure.system.lgsm.lgsm_manager import LgsmManager
+from app.container import container
 
 # Import config data.
 CONFIG_FILE = "main.conf"
@@ -407,8 +408,13 @@ def change_password():
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
     lgsmsh = SCRIPTPATH + "/bin/linuxgsm.sh"
-    check_and_get_lgsmsh(lgsmsh)
+#    check_and_get_lgsmsh(lgsmsh)
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        container.check_and_get_lgsmsh().execute(lgsmsh)
 
+    return
     servers_list = os.popen(f"{lgsmsh} list").read()
 
     short_names = []
@@ -781,7 +787,7 @@ def main(argv):
             return
         elif opt in ("-f", "--fetch_json"):
             print("Disabled till can fix to also update imgs")
-#            update_gs_list()
+            update_gs_list()
             return
         elif opt in ("-t", "--test", "-x", "--test_full"):
             run_tests()

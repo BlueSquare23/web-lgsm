@@ -93,6 +93,10 @@ from app.application.use_cases.sudoers.add_sudoers_rule import AddSudoersRule
 from app.infrastructure.system.game_server.tmux_socket_name_cache import TmuxSocketNameCache
 from app.application.use_cases.tmux.get_tmux_socket_name import GetTmuxSocketName
 
+# LGSM
+from app.infrastructure.system.lgsm.lgsm_manager import LgsmManager
+from app.application.use_cases.lgsm.check_and_get_lgsmsh import CheckAndGetLgsmsh
+
 class Container:
 
     # ---- Repositories ----
@@ -146,6 +150,11 @@ class Container:
 
     def tmux_socket_cache_handler(self):
         return TmuxSocketNameCache()
+
+    def lgsm_manager(self):
+        return LgsmManager(
+            logger=current_app.logger,  # I don't love this dep inversion but its fine for now
+        )
 
     # ---- Use Cases ----
 
@@ -376,6 +385,13 @@ class Container:
     def get_tmux_socket_name(self):
         return GetTmuxSocketName(
             tmux_socket_cache_handler=self.tmux_socket_cache_handler()
+        )
+
+    ## LGSM
+
+    def check_and_get_lgsmsh(self):
+        return CheckAndGetLgsmsh(
+            lgsm_manager=self.lgsm_manager(),
         )
 
 

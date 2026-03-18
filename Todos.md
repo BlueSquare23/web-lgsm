@@ -260,7 +260,7 @@
 
 ### New Features, Highlevel Release Goals
 
-* [ ] **Continue re-architecture efforts**
+* [x] **Continue re-architecture efforts**
   - Problems:
     - Too many "services" that aren't services.
     - Lacking conceptual models for what they are.
@@ -349,9 +349,23 @@ If you need any icons, we're also using bootstrap icons, so you can just use any
 https://icons.getbootstrap.com/
 ```
 
+* [x] **Cleanup Home template install list jinja via routecode**
+  - I can get rid or the nested ifs in the template file by getting the game
+    server list for the give user and only passing that to the template.
+
 * [ ] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
   - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55
-  - Yeah shouldn't be too hard just some JS and maybe we store some custom order pref in the db or something too.
+  - Two Parts of this:
+  - Part 1: Quick Alpha Sorting
+    - Easy, frontend only
+    - [ ] Some JS to do sort by alpha, asc/desc
+  - Part 2: Custom Sort Order
+    - Hard: Needs backend changes
+    - [ ] New column in DB & field in domain entity for `sort_order`
+    - [ ] New Method on SqlAlchUserRepo for `.list_sorted()` that just does `GameServerModel.query.order_by(UserModel.sort_order).all()`
+    - [ ] New usecase & container wiring for calling repo method
+    - [ ] New `/api/update-order/<GSUUID>` api route for catching updates
+    - [ ] New frontend changes using `SortableJS` to make list dragable
 
 * [ ] **Clean up misc messes and add more unit tests for untested classes**
 
@@ -492,7 +506,6 @@ https://icons.getbootstrap.com/
   - [x] Create usecase for run and wire it up through container.
   - [x] Replace routecode calls to new use case.
 
-
 * [ ] **Figure out how logger fits into clean architecture**
   - It'd be really nice to get more info out of some of these deeper errors to
     help catch bugs and because I don't totally know what I'm doing yet.
@@ -523,16 +536,12 @@ https://icons.getbootstrap.com/
     clean arch), we can just use that to run cron commands as alt users more
     securely and faster without having to become root.
 
-* [ ] **This shouldn't be fatal, `install.sh` MAKE FIX!**
+* [x] **This shouldn't be fatal, `root_install.sh` MAKE FIX!**
 ```
 ####### Installing Web-LGSM Ansible Connector...
 ####### Setting up Share Modules Dir...
 mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
 ```
-
-* [ ] **Fix the in app update!**
-  - I think this is still broken which sucks.
-  - You should be able to update the app from the web panel.
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 
@@ -559,7 +568,7 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
   - I'm thinking I just make a branch of the main flask app an spend a few
     bucks on a .com.
   - We can throw it up on my VPS at work its fine.
-  
+
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.
@@ -644,6 +653,18 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
       to do than time to do them.
 
 ## Version 1.8.x Todos
+
+* [ ] **Add Sudo Pass Form for cmds that need it**
+  - Things like app update (and maybe even install again) need a sudo password
+    to run.
+  - Not sure how to hack this into existing sudo invoked stuff atm cause its
+    gonna wanna read stdin. Problem for tomorrow me!
+
+* [ ] **Fix the in app update!**
+  - This requires sudo password form.
+  - I think this is still broken which sucks.
+  - You should be able to update the app from the web panel.
+
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something

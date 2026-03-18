@@ -34,6 +34,7 @@ from app.application.use_cases.user.check_user_access import CheckUserAccess
 from app.application.use_cases.user.delete_user import DeleteUser
 from app.application.use_cases.user.get_user_totp_uri import GetUserTotpUri
 from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
+from app.application.use_cases.user.list_user_game_servers import ListUserGameServers
 
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
@@ -244,6 +245,12 @@ class Container:
     def verify_user_totp(self):
         return VerifyUserTotp(
             user_repository=self.user_repository(),
+        )
+
+    def list_user_game_servers(self):
+        return ListUserGameServers(
+            user_repository=self.user_repository(),
+            game_server_repository=self.game_server_repository(),
         )
 
     ## GameServer

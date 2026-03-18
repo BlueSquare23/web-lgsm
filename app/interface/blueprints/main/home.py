@@ -26,16 +26,17 @@ def home():
         log_wrap("current_user.permissions", current_user.permissions)
     )
 
-    installed_servers = container.list_game_servers().execute()
-    for server in installed_servers:
+    servers = container.list_user_game_servers().execute(current_user.id)
+
+    for server in servers:
         current_app.logger.info(server.id)
 
-    current_app.logger.debug(log_wrap("installed_servers", installed_servers))
+    current_app.logger.debug(log_wrap("servers", servers))
 
     return render_template(
         "home.html",
         user=current_user,
-        all_game_servers=installed_servers,
+        servers=servers,
         _config=config,
     )
 

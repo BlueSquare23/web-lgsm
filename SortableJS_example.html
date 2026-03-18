@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SortableJS + Sorting Demo</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #222;
+      color: white;
+      text-align: center;
+    }
+
+    .controls {
+      margin: 20px;
+    }
+
+    .list-group {
+      width: 320px;
+      margin: 0 auto;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+
+    .list-group-item {
+      padding: 12px;
+      border-bottom: 1px solid #444;
+      background: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-group-item:last-child {
+      border-bottom: none;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      opacity: 0.3;
+    }
+
+    .editable .drag-handle {
+      opacity: 1;
+    }
+
+    select, button {
+      padding: 8px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Installed Servers</h2>
+
+<div class="controls">
+  <button id="toggle-btn">Enable Reorder Mode</button>
+
+  <select id="sort-select">
+    <option value="default">Custom Order</option>
+    <option value="asc">Name (A → Z)</option>
+    <option value="desc">Name (Z → A)</option>
+  </select>
+</div>
+
+<div id="server-list" class="list-group locked">
+  <div class="list-group-item" data-id="1" data-name="Minecraft Server">
+    <span>Minecraft Server</span>
+    <span class="drag-handle">☰</span>
+  </div>
+  <div class="list-group-item" data-id="2" data-name="CS:GO Server">
+    <span>CS:GO Server</span>
+    <span class="drag-handle">☰</span>
+  </div>
+  <div class="list-group-item" data-id="3" data-name="Rust Server">
+    <span>Rust Server</span>
+    <span class="drag-handle">☰</span>
+  </div>
+  <div class="list-group-item" data-id="4" data-name="Valheim Server">
+    <span>Valheim Server</span>
+    <span class="drag-handle">☰</span>
+  </div>
+</div>
+
+<script>
+  let isEditable = false;
+
+  const list = document.getElementById('server-list');
+  const toggleBtn = document.getElementById('toggle-btn');
+  const sortSelect = document.getElementById('sort-select');
+
+  // Store original custom order
+  let originalOrder = Array.from(document.querySelectorAll('.list-group-item'));
+
+  const sortable = new Sortable(list, {
+    animation: 150,
+    handle: '.drag-handle',
+    disabled: true,
+
+    onEnd: function () {
+      // Update stored custom order
+      originalOrder = Array.from(document.querySelectorAll('.list-group-item'));
+
+      const order = originalOrder.map(el => el.dataset.id);
+      console.log("Saved custom order:", order);
+    }
+  });
+
+  // Toggle reorder mode
+  toggleBtn.addEventListener('click', () => {
+    isEditable = !isEditable;
+    sortable.option("disabled", !isEditable);
+
+    if (isEditable) {
+      list.classList.add('editable');
+      toggleBtn.innerText = "Lock Order";
+      sortSelect.disabled = true; // prevent conflicts
+    } else {
+      list.classList.remove('editable');
+      toggleBtn.innerText = "Enable Reorder Mode";
+      sortSelect.disabled = false;
+    }
+  });
+
+  // Sorting logic
+  sortSelect.addEventListener('change', function () {
+    const items = Array.from(document.querySelectorAll('.list-group-item'));
+
+    let sorted;
+
+    if (this.value === 'asc') {
+      sorted = items.sort((a, b) =>
+        a.dataset.name.localeCompare(b.dataset.name)
+      );
+    } else if (this.value === 'desc') {
+      sorted = items.sort((a, b) =>
+        b.dataset.name.localeCompare(a.dataset.name)
+      );
+    } else {
+      // Restore custom order
+      sorted = originalOrder;
+    }
+
+    sorted.forEach(el => list.appendChild(el));
+  });
+</script>
+
+</body>
+</html>

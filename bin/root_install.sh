@@ -185,7 +185,7 @@ mv $PLAYBOOKS_PATH/ansible_connector.py $CONNECTOR_PATH
 echo -e "${GREEN}####### Setting up Share Modules Dir...${RESET}"
 
 venv_utils="$VENV_PATH/utils"
-mkdir "$venv_utils"
+mkdir -p "$venv_utils"
 cp -r "$SCRIPTPATH/app/utils/shared" "$venv_utils/"
 
 echo -e "${GREEN}####### Setting up Sudoers Rules...${RESET}"

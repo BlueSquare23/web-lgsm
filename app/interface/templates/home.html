@@ -8,69 +8,58 @@
       <br />
       <h2 style="color: white;">Installed Servers</h2>
 
-      {% if all_game_servers is not none %}
-        {% if all_game_servers|length > 0 %}
-          {% if user.role == 'admin' or parsed_json.server_ids|length > 0 %}
-            <form id="delete-selected-form">
-              <div class="list-group form-check form-switch border border-secondary">
-                {# Hacky ass solution to printing no servers when user has none #}
-                {% set has_server = {'has': False} %}
-                {% for server in all_game_servers %}
-                  {% if not server.install_finished %}
-                    <div class="list-group-item list-group-item-action">
-                      <div class="d-flex align-items-center">
-                        <a href="/install?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
-                          <!-- Glow via text-shadow -->
-                          <span class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}&nbsp&nbsp;&nbsp <b>Installation Not Finished!</b>
-                        </a>
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
-                        </div>
-                      </div>
-                    </div>
-                  {% else %}
-{# TODO: ADD if server.install_failed message #}
-                    {% if user.role == 'admin' or server.id in parsed_json.server_ids %}
-                      {% if has_server.update({'has': True}) %} {% endif %}
-                    <div class="list-group-item list-group-item-action">
-                      <div class="d-flex align-items-center">
-                        <a href="/controls?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
-                          <!-- Glow via text-shadow -->
-                          <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}{% if server.install_failed %}&nbsp&nbsp;&nbsp <b>Installation Failed!</b>{% endif %}
-                        </a>
-                        <div class="form-check">
-                          <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
-                        </div>
-                      </div>
-                    </div>
-                    {% else %}
-                      {% if loop.last and not has_server.has %}
-                    <ul class="list-group border border-white">
-                      <li class="list-group-item">Your user does not have access to any game servers yet...</li>
-                    </ul>
-                      {% endif %}
-                    {% endif %}
-                  {% endif %}
-                {% endfor %}
-              </div>
-              <br />
-              <button class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
-            </form>
-            <script src="/static/js/update-status-indicators.js"></script>
-          {% else %}
-          <ul class="list-group border border-white">
-            <li class="list-group-item">Your user does not have access to any game servers yet...</li>
-          </ul>
-          {% endif %}
-        {% else %}
-          <ul class="list-group border border-white">
-            <li class="list-group-item">No Servers Currently Installed</li>
-          </ul>
-        {% endif %}
-      {% else %}
+      {% if not servers %}
         <ul class="list-group border border-white">
-          <li class="list-group-item">No Servers Currently Installed</li>
+          <li class="list-group-item">No game servers available to list...</li>
         </ul>
+      {% else %}
+
+        <form id="delete-selected-form">
+          <div class="list-group form-check form-switch border border-secondary">
+            {# Hacky ass solution to printing no servers when user has none #}
+            {% set has_server = {'has': False} %}
+            {% for server in servers %}
+              {% if not server.install_finished %}
+                <div class="list-group-item list-group-item-action">
+                  <div class="d-flex align-items-center">
+                    <a href="/install?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                      <!-- Glow via text-shadow -->
+                      <span class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}&nbsp&nbsp;&nbsp <b>Installation Not Finished!</b>
+                    </a>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+{# TODO: if server.install_failed message #}
+                {% if user.role == 'admin' or server.id in parsed_json.server_ids %}
+                  {% if has_server.update({'has': True}) %} {% endif %}
+                <div class="list-group-item list-group-item-action">
+                  <div class="d-flex align-items-center">
+                    <a href="/controls?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                      <!-- Glow via text-shadow -->
+                      <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}{% if server.install_failed %}&nbsp&nbsp;&nbsp <b>Installation Failed!</b>{% endif %}
+                    </a>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
+                    </div>
+                  </div>
+                </div>
+                {% else %}
+                  {% if loop.last and not has_server.has %}
+                <ul class="list-group border border-white">
+                  <li class="list-group-item">Your user does not have access to any game servers yet...</li>
+                </ul>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <br />
+          <button class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
+        </form>
+        <script src="/static/js/update-status-indicators.js"></script>
       {% endif %}
 
       {% if _config.getboolean('aesthetic', 'show_stats', True) %}

@@ -23,6 +23,15 @@ from app.container import container
 
 from . import auth_bp
 
+from flask_login import UserMixin
+
+class AuthUser(UserMixin):
+    def __init__(self, user_id: str):
+        self.id = user_id  # Flask-Login uses this
+
+    def get_id(self):
+        return str(self.id)
+
 ######### Login Route #########
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -74,7 +83,8 @@ def login():
     if user.otp_enabled:
         # For case where user is setting up otp for first time.
         if not user.otp_setup:
-            login_user(user, remember=True, duration=four_weeks_delta)
+            auth_user = AuthUser(user.id)
+            login_user(auth_user, remember=True, duration=four_weeks_delta)
             confirm_login()
             container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
             flash("Please setup two factor authentication!", category="success")
@@ -86,7 +96,8 @@ def login():
             return render_template("login.html", user=current_user, form=form), 403
 
     flash("Logged in!", category="success")
-    login_user(user, remember=True, duration=four_weeks_delta)
+    auth_user = AuthUser(user.id)
+    login_user(auth_user, remember=True, duration=four_weeks_delta)
     confirm_login()
     container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
     return redirect(url_for("main.home"))

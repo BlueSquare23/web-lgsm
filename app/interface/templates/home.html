@@ -14,13 +14,23 @@
         </ul>
       {% else %}
 
+        <div class="controls d-flex justify-content-end">
+          <button id="toggle-btn" class="btn btn-outline-primary">Enable Reorder</button>
+
+          <select id="sort-select" class="btn btn-outline-primary">
+            <option value="default">Custom Order</option>
+            <option value="asc">Name (A → Z)</option>
+            <option value="desc">Name (Z → A)</option>
+          </select>
+        </div>
+
         <form id="delete-selected-form">
-          <div class="list-group form-check form-switch border border-secondary">
+          <div id="server-list" class="list-group form-check form-switch border border-secondary locked">
             {# Hacky ass solution to printing no servers when user has none #}
             {% set has_server = {'has': False} %}
             {% for server in servers %}
               {% if not server.install_finished %}
-                <div class="list-group-item list-group-item-action">
+                <div class="list-group-item list-group-item-action" data-id="{{server.id}}" data-name="{{server.install_name}}">
                   <div class="d-flex align-items-center">
                     <a href="/install?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
                       <!-- Glow via text-shadow -->
@@ -29,13 +39,14 @@
                     <div class="form-check">
                       <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
                     </div>
+                    <span class="drag-handle">☰</span>
                   </div>
                 </div>
               {% else %}
 {# TODO: if server.install_failed message #}
                 {% if user.role == 'admin' or server.id in parsed_json.server_ids %}
                   {% if has_server.update({'has': True}) %} {% endif %}
-                <div class="list-group-item list-group-item-action">
+                <div class="list-group-item list-group-item-action" data-id="{{server.id}}" data-name="{{server.install_name}}">
                   <div class="d-flex align-items-center">
                     <a href="/controls?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
                       <!-- Glow via text-shadow -->
@@ -44,6 +55,7 @@
                     <div class="form-check">
                       <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
                     </div>
+                    <span class="drag-handle">☰</span>
                   </div>
                 </div>
                 {% else %}
@@ -138,5 +150,98 @@
       <script src="/static/js/show-spinners.js"></script>
       <script src="/static/js/show-alert.js"></script>
       <script src="/static/js/delete-selected-form.js"></script>
+
+  <!-- TODO: Put in base.html for use elsewhere -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<script>
+  let isEditable = false;
+
+  const list = document.getElementById('server-list');
+  const toggleBtn = document.getElementById('toggle-btn');
+  const sortSelect = document.getElementById('sort-select');
+
+  // Store original custom order
+  let originalOrder = Array.from(list.querySelectorAll('.list-group-item'));
+
+  const sortable = new Sortable(list, {
+    animation: 150,
+    handle: '.drag-handle',
+    disabled: true,
+
+    onEnd: function () {
+      // Update stored custom order
+      originalOrder = Array.from(list.querySelectorAll('.list-group-item'));
+
+      // Build full payload
+      const order = originalOrder.map(el => ({
+        id: el.dataset.id,
+        name: el.dataset.name
+      }));
+
+      // Send POST request
+      fetch('/api/update-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order: order
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to update order');
+        }
+        return response.json(); // optional
+      })
+      .then(data => {
+        console.log('Order successfully updated:', data);
+      })
+      .catch(error => {
+        console.error('Error updating order:', error);
+      });
+    }
+  });
+
+  // Toggle reorder mode
+  toggleBtn.addEventListener('click', () => {
+    isEditable = !isEditable;
+    sortable.option("disabled", !isEditable);
+
+    if (isEditable) {
+      list.classList.add('editable');
+      toggleBtn.innerText = "Lock Order";
+      sortSelect.disabled = true; // prevent conflicts
+    } else {
+      list.classList.remove('editable');
+      toggleBtn.innerText = "Enable Reorder";
+      sortSelect.disabled = false;
+    }
+  });
+
+  // Sorting logic
+  sortSelect.addEventListener('change', function () {
+    const items = Array.from(list.querySelectorAll('.list-group-item'));
+
+    let sorted;
+
+    if (this.value === 'asc') {
+      sorted = items.sort((a, b) =>
+        a.dataset.name.localeCompare(b.dataset.name)
+      );
+    } else if (this.value === 'desc') {
+      sorted = items.sort((a, b) =>
+        b.dataset.name.localeCompare(a.dataset.name)
+      );
+    } else {
+      // Restore custom order
+      sorted = originalOrder;
+    }
+
+    sorted.forEach(el => list.appendChild(el));
+  });
+</script>
+
 
 {% endblock %}

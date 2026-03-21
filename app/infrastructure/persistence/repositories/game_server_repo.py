@@ -100,7 +100,7 @@ class SqlAlchemyGameServerRepository(GameServerRepository):
         Fetches list of all game_servers from DB and converts them to list of GameServer
         entity objects.
         """
-        all_models = GameServerModel.query.all()
+        all_models = GameServerModel.query.order_by(GameServerModel.sort_order).all()
         all_game_servers = []
 
         for model in all_models:

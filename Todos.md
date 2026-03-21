@@ -353,23 +353,21 @@ https://icons.getbootstrap.com/
   - I can get rid or the nested ifs in the template file by getting the game
     server list for the give user and only passing that to the template.
 
-* [ ] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
+* [x] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
   - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55
   - Two Parts of this:
-  - Part 1: Quick Alpha Sorting
-    - Easy, frontend only
-    - [ ] Some JS to do sort by alpha, asc/desc
-  - Part 2: Custom Sort Order
-    - Hard: Needs backend changes
-    - [ ] New column in DB & field in domain entity for `sort_order`
-    - [ ] New Method on SqlAlchUserRepo for `.list_sorted()` that just does `GameServerModel.query.order_by(UserModel.sort_order).all()`
-    - [ ] New usecase & container wiring for calling repo method
-    - [ ] New `/api/update-order/<GSUUID>` api route for catching updates
-    - [ ] New frontend changes using `SortableJS` to make list dragable
+  - Part 1: Fronend
+    - [x] New JS to do sort by alpha, asc/desc
+    - [x] New html for home template
+    - [x] New frontend changes using `SortableJS` to make list dragable
+  - Part 2: Backend
+    - [x] New column in DB & field in domain entity for `sort_order`
+    - [x] New `/api/update-order/<GSUUID>` api route for catching updates
+    - [x] Change list on SqlAlchGameServerRepo to list by sort order `GameServerModel.query.order_by(GameServerModel.sort_order).all()`
 
 * [ ] **Clean up misc messes and add more unit tests for untested classes**
 
-* [ ] **Explore old inline TODO's for v1.9.0 and see what's most important**
+* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
   - For the biggest stuff either fix there on the spot (if able) or make a todo
     below for later.
   - But want to try to clean up some of that backlog.

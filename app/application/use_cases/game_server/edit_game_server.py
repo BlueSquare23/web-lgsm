@@ -5,7 +5,7 @@ class EditGameServer:
     def __init__(self, game_server_repository):
         self.game_server_repository = game_server_repository
 
-    def execute(self, id, install_name, install_path, script_name, username, install_type, install_host=None, install_finished=False, install_failed=False, keyfile_path=None):
+    def execute(self, id, install_name, install_path, script_name, username, install_type, is_container=None, install_host=None, install_finished=False, install_failed=False, keyfile_path=None, sort_order=None):
 
         # TODO: Convert to **kwargs, for rn fine cause still dev and debugging.
         # But once cooled, use less verbose option.
@@ -17,12 +17,13 @@ class EditGameServer:
             install_path = install_path,
             script_name = script_name,
             username = username,
-            is_container = True if install_type == 'docker' else False,
+            is_container = True if install_type == 'docker' or is_container else False,
             install_type = install_type,
             install_host = '127.0.0.1' if not install_host else install_host,
             install_finished = install_finished,
             install_failed = install_failed,
             keyfile_path = keyfile_path,
+            sort_order = sort_order,
         )
 
         # TODO: Perhaps introduce try catch exception handling here. Need

@@ -65,7 +65,6 @@ class ManageCron(Resource):
             return resp
 
         data = request.json
-#        cron = CronService(server_id)
 
         command = data.get('command')
         custom = data.get('custom')

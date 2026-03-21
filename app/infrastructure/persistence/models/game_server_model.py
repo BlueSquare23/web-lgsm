@@ -31,6 +31,8 @@ class GameServerModel(db.Model):
     install_failed = db.Column(db.Boolean())
     # Private ssh keyfile path.
     keyfile_path = db.Column(db.String(150))
+    # Sort order for home page listing
+    sort_order = db.Column(db.Integer)
 
     def __repr__(self):
         return (

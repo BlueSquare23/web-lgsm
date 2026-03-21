@@ -2,6 +2,7 @@ import subprocess
 import sys
 import json
 import os
+from datetime import datetime
 
 # TODO: REMOVE THIS --v
 from flask import current_app
@@ -46,7 +47,8 @@ class UserModuleService:
             json.dumps(data)
         ]
 
-        cmd_id = 'user_module_service'
+        unique_time_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
+        cmd_id = 'user_module_service' + unique_time_str  # Keep proc_info id unique
         CommandExecutor().run(cmd, None, cmd_id)
         proc_info = InMemProcInfoRepository().get(cmd_id)
 
@@ -56,6 +58,8 @@ class UserModuleService:
         try:
             module_out = "\n".join(proc_info.stdout)
             struct = json.loads(module_out)
+            InMemProcInfoRepository().remove(cmd_id)  # Cleanup proc_info obj
             return struct
         except:
             return module_out
+            

@@ -100,6 +100,7 @@ def controls():
 
             cache.set(cache_key, cfg_paths, timeout=1800)
 
+        cfg_paths = container.find_cfg_paths().execute(server)
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
         current_app.logger.info(log_wrap("controls_list", controls_list))
 

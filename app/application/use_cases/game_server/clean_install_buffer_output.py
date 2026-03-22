@@ -9,4 +9,4 @@ class ClearInstallBufferOutput:
         Returns:
             Bool: True if install canceled successfully, False otherwise.
         """
-        return self.clear_proc_info_post_install(server_id, app_context)
+        return self.install_manager.clear_proc_info_post_install(server_id, app_context)

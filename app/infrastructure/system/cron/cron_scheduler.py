@@ -85,6 +85,8 @@ class CronScheduler:
         server = repo.get(server_id)
 
         cmd_id = 'list_jobs'
+        InMemProcInfoRepository().remove(cmd_id)  # Clear any old proc_info objects
+
         cmd = [PATHS['crontab'], '-l']
 
         self.command_service.run(cmd, server, cmd_id)

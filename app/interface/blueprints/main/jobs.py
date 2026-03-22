@@ -41,7 +41,7 @@ def jobs():
         server_json = None
         jobs_list = []
         controls_list = []
-        game_servers = container.list_game_servers().execute()
+        game_servers = container.list_user_game_servers().execute(current_user.id)
 
         if request.args:
             # Checking id is valid.
@@ -51,7 +51,6 @@ def jobs():
                 return redirect(url_for("main.jobs"))
 
             server_id = request.args.get("server_id")
-#            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
             server_name = server.install_name
 
@@ -59,7 +58,6 @@ def jobs():
             current_app.logger.info(log_wrap("jobs_list", jobs_list))
 
             server_dict = server.__dict__
-#            del(server_dict["_sa_instance_state"])
             server_json = json.dumps(server_dict)
             current_app.logger.info(log_wrap("server_json", server_json))
 

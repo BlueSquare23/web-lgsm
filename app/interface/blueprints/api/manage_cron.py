@@ -16,8 +16,8 @@ from app.container import container
 ######### API Cron Manager #########
 
 class ManageCron(Resource):
-    def check_perms(self):
-        if not container.check_user_access().execute(current_user.id, "jobs"):
+    def check_perms(self, server_id=None):
+        if not container.check_user_access().execute(current_user.id, "jobs", server_id):
             resp_dict = { "Error": f"Insufficient permission" }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
@@ -36,12 +36,12 @@ class ManageCron(Resource):
     # from the repository and do this that way instead.
     @login_required
     def get(self, server_id, job_id=None):
-        allowed, resp = self.check_perms()
-        if not allowed:
-            return resp
-
         valid, resp = self.validate_server_id(server_id)
         if not valid:
+            return resp
+
+        allowed, resp = self.check_perms(server_id)
+        if not allowed:
             return resp
 
         jobs_list = container.list_cron_jobs().execute(server_id)
@@ -56,13 +56,14 @@ class ManageCron(Resource):
 
     @login_required
     def post(self, server_id, job_id=None):
-        allowed, resp = self.check_perms()
-        if not allowed:
-            return resp
-
         valid, resp = self.validate_server_id(server_id)
         if not valid:
             return resp
+
+        allowed, resp = self.check_perms(server_id)
+        if not allowed:
+            return resp
+
 
         data = request.json
 
@@ -97,12 +98,12 @@ class ManageCron(Resource):
 
     @login_required
     def delete(self, server_id, job_id):
-        allowed, resp = self.check_perms()
-        if not allowed:
-            return resp
-
         valid, resp = self.validate_server_id(server_id)
         if not valid:
+            return resp
+
+        allowed, resp = self.check_perms(server_id)
+        if not allowed:
             return resp
 
         if container.delete_cron_job().execute(job_id):

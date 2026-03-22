@@ -62,7 +62,6 @@ def install():
         server_id = request.args.get("server_id")
         cancel = request.args.get("cancel")
         if server_id != None and cancel == "true":
-#            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
             if server == None:
                 flash(
@@ -166,8 +165,13 @@ def install():
     if current_user.role != "admin":
         user_perms = json.loads(current_user.permissions)
         user_perms["server_ids"].append(server_id)
-        current_user.permissions = json.dumps(user_perms)
-        container.update_user.execute(**current_user.__dict__)
+
+#        current_user.permissions = json.dumps(user_perms)
+
+        user = container.get_user().execute(current_user.id)
+        user.permissions = json.dumps(user_perms)
+
+        container.edit_user().execute(**user.__dict__)
 
     cmd = [
         PATHS["sudo"],
@@ -187,7 +191,7 @@ def install():
     install_daemon.start()
 
     clear_daemon = Thread(
-        target=container.clear_install_buffer_output().execute(),
+        target=container.clear_install_buffer_output().execute,
         args=(server_id, current_app.app_context()),
         daemon=True,
         name=f"clear_install_{server_id}",

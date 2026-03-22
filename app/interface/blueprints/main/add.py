@@ -34,7 +34,7 @@ def add():
 
     server_json = None
     status_code = 200
-    game_servers = container.list_game_servers().execute()
+    game_servers = container.list_user_game_servers().execute(current_user.id)
     form = AddForm()
 
     if request.method == "GET":

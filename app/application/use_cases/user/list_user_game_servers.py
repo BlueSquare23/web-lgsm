@@ -17,7 +17,8 @@ class ListUserGameServers:
         servers = []
         for server_id in user_perms['server_ids']:
             server = self.game_server_repository.get(server_id)
-            servers.append(server)
+            if server:
+                servers.append(server)
         
         return servers
 

@@ -52,7 +52,7 @@ def setup():
         'permissions': json.dumps({"admin": True}),
         'otp_enabled': enable_otp,
     }
-    container.update_user().execute(**new_user)
+    container.edit_user().execute(**new_user)
 
     flash("User created!")
     login_user(new_user, remember=True)

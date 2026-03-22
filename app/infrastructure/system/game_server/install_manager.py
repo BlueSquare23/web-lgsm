@@ -19,6 +19,9 @@ class GameServerInstallManager:
         PATHS["ansible_connector"],
     ]
 
+    def __init__(self, game_server_repository=SqlAlchemyGameServerRepository()):
+        self.game_server_repository=game_server_repository
+
     def list(self):
         """
         Get list of install-able game servers. Turns data in games_servers.json
@@ -56,7 +59,7 @@ class GameServerInstallManager:
 
         # NOTE: For the --cancel option on the ansible connector script we pass in
         # the pid of the running install, instead of a game server's ID.
-        cmd = GameServerManager.CONNECTOR_CMD + ["--cancel", str(pid)]
+        cmd = GameServerInstallManager.CONNECTOR_CMD + ["--cancel", str(pid)]
 
         cmd_id = 'cancel_install'
         CommandExecutor().run(cmd, None, cmd_id)
@@ -85,9 +88,11 @@ class GameServerInstallManager:
         for thread in threads:
             if thread.is_alive() and thread.name.startswith("web_lgsm_install_"):
                 server_id = thread.name.replace("web_lgsm_install_", "")
+
                 if not server_id:
                     continue
-                server = SqlAlchemyGameServerRepository.get(server_id)
+
+                server = self.game_server_repository.get(server_id)
 
                 # Check game server exists.
                 if server:
@@ -125,7 +130,7 @@ class GameServerInstallManager:
 
             # Aka install finished or died.
             if server_id not in all_installs:
-                server = SqlAlchemyGameServerRepository.get(server_id)
+                server = self.game_server_repository.get(server_id)
     
                 # Rare edge case if server deleted before thread dies.
                 if server == None:

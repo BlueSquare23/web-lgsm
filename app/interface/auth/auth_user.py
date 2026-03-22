@@ -7,6 +7,9 @@ class AuthUser(UserMixin):
         self.id = user_id
 
         user = container.get_user().execute(user_id)
+        if not user:
+            return
+
         self.__dict__.update(user.__dict__)
 
     def get_id(self):

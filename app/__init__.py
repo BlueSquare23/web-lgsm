@@ -126,18 +126,16 @@ def register_template_filters(app):
     def from_json_filter(s):
         return json.loads(s)
 
-# NOTE: This is the only place in the infra layer that we're using an sqlalch
-# model directly. This violates clean arch principals, but tbh is too much of a
-# pia to rewrite. As a result, you the programmer should use the
-# `container.to_user.execute()` method to translate current_user object to a
-# domain layer object.
+# We're using the AuthUser wrapper to convert the domain user entity into an
+# auth user for flask login stuff.
 def register_user_loader():
     """Register the user loader for Flask-Login"""
-    from .infrastructure.persistence.models.user_model import UserModel
+    from app.interface.auth.auth_user import AuthUser
 
     @login_manager.user_loader
     def load_user(id):
-        return db.session.get(UserModel, int(id))
+        auth_user = AuthUser(id)
+        return auth_user
 
 def create_app():
     """Application factory function"""

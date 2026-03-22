@@ -13,8 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **_!!! E V E R Y T H I N G !!!_**
 - **!!!COMPLETE BACKEND CLEAN ARCHITECTURE OVERHAUL!!!**
-- The majority of application's code has been restructured to fit a [_Clean Architecture_](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
+- The majority of application's code has been restructured to use a [_Clean Architecture_](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
 
 ### Fixed
 

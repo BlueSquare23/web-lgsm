@@ -38,48 +38,59 @@ patterns used in this project.
 
 2. **Clone Your Fork**
    - Clone your forked repository to your local machine.
-   - ```bash
+     ```bash
      git clone https://github.com/your-username/web-lgsm.git
+     cd web-lgsm/
      ```
 
-3. **Checkout the latest `dev-x.y.z` branch**
+3. **Add new upstream and fetch**
+     ```
+     git remote add upstream https://github.com/BlueSquare23/web-lgsm.git
+     git fetch upstream
+     ```
+
+4. **See all new remote branches**
+     ```
+     git branch -r
+     ```
+
+5. **Create local `dev-x.y.z` branch from latest upstream dev branch**
    - You can [view all current branches here](https://github.com/BlueSquare23/web-lgsm/branches)
-   - ```bash
-     git checkout dev-x.y.z  # For example dev-1.9.1
-     git pull  # Just to be safe
+     ```bash
+     git checkout --track upstream/dev-x.y.z  # For example dev-1.9.1
      ```
 
-4. **Create a new Branch off the Latest Dev Branch**
+6. **Create a new Branch off the Latest Dev Branch (Optional)**
    - Create a new branch for your work.
-   - ```bash
+     ```bash
      git checkout -b my-feature-branch
      ```
 
-5. **Make Your Changes**
+7. **Make Your Changes**
    - Make your changes or additions in your branch.
    - If your changes are significant enough, please tweak test code accordingly
      &/or write new tests for you feature / tweak.
 
-6. **Test Your Changes**
-   - Run `--test_full` to ennsure your changes do not break
-     anything and work as expected.
+8. **Test Your Changes**
+   - Run `--test_full` to ensure your changes do not break anything and work as
+     expected.
 
-7. **Commit Your Changes**
+9. **Commit Your Changes**
    - Commit your changes with a clear and descriptive commit message.
-   - ```bash
+     ```bash
      git commit -m "Add feature XYZ does needful"
      ```
 
-8. **Push Your Branch**
+10. **Push Your Branch**
    - Push your branch to your forked repository.
-   - ```bash
+     ```bash
      git push origin my-feature-branch
      ```
 
-9. **Create a Pull Request to the Latest Dev Branch**
+11. **Create a Pull Request to the Latest Dev Branch**
    - To avoid conflicts run, `git fetch upstream` && `git merge upstream/dev-x.y.z` 
      before opening your pull request.
-   - Open a pull request from your branch to the latest dev branchbranch of the web-lgsm
+   - Open a pull request from your branch to the latest dev branch of the web-lgsm
      repository.
    - You can [view all current branches here](https://github.com/BlueSquare23/web-lgsm/branches)
    - Provide a clear description of your changes and the problem they solve or

@@ -35,6 +35,10 @@
     "short_ctrl": "u",
     "description": "Check and apply any server updates."
   },
+  "force-update": {
+    "short_ctrl": "fu",
+    "description": "Apply server updates bypassing check."
+  },
   "backup": {
     "short_ctrl": "b",
     "description": "Create backup archives of the server."

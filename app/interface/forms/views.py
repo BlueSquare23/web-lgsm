@@ -417,6 +417,7 @@ class JobsForm(FlaskForm):
             'test-alert',
             'details',
             'update-lgsm',
+            'force-update',
             'update',
             'backup',
         ],

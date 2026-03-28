@@ -529,7 +529,7 @@ https://icons.getbootstrap.com/
   - For not its not super high priority, but there will probably be cases where
     it comes up.
 
-* [ ] **Remove cron stuff from ansible connector**
+* [x] **Remove cron stuff from ansible connector**
   - Now that we have the new user module service (soon to be refactored under
     clean arch), we can just use that to run cron commands as alt users more
     securely and faster without having to become root.
@@ -653,7 +653,14 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
 
-## Version 1.8.x Todos
+## Version 1.9.x Todos
+
+* [ ] **More Cron Improvements**
+  - [ ] Add `@reboot`, `@daily`, `@hourly`, etc. to cron scheduler.
+  - [ ] Add option to send stderr or stderr & stdout to file (default /dev/null)
+  - [x] Make schedule expression to English description more natural sounding.
+  - [x] Add greyed out list for jobs that lack `server_id` and `job_id` for admins only.
+  - [ ] Add "adopt" for unmanaged jobs to add them to DB and associate with game server.
 
 * [ ] **Add Sudo Pass Form for cmds that need it**
   - Things like app update (and maybe even install again) need a sudo password

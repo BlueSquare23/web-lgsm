@@ -12,4 +12,3 @@ class Job:
         self.command = command 
         self.comment = comment
 
-

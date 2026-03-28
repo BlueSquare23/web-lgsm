@@ -86,103 +86,100 @@ class CronScheduler:
 
         return self.parse_cron_jobs("".join(proc_info.stdout), server.id)
 
-
     def parse_cron_jobs(self, cron_text, target_uuid):
         jobs = []
-        current_server_id = None
-        current_job_id = None
-        current_comment = None
+        lines = [l.strip() for l in cron_text.split('\n')]
 
-        for line in cron_text.split('\n'):
-            line = line.strip()
+        def parse_meta(meta_str):
+            try:
+                parts = [p.strip() for p in meta_str.split(',', 2)]
+                server_id = parts[0] if len(parts) > 0 else None
+                job_id = parts[1] if len(parts) > 1 else None
+                comment = parts[2] if len(parts) > 2 else None
+                return server_id, job_id, comment
+            except Exception:
+                return None, None, None
 
-            # Handle Ansible-style header (For backward compat)
-            if line.startswith('#Ansible:'):
-                try:
-                    meta = line.replace('#Ansible:', '').strip()
-                    parts = [p.strip() for p in meta.split(',', 2)]
+        def is_valid_uuid_like(val):
+            return bool(val and re.match(r'^[a-f0-9\-]{36}$', val))
     
-                    current_server_id = parts[0]
-                    current_job_id = parts[1] if len(parts) > 1 else None
-                    current_comment = parts[2] if len(parts) > 2 else None
-                except Exception:
-                    current_server_id = None
-                    current_job_id = None
-                    current_comment = None
+        for i, raw_line in enumerate(lines):
+            if not raw_line or raw_line.startswith('#'):
                 continue
-
-            # Skip empty lines
-            if not line:
-                continue
-
-            # Extract inline comment (CronTab style)
+    
+            line = raw_line
+    
+            # 1. Extract inline metadata
             inline_server_id = None
             inline_job_id = None
             inline_comment = None
-
-            if '#' in line:
-                line, inline_meta = line.split('#', 1)
+    
+            if ' #' in line:  # safer than just '#'
+                line, inline_meta = line.split(' #', 1)
                 inline_meta = inline_meta.strip()
-
-                try:
-                    parts = [p.strip() for p in inline_meta.split(',', 2)]
-                    inline_server_id = parts[0]
-                    inline_job_id = parts[1] if len(parts) > 1 else None
-                    inline_comment = parts[2] if len(parts) > 2 else None
-                except Exception:
-                    pass
-
-            # Parse cron fields
+                inline_server_id, inline_job_id, inline_comment = parse_meta(inline_meta)
+    
+            # 2. Parse cron fields
             parts = re.split(r'\s+', line.strip(), maxsplit=5)
             if len(parts) < 6:
-                # reset ansible metadata if line invalid
-                current_server_id = None
-                current_job_id = None
-                current_comment = None
                 continue
-
-            # NOTE: We kinda fudge command here. Normally command is just
-            # one word arg (start, stop, details, etc.) whereas here we make it
-            # the full cronjob cmd string for better display on frontend.
+    
             schedule = ' '.join(parts[:5])
             command = parts[5]
-
-            # Choose metadata source
-            server_id = inline_server_id or current_server_id
-            job_id = inline_job_id if inline_job_id else current_job_id
-            comment = inline_comment if inline_comment else current_comment
-
-            # Validate cron
+    
+            # 3. Validate cron
             try:
                 Cron(schedule)
-
-                kwargs = {
-                    'schedule': schedule,
-                    'command': command,
-                    'server_id': server_id,
-                    'job_id': job_id,
-                    'comment': comment,
-                }
-                job = Job(**kwargs)
-
-                if server_id == target_uuid:
-                    jobs.append(job)
-
-                # Strip path from command for DB entry.
+            except ValueError:
+                continue
+    
+            # 4. Fallback to previous line (Ansible-style, for backward compat)
+            server_id = inline_server_id
+            job_id = inline_job_id
+            comment = inline_comment
+    
+            if not (server_id and job_id) and i > 0:
+                prev_line = lines[i - 1]
+                if prev_line.startswith('#Ansible:'):
+                    meta = prev_line.replace('#Ansible:', '').strip()
+                    s_id, j_id, cmt = parse_meta(meta)
+    
+                    server_id = server_id or s_id
+                    job_id = job_id or j_id
+                    comment = comment or cmt
+    
+            # 5. Build job object
+            job = Job(
+                schedule=schedule,
+                command=command,
+                server_id=server_id,
+                job_id=job_id,
+                comment=comment,
+            )
+    
+            # 6. Classify job
+            is_managed = (
+                is_valid_uuid_like(server_id) and
+                bool(job_id)
+            )
+    
+            job.is_managed = is_managed
+    
+            # 7. Unmanaged jobs (greyed out)
+            if not is_managed:
+                jobs.append(job)
+                continue
+    
+            # 8. Managed jobs (normal flow)
+            if server_id == target_uuid:
+                jobs.append(job)
+    
+                # Sync DB
                 job_copy = copy.copy(job)
                 command_parts = command.split(' ')
                 job_copy.command = command_parts[-1]
-
-                # Ensure DB entry for job matches file system
+    
                 self.cron_repo.update(job_copy)
-
-            except ValueError:
-                pass
-
-            # Reset Ansible-style metadata
-            current_server_id = None
-            current_job_id = None
-            current_comment = None
-
+    
         return jobs
 

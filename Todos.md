@@ -291,17 +291,10 @@
   - Mostly right now I'm concerned with things slipping past validation, and
     with the amount of shell code that should really be python. If we can cut
     those things down, we gain a lot more security.
-  - [ ] Also some pip requirements need updated.
+  - [x] Also some pip requirements need updated.
   - **NOTE:** _This should happen after the main bulk of the rearch cleanup otherwise we're just security testing and patching code that's about to be changed._
 
-* [ ] **Find way to detect available server controls on a per server basis**
-  - I'm thinking the existing `json/controls.json` file isn't going to cut it anymore.
-  - I'm pretty sure there are plenty of servers that don't have the exact same
-    normal options and ones that have special options. 
-  - So I'm thinking at first controls page load for new server we detect options
-    and store them to DB for GameServer.
-
-* [ ] **Cron Add Listing of All Jobs for Admins**
+* [x] **Cron Add Listing of All Jobs for Admins**
   - For jobs that are in the crontab, but not in the database (aka ones not
     controlled by the app), show them for admins, but greyed out.
   - User Requested: https://github.com/BlueSquare23/web-lgsm/issues/49
@@ -365,7 +358,7 @@ https://icons.getbootstrap.com/
     - [x] New `/api/update-order/<GSUUID>` api route for catching updates
     - [x] Change list on SqlAlchGameServerRepo to list by sort order `GameServerModel.query.order_by(GameServerModel.sort_order).all()`
 
-* [ ] **Clean up misc messes and add more unit tests for untested classes**
+* [ ] **Add unit tests for untested classes**
 
 * [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
   - For the biggest stuff either fix there on the spot (if able) or make a todo
@@ -589,12 +582,12 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
     catch 500's and send a stack trace and maybe some anonomized vars dump back
     to me somehow. (Email sucks so prolly just post to a site I control)
 
-* [ ] **For install list do sort by alpha two columns header**
+* [x] **For install list do sort by alpha two columns header**
   - At the top of the install page, add some buttons to sort by alphabetical
     order for both columns.
   - Right now order is ascending by server short name.
 
-* [ ] **Change sort order of game servers on main page**
+* [x] **Change sort order of game servers on main page**
   - User wants the ability to change the ordering of the GameServer items on
     the home page.
   - Either sort alphabetically or custom order.
@@ -603,12 +596,20 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
 
 ### The Rest
 
-* [ ] **Use controls.json for form validation & list**
+* [x] **Use controls.json for form validation & list**
+  - INSTEAD, HARDCODE `force-update` FOR NOW, THEN OVERHAUL AVAILABLE COMMAND DETECTION!!!
   - I think that form is using a hardcoded list of valid controls for game
     servers so it blocks other controls for things like `force-update`.
   - I think this might hint at a bigger issue though and we should be doing
     more to detect available server controls. 
   - Related Issue: https://github.com/BlueSquare23/web-lgsm/issues/49
+
+* [ ] **Find way to detect available server controls on a per server basis**
+  - I'm thinking the existing `json/controls.json` file isn't going to cut it anymore.
+  - I'm pretty sure there are plenty of servers that don't have the exact same
+    normal options and ones that have special options. 
+  - So I'm thinking at first controls page load for new server we detect options
+    and store them to DB for GameServer.
 
 * [ ] **Break up form classes into one class per file**
   - Just makes things easier to find.
@@ -624,7 +625,7 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
       and then pass the env in. Not sure why he put them in the old
       run_cmd_popen, perhaps because they were not needed elsewhere.
 
-* [ ] **Clean up html and stray JS**
+* [x] **Clean up html and stray JS**
   - There's javascript in html templates still cause I'm lazy. Needs put in its
     own script fils(s) and linked.
   - Also just html in comments still and misc stuff like that.

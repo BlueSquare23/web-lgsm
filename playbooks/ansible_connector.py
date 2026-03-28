@@ -27,7 +27,6 @@ APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT
 sys.path.append(APP_PATH)
 from app import db
 from app.infrastructure.persistence.models.game_server_model import GameServerModel
-from app.infrastructure.persistence.models.cron_model import CronModel
 
 # Global options hash.
 O = {"dry": False, "delete": False}
@@ -45,33 +44,28 @@ def print_help(msg=None):
       -n, --dry             Dry run mode, print only don't run cmd
       -i, --install <id>    Install new game server
       -x, --cancel <id>     Cancel an ongoing installation
-      -d, --delete <id>     Delete an installation & its user or a cronjob
-      -c, --cron <id>       Cronjob to create or edit
+      -d, --delete <id>     Delete an installation & its user
     """
     )
     exit()
 
 
-def db_fetch(item_id, item_type='GameServerModel'):
+def db_fetch(item_id):
     """
-    Connects to app's DB and returns either GameServerModel or CronModel object that
+    Connects to app's DB and returns either GameServerModel object that
     matches item_id.
 
     Args:
-        item_id (str): Id of GameServerModel|CronModel obj to fetch.
-        item_type (str): Type of object to fetch. Either GameServerModel or CronModel.
+        item_id (str): Id of GameServerModel obj to fetch.
     Returns:
-        GameServerModel|CronModel: GameServerModel or CronModel object matching ID.
+        GameServerModel: GameServerModel object matching ID.
     """
     engine = create_engine('sqlite:///app/database.db')
     
     # Use new db session context.
     # Can't use app context in ansible connector.
     with Session(engine) as session:
-        if item_type == 'CronModel':
-            item = session.get(CronModel, item_id)
-        else:
-            item = session.get(GameServerModel, item_id)
+        item = session.get(GameServerModel, item_id)
 
         if item == None:
             print("Error: No server with ID found.")
@@ -313,52 +307,6 @@ def cancel_install(pid):
     exit()
 
 
-def run_cron_edit(job_id):
-    """
-    Handles invocation of cronjob edit playbook.
-
-    Args:
-        job_id (str(shortuuid)): Id of job to edit.
-    """
-    job = db_fetch(job_id, 'CronModel')
-    server = db_fetch(job.server_id)
-
-    ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
-    edit_jobs_path = os.path.join(PLAYBOOKS, "playbooks/edit_jobs.yml")
-
-    comment = f"{job.server_id}, {job.id}, {job.comment}"
-    job_str = f"{server.install_path}/{server.script_name} {job.command}"
-    state = 'absent' if O["delete"] else 'present'
-
-    custom_job_prefix = 'custom: '
-    if job.command.startswith(custom_job_prefix):
-        job_str = job.command.replace(custom_job_prefix, '')
-
-    cmd = [
-        "/usr/bin/sudo",
-        "-n",
-        ansible_cmd_path,
-        edit_jobs_path,
-        "-e",
-        f"comment='{comment}'",
-        "-e",
-        f"username={server.username}",
-        "-e",
-        f"job='{job_str}'",
-        "-e",
-        f"schedule='{job.schedule}'",
-        "-e",
-        f"state='{state}'",
-    ]
-
-    if O["dry"]:
-        print(cmd)
-        exit()
-
-    run_cmd(cmd)
-    exit()
-
-
 def run_delete_user(server_id):
     """
     Wraps the invocation of the delete_user.yml playbook.
@@ -418,7 +366,7 @@ def run_add_sudoers(username):
 def main(argv):
     """Process getopts, loads json vars, runs appropriate playbook"""
     try:
-        opts, args = getopt.getopt(argv, "hni:x:c:d:u:", ["help", "dry", "install=", "cancel=", "cron=", "delete=", "user="])
+        opts, args = getopt.getopt(argv, "hni:x:d:u:", ["help", "dry", "install=", "cancel=", "delete=", "user="])
     except getopt.GetoptError:
         print_help("Invalid option!")
 
@@ -441,9 +389,6 @@ def main(argv):
 
         if opt in ("-x", "--cancel"):
             cancel_install(arg)
-
-        if opt in ("-c", "--cron"):
-            run_cron_edit(arg)
 
         if opt in ("-d", "--delete"):
             run_delete_user(arg)

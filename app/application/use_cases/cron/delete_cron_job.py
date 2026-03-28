@@ -12,7 +12,7 @@ class DeleteCronJob:
         job = self.cron_repository.get(job_id)
 
         # If we can't delete from the system, don't delete from DB.
-        if self.cron_scheduler.delete(job):
+        if self.cron_scheduler.delete(job_id):
             return self.cron_repository.delete(job_id)
 
         return False

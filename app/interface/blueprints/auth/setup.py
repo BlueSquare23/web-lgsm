@@ -68,7 +68,7 @@ def setup():
     four_weeks_delta = timedelta(days=28)
     auth_user = AuthUser(user_id)
     login_user(auth_user, remember=True, duration=four_weeks_delta)
-    container.log_audit_event().execute(new_user.id,  f"New user '{username}' created")
+    container.log_audit_event().execute(new_user["id"],  f"New user '{username}' created")
 
     if enable_otp:
         return redirect(url_for("auth.two_factor_setup"))

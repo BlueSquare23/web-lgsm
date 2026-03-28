@@ -8,8 +8,13 @@ from app import db
 class SqlAlchemyCronRepository(CronRepository):
 
     def add(self, job):
+        # Set new shortuuid if not already set
+        job_id = str(shortuuid.uuid())
+        if job.job_id:
+            job_id = job.job_id
+
         model = CronModel(
-            id=str(shortuuid.uuid()),  # Always set new shortuuid
+            id=job_id,
             server_id=job.server_id,
             schedule=job.schedule,
             command=job.command,

@@ -16,7 +16,13 @@ class UpdateCronJob:
             comment = comment,
         )
         try:
-            job.job_id = self.cron_repository.update(job)
+            status = self.cron_repository.update(job)
+            if not status:
+                return False
+
+            if not isinstance(status, bool):
+                job.job_id = status
+
             return self.cron_scheduler.update(job)
         except:
             return False

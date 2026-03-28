@@ -64,9 +64,7 @@ class ManageCron(Resource):
         if not allowed:
             return resp
 
-
         data = request.json
-
         command = data.get('command')
         custom = data.get('custom')
         comment = data.get('comment')

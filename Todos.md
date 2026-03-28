@@ -282,7 +282,7 @@
     - This will give us a clear dependency graph and a skeleton we can use to
       continue the project's growth.
 
-* [ ] **Do a basic security audit, identify and patch holes, and improve validation**
+* [x] **Do a basic security audit, identify and patch holes, and improve validation**
   - Okay there's plenty of things about this app and codebase that are _suss_.
     Not intonationally, its just if you're going to build something like this
     it involves risks.
@@ -533,6 +533,10 @@ https://icons.getbootstrap.com/
   - Now that we have the new user module service (soon to be refactored under
     clean arch), we can just use that to run cron commands as alt users more
     securely and faster without having to become root.
+  - Instead we need:
+    - [x] New user module service script for cron.
+    - [x] Update cron manager to call that instead of connector.
+    - [x] Rip out old cron stuff in connector.
 
 * [x] **This shouldn't be fatal, `root_install.sh` MAKE FIX!**
 ```

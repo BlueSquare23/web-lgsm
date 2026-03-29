@@ -2,8 +2,8 @@ import paramiko
 import shlex
 import time
 import os
+
 from functools import lru_cache
-from flask import current_app
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
@@ -88,12 +88,12 @@ class SshCommandExecutor(BaseCommandExecutor):
         safe_cmd = shlex.join(cmd)
         
         # Log info.
-        current_app.logger.debug(self._log_wrap("proc_info pre ssh cmd:", str(proc_info)))
-        current_app.logger.info(cmd)
-        current_app.logger.info(safe_cmd)
-        current_app.logger.info(hostname)
-        current_app.logger.info(username)
-        current_app.logger.info(pub_key_file)
+        self.logger.debug(self._log_wrap("proc_info pre ssh cmd:", str(proc_info)))
+        self.logger.info(cmd)
+        self.logger.info(safe_cmd)
+        self.logger.info(hostname)
+        self.logger.info(username)
+        self.logger.info(pub_key_file)
 
         try:
             client = self._get_ssh_client(hostname, username, pub_key_file)
@@ -116,14 +116,14 @@ class SshCommandExecutor(BaseCommandExecutor):
             return True
 
         except paramiko.SSHException as e:
-            current_app.logger.debug(str(e))
+            self.logger.debug(str(e))
             proc_info.stderr.append(str(e))
             proc_info.exit_status = 5
             proc_info.process_lock = False
             return False
 
         except TimeoutError as e:
-            current_app.logger.debug(str(e))
+            self.logger.debug(str(e))
             proc_info.stderr.append(str(e))
             proc_info.exit_status = 7
             proc_info.process_lock = False
@@ -194,4 +194,4 @@ class SshCommandExecutor(BaseCommandExecutor):
             
             # Log
             log_msg = self._log_wrap(output_type, line.strip())
-            current_app.logger.debug(log_msg)
+            self.logger.debug(log_msg)

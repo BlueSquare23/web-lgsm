@@ -1,9 +1,7 @@
 import os
 import getpass
 import base64
-
-from flask import current_app
-#from ..user_module_service import UserModuleService
+import logging
 
 from app.utils.helpers import log_wrap
 from .file_interface import FileInterface
@@ -18,7 +16,7 @@ class LocalFileInterface(FileInterface):
         self.executor = executor
 
     def read(self, file_path):
-        current_app.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("file_path", file_path))
         args = [ file_path ]
 
         kwargs = dict()
@@ -33,13 +31,13 @@ class LocalFileInterface(FileInterface):
         if stripped == 'null':
             return None
 
-        current_app.logger.debug(log_wrap("encoded", encoded))
+        self.logger.debug(log_wrap("encoded", encoded))
         
         return base64.b64decode(encoded).decode('utf-8', errors='ignore')
 
     
     def write(self, file_path, content):
-        current_app.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("file_path", file_path))
 
         # Encode the str to bytes.
         encoded_bytes = content.encode('utf-8')

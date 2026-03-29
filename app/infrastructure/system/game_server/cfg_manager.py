@@ -1,11 +1,9 @@
 import os
 import getpass
 import json
-
-from flask import current_app, flash
+import logging
 
 from app.utils.paths import PATHS
-
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 from app.infrastructure.system.user.user_module_service import UserModuleService 
@@ -14,10 +12,11 @@ from app.infrastructure.system.user.user_module_service import UserModuleService
 class CfgManager:
     USER = getpass.getuser()
 
-    def __init__(self, executor=UserModuleService(), proc_info_service=InMemProcInfoRepository(), command_exec_service=CommandExecutor()):
+    def __init__(self, executor=UserModuleService(), proc_info_service=InMemProcInfoRepository(), command_exec_service=CommandExecutor(), logger=logging.getLogger(__name__)):
         self.executor = executor
         self.proc_info_service = proc_info_service
         self.command_exec_service = command_exec_service
+        self.logger = logger
 
     def find_cfg_paths(self, server):
         cfg_whitelist = open("json/accepted_cfgs.json", "r")
@@ -60,8 +59,9 @@ class CfgManager:
 
         # If the ssh connection itself fails return False.
         if not success:
-            current_app.logger.info(proc_info)
-            flash("Problem connecting to remote host!", category="error")
+            self.logger.info(proc_info)
+# Convert to exception
+#            flash("Problem connecting to remote host!", category="error")
             return cfg_paths
 
         if proc_info.exit_status > 0:
@@ -69,7 +69,7 @@ class CfgManager:
 
         for item in proc_info.stdout:
             item = item.strip()
-            current_app.logger.info(item)
+            self.logger.info(item)
 
             # Check str coming back is valid cfg name str.
             if os.path.basename(item) in valid_gs_cfgs:

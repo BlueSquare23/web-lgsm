@@ -1,12 +1,13 @@
 import os
 import time
 import requests
+import logging
 
 class LgsmManager:
     LINUXGSM_URL = "https://linuxgsm.sh"
     THREE_WEEKS_SECONDS = 1814400
 
-    def __init__(self, logger):
+    def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger
 
     def get_lgsmsh(self, lgsmsh_path):

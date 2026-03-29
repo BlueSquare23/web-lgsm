@@ -1,7 +1,6 @@
 import os
 import paramiko
 
-from flask import current_app
 from functools import lru_cache
 
 from app.utils.helpers import log_wrap
@@ -59,7 +58,7 @@ class SSHFileInterface(FileInterface):
             raise
 
     def read(self, file_path):
-        current_app.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("file_path", file_path))
         pub_key_file = self._get_ssh_key_file(self.server.username, self.server.install_host)
         hostname = self.server.install_host
         username = self.server.username
@@ -73,11 +72,11 @@ class SSHFileInterface(FileInterface):
             
             return content.decode()
         except Exception as e:
-            current_app.logger.debug(e)
+            self.logger.debug(e)
             return None
     
     def write(self, file_path, content):
-        current_app.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("file_path", file_path))
         pub_key_file = self._get_ssh_key_file(self.server.username, self.server.install_host)
         hostname = self.server.install_host
         username = self.server.username
@@ -91,5 +90,5 @@ class SSHFileInterface(FileInterface):
             
             return True
         except Exception as e:
-            current_app.logger.debug(e)
+            self.logger.debug(e)
             return False

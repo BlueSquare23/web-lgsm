@@ -4,9 +4,6 @@ import json
 import os
 from datetime import datetime
 
-# TODO: REMOVE THIS --v
-from flask import current_app
-
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor

@@ -1,3 +1,5 @@
+import logging
+
 from abc import ABC, abstractmethod
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
@@ -19,9 +21,10 @@ class CommandExecutor(ABC):
 class BaseCommandExecutor(CommandExecutor):
     """Base implementation with common functionality."""
     
-    def __init__(self):
+    def __init__(self, logger=logging.getLogger(__name__)):
         self.config = None  # Will be injected
         self.proc_info_repo = None  # Will be injected
+        self.logger = logger
         
     def _setup_proc_info(self, cmd_id, create=True):
         """Setup process info object."""
@@ -38,9 +41,6 @@ class BaseCommandExecutor(CommandExecutor):
     
     def _process_output_line(self, line, output_type, proc_info):
         """Process a single line of output."""
-# TODO: Figure out how to pipe logger info here. Shouldn't be pulling it via current_app. That's flask interface layer.
-#        from flask import current_app
-        
         # Add the newlines for optional old-style setting.
         if self.config.getboolean('settings', 'end_in_newlines'):
             if not line.endswith("\n"):
@@ -49,11 +49,11 @@ class BaseCommandExecutor(CommandExecutor):
         if output_type == "stdout":
             proc_info.stdout.append(line)
             log_msg = self._log_wrap("stdout", line.replace("\n", ""))
-#            current_app.logger.debug(log_msg)
+            self.logger.debug(log_msg)
         else:
             proc_info.stderr.append(line)
             log_msg = self._log_wrap("stderr", line.replace("\n", ""))
-#            current_app.logger.debug(log_msg)
+            self.logger.debug(log_msg)
     
     def _log_wrap(self, stream_type, message):
         """Wrapper for logging (assuming this exists somewhere)."""

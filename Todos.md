@@ -497,16 +497,11 @@ https://icons.getbootstrap.com/
   - [x] Create usecase for run and wire it up through container.
   - [x] Replace routecode calls to new use case.
 
-* [ ] **Figure out how logger fits into clean architecture**
-  - It'd be really nice to get more info out of some of these deeper errors to
-    help catch bugs and because I don't totally know what I'm doing yet.
-  - But it feels wrong to push the normal logger down into those.
-  - I mean I rarely even put the logger in utils functions when I still had a
-    million of those.
-  - I could be wrong, but the logger seems like an interface layer thing.
-  - So then how the heck do I get info outta those lower layers?
-  - For now I've just been using good old fashion `print('fart')` but I need to
-    figure this out.
+* [x] **Figure out how logger fits into clean architecture**
+  - I was way overthinking this, the logger is already installed in our main
+    `__init__.py` and so we can use it anywhere in the app and it'll make it to
+    the log.
+  - No need to build out DI. Python logger has DI included automagically by default.
 
 * [ ] **Figure out how exception handling fits into clean architecture**
   - https://www.geeksforgeeks.org/python/define-custom-exceptions-in-python/

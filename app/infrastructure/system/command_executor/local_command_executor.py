@@ -1,6 +1,5 @@
 import subprocess
 import uuid
-from flask import current_app
 from .base_executor import BaseCommandExecutor
 
 class LocalCommandExecutor(BaseCommandExecutor):
@@ -24,7 +23,7 @@ class LocalCommandExecutor(BaseCommandExecutor):
         if app_context:
             app_context.push()
         
-        current_app.logger.info(self._log_wrap("cmd", cmd))
+        self.logger.info(self._log_wrap("cmd", cmd))
         
         # Subprocess call, Bytes mode, not buffered.
         proc = subprocess.Popen(

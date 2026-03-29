@@ -1,6 +1,7 @@
 import re
 import json
 import threading
+import logging
 
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
@@ -19,8 +20,9 @@ class GameServerInstallManager:
         PATHS["ansible_connector"],
     ]
 
-    def __init__(self, game_server_repository=SqlAlchemyGameServerRepository()):
+    def __init__(self, game_server_repository=SqlAlchemyGameServerRepository(), logger=logging.getLogger(__name__)):
         self.game_server_repository=game_server_repository
+        self.logger = logger
 
     def list(self):
         """
@@ -123,7 +125,7 @@ class GameServerInstallManager:
         time.sleep(5)
 
 #TODO: Sort out logger call, I need a standardized way to do them. I don't like this passing in current app to infra layer.
-        current_app.logger.info("<CLEAR DAEMON> - Starting clear thread")
+        self.logger.info("<CLEAR DAEMON> - Starting clear thread")
 
         while runtime < max_lifetime:
             all_installs = get_running_installs()
@@ -139,7 +141,7 @@ class GameServerInstallManager:
                 # If install thread not running anymore and install marked
                 # finished, clear out the old proc_info object.
                 if server.install_finished and not server.install_failed:
-                    current_app.logger.info("<CLEAR DAEMON> - Thread Cleared!")
+                    self.logger.info("<CLEAR DAEMON> - Thread Cleared!")
                     InMemProcInfoRepository.remove(server_id)
                     return
 

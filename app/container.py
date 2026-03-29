@@ -162,9 +162,7 @@ class Container:
         return TmuxSocketNameCache()
 
     def lgsm_manager(self):
-        return LgsmManager(
-            logger=current_app.logger,  # I don't love this dep inversion but its fine for now
-        )
+        return LgsmManager()
 
     # ---- Use Cases ----
 

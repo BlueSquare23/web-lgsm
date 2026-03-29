@@ -1,12 +1,11 @@
 import re
 import getpass
+import logging
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 
 from app.utils.paths import PATHS
-
-from flask import current_app  # Ugh fine for now for logging, TODO figure out logging...
 
 from app.utils.helpers import log_wrap
 
@@ -23,6 +22,9 @@ class GameServerManager:
         PATHS["ansible_connector"],
     ]
     USER = getpass.getuser()
+
+    def __init__(self, logger=logging.getLogger(__name__)):
+        self.logger = logger
 
     def _normalize_path(path):
         """
@@ -103,12 +105,12 @@ class GameServerManager:
 
             # If the ssh connection itself fails return False.
             if not success or proc_info == None:
-                current_app.logger.info(log_wrap("proc_info", proc_info))
+                self.logger.info(log_wrap("proc_info", proc_info))
 #                flash("Problem connecting to remote host!", category="error")
                 return False
 
             if proc_info.exit_status > 0:
-                current_app.logger.info(proc_info)
+                self.logger.info(proc_info)
 #                flash("Delete command failed! Check logs for more info.", category="error")
                 return False
 
@@ -139,7 +141,7 @@ class GameServerManager:
         CommandExecutor().run(cmd, server, cmd_id)
     
         proc_info = InMemProcInfoRepository().get(cmd_id)
-        current_app.logger.info(log_wrap("proc_info", proc_info))
+        self.logger.info(log_wrap("proc_info", proc_info))
     
         if proc_info == None:
             return None

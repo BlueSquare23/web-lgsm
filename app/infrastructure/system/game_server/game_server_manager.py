@@ -46,35 +46,27 @@ class GameServerManager:
         return path
 
 
-    # TODO: Replace failure flash cases below with custom exceptions to
-    # communicate more information to the user! Basically, long ago before
-    # refactors this used to live in route code and exceptions were made known
-    # to the user directly. 
-    #
-    # Now we've abstracted this, so exceptions need explicitly bubbled up.
-    # Still haven't totally figured out how I'm handling exceptions yet tbh.
-    def delete(self, server, delete_user):
+    def delete(self, server, delete_user, errors):
         """
         Does the actual deletions for the /delete route.
 
         Args:
-            server (GameServer): Game server to delete.
+            server (GameServer): Game server to delete
+            delete_user (bool): Delete user setting
+            errors: Errors buffer
 
         Returns:
-            Bool: True if deletion was successful, False if something went wrong.
+            bool: True if deletion was successful, False if something went wrong.
         """
 
         if server.install_type == "local":
             if server.username == GameServerManager.USER:
                 if self._normalize_path(f"/home/{GameServerManager.USER}") == self._normalize_path(server.install_path):
-                    flash("Will not delete users home directories!", category="error")
+                    errors.append("Will not delete users home directories!")
                     return False
 
                 if self._normalize_path(CWD) == self._normalize_path(server.install_path):
-#                    flash(
-#                        "Will not delete web-lgsm base installation directory!",
-#                        category="error",
-#                    )
+                    errors.append("Will not delete web-lgsm base installation directory!")
                     return False
 
                 if os.path.isdir(server.install_path):
@@ -85,17 +77,12 @@ class GameServerManager:
                 CommandExecutor().run(cmd)
 
         if server.install_type == "remote":
-#            if delete_user:
-#                flash(
-#                    f"Warning: Cannot delete game server users for remote installs. Only removing files!"
-#                )
-
             # Check to ensure is not a home directory before delete. Just some
             # idiot proofing, myself being the chief idiot.
             if self._normalize_path(f"/home/{server.username}") == self._normalize_path(
                 server.install_path
             ):
-#                flash("Will not delete remote users home directories!", category="error")
+                errors.append("Will not delete remote users home directories!")
                 return False
 
             cmd = [PATHS["rm"], "-rf", server.install_path]
@@ -106,12 +93,12 @@ class GameServerManager:
             # If the ssh connection itself fails return False.
             if not success or proc_info == None:
                 self.logger.info(log_wrap("proc_info", proc_info))
-#                flash("Problem connecting to remote host!", category="error")
+                errors.append("Problem connecting to remote host!")
                 return False
 
             if proc_info.exit_status > 0:
                 self.logger.info(proc_info)
-#                flash("Delete command failed! Check logs for more info.", category="error")
+                errors.append("Delete command failed! Check logs for more info.")
                 return False
 
         return True

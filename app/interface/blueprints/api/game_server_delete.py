@@ -53,8 +53,7 @@ class GameServerDelete(Resource):
 
         if len(jobs_list) > 0:
             for job in jobs_list:
-                container.delete_cron_job().execute(job.id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
-                # Remove job from DB.
+                container.delete_cron_job().execute(job.job_id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
 
         # Drop any saved proc_info objects.
         container.remove_process().execute(server_id)
@@ -62,20 +61,20 @@ class GameServerDelete(Resource):
         # Log to ensure process was dropped.
         current_app.logger.info(log_wrap("All processes", container.list_processes().execute()))
 
-        # TODO: Refactor this now that config handling has been changed.
-#        if not delete_server(server, config.getboolean('settings','remove_files'), config.getboolean('settings','delete_user')):
+        remove_files = container.getboolean_config().execute('settings','remove_files')
+        delete_user = container.getboolean_config().execute('settings','delete_user')
 
-        if not container.delete_game_server().execute(server.id, container.getboolean_config().execute('settings','remove_files'), container.getboolean_config().execute('settings','delete_user')):
+        errors = []
+
+        if not container.delete_game_server().execute(server.id, remove_files, delete_user, errors):
             resp_dict = {
-                "Error": "Problem deleting server, see error logs for more details."
+                "Errors": errors
             }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
             )
             return response
 
-        delete_user = str(container.getboolean_config().execute('settings','delete_user'))
-        remove_files = str(container.getboolean_config().execute('settings','remove_files'))
         container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
 
         return "", 204

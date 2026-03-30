@@ -4,8 +4,13 @@ class DeleteGameServer:
         self.game_server_repository = game_server_repository
         self.game_server_manager = game_server_manager
 
-    def execute(self, id, remove_files, delete_user):
+    def execute(self, id, remove_files, delete_user, errors):
         """
+        id (str): ID of game_server to delete
+        remove_files (bool): Remove files setting
+        delete_user (bool): Delete user setting
+        errors (list): Errors buffer for catching errors
+
         Returns:
             Bool: True if successfully deleted, false otherwise.
         """
@@ -16,6 +21,6 @@ class DeleteGameServer:
             return self.game_server_repository.delete(id)
 
         # If system delete success, delete from DB.
-        if self.game_server_manager.delete(server, delete_user):
+        if self.game_server_manager.delete(server, delete_user, errors):
             return self.game_server_repository.delete(id)
 

@@ -7,7 +7,8 @@ the repositories, all the wiring. It's "dirty" by design so everything else can
 stay clean. Think of it as the place where all the abstraction debt gets paid.
 """
 
-from flask import current_app
+#from flask import current_app
+import logging
 
 # NOTE: Dirs have full names, files have abbreviations.
 
@@ -171,7 +172,7 @@ class Container:
     def log_audit_event(self):
         return LogAuditEvent(
             audit_repository=self.audit_repository(),
-            logger=current_app.audit_logger,
+            logger=logging.getLogger('audit'),
         )
 
     def list_audit_logs(self):

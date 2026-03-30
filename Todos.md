@@ -454,7 +454,7 @@ https://icons.getbootstrap.com/
   - Basically, a ton of the current routecode sorta things can happen in application/usecases
   - This will thin out the routes and make the connection to the DB clean arch.
 
-* [ ] **Eventually figure out cleaner pattern(s) for container stuff**
+* [x] **Figure out cleaner pattern(s) for container stuff**
   - Right now container is easy and since what I'm mainly worried about is
     refactoring the app code, then a conatiner with same interface for
     accessing all usecases is fine right now.
@@ -503,19 +503,13 @@ https://icons.getbootstrap.com/
     the log.
   - No need to build out DI. Python logger has DI included automagically by default.
 
-* [ ] **Figure out how exception handling fits into clean architecture**
+* [x] **Figure out how exception handling fits into clean architecture**
   - https://www.geeksforgeeks.org/python/define-custom-exceptions-in-python/
   - https://blog.miguelgrinberg.com/post/the-ultimate-guide-to-error-handling-in-python
   - https://codesignal.com/learn/courses/clean-code-with-modules-and-packages/lessons/introduction-to-exception-handling-in-python
-  - From what I read online, each layer should catch exceptions and repackage
-    them for higher layers to keep clean seperation.
-  - For example, instead of letting database errors bubble up through the
-    layers, catch them and re-raise as `SqlAlchemyRepositoryError`.
-  - Make sure exceptions have enough context to understand underlying issue.
-  - Don't rely on exceptions to transmit messages as a part of core logic.
-    - By definition they are they exception, not the rule. They are not business logic.
-  - For not its not super high priority, but there will probably be cases where
-    it comes up.
+  - I was over thinking this too. I can just do, throw exception in infra
+    layer, catch it in flask route code. That's a way simpler approach.
+  - Also see result object below, can handle most of it cleaner.
 
 * [x] **Remove cron stuff from ansible connector**
   - Now that we have the new user module service (soon to be refactored under

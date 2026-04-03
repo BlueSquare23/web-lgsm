@@ -256,6 +256,35 @@
   - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
+## Version 1.9.2 Todos
+
+### New Features, Highlevel Release Goals
+
+* [ ] **Add install new game servers to containers**
+  - Instead of installing as new system users, allow install game servers
+    inside of containers.
+  - Might even be able to use the pre-made containers from LGSM.
+  - And/Or tell users manually create the ports.
+  - And/Or just let them directly access and edit the yaml via web file editor.
+
+* [ ] **Look into Docker in Docker (DinD) deployment**
+  - If this is viable and not too annoying, I think it could be the main way
+    for distributing, deploying, and updating the app.
+  - I don't think the bare metal install will ever go away, but if we can wrap
+    it in layers of containers, that significantly boots our security without
+    requiring too many fundamental app rewrites.
+  - Idea is:
+```
+Host Machine
+└── Web App Container (with DinD)
+    ├── Inner Docker Daemon (runs inside)
+    └── Game Server Container A (managed by inner daemon)
+    └── Game Server Container B (managed by inner daemon)
+```
+  - Then new default setup would be install new game servers to sub containers,
+    instead of to users on the system.
+
+
 ## Version 1.9.1 Todos
 
 ### New Features, Highlevel Release Goals
@@ -541,8 +570,9 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
 ]
 ```
 
-* [ ] **Look into Arbor impact analysis engine**
+* [x] **Look into Arbor impact analysis engine**
   - https://github.com/Anandb71/arbor
+  - Not what I was looking for.
 
 * [ ] **I need a public site for the project**
   - Not only do I need to catch form posts for usage stats and crash reports,

@@ -33,7 +33,7 @@ defined by The Clean Architecture.
 This app uses [_The Clean Architecture_](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 (mostly). Its another one from Uncle Bob. 
 
-![Clean Architecture Layers](images/clean_arch_layers.png)
+![Clean Architecture Onion](images/CleanArchitecture.jpg)
 
 The Clean Architecture is all about dependency direction and separation of
 concerns.
@@ -89,6 +89,8 @@ infrastructure -> domain
 * Interface depends on application (never on infrastructure directly).
 
 * Infrastructure depends only on domain (to implement interfaces).
+
+![Clean Architecture Layers](images/clean_arch_layers.png)
 
 #### A Basic Example
 

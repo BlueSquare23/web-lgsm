@@ -153,7 +153,7 @@ app
 │   ├── templates                # Jinja2 Templates
 │   └── use_cases                # Interface Layer Usecase Factory Module
 └── utils
-    └── shared                   # Share Module Code
+    └── shared                   # Shared Module Code
 ```
 
 ---
@@ -278,7 +278,7 @@ We have a few things going on here:
   server install, just the bare files for mocking).
 
 * The `test_vars.json` file holds some static data used for testing stuff. Why
-  is this not in the apps json folder? `¯\_(ツ)_/¯`
+  is this not in the apps json folder? ¯\\\_(ツ)\_/¯
 
 * The `unit` dir holds the projects straight unit tests of utils functions and
   the apps models. These could really used expanded and made more through, but

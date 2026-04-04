@@ -48,6 +48,46 @@
 ---
 
 ## 3. Architecture
+
+![The Clean Architecture](images/CleanArchitecture.jpg)
+
+This application utilizes  [_The Clean Architecture_](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) (or tries to at least).
+
+The best way I've heard the clean architecture described is as:
+
+> An "Imperative shell" that wraps and uses a "Functional Core"
+
+That is the core off the application shouldn't "do" anything. It should simply
+take inputs and return output, with no _"side-effects"_. 
+
+We accomplish this by breaking down the app into different layers, each with
+different concerns and responsibilities.
+
+#### Separation of Concerns / Dependency Graph
+
+```
+  Interface (aka Routes, Forms, Templates, etc)
+          |
+          v
+  Use Cases (Application)
+          |
+          v
+  Entities (Domain)
+          ^
+          |
+  Infrastructure (DB, CMDs, filesystem, tmux, OS, etc)
+```
+
+By keeping the dependency graph clean, with simple rules about what layers are
+allowed to import from other layers, we're able to keep the project
+understandable, testable, and mailable, while we continue to grow.
+
+For more information see the [Architecture.md](Architecture.md) file.
+
+---
+
+## 4. Detailed Design
+
 - **High-Level Diagram**:
 
 ![Design Diagram](images/design_diagram.png)
@@ -60,9 +100,6 @@
   * `Objects`: As of right now, this app is not very OOP. Mainly I'm just using one `ProcInfoVessel` class to create objects for storing output from commands. I'd like to make this app more object oriented in the future, but everything takes time.
   * `main.conf`: The main configuration file for storing settings relating to aesthetic & control features for the flask app. The settings page updates this file directly.
 
----
-
-## 4. Detailed Design
 - **Routes/Endpoints**:
 ![Routes Diagram](images/routes.png)
   * Auth Routes
@@ -89,52 +126,52 @@
   * User: Model for holding user information. Permission, Username, Pass Hash, etc.
   * GameServer: Model for information about individual game servers. Install Path, Name, Install Type, Install Host, etc.
 
-- **Basic App Structure**:
+- **Basic App Dir Structure**:
 ```
-app/
-├── api.py                  # Houses all API logic.
-├── auth.py                 # Houses setup, login, & add/edit user pages.
-├── cmd_descriptor.py       # Houses CmdDescriptor class for creating command description objects.
-├── database.db             # Sqlite DB file for project.
-├── forms.py                # Houses Flask-WTF form classes for form handling & validation.
-├── __init__.py             # Main entrypoint for app. Set's up app, db, imports route blueprints, etc.
-├── models.py               # Houses main Flask SqlAlchemy db classes.
-├── processes_global.py     # Houses global singleton dict of ProcInfoVessel objects.
-├── proc_info_vessel.py     # Houses ProcInfoVessel class for creating proc_info objects.
-├── specs
-│   └── api_spec.yaml       # Swagger API Docs yaml spec sheet, used for building interactive swagger docs.
-├── static
-│   ├── css
-│   │   └── main.css        # For custom non-bootstrap CSS.
-│   ├── img
-│   │   ├── ...
-│   │   └── favicon.ico     
-│   └── js                  # Javascript dir for vanilla & Jquery scripts.
-│       ├── node_modules    
-│       │   └── @xterm      # Npm Xterm.js library for web terminal.
-│       │       └── ...
-│       ├── ...
-│       └── update-xterm.js
-├── templates               # Houses Jinja2/HTML templates for app's pages.
-│   ├── about.html
-│   ├── add.html
-│   ├── base.html
-│   └── ...
-├── utils.py            # Houses all the shit I didn't have a better place for.
-└── views.py            # Houses main views blueprints for the app. Aka home, add, edit, settings, etc. pages.
-
+app
+├── application                  # Application Layer Classes
+│   └── use_cases
+├── container.py                 # Main Composition Root - Wiring Code
+├── database.db                  # Sqlite Database
+├── domain                       # Domain Layer Classes - Entities + Repository Adapters
+│   ├── entities                 
+│   └── repositories
+├── extensions.py                # Flask Extensions 
+├── infrastructure               # Infrastructure Layer Classes
+│   ├── persistence
+│   │   ├── models               # SqlAlchemy Models
+│   │   └── repositories         # Concrete SqlAlchemy Repositories
+│   ├── security
+│   └── system                   # Other Infra Layer Services
+├── __init__.py                  # Flask App Factory
+├── interface                    # Interface Layer Classes
+│   ├── auth
+│   ├── blueprints               # Flask Route Blueprints
+│   ├── forms                    # Flask Wtforms Classes
+│   ├── http
+│   ├── static
+│   ├── templates                # Jinja2 Templates
+│   └── use_cases                # Interface Layer Usecase Factory Module
+└── utils
+    └── shared                   # Share Module Code
 ```
 
 ---
 
 ## 5. Design Decisions
-- **Primary Motivator**: Make it work! This project has NOT been well designed.
-  Trying now to do a better job at design now, hence this doc. But many aspects
-  of this project have just been assembled until they work. So if you see
-  something dumb, and think "why is that stupid" answer likely is because I
-  didn't know any better or was too lazy at the time.
 
-- **Why Ansible Connector**: This app needed the ability to create and destroy
+- **Primary Motivator**: Make it work, then make it better! Luckily, more and
+  more it seems we're in the make it better phase!
+
+- **Why Python / Flask**: Tbh because I wanted to use python and had a little
+  bit of familiarity with Flask already and so just started building it out in
+  that. In retrospect, if I would've started with something like Django, I
+  wouldn't have had to write as much from scratch or use so many external
+  modules. However, I probably also wouldn't have learned as much about the raw
+  bits and bobs that go into building out a web app. It all comes out in the wash
+  ¯\\\_(ツ)\_/¯
+
+- **Why the Ansible Connector**: This app needed the ability to create and destroy
   new system users, setup directories and permissions for them, etc. So lots of
   sort of system administrative tasks. I don't want to re-invent the wheel so
   just went with ansible. Problem is, playbooks for this app need to run as root
@@ -142,9 +179,12 @@ app/
   single external script (aka the `ansible_connector.py`) for being the interface
   between the project's playbooks and the running flask app itself.
 
-- **More Stuff**: Fill me out with even more considerations that came up while
-  building this app. Will add more stuff later, cause yeah there's more I
-  should prolly esplain. For now, see the faqs if you have questions.
+- **Why the Clean Architecture**: For too long I went with no real architecture
+  and it came back to bite me over and over again. Circular import errors
+  galore, no separation of concerns, database objects in the templates, etc. I
+  needed to clean it all up. I started looking into how to organize classes and
+  accidentally discovered software architecture. So I started learning more about
+  design patterns and the clean architecture in an effort to clean this all up!
 
 ---
 
@@ -391,7 +431,7 @@ Flask-Migrate:
 
 2. Run the db init to setup database tracking:
 ```
-» flask --app app:main db init
+» flask --app app:create_app db init
 Root logger level: WARNING
   Creating directory '/home/blue/Projects/web-lgsm/migrations' ...  done
   Creating directory '/home/blue/Projects/web-lgsm/migrations/versions' ...  done
@@ -411,7 +451,7 @@ Root logger level: WARNING
 4. Run initial migrate:
 
 ```
-» flask --app app:main db migrate -m "Initial migrate"
+» flask --app app:create_app db migrate -m "Initial migrate"
 Root logger level: WARNING
 INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
 INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
@@ -435,7 +475,7 @@ def upgrade():
 
 5. Finally run the upgrade to bring the database schema up to date:
 ```
-» flask --app app:main db upgrade
+» flask --app app:create_app db upgrade
 Root logger level: WARNING
 INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
 INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
@@ -469,7 +509,7 @@ img_path = db.Column(db.String(150))  # New field
 * Create a new migration: This will generate a new file in `migrations/versions/` for this change.
 
 ```
-flask --app app:main db migrate -m "add img_path to User model"
+flask --app app:create_app db migrate -m "add img_path to User model"
 Root logger level: WARNING
  * Database Loaded!
 INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
@@ -481,7 +521,7 @@ INFO  [alembic.autogenerate.compare] Detected added column 'user.img_path'
 * Run the migration to apply the changes to the DB.
 
 ```
-flask --app app:main db upgrade
+flask --app app:create_app db upgrade
 Root logger level: WARNING
  * Database Loaded!
 INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
@@ -491,7 +531,7 @@ INFO  [alembic.runtime.migration] Running upgrade  -> d2829b640c78, add img_path
 
 * See current revision:
 ```
-flask --app app:main db current
+flask --app app:create_app db current
 Root logger level: WARNING
  * Database Loaded!
 INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
@@ -501,7 +541,7 @@ d2829b640c78 (head)
 
 * See revision history:
 ```
-flask --app app:main db history
+flask --app app:create_app db history
 Root logger level: WARNING
  * Database Loaded!
 <base> -> d2829b640c78 (head), add img_path to User model
@@ -514,7 +554,7 @@ db model and need to fix it. You can run downgrade to go back to the previous
 head.
 
 ```
-flask --app app:main db history
+flask --app app:create_app db history
 Root logger level: WARNING
 6f1dce569562 -> 46316fc0e18c (head), bad update need to revert
 ef9d6478fcfe -> 6f1dce569562, remove unique constraint from GameServer install_name
@@ -525,7 +565,7 @@ aa0ff60b5509 -> 592b30a8d8c9, add Jobs class/table
 ```
 
 ```
-flask --app app:main db downgrade
+flask --app app:create_app db downgrade
 ```
 
 Then you can also remove the most recent `migrations/versions` file for these
@@ -538,7 +578,7 @@ rm migrations/versions/46316fc0e18c_bad_update_need_to_revert.py
 You should see you're on the new head:
 
 ```
-flask --app app:main db history
+flask --app app:create_app db history
 Root logger level: WARNING
 ef9d6478fcfe -> 6f1dce569562 (head), remove unique constraint from GameServer install_name
 592b30a8d8c9 -> ef9d6478fcfe, Create new Audit table

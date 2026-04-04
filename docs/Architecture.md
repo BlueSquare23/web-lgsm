@@ -156,7 +156,7 @@ We'll start at the top / outside and work our way down / in.
 
 ### The Flask App Factory
 
-* [`app/__init__.py`](app/__init__.py)
+* [`app/__init__.py`](../app/__init__.py)
 
 Everyone who's ever written a flask app before is probably familiar with the
 main `create_app` factory. Where this app differs is the main `app/__init__.py`
@@ -167,7 +167,7 @@ just produces a flask `app` object.
 
 ### The container.py - Composition Root
 
-* [`app/container.py`](app/container.py)
+* [`app/container.py`](../app/container.py)
 
 The composition root is really the key concept here. It's the one place in the
 entire application that's allowed to know about everything; all the concrete
@@ -188,7 +188,7 @@ layer stuff they need.
 
 ### The Interface Usecase Factory Module
 
-* [`app/interface/use_cases/__init__.py`](app/interface/use_cases/__init__.py)
+* [`app/interface/use_cases/__init__.py`](../app/interface/use_cases/__init__.py)
 
 In our interface layer, we want to use the container to have access to our
 application use cases. That's how the app works. If we want to do something
@@ -213,7 +213,7 @@ servers = list_user_game_servers(current_user.id)
 
 Our application use cases all follow the same basic structure that looks like this:
 
-* Example Usecase: [`app/application/use_cases/game_server/list_game_servers.py`](app/application/use_cases/game_server/list_game_servers.py)
+* Example Usecase: [`app/application/use_cases/game_server/list_game_servers.py`](../app/application/use_cases/game_server/list_game_servers.py)
 
 ```python
 class ListGameServers:
@@ -245,7 +245,7 @@ In practice in our app the repository looks like this.
 
 First off in our domain layer we have:
 
-* A Domain Entity: [`app/domain/entities/game_server.py`](app/domain/entities/game_server.py)
+* A Domain Entity: [`app/domain/entities/game_server.py`](../app/domain/entities/game_server.py)
 
 ```python
 class GameServer:
@@ -255,7 +255,7 @@ class GameServer:
     ...
 ```
 
-* An Interface Adapter: [`app/domain/repositories/game_server_repo.py`](app/domain/repositories/game_server_repo.py)
+* An Interface Adapter: [`app/domain/repositories/game_server_repo.py`](../app/domain/repositories/game_server_repo.py)
 
 ```python
 class GameServerRepository:
@@ -271,7 +271,7 @@ class GameServerRepository:
 We then inherit from that abstract Repository class in our infrastructure
 layer.
 
-* Concrete Infrastructure Port: [`app/infrastructure/persistence/repositories/game_server_repo.py`](app/infrastructure/persistence/repositories/game_server_repo.py)
+* Concrete Infrastructure Port: [`app/infrastructure/persistence/repositories/game_server_repo.py`](../app/infrastructure/persistence/repositories/game_server_repo.py)
 
 ```python
 import os
@@ -301,7 +301,7 @@ class SqlAlchemyGameServerRepository(GameServerRepository):
 And lastly our actual SqlAlchemy ORM classes are also defined in our
 infrastructure layer.
 
-* DB Model: [`app/infrastructure/persistence/models/game_server_model.py`](app/infrastructure/persistence/models/game_server_model.py)
+* DB Model: [`app/infrastructure/persistence/models/game_server_model.py`](../app/infrastructure/persistence/models/game_server_model.py)
 
 ```python
 import uuid

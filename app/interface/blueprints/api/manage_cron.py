@@ -68,12 +68,12 @@ class ManageCron(Resource):
         command = data.get('command')
         custom = data.get('custom')
         comment = data.get('comment')
-        cron_expression = data.get('cron_expression')
+        schedule = data.get('schedule')
 
         try:
-            Cron(cron_expression)
+            Cron(schedule)
         except ValueError:
-            return {'Error':'Invalid cron expression'}, 400
+            return {'Error':'Invalid cron schedule'}, 400
 
         if command == 'send':
             command = f"send {custom}"
@@ -86,7 +86,7 @@ class ManageCron(Resource):
             'server_id': server_id,
             'command': command,
             'comment': comment,
-            'schedule': cron_expression,
+            'schedule': schedule,
         }
 
         if container.update_cron_job().execute(**job):

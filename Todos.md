@@ -84,6 +84,13 @@
 
 ## Main Goals for v1.9 -> v1.10
 
+* **THE BIG FIVE!**
+  - File Manager
+  - Interactive Terminal
+  - Frontend Overhaul
+  - Docker in Docker
+  - Promotion & Community
+
 * [ ] **Revamp the interface design and layout**
   - I'm not much of a front end guy. However, this project has simply come too
     far with the original design / layout of the main pages and it needs an
@@ -133,7 +140,7 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-* [ ] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
+* [x] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
   - This project has been poorly designed and modeled up until this point.
   - I am now beginning the process of redesigning the project piecemeal while
     maintaining functionality.
@@ -149,7 +156,7 @@
   - All user input coming into the app, even through the API should go through
     a form class for valiation.
 
-* [ ] **Reduce redundancies in disparate isomorphic representations of the same data**
+* [x] **Reduce redundancies in disparate isomorphic representations of the same data**
   - I have too many different representations of the same underlying data.
     - There's the data in the DB.
     - There's the data on disk, in flat json files.
@@ -176,7 +183,7 @@
     - Right now you can manage them over ssh, but never got around to making
       install over ssh work.
 
-* [ ] **Rethink main design to sandbox things even more**
+* [x] **Rethink main design to sandbox things even more**
   - Right now the web -> db -> ansible connector as root way of administering
     the system has me nervous.
   - There's validation, there's sanitization. But the whole approach seems bad.
@@ -185,7 +192,7 @@
     necessaity to package up all the escalted dirty work in one script.
   - But its overloaded and its data channels are too wide and I suspect leaky.
     - A new approach is needed.
-  - Running as the new user through sudo maybe the preferable way over
+  - [x] Running as the new user through sudo maybe the preferable way over
     backwardsass ssh to localhost approach.
 
 * [ ] **Get fully working shell interface through web terminal**

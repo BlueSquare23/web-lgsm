@@ -39,7 +39,8 @@ def controls():
         server_name = request.args.get("server")
         if server_name:
             current_app.logger.info(log_wrap("server_name", server_name))
-            server = container.query_game_server().execute({'install_name': server_name})
+            game_server_data = {'install_name': server_name}
+            server = container.query_game_server().execute(**game_server_data)
             current_app.logger.info(log_wrap("server", server))
             if server == None:
                 flash("Invalid game server name!", category="error")

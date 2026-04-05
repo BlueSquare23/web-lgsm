@@ -1,7 +1,7 @@
 import os
 import json
 
-from app.services import SystemMetrics
+from app.infrastructure.system.metrics.system_metrics import SystemMetrics
 
 class TestSystemMetrics:
 

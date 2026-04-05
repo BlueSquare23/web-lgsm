@@ -1,12 +1,11 @@
 import json
 
-from flask import Response
+from flask import Response, flash
 from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app import db
 from app.utils import *
-#from app.models import GameServer
 
 from . import api
 
@@ -76,6 +75,8 @@ class GameServerDelete(Resource):
             return response
 
         container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', deleted game server '{server_name}', delete_user: {delete_user}, remove_file:{remove_files}")
+
+        flash(f"Game server, {server.install_name} deleted!")  # I hate this but it works, so fine for now. TODO: FIX THIS!
 
         return "", 204
 

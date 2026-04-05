@@ -115,7 +115,7 @@ paths:
                 comment:
                   type: string
                   description: Optional comment about the job
-                cron_expression:
+                schedule:
                   type: string
                   description: Cron expression for scheduling
       responses:
@@ -250,7 +250,7 @@ paths:
                 comment:
                   type: string
                   description: Optional comment about the job
-                cron_expression:
+                schedule:
                   type: string
                   description: Cron expression for scheduling
       responses:

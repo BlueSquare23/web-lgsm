@@ -1,5 +1,6 @@
 import json
 import getpass
+import uuid
 
 from flask_login import login_required, current_user
 from flask import (
@@ -21,6 +22,16 @@ from app.container import container
 USER = getpass.getuser()
 
 from . import main_bp
+
+
+# TODO: Put somewhere else.
+def is_valid_uuid(val):
+    try:
+        # Attempts to parse the string into a UUID object
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
 
 ######### Add Page #########
 
@@ -121,25 +132,34 @@ def add():
             f"For docker installs be sure to add the following sudoers rule to /etc/sudoers.d/{USER}-docker"
         )
         flash(
-            f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server.username} {server.script_name} *"
+            f"{USER} ALL=(root) NOPASSWD: /usr/bin/docker exec --user {server['username']} {server['script_name']} *"
         )
 
     # TODO: For remote installs, generate an SSH key as part of add step.
     # Should probably even make form take existing SSH key file path as arg for
     # remote installs.
 
-    container.edit_game_server().execute(**server)
+    result = container.edit_game_server().execute(**server)
+    if not result:
+        flash("Problem adding server! See logs for details.", category="error")
+        return redirect(url_for("main.add"))
+
+    # Set server ID for newly added servers.
+    if is_valid_uuid(result) and new_server:
+        server['id'] = result
 
     # Update web user's permissions to give access to new game server after adding it.
     if current_user.role != "admin":
         user_perms = json.loads(current_user.permissions)
-        user_perms["server_ids"].append(server.id)
+        user_perms["server_ids"].append(server['id'])
         current_user.permissions = json.dumps(user_perms)
         current_app.logger.info(
-            log_wrap("Updated User Permissions:", user_ident.permissions)
+            log_wrap("Current User:", current_user)
         )
-        # TODO: Clean this up I don't like passing from current user cause its an sql alch model. Also does this even work?
-        container.edit_user.execute(**current_user.__dict__)
+        current_app.logger.info(
+            log_wrap("Updated User Permissions:", current_user.permissions)
+        )
+        container.edit_user().execute(**current_user.__dict__)
 
     # Auto add sudoers rule for server.
     if server['install_type'] == 'local' and server['username'] != USER:

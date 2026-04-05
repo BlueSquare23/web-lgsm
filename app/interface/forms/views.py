@@ -390,9 +390,9 @@ class ServerControlForm(FlaskForm):
 
 
 class ValidCronExpr:
-    """Validator checks cron expression is valid"""
+    """Validator checks cron schedule is valid"""
 
-    def __init__(self, message="Invalid cron expression!"):
+    def __init__(self, message="Invalid cron schedule!"):
         self.message = message
 
     def __call__(self, form, field):
@@ -444,7 +444,7 @@ class JobsForm(FlaskForm):
         render_kw={"placeholder": "Some comment here", "class": "form-control bg-dark text-light border-secondary"},
     )
 
-    cron_expression = StringField(
+    schedule = StringField(
         "Cron Expression",
         validators=[
             InputRequired(),

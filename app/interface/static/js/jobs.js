@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Update cron expression when any field changes
+  // Update cron schedule when any field changes
   const cronInputs = ['minutes', 'hours', 'dayOfMonth', 'month', 'dayOfWeek'];
   cronInputs.forEach(id => {
     document.getElementById(id).addEventListener('change', updateCronExpression);
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
           document.getElementById('command').value = job.command.split(" ")[1];
           document.getElementById('custom').value = job.custom;
           
-          // Parse cron expression
+          // Parse cron schedule 
           const parts = job.schedule.split(' ');
           document.getElementById('minutes').value = parts[0];
           document.getElementById('hours').value = parts[1];
@@ -119,7 +119,7 @@ function updateCronExpression() {
 
 function describeCron(cronExpression) {
   const parts = cronExpression.split(' ');
-  if (parts.length !== 5) return 'Invalid cron expression';
+  if (parts.length !== 5) return 'Invalid cron schedule';
 
   const [min, hour, dom, month, dow] = parts;
 

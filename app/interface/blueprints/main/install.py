@@ -92,7 +92,6 @@ def install():
 
         # For displaying Installing ServerName...
         if server_id != None:
-#            server = GameServer.query.filter_by(id=server_id).first()
             server = container.get_game_server().execute(server_id)
             if server == None:
                 flash(

@@ -1,12 +1,14 @@
 import os
 import pytest
-from app.models import User, GameServer
+
+from app.infrastructure.persistence.models.user_model import UserModel
+from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
 @pytest.fixture
 def new_user(test_vars):
     username = test_vars["username"]
     password = test_vars["username"]
-    return User(username=username, password=password)
+    return UserModel(username=username, password=password)
 
 
 def test_new_user(new_user, test_vars):
@@ -22,7 +24,7 @@ def new_game_server(test_vars):
     test_server_path = test_vars["test_server_path"]
     test_server_name = test_vars["test_server_name"]
 
-    return GameServer(
+    return GameServerModel(
         install_name=test_server,
         install_path=test_server_path,
         script_name=test_server_name,

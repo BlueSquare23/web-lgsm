@@ -120,7 +120,7 @@ except KeyError as e:
 os.environ["LOG_LEVEL"] = LOG_LEVEL
 
 # Global options hash.
-O = {"verbose": False, "check": False, "auto": False, "test_full": False, "noback": False}
+O = {"verbose": False, "check": False, "auto": False, "noback": False}
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -576,7 +576,14 @@ def update_weblgsm():
     return
 
 
-def run_tests():
+def run_tests(target):
+    """
+    Pytest wrapper
+
+    Args:
+        target: 'full', None, 'tests/functional/some_test.py::some_test'
+    """
+
     # If in container don't backup db.
     if "CONTAINER" not in os.environ:
         # Backup Database.
@@ -598,7 +605,8 @@ def run_tests():
     probability = 0.15
 
     try:
-        if O["test_full"]:
+        # Run all tests (including integration tests)
+        if target == 'full':
             # Backup Existing MC install, if one exists.
             mcdir = os.path.join(SCRIPTPATH, "Minecraft")
             if os.path.isdir(mcdir):
@@ -615,12 +623,19 @@ def run_tests():
                 
             run_command_popen(run_tests)
 
-        else:
+        # Otherwise run all non-integration tests. 
+        elif target == 'main':
             run_tests = "coverage run -m pytest --cache-clear -vvv tests/ -m 'not integration'"
 
             # Random chance tests get run in reverse order.
             if random.random() < probability:
                 run_tests = "coverage run -m pytest --reverse --cache-clear -vvv tests/ -m 'not integration'"
+
+            run_command_popen(run_tests)
+
+        # Run supplied tests.
+        elif target:
+            run_tests = f"coverage run -m pytest --cache-clear -vvv {target} -m 'not integration'"
 
             run_command_popen(run_tests)
 
@@ -728,12 +743,11 @@ def main(argv):
             "noback",
             "auto",
             "fetch_json",
-            "test",
-            "test_full",
+            "test=",
             "valid=",
             "reset_totp",
         ]
-        opts, args = getopt.getopt(argv, "hVsmrqdvpucnaftxj:P", longopts)
+        opts, args = getopt.getopt(argv, "hVsmrqdvpucnaft:j:P", longopts)
     except getopt.GetoptError as e:
         print(e)
         print_help()
@@ -751,8 +765,6 @@ def main(argv):
             O["check"] = True
         if opt in ("-a", "--auto"):
             O["auto"] = True
-        if opt in ("-x", "--test_full"):
-            O["test_full"] = True
         if opt in ("-n", "--noback"):
             O["noback"] = True
 
@@ -789,8 +801,8 @@ def main(argv):
             print("Disabled till can fix to also update imgs")
             update_gs_list()
             return
-        elif opt in ("-t", "--test", "-x", "--test_full"):
-            run_tests()
+        elif opt in ("-t", "--test"):
+            run_tests(arg)
             return
         elif opt in ("-j", "--valid"):
             add_valid_gs_user(arg)

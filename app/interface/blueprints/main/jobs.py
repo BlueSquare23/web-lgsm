@@ -108,7 +108,7 @@ def jobs():
 
         job = {
             'job_id': form.job_id.data,
-            'schedule': form.cron_expression.data,
+            'schedule': form.schedule.data,
             'command': command,
             'server_id': form.server_id.data,
             'comment': form.comment.data,
@@ -118,7 +118,7 @@ def jobs():
 #        if container.update_cron_job().execute(**job):   # Hrrrmm... why doesn't this work...
         if container.update_cron_job().execute(
                 job_id=form.job_id.data,
-                schedule=form.cron_expression.data,
+                schedule=form.schedule.data,
                 command=command,
                 server_id=form.server_id.data,
                 comment=form.comment.data,

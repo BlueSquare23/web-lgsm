@@ -1,4 +1,6 @@
+import os
 import re
+import shutil
 import getpass
 import logging
 
@@ -15,6 +17,7 @@ class GameServerManager:
     """
     System interface for managing concrete parts of game servers.
     """
+    CWD = os.getcwd()
     CONNECTOR_CMD = [
         PATHS["sudo"],
         "-n",
@@ -26,7 +29,7 @@ class GameServerManager:
     def __init__(self, logger=logging.getLogger(__name__)):
         self.logger = logger
 
-    def _normalize_path(path):
+    def _normalize_path(self, path):
         """
         Little helper function used to normalize supplied path in order to
         check if two path str's are equivalent. Used to ensure NOT deleting home dir by
@@ -65,7 +68,7 @@ class GameServerManager:
                     errors.append("Will not delete users home directories!")
                     return False
 
-                if self._normalize_path(CWD) == self._normalize_path(server.install_path):
+                if self._normalize_path(GameServerManager.CWD) == self._normalize_path(server.install_path):
                     errors.append("Will not delete web-lgsm base installation directory!")
                     return False
 

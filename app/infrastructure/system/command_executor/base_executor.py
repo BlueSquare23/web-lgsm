@@ -49,7 +49,7 @@ class BaseCommandExecutor(CommandExecutor):
         if output_type == "stdout":
             proc_info.stdout.append(line)
             log_msg = self._log_wrap("stdout", line.replace("\n", ""))
-            self.logger.debug(log_msg)
+#            self.logger.debug(log_msg)
         else:
             proc_info.stderr.append(line)
             log_msg = self._log_wrap("stderr", line.replace("\n", ""))

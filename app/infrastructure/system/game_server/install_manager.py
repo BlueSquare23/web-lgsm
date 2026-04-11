@@ -143,7 +143,7 @@ class GameServerInstallManager:
                 # finished, clear out the old proc_info object.
                 if server.install_finished and not server.install_failed:
                     self.logger.info("<CLEAR DAEMON> - Thread Cleared!")
-                    InMemProcInfoRepository.remove(server_id)
+                    InMemProcInfoRepository().remove(server_id)
                     return
 
             time.sleep(5)

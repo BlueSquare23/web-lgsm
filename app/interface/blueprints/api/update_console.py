@@ -32,7 +32,7 @@ class UpdateConsole(Resource):
             )
             return response
 
-        tmux_socket = container.get_tmux_socket_name.execute(server)
+        tmux_socket = container.get_tmux_socket_name().execute(server)
 
         cmd = [
             PATHS["tmux"],

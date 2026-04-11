@@ -205,7 +205,7 @@ def controls():
             flash("Send command button disabled!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        active = container.get_game_server_power_state(server)
+        active = container.get_game_server_power_state().execute(server)
         if not active:
             flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))

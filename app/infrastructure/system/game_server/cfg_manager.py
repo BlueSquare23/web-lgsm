@@ -12,10 +12,10 @@ from app.infrastructure.system.user.user_module_service import UserModuleService
 class CfgManager:
     USER = getpass.getuser()
 
-    def __init__(self, executor=UserModuleService(), proc_info_service=InMemProcInfoRepository(), command_exec_service=CommandExecutor(), logger=logging.getLogger(__name__)):
+    def __init__(self, executor=UserModuleService(), proc_info_repo=InMemProcInfoRepository(), command_executor=CommandExecutor(), logger=logging.getLogger(__name__)):
         self.executor = executor
-        self.proc_info_service = proc_info_service
-        self.command_exec_service = command_exec_service
+        self.proc_info_repo = proc_info_repo
+        self.command_executor = command_executor
         self.logger = logger
 
     def find_cfg_paths(self, server):
@@ -54,8 +54,8 @@ class CfgManager:
         ] + wanted[:-1]
 
         cmd_id = "find_cfg_paths"
-        success = self.command_exec_service().run_command(cmd, server, cmd_id)
-        proc_info = self.proc_info_service.get_process(cmd_id)
+        success = self.command_executor.run(cmd, server, cmd_id)
+        proc_info = self.proc_info_repo.get(cmd_id)
 
         # If the ssh connection itself fails return False.
         if not success:

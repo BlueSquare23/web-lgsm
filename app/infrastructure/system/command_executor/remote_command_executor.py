@@ -3,63 +3,18 @@ import shlex
 import time
 import os
 
-from functools import lru_cache
-
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
+from app.infrastructure.system.ssh.client import SSHClientInterface
 
 from .base_executor import BaseCommandExecutor
 
 class SshCommandExecutor(BaseCommandExecutor):
     """SSH command execution using paramiko."""
     
-    def __init__(self, config):
+    def __init__(self, config, client_interface=SSHClientInterface()):
         super().__init__()
         self.config = config
-    
-    def _get_ssh_key_file(self, user, host):
-        """
-        Fetches ssh private key file for user:host from ~/.ssh if user:host key
-        exists.
-        """
-        home_dir = os.path.expanduser("~")
-        ssh_dir = os.path.join(home_dir, ".ssh")
-        if not os.path.isdir(ssh_dir):
-            os.mkdir(ssh_dir, mode=0o700)
-
-        all_pub_keys = [f for f in os.listdir(ssh_dir) if f.endswith(".pub")]
-
-        key_name = f"id_ecdsa_{user}_{host}"
-
-        # If no key files for user@server yet, create new one.
-        if key_name + ".pub" not in all_pub_keys:
-            return None
-
-        keyfile = os.path.join(ssh_dir, key_name)
-        return keyfile
-    
-    @lru_cache(maxsize=32)
-    def _get_ssh_client(self, hostname, username, key_filename):
-        """
-        Cache ssh connection objects using lru_cache.
-        """
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(
-            hostname, 
-            username=username,
-            key_filename=key_filename,
-            timeout=3,
-            look_for_keys=False, 
-            allow_agent=False
-        )
-
-        # Verify connection is alive.
-        try:
-            client.exec_command("echo 'healthcheck'", timeout=2)
-            return client
-        except Exception:
-            client.close()
-            raise
+        self.client_interface = client_interface
     
     def run(self, cmd, cmd_id=None, app_context=False, timeout=5.0, server=None):
         """Execute command via SSH."""
@@ -77,11 +32,8 @@ class SshCommandExecutor(BaseCommandExecutor):
         
         hostname = server.install_host
         username = server.username
-        
-        pub_key_file = self._get_ssh_key_file(server.username, server.install_host)
 
         # App context needed for logging in threads.
-        print('########################' + str(app_context))
         if app_context:
             app_context.push()
 
@@ -93,10 +45,9 @@ class SshCommandExecutor(BaseCommandExecutor):
         self.logger.info(safe_cmd)
         self.logger.info(hostname)
         self.logger.info(username)
-        self.logger.info(pub_key_file)
 
         try:
-            client = self._get_ssh_client(hostname, username, pub_key_file)
+            client = self.client_interface.get_client(username, hostname)
 
             proc_info.process_lock = True
             # Open a new session and request a PTY.

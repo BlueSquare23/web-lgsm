@@ -635,7 +635,7 @@ def run_tests(target):
 
         # Run supplied tests.
         elif target:
-            run_tests = f"coverage run -m pytest --cache-clear -vvv {target} -m 'not integration'"
+            run_tests = f"coverage run -m pytest --cache-clear -vvv {target}"
 
             run_command_popen(run_tests)
 
@@ -688,31 +688,30 @@ def print_help():
     """Prints help menu"""
     print(
         """
-  ╔═══════════════════════════════════════════════════════════╗  
-  ║ Usage: web-lgsm.py [options]                              ║
-  ║                                                           ║
-  ║   Options:                                                ║
-  ║                                                           ║
-  ║   -h, --help          Prints this help menu               ║
-  ║   -V, --version       Prints web-lgsm version             ║
-  ║   -s, --start         Starts the server (default no args) ║
-  ║   -q, --stop          Stop the server                     ║
-  ║   -r, --restart       Restart the server                  ║
-  ║   -m, --status        Show server status                  ║
-  ║   -d, --debug         Start server in debug mode          ║
-  ║   -v, --verbose       More verbose output                 ║
-  ║   -p, --passwd        Change web user password            ║
-  ║   -u, --update        Update web-lgsm version             ║
-  ║   -c, --check         Check if an update is available     ║
-  ║   -n, --noback        Don't backup web-lgsm for updates   ║
-  ║   -a, --auto          Run an auto update                  ║
-  ║   -f, --fetch_json    Fetch latest game servers json      ║
-  ║   -t, --test          Run project's pytest tests (short)  ║
-  ║   -x, --test_full     Run ALL project's pytest tests      ║
-  ║   -j, --valid [user]  Add valid gs_user to allow list     ║
-  ║   -P, --reset_totp    Reset user's 2fa access             ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
+  ╔══════════════════════════════════════════════════════════════╗  
+  ║ Usage: web-lgsm.py [options]                                 ║
+  ║                                                              ║
+  ║   Options:                                                   ║
+  ║                                                              ║
+  ║   -h, --help             Prints this help menu               ║
+  ║   -V, --version          Prints web-lgsm version             ║
+  ║   -s, --start            Starts the server (default no args) ║
+  ║   -q, --stop             Stop the server                     ║
+  ║   -r, --restart          Restart the server                  ║
+  ║   -m, --status           Show server status                  ║
+  ║   -d, --debug            Start server in debug mode          ║
+  ║   -v, --verbose          More verbose output                 ║
+  ║   -p, --passwd           Change web user password            ║
+  ║   -u, --update           Update web-lgsm version             ║
+  ║   -c, --check            Check if an update is available     ║
+  ║   -n, --noback           Don't backup web-lgsm for updates   ║
+  ║   -a, --auto             Run an auto update                  ║
+  ║   -f, --fetch_json       Fetch latest game servers json      ║
+  ║   -t, --test [full|main] Run project's pytest tests          ║
+  ║   -j, --valid [user]     Add valid gs_user to allow list     ║
+  ║   -P, --reset_totp       Reset user's 2fa access             ║
+  ║                                                              ║
+  ╚══════════════════════════════════════════════════════════════╝
     """
     )
     exit()

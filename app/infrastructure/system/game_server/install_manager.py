@@ -129,7 +129,7 @@ class GameServerInstallManager:
         self.logger.info("<CLEAR DAEMON> - Starting clear thread")
 
         while runtime < max_lifetime:
-            all_installs = get_running_installs()
+            all_installs = self.list_running()
 
             # Aka install finished or died.
             if server_id not in all_installs:

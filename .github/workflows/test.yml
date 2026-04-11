@@ -37,19 +37,18 @@ jobs:
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
           sudo apt update
-          sudo apt install openjdk-21-jdk
+          sudo apt install openjdk-25-jdk
           set -x
           sudo update-alternatives --list java
-          sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+          sudo update-alternatives --set java /usr/lib/jvm/java-25-openjdk-amd64/bin/java
           java -version
           sudo update-alternatives --list javac
-          sudo update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac
+          sudo update-alternatives --set javac /usr/lib/jvm/java-25-openjdk-amd64/bin/javac
           javac -version
 
       - name: Run Pytest Tests
         run: |
-          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test main
-#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test
+          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test full
 
       - name: Generate coverage report
         run: |

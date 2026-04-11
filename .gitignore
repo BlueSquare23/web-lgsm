@@ -1,5 +1,6 @@
 *.log
 *.env
+*.secret
 *.db
 *.misc
 *.swp

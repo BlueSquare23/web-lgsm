@@ -7,7 +7,7 @@ perl -e 'print "-" x 40; print "\n"' # <3 perl!
 echo -n "Git Branch: "
 git branch --show-current
 grep -H "version" tests/test_vars.json
-grep -HoP 'Version: \d\.\d\.\d' app/templates/base.html
+grep -HoP 'Version: \d\.\d\.\d' app/interface/templates/base.html
 
 echo "Downloading latest coverage badge using gh cli..."
 set -x

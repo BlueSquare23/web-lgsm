@@ -9,19 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New docs on [Application's Software Architecture](docs/architecture.md)
+- New security headers for XSS Protection and a proper Content Security Policy.
 - New display "unmanaged" cronjobs for admins ([Addresses #issue-49](https://github.com/BlueSquare23/web-lgsm/issues/49))
 - New options for home page game server listing sort order! ([Resolves #issue-55](https://github.com/BlueSquare23/web-lgsm/issues/55))
 
 ### Changed
 
+- Refreshed documentation in light of recent changes.
+- Reorganized app dir folder structure to reflect new architectural layers.
 - Change app to use _user module service_ for managing cronjobs instead of _ansible connector_.
 - **!!!COMPLETE BACKEND CLEAN ARCHITECTURE OVERHAUL!!!**
 - The majority of application's code has been restructured to use a [_Clean Architecture_](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
 
 ### Fixed
 
-- Make cron expression English translation to sound more natural.
-- Fixed circular imports by separating code into clean layers of responsibility.
+- Fix minor `root_install.sh` fatal mkdir call.
+- Make cron schedule expression English translation to sound more natural.
+- Fix circular imports by separating code into clean layers of responsibility.
 
 ## [v1.9.0 - 2026-02-08]
 

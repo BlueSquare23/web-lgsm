@@ -380,3 +380,25 @@ def test_post_server_list_order(authed_client, add_mock_server, test_vars):
         assert response.status_code == 200
         response_data = json.loads(response.data)
         assert response_data == { "success": "Sort order updated successfully"}
+
+def test_load_spec(authed_client, add_mock_server, test_vars):
+    with authed_client:
+        response = authed_client.get("/api/spec")
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+
+        # basic structure check
+        assert "paths" in data
+        paths = data["paths"]
+
+        # check a few important routes exist
+        assert "/cmd-output/{server_id}" in paths
+        assert "/cron/{server_id}" in paths
+        assert "/server-status/{server_id}" in paths
+        assert "/system-usage" in paths
+
+        # optional: check methods exist for a route
+        assert "get" in paths["/system-usage"]
+        assert "post" in paths["/cron/{server_id}"]
+

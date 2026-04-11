@@ -394,7 +394,7 @@ https://icons.getbootstrap.com/
     - [x] New `/api/update-order/<GSUUID>` api route for catching updates
     - [x] Change list on SqlAlchGameServerRepo to list by sort order `GameServerModel.query.order_by(GameServerModel.sort_order).all()`
 
-* [ ] **Add unit tests for untested classes**
+* [x] **Add unit tests for untested classes**
 
 * [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
   - For the biggest stuff either fix there on the spot (if able) or make a todo
@@ -402,7 +402,7 @@ https://icons.getbootstrap.com/
   - But want to try to clean up some of that backlog.
   - Just run `grep -R TODO app/*` to find em all!
 
-* [ ] **Do a Docs Audit/Refresh**
+* [x] **Do a Docs Audit/Refresh**
   - Basically there's old dead info in some of the docs files still. I just
     need to go through each one read it and check its info is still up to date.
 

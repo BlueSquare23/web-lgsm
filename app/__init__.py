@@ -152,9 +152,42 @@ def create_app():
 
     @app.after_request
     def add_security_headers(response):
-        response.headers['X-Frame-Options'] = 'DENY'
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            # JavaScript
+            "script-src 'self' "
+            "'unsafe-inline' 'unsafe-eval' "
+            "https://ajax.googleapis.com "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://cdnjs.buymeacoffee.com; "
+            # CSS
+            "style-src 'self' "
+            "'unsafe-inline' "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com; "
+            # Images
+            "img-src 'self' data: blob: https:; "
+            # Fonts
+            "font-src 'self' "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://cdn.buymeacoffee.com; "
+            # Web Workers (required for xterm.js)
+            "worker-src 'self' blob:; "
+            # WebSocket / API connections (xterm + backend comms)
+            "connect-src 'self' ws: wss: https:; "
+            # Iframes / embedded widgets (Buy Me a Coffee, etc.)
+            "frame-src 'self' "
+            "https://www.buymeacoffee.com "
+            "https://buymeacoffee.com; "
+            # Prevent clickjacking (modern equivalent of X-Frame-Options)
+            "frame-ancestors 'self';"
+        )
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         return response
 
     # Remove default handler and add audit logger

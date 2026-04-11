@@ -602,13 +602,13 @@ We're primarily using it for A) builtin CSRF protection, and B) form validation
 
 ### TLDR How it works
 
-In the [`app/forms.py`](../app/forms.py) file are all of the FlaskForm classes
-for handling form submissions.
+In the [`app/interface/forms/`](../app/interface/forms) directory are all of
+the FlaskForm classes for handling form submissions.
 
 If we look at the settings form we can see a class for each form. Let's look at
 the SettingsForm, because its got a good variety of different input types.
 
-* `app/forms.py`
+* In `app/interface/forms/`:
 
 ```python
 class SettingsForm(FlaskForm):
@@ -670,7 +670,7 @@ class SettingsForm(FlaskForm):
 And then in our route code we just have to instantiate a new form object and
 pass it to our `render_template` call.
 
-* `app/views.py`
+* `app/interface/blueprints/main/settings.py`
 
 ```python
 @views.route("/settings", methods=["GET", "POST"])
@@ -692,7 +692,7 @@ def settings():
 Then finally in our template file we can use some jinja to add our input fields
 for our form.
 
-* `app/templates/settings.html`
+* `app/interface/templates/settings.html`
 
 ```html
         <form method="POST">

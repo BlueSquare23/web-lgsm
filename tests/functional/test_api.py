@@ -360,3 +360,23 @@ def test_manage_cron_delete_nonexistent_job(authed_client, add_mock_server, test
         response = authed_client.delete(f"/api/cron/{server_id}/nonexistent_job")
         debug_response(response)
         assert response.status_code == 500
+
+
+def test_post_server_list_order(authed_client, add_mock_server, test_vars):
+    """Test POST update-order"""
+    server_name = test_vars["test_server"]
+    server_id = get_server_id(server_name)
+    with authed_client:
+        response = authed_client.post(
+            f"/api/update-order",
+            json={
+                "order": [{
+                    "id":server_id,
+                    "name":server_name
+                }]
+            }
+        )
+
+        assert response.status_code == 200
+        response_data = json.loads(response.data)
+        assert response_data == { "success": "Sort order updated successfully"}

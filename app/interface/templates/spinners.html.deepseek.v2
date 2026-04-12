@@ -1,0 +1,71 @@
+{# spinners.html #}
+<div id="spinners" style="display: none;">
+  <style>
+    .spinner-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .spinner-text {
+      color: #00ff11;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .custom-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(0, 255, 17, 0.1);
+      border-top: 2px solid #00ff11;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Pulsing dot animation */
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #00ff11;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.8); }
+    }
+    
+    /* Animated dots for text */
+    .loading-dots::after {
+      content: '';
+      animation: loadingDots 1.5s steps(4, end) infinite;
+    }
+    
+    @keyframes loadingDots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+  </style>
+  
+  <div class="spinner-container">
+    <div class="custom-spinner"></div>
+    {% if install_name %}
+      <span class="spinner-text">Installing {{ install_name|capitalize }}<span class="loading-dots"></span></span>
+    {% elif spinner_context is defined and spinner_context is not none %}
+      <span class="spinner-text">{{ spinner_context }}<span class="loading-dots"></span></span>
+    {% else %}
+      <span class="spinner-text">Processing<span class="loading-dots"></span></span>
+    {% endif %}
+  </div>
+</div>

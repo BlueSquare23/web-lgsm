@@ -4,8 +4,9 @@
 
 {% block content %}
 <div class="container px-4 py-4">
+  {% include 'spinners.html' %}
 
-  <!-- Server Header Card with Integrated Spinner -->
+  <!-- Server Header Card -->
   <div class="row mb-4">
     <div class="col-12">
       <div class="card bg-dark border-secondary">
@@ -17,21 +18,8 @@
               </h1>
               <p class="text-muted mb-0 mt-1">Server ID: {{ server_id }}</p>
             </div>
-            <div class="d-flex align-items-center gap-3">
-              <!-- Spinner element right in the header -->
-              <div id="header-spinner" style="display: none;">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                <!-- Include spinners.html for compatibility -->
-                {% include 'spinners.html' %}
-                  <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
-                    <span id="spinner-text">Processing</span><span class="loading-dots"></span>
-                  </span>
-                </div>
-              </div>
-              <span class="badge bg-info">Status: Running</span>
+            <div>
+              <span class="badge bg-info me-2">Status: Running</span>
             </div>
           </div>
         </div>
@@ -79,31 +67,33 @@
     </form>
   </div>
 
-  {% set parsed_json = user.permissions|from_json %}
-  {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
-    {% if cfg_paths|length %}
-      <!-- Configuration Files Section -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card bg-dark border-secondary">
-            <div class="card-header bg-dark border-secondary">
-              <h5 class="mb-0 text-light">
-                <i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Configuration Files
-              </h5>
-            </div>
-            <div class="card-body">
-              <div class="d-flex flex-wrap gap-2">
-                {% for cfg_path in cfg_paths %}
-                  {% set cfg_file = cfg_path.split('/')[-1] %}
-                  <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
-                    <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
-                  </a>
-                {% endfor %}
+  {% if _config.getboolean('settings', 'cfg_editor', False) %}
+    {% set parsed_json = user.permissions|from_json %}
+    {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
+      {% if cfg_paths|length %}
+        <!-- Configuration Files Section -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card bg-dark border-secondary">
+              <div class="card-header bg-dark border-secondary">
+                <h5 class="mb-0 text-light">
+                  <i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Configuration Files
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                  {% for cfg_path in cfg_paths %}
+                    {% set cfg_file = cfg_path.split('/')[-1] %}
+                    <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
+                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
+                    </a>
+                  {% endfor %}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      {% endif %}
     {% endif %}
   {% endif %}
 
@@ -250,19 +240,6 @@
     {% else %}
       let sConsole = false;
     {% endif %}
-    
-    {# Pass install_name and spinner_context to JavaScript #}
-    {% if install_name %}
-      let installName = "{{ install_name|capitalize }}";
-    {% else %}
-      let installName = null;
-    {% endif %}
-    
-    {% if spinner_context is defined and spinner_context is not none %}
-      let spinnerContext = "{{ spinner_context }}";
-    {% else %}
-      let spinnerContext = null;
-    {% endif %}
   </script>
 
   <!-- Import JavaScript -->
@@ -271,23 +248,12 @@
   <script src="/static/js/show-alert.js"></script>
   <script src="/static/js/delete-btn.js"></script>
 
-  <!-- Bootstrap Icons CSS -->
+  <!-- Bootstrap Icons CSS (Add this to your base template if not already present) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </div>
 
 <style>
-  .loading-dots::after {
-    content: '';
-    animation: loadingDots 1.5s steps(4, end) infinite;
-  }
-  
-  @keyframes loadingDots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
-  }
-  
+  /* Additional modern touches */
   .card {
     backdrop-filter: blur(10px);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -319,11 +285,20 @@
     --bs-bg-opacity: 0.1;
   }
   
+  /* Smooth gradient for backgrounds */
+/*
+  .bg-dark {
+    background: linear-gradient(145deg, #1e1e2f 0%, #2d2d44 100%) !important;
+  }
+*/
+  
+  /* Better terminal integration */
   .card-body.p-0 {
     border-radius: 0 0 0.375rem 0.375rem;
     overflow: hidden;
   }
   
+  /* Responsive adjustments */
   @media (max-width: 768px) {
     .btn {
       padding: 0.5rem 1rem;

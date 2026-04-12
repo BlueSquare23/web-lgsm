@@ -4,8 +4,9 @@
 
 {% block content %}
 <div class="container px-4 py-4">
+  {% include 'spinners.html' %}
 
-  <!-- Server Header Card with Integrated Spinner -->
+  <!-- Server Header Card -->
   <div class="row mb-4">
     <div class="col-12">
       <div class="card bg-dark border-secondary">
@@ -17,21 +18,8 @@
               </h1>
               <p class="text-muted mb-0 mt-1">Server ID: {{ server_id }}</p>
             </div>
-            <div class="d-flex align-items-center gap-3">
-              <!-- Spinner element right in the header -->
-              <div id="header-spinner" style="display: none;">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                <!-- Include spinners.html for compatibility -->
-                {% include 'spinners.html' %}
-                  <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
-                    <span id="spinner-text">Processing</span><span class="loading-dots"></span>
-                  </span>
-                </div>
-              </div>
-              <span class="badge bg-info">Status: Running</span>
+            <div>
+              <span class="badge bg-info me-2">Status: Running</span>
             </div>
           </div>
         </div>
@@ -250,19 +238,6 @@
     {% else %}
       let sConsole = false;
     {% endif %}
-    
-    {# Pass install_name and spinner_context to JavaScript #}
-    {% if install_name %}
-      let installName = "{{ install_name|capitalize }}";
-    {% else %}
-      let installName = null;
-    {% endif %}
-    
-    {% if spinner_context is defined and spinner_context is not none %}
-      let spinnerContext = "{{ spinner_context }}";
-    {% else %}
-      let spinnerContext = null;
-    {% endif %}
   </script>
 
   <!-- Import JavaScript -->
@@ -276,18 +251,6 @@
 </div>
 
 <style>
-  .loading-dots::after {
-    content: '';
-    animation: loadingDots 1.5s steps(4, end) infinite;
-  }
-  
-  @keyframes loadingDots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
-  }
-  
   .card {
     backdrop-filter: blur(10px);
     transition: transform 0.2s ease, box-shadow 0.2s ease;

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM Server Controls{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  {% include 'spinners.html' %}
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">🎮 {{ server_name|capitalize }} Control Panel</h2>
+    <button id="delete-btn" class="btn btn-outline-danger btn-sm">Delete Server</button>
+  </div>
+
+  <!-- TERMINAL CARD -->
+  <div class="card bg-dark border-secondary shadow-sm mb-4">
+    <div class="card-header text-white d-flex justify-content-between align-items-center">
+      <span>Live Console</span>
+      <button class="btn btn-sm btn-outline-light" onclick="window.scrollTo(0,0)">Top</button>
+    </div>
+    <div class="card-body p-2">
+      {% include 'xtermjs.html' %}
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="row g-3 mb-4">
+
+    {% set parsed_json = user.permissions|from_json %}
+    {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
+      {% if cfg_paths|length %}
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header">Config Files</div>
+            <div class="card-body d-flex flex-wrap gap-2">
+              {% for cfg_path in cfg_paths %}
+                {% set cfg_file = cfg_path.split('/')[-1] %}
+                <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" 
+                   class="btn btn-outline-primary btn-sm">
+                  {{ cfg_file }}
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100 text-center">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <a href="{{ url_for('main.add', server_id=server_id) }}" 
+             class="btn btn-outline-primary">
+            ⚙ Settings
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% if show_jobs_edit %}
+    <div class="col-md-3">
+      <div class="card shadow-sm h-100 text-center">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <a href="{{ url_for('main.jobs', server_id=server_id) }}" 
+             class="btn btn-outline-primary">
+            🕒 Jobs
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header">
+      Server Controls
+    </div>
+    <div class="card-body">
+
+      <div class="row g-3">
+
+        {% for control in server_controls %}
+          <div class="col-md-4 col-lg-3">
+
+            {% if control.short_ctrl == 'sd' %}
+              <button class="btn btn-outline-primary w-100 h-100"
+                      onclick="openForm('{{server_id}}', '{{control.short_ctrl}}', 'send_cmd_form');">
+                <div class="fw-bold">{{ control.long_ctrl }}</div>
+                <small class="text-muted">{{ control.description }}</small>
+              </button>
+
+            {% else %}
+              <form method="POST" action="/controls" class="h-100">
+                {{ controls_form.csrf_token }}
+                {{ controls_form.ctrl_form(value='true') }}
+                {{ controls_form.server_id(value=server_id) }}
+                {{ controls_form.control(value=control.short_ctrl) }}
+
+                <button onclick="window.scrollTo(0,0);showSpinners();" 
+                        class="btn btn-outline-primary w-100 h-100">
+                  <div class="fw-bold">{{ control.long_ctrl }}</div>
+                  <small class="text-muted">{{ control.description }}</small>
+                </button>
+              </form>
+            {% endif %}
+
+          </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SEND COMMAND MODAL STYLE -->
+<div class="modal fade" id="send_cmd_modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title">Send Command</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="/controls">
+        <div class="modal-body">
+          {{ send_cmd_form.csrf_token }}
+          {{ send_cmd_form.send_form(value='true') }}
+          {{ send_cmd_form.server_id(value=server_id) }}
+          {{ send_cmd_form.control(value='sd') }}
+
+          {{ send_cmd_form.send_cmd(class="form-control", placeholder="Enter command") }}
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- JS VARS -->
+<script>
+  let serverId = "{{ server_id }}";
+  let textColor = "{{ _config.get('aesthetic','text_color') }}";
+  let showStderr = {{ 'true' if _config.get('settings','show_stderr') else 'false' }};
+  let sConsole = {{ 'true' if console is defined and console else 'false' }};
+</script>
+
+<script src="/static/js/update-xterm.js"></script>
+<script src="/static/js/show-spinners.js"></script>
+<script src="/static/js/show-alert.js"></script>
+<script src="/static/js/delete-btn.js"></script>
+
+{% endblock %}

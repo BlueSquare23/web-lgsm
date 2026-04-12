@@ -1,0 +1,28 @@
+// show-spinners.js
+function showSpinners() {
+  const spinners = document.getElementById('spinners');
+  const spinnerContainer = document.getElementById('spinner-container');
+  
+  if (spinners && spinnerContainer) {
+    // Move the spinner content to the header container
+    spinnerContainer.innerHTML = spinners.innerHTML;
+    spinnerContainer.style.display = 'block';
+    // Hide the original spinner div
+    spinners.style.display = 'none';
+    // But keep its content (we already cloned it)
+  }
+}
+
+function hideSpinners() {
+  const spinnerContainer = document.getElementById('spinner-container');
+  const spinners = document.getElementById('spinners');
+  
+  if (spinnerContainer) {
+    spinnerContainer.style.display = 'none';
+    spinnerContainer.innerHTML = '';
+  }
+  
+  if (spinners) {
+    spinners.style.display = 'none';
+  }
+}

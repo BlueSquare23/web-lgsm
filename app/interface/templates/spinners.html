@@ -1,20 +1,32 @@
-        <div id="spinners" style="display: none;">
-          {% if install_name %}
-            <h2 style='color:#00ff11'>Installing {{install_name|capitalize}}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
-          {% endif %}
+{# spinners.html #}
+<div id="spinners" style="display: none;">
+  <div class="d-flex align-items-center gap-2">
+    <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
+      {% if install_name %}
+        Installing {{ install_name|capitalize }}<span class="loading-dots"></span>
+      {% elif spinner_context is defined and spinner_context is not none %}
+        {{ spinner_context }}<span class="loading-dots"></span>
+      {% else %}
+        Processing<span class="loading-dots"></span>
+      {% endif %}
+    </span>
+  </div>
+</div>
 
-          {# Used to show ... messages on different pages #}
-          {% if spinner_context is defined and spinner_context is not none %}
-            <h2 style='color:#00ff11'>{{ spinner_context }}<span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></h2>
-          {% endif %}
-
-          {% set spinner_colors = ["primary", "secondary", "success", "danger", "warning", "info", "light"] %}
-          {% for bs_color in spinner_colors %}
-            <div class="spinner-border text-{{bs_color}}" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          {% endfor %}
-
-          <hr style="color: white;" />
-        </div>
-
+<style>
+  /* Animated dots for text */
+  .loading-dots::after {
+    content: '';
+    animation: loadingDots 1.5s steps(4, end) infinite;
+  }
+  
+  @keyframes loadingDots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+  }
+</style>

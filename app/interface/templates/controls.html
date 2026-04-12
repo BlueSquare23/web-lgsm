@@ -15,7 +15,7 @@
               <h1 class="display-6 mb-0 text-light">
                 <i class="bi bi-server me-2"></i>{{ server_name|capitalize }}
               </h1>
-              <p class="text-muted mb-0 mt-1">Server ID: {{ server_id }}</p>
+              <p class="text-white mb-0 mt-1">Server ID: {{ server_id }}</p>
             </div>
             <div class="d-flex align-items-center gap-3">
               <!-- Spinner element right in the header -->
@@ -45,8 +45,8 @@
           <i class="bi bi-terminal-fill me-2 text-primary"></i>
           <h5 class="mb-0 text-light">Console Output</h5>
         </div>
-        <div class="card-body p-0">
-          {% include 'xtermjs.html' %}
+        <div class="card-body bg-dark border border-white rounded-3 p-0 m-3">
+          <div id="terminal" style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;" class="rounded-3 p-3" id="output-terminal"></div>
         </div>
       </div>
     </div>
@@ -77,31 +77,33 @@
     </form>
   </div>
 
-  {% set parsed_json = user.permissions|from_json %}
-  {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
-    {% if cfg_paths|length %}
-      <!-- Configuration Files Section -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card bg-dark border-secondary">
-            <div class="card-header bg-dark border-secondary">
-              <h5 class="mb-0 text-light">
-                <i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Configuration Files
-              </h5>
-            </div>
-            <div class="card-body">
-              <div class="d-flex flex-wrap gap-2">
-                {% for cfg_path in cfg_paths %}
-                  {% set cfg_file = cfg_path.split('/')[-1] %}
-                  <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
-                    <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
-                  </a>
-                {% endfor %}
+  {% if _config.getboolean('settings', 'cfg_editor', False) %}
+    {% set parsed_json = user.permissions|from_json %}
+    {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
+      {% if cfg_paths|length %}
+        <!-- Configuration Files Section -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card bg-dark border-secondary">
+              <div class="card-header bg-dark border-secondary">
+                <h5 class="mb-0 text-light">
+                  <i class="bi bi-file-earmark-text-fill me-2 text-warning"></i>Configuration Files
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                  {% for cfg_path in cfg_paths %}
+                    {% set cfg_file = cfg_path.split('/')[-1] %}
+                    <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
+                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
+                    </a>
+                  {% endfor %}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      {% endif %}
     {% endif %}
   {% endif %}
 
@@ -112,7 +114,7 @@
         <div class="card-body text-center">
           <i class="bi bi-gear-fill fs-1 text-primary mb-3"></i>
           <h5 class="text-light">Server Configuration</h5>
-          <p class="text-muted small">Modify server settings and parameters</p>
+          <p class="text-white small">Modify server settings and parameters</p>
           <a href="{{ url_for('main.add', server_id=server_id) }}" class="btn btn-outline-primary w-100">
             <i class="bi bi-sliders2 me-1"></i>Edit {{ server_name|capitalize }} Settings
           </a>
@@ -126,7 +128,7 @@
         <div class="card-body text-center">
           <i class="bi bi-calendar3 fs-1 text-success mb-3"></i>
           <h5 class="text-light">Scheduled Tasks</h5>
-          <p class="text-muted small">Manage automated jobs and backups</p>
+          <p class="text-white small">Manage automated jobs and backups</p>
           <a href="{{ url_for('main.jobs', server_id=server_id) }}" class="btn btn-outline-success w-100">
             <i class="bi bi-clock-history me-1"></i>Edit {{ server_name|capitalize }} Jobs
           </a>
@@ -202,7 +204,7 @@
                         {{ control.long_ctrl }}
                       </button>
                     </div>
-                    <p class="text-muted small mt-2 mb-0 text-center">{{ control.description }}</p>
+                    <p class="text-white small mt-2 mb-0 text-center">{{ control.description }}</p>
                   </form>
                 </div>
               {% endif %}
@@ -326,5 +328,6 @@
       font-size: 1.5rem;
     }
   }
+
 </style>
 {% endblock %}

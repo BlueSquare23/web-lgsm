@@ -8,8 +8,13 @@ import configparser
 from werkzeug.security import generate_password_hash
 
 from app import create_app
-from app.models import User, GameServer, Job
-from app.services import CronService
+
+from app.domain.entities.job import Job
+
+from app.infrastructure.persistence.models.cron_model import CronModel
+from app.infrastructure.persistence.models.user_model import UserModel
+from app.infrastructure.persistence.models.game_server_model import  GameServerModel
+from app.infrastructure.system.cron.cron_scheduler import CronScheduler
 from utils import *
 
 
@@ -90,7 +95,7 @@ def test_config():
 @pytest.fixture()
 def setup_client(db_session, test_vars):
     # Create initial user directly in database
-    user = User(
+    user = UserModel(
         username=test_vars["username"],
         password=generate_password_hash(test_vars["password"], method="pbkdf2:sha256"),
         role="admin",
@@ -147,7 +152,7 @@ def add_mock_server(db_session, test_vars):
     shutil.copy(common_cfg, cfg_dir)
 
     # Create server directly in database
-    server = GameServer(
+    server = GameServerModel(
         install_type='local',
         install_name=test_server,
         install_path=test_server_path,
@@ -166,7 +171,7 @@ def add_mock_server(db_session, test_vars):
 @pytest.fixture()
 def add_second_user_no_perms(db_session, setup_client, test_vars):
     # Create second user with no permissions
-    user = User(
+    user = UserModel(
         username="test2",
         password=generate_password_hash(test_vars["password"]),
         role="user",
@@ -204,7 +209,7 @@ def add_second_user_all_perms(db_session, add_mock_server, test_vars):
     server_id = get_server_id(test_server)
 
     # Create second user with all permissions
-    user = User(
+    user = UserModel(
         username="test2",
         password=generate_password_hash(test_vars["password"]),
         role="user",
@@ -264,7 +269,7 @@ def user_authed_client_all_perms(client, add_second_user_all_perms, test_vars):
 def add_mock_cron_job(client, test_vars):
     test_server = test_vars["test_server"]
     server_id = get_server_id(test_server)
-    cron_service = CronService(server_id=server_id)
+    cron_scheduler = CronScheduler()
 
     # Create a test job first
     job_data = {
@@ -272,14 +277,15 @@ def add_mock_cron_job(client, test_vars):
         "server_id": server_id,
         "command": "echo 'delete me'",
         "comment": "Delete test",
-        "expression": "* * * * *"
+        "schedule": "* * * * *"
     }
-    cron_service.edit_job(job_data)
-    jobs_list = cron_service.list_jobs()
-    job_id = jobs_list[0]["job_id"]
+    job = Job(**job_data)
+    cron_scheduler.update(job)
+    jobs_list = cron_scheduler.list(server_id)
+    job_id = jobs_list[0].job_id
 
     # Verify job exists
-    assert Job.query.filter_by(id=job_id).first() is not None
+    assert CronModel.query.filter_by(id=job_id).first() is not None
     test_vars["job_id"] = job_id
 
     return client

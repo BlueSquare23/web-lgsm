@@ -90,7 +90,7 @@ EOF
     fi
 
     echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"
-    cd $SCRIPTPATH/app/static/js
+    cd $SCRIPTPATH/app/interface/static/js
     npm install @xterm/xterm
     npm install --save @xterm/addon-fit
     cd $SCRIPTPATH

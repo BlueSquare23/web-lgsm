@@ -1,0 +1,719 @@
+interfaces = []
+exclude = [
+    "**/*__pycache__",
+    "**/*egg-info",
+    "**/docs",
+    "**/tests",
+    "**/venv",
+]
+source_roots = [
+    ".",
+]
+
+[[modules ]]
+path = "app.application.use_cases"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.command"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.metrics.get_host_stats"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.blocklist.check_blocked"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.get_game_server_power_state"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.lgsm.check_and_get_lgsmsh"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.processes.add_process"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.audit.list_audit_logs"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.list_game_servers"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.audit"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.sudoers"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.list_running_installs"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.processes"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.audit.log_event"
+depends_on = ["app.domain.entities.audit"]
+
+[[modules ]]
+path = "app.application.use_cases.blocklist"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.delete_game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.processes.get_process"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.file_system"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.get_game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.find_cfg_paths"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.file_system.read_file"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.file_system.write_file"
+depends_on = []
+
+[[modules ]]
+path = "app.application"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.controls"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.cancel_game_server_install"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.query_game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.processes.list_processes"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.metrics"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.processes.remove_process"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.config"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.cron"
+depends_on = ["app.domain.entities.job"]
+
+[[modules ]]
+path = "app.application.use_cases.game_server.clean_install_buffer_output"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.blocklist.add_failed"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.tmux"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.list_installable"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.lgsm"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.game_server.edit_game_server"
+depends_on = ["app.domain.entities.game_server"]
+
+[[modules ]]
+path = "app.application.use_cases.user.get_user"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.lgsm"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.command_executor.command_executor"
+depends_on = ["app.utils.paths", "app.infrastructure.system.command_executor.local_command_executor", "app.infrastructure.system.command_executor.remote_command_executor", "app.infrastructure.system.config"]
+
+[[modules ]]
+path = "app.interface.blueprints.auth.login"
+depends_on = ["app.container", "app.interface.forms.auth", "app.interface.forms.validation_errors", "app.interface.http.client_ip", "app.interface.blueprints.auth", "app.interface.auth.auth_user"]
+
+[[modules ]]
+path = "app.interface.forms.validation_errors"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.auth"
+depends_on = []
+
+[[modules ]]
+path = "app.container"
+depends_on = ["app.application.use_cases.game_server.delete_game_server", "app.application.use_cases.user.get_user", "app.application.use_cases.blocklist.check_blocked", "app.infrastructure.system.game_server.cfg_manager", "app.infrastructure.system.command_executor.command_executor", "app.application.use_cases.game_server.clean_install_buffer_output", "app.infrastructure.security.blocklist_repo", "app.application.use_cases.tmux.get_tmux_socket_name", "app.infrastructure.persistence.repositories.user_repo", "app.application.use_cases.game_server.list_running_installs", "app.application.use_cases.blocklist.add_failed", "app.infrastructure.system.config.config_manager", "app.infrastructure.system.repositories.proc_info_repo", "app.infrastructure.system.cron.cron_scheduler", "app.application.use_cases.cron", "app.application.use_cases.user.verify_user_totp", "app.application.use_cases.sudoers.check_sudoers_access", "app.infrastructure.system.game_server.install_manager", "app.application.use_cases.game_server.list_game_servers", "app.application.use_cases.processes.get_process", "app.application.use_cases.user.check_user_access", "app.application.use_cases.game_server.list_installable", "app.infrastructure.system.game_server.tmux_socket_name_cache", "app.infrastructure.system.lgsm.lgsm_manager", "app.infrastructure.system.user.sudoers_service", "app.application.use_cases.user.get_user_totp_uri", "app.application.use_cases.game_server.get_game_server", "app.application.use_cases.command.run_cmd", "app.application.use_cases.config.get_template_config", "app.infrastructure.system.file_system.file_manager", "app.infrastructure.persistence.repositories.game_server_repo", "app.application.use_cases.game_server.get_game_server_power_state", "app.application.use_cases.game_server.edit_game_server", "app.application.use_cases.config.getboolean_config", "app.application.use_cases.user.list_user_game_servers", "app.application.use_cases.game_server.cancel_game_server_install", "app.application.use_cases.lgsm.check_and_get_lgsmsh", "app.infrastructure.persistence.repositories.audit_repo", "app.application.use_cases.user.list_users", "app.application.use_cases.user.delete_user", "app.application.use_cases.controls.list_controls", "app.application.use_cases.game_server.find_cfg_paths", "app.infrastructure.system.game_server.game_server_manager", "app.application.use_cases.config.get_config", "app.application.use_cases.file_system.write_file", "app.application.use_cases.config.batch_update_config", "app.application.use_cases.metrics.get_host_stats", "app.infrastructure.persistence.repositories.cron_repo", "app.infrastructure.system.repositories.controls_repo", "app.application.use_cases.user.edit_user", "app.application.use_cases.config.set_config", "app.application.use_cases.audit.log_event", "app.application.use_cases.audit.list_audit_logs", "app.application.use_cases.config.getint_config", "app.application.use_cases.processes.list_processes", "app.application.use_cases.user.to_user", "app.application.use_cases.sudoers.add_sudoers_rule", "app.infrastructure.system.metrics.system_metrics", "app.application.use_cases.file_system.read_file", "app.application.use_cases.processes.remove_process", "app.application.use_cases.processes.add_process", "app.application.use_cases.game_server.query_game_server", "app.application.use_cases.user.query_user"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.jobs"
+depends_on = ["app.utils", "app.interface.blueprints.main", "app.interface.forms.validation_errors", "app.container", "app.interface.forms.views"]
+
+[[modules ]]
+path = "app.domain.repositories.audit_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.models"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user.verify_user_totp"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.auth.logout"
+depends_on = ["app.interface.blueprints.auth", "app.container"]
+
+[[modules ]]
+path = "app.infrastructure.system.command_executor.local_command_executor"
+depends_on = ["app.infrastructure.system.command_executor.base_executor"]
+
+[[modules ]]
+path = "app.application.use_cases.user.delete_user"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.api.update_console"
+depends_on = ["app.utils", "app.interface.blueprints.api", "app.container"]
+
+[[modules ]]
+path = "app.application.use_cases.user.list_user_game_servers"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.lgsm.lgsm_manager"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.api.cmd_output"
+depends_on = ["app.interface.blueprints.api", "app.utils", "app.container"]
+
+[[modules ]]
+path = "app.interface.blueprints.api.system_usage"
+depends_on = ["app.container", "app.interface.blueprints.api"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.install"
+depends_on = ["app.interface.blueprints.main", "app.utils", "app.interface.forms.validation_errors", "app.interface.forms.views", "app.utils.paths", "app.container"]
+
+[[modules ]]
+path = "app.interface.http"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.api"
+depends_on = ["app.interface.blueprints.api.manage_cron", "app.interface.blueprints.api.system_usage", "app.interface.blueprints.api.update_console", "app.interface.blueprints.api.server_list_order", "app.interface.blueprints.api.cmd_output", "app.interface.blueprints.api.game_server_delete", "app.interface.blueprints.api.server_status"]
+
+[[modules ]]
+path = "app.infrastructure.system.metrics.system_metrics"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.repositories"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.auth.auth_user"
+depends_on = ["app.container"]
+
+[[modules ]]
+path = "app.interface.forms.views"
+depends_on = ["app.container", "app.interface.forms.helpers"]
+
+[[modules ]]
+path = "app.interface.blueprints.auth.edit_users"
+depends_on = ["app.interface.blueprints.auth", "app.container", "app.utils", "app.interface.forms.auth", "app.interface.forms.validation_errors"]
+
+[[modules ]]
+path = "app.infrastructure.system.game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.config.config_manager"
+depends_on = ["app.infrastructure.system.config.defaults"]
+
+[[modules ]]
+path = "app.domain.repositories.controls_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared.edit_cron"
+depends_on = []
+
+[[modules ]]
+path = "web-lgsm"
+depends_on = ["app.infrastructure.persistence.models.user_model", "app.container"]
+
+[[modules ]]
+path = "app.application.use_cases.config.batch_update_config"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.game_server_repo"
+depends_on = ["app.domain.repositories.game_server_repo", "app.domain.entities.game_server", "app.infrastructure.persistence.models.game_server_model"]
+
+[[modules ]]
+path = "app.domain.repositories"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities.proc_info"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.repositories.user_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user.get_user_totp_uri"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.config.set_config"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared.write_file"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.file_system"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.user_model"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared"
+depends_on = ["app.utils.shared.find_cfg_paths", "app.utils.shared.read_file", "app.utils.shared.edit_cron", "app.utils.shared.write_file"]
+
+[[modules ]]
+path = "app.infrastructure.system.command_executor"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.paths"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.main.changelog"
+depends_on = ["app.interface.blueprints.main", "app.utils"]
+
+[[modules ]]
+path = "app.infrastructure.system.ssh.client"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities.user"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.cron"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.auth.two_factor"
+depends_on = ["app.interface.blueprints.auth", "app.container", "app.interface.forms.validation_errors", "app.interface.forms.auth"]
+
+[[modules ]]
+path = "app.infrastructure.system.game_server.install_manager"
+depends_on = ["app.utils.paths", "app.infrastructure.persistence.repositories.game_server_repo", "app.infrastructure.system.repositories.proc_info_repo", "app.infrastructure.system.command_executor.command_executor"]
+
+[[modules ]]
+path = "app.infrastructure.system.command_executor.base_executor"
+depends_on = ["app.infrastructure.system.repositories.proc_info_repo"]
+
+[[modules ]]
+path = "app.interface.forms"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.tmux.get_tmux_socket_name"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities.control"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.game_server_model"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.command_executor.remote_command_executor"
+depends_on = ["app.infrastructure.system.command_executor.base_executor", "app.infrastructure.system.ssh.client", "app.infrastructure.system.repositories.proc_info_repo"]
+
+[[modules ]]
+path = "app.interface.http.client_ip"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared.read_file"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user.query_user"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.game_server.game_server_manager"
+depends_on = ["app.infrastructure.system.repositories.proc_info_repo", "app.utils.paths", "app.infrastructure.system.command_executor.command_executor", "app.utils.helpers", "app.infrastructure.system.game_server.tmux_socket_name_cache"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.spec"
+depends_on = ["app.interface.blueprints.main"]
+
+[[modules ]]
+path = "app.extensions"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.controls.list_controls"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.file_system.local_file_interface"
+depends_on = ["app.utils.helpers", "app.infrastructure.system.file_system.file_interface"]
+
+[[modules ]]
+path = "app.interface.templates"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.command.run_cmd"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.repositories.proc_info_repo"
+depends_on = ["app.domain.repositories.proc_info_repo", "app.domain.entities.proc_info"]
+
+[[modules ]]
+path = "app.infrastructure.persistence"
+depends_on = []
+
+[[modules ]]
+path = "app.utils.shared.cli"
+depends_on = ["app.utils.shared.read_file", "app.utils.shared.write_file", "app.utils.shared.edit_cron", "app.utils.shared.find_cfg_paths"]
+
+[[modules ]]
+path = "app.infrastructure.system.user.sudoers_service"
+depends_on = ["app.utils.paths", "app.infrastructure.system.repositories.proc_info_repo", "app.infrastructure.system.command_executor.command_executor"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.add"
+depends_on = ["app.interface.forms.views", "app.interface.forms.validation_errors", "app.interface.blueprints.main", "app.container", "app.utils"]
+
+[[modules ]]
+path = "app.infrastructure.security.blocklist_repo"
+depends_on = ["app.domain.repositories.blocklist_repo"]
+
+[[modules ]]
+path = "app.infrastructure.system.file_system.file_manager"
+depends_on = ["app.infrastructure.system.file_system.remote_file_interface", "app.infrastructure.system.user.user_module_service", "app.utils.helpers", "app.infrastructure.system.file_system.local_file_interface"]
+
+[[modules ]]
+path = "app.infrastructure.system.repositories.controls_repo"
+depends_on = ["app.domain.entities.control", "app.infrastructure.system.config.config_manager"]
+
+[[modules ]]
+path = "app.interface.blueprints.api.server_list_order"
+depends_on = ["app.container", "app.utils.helpers", "app.interface.blueprints.api"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.audit"
+depends_on = ["app.container", "app.interface.blueprints.main"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.user_repo"
+depends_on = ["app.domain.repositories.user_repo", "app.domain.entities.user", "app.infrastructure.persistence.models.user_model"]
+
+[[modules ]]
+path = "app.infrastructure.system.game_server.cfg_manager"
+depends_on = ["app.utils.paths", "app.infrastructure.system.user.user_module_service", "app.infrastructure.system.repositories.proc_info_repo", "app.infrastructure.system.command_executor.command_executor"]
+
+[[modules ]]
+path = "app.infrastructure.security"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.api.server_status"
+depends_on = ["app.utils", "app.interface.blueprints.api", "app.container"]
+
+[[modules ]]
+path = "app.infrastructure.system.metrics"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.config.defaults"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.config.getint_config"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities.game_server"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.main.settings"
+depends_on = ["app.interface.forms.views", "app.container", "app.interface.blueprints.main", "app.utils", "app.interface.forms.validation_errors"]
+
+[[modules ]]
+path = "app.application.use_cases.user.edit_user"
+depends_on = ["app.domain.entities.user"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.audit_repo"
+depends_on = ["app.infrastructure.persistence.models.audit_model", "app.domain.repositories.audit_repo", "app.domain.entities.audit"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.edit"
+depends_on = ["app.utils", "app.interface.forms.views", "app.interface.forms.validation_errors", "app.interface.blueprints.main", "app.container"]
+
+[[modules ]]
+path = "app.interface.forms.auth"
+depends_on = ["app.interface.forms.helpers", "app.container"]
+
+[[modules ]]
+path = "app.application.use_cases.sudoers.add_sudoers_rule"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.cron.cron_scheduler"
+depends_on = ["app.infrastructure.persistence.repositories.cron_repo", "app.infrastructure.system.user.user_module_service", "app.infrastructure.system.command_executor.command_executor", "app.infrastructure.persistence.repositories.game_server_repo", "app.utils.paths", "app.infrastructure.system.repositories.proc_info_repo", "app.domain.entities.job"]
+
+[[modules ]]
+path = "app.application.use_cases.config.get_template_config"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user.to_user"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.auth.setup"
+depends_on = ["app.interface.blueprints.auth", "app.interface.forms.auth", "app.interface.forms.validation_errors", "app.container", "app.interface.auth.auth_user"]
+
+[[modules ]]
+path = "app.interface.blueprints.api.manage_cron"
+depends_on = ["app.interface.blueprints.api", "app.utils", "app.interface.forms.views", "app.container"]
+
+[[modules ]]
+path = "app.application.use_cases.user.list_users"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.repositories.proc_info_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.main.home"
+depends_on = ["app.interface.blueprints.main", "app.interface.use_cases", "app.utils"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.cron_model"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.forms.helpers"
+depends_on = ["app.container"]
+
+[[modules ]]
+path = "app.application.use_cases.sudoers.check_sudoers_access"
+depends_on = []
+
+[[modules ]]
+path = "app.interface"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.persistence.repositories.cron_repo"
+depends_on = ["app.domain.entities.job", "app.infrastructure.persistence.models.cron_model", "app.domain.repositories.cron_repo"]
+
+[[modules ]]
+path = "app.interface.blueprints.api.game_server_delete"
+depends_on = ["app.container", "app.interface.blueprints.api", "app.utils"]
+
+[[modules ]]
+path = "app.utils.helpers"
+depends_on = ["app.container", "app.utils.paths"]
+
+[[modules ]]
+path = "app.infrastructure.persistence.models.audit_model"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.main.about"
+depends_on = ["app.interface.blueprints.main", "app.container"]
+
+[[modules ]]
+path = "app.utils"
+depends_on = ["app.utils.helpers", "app.utils.paths"]
+
+[[modules ]]
+path = "app.application.use_cases.config.get_config"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.repositories.cron_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.file_system.file_interface"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.entities.job"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.user.user_module_service"
+depends_on = ["app.infrastructure.system.command_executor.command_executor", "app.infrastructure.system.repositories.proc_info_repo"]
+
+[[modules ]]
+path = "app.interface.blueprints.main.controls"
+depends_on = ["app.utils", "app.container", "app.interface.forms.valid_command", "app.interface.forms.validation_errors", "app.interface.forms.views", "app.interface.blueprints.main"]
+
+[[modules ]]
+path = "app.infrastructure.system.config"
+depends_on = ["app.infrastructure.system.config.config_manager"]
+
+[[modules ]]
+path = "app.application.use_cases.config.getboolean_config"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.file_system.remote_file_interface"
+depends_on = ["app.utils.helpers", "app.infrastructure.system.ssh.client", "app.infrastructure.system.file_system.file_interface"]
+
+[[modules ]]
+path = "app.infrastructure.system.ssh"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.static"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system.user"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.auth"
+depends_on = ["app.interface.blueprints.auth.two_factor", "app.interface.blueprints.auth.edit_users", "app.interface.blueprints.auth.login", "app.interface.blueprints.auth.logout", "app.interface.blueprints.auth.setup"]
+
+[[modules ]]
+path = "app.domain.repositories.game_server_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.application.use_cases.user.check_user_access"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.forms.valid_command"
+depends_on = ["app.container"]
+
+[[modules ]]
+path = "app.infrastructure.system.game_server.tmux_socket_name_cache"
+depends_on = ["app.infrastructure.system.file_system.file_manager", "app.infrastructure.system.user.user_module_service"]
+
+[[modules ]]
+path = "app.interface.blueprints.main"
+depends_on = ["app.interface.blueprints.main.controls", "app.interface.blueprints.main.settings", "app.interface.blueprints.main.add", "app.interface.blueprints.main.edit", "app.interface.blueprints.main.install", "app.interface.blueprints.main.changelog", "app.interface.blueprints.main.audit", "app.interface.blueprints.main.about", "app.interface.blueprints.main.spec", "app.interface.blueprints.main.home", "app.interface.blueprints.main.jobs"]
+
+[[modules ]]
+path = "app.domain.entities.audit"
+depends_on = []
+
+[[modules ]]
+path = "app.domain.repositories.blocklist_repo"
+depends_on = []
+
+[[modules ]]
+path = "app.infrastructure.system"
+depends_on = []
+
+[[modules ]]
+path = "app.domain"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.blueprints.api.specs"
+depends_on = []
+
+[[modules ]]
+path = "app.interface.use_cases"
+depends_on = ["app.container"]
+
+[[modules ]]
+path = "app.utils.shared.find_cfg_paths"
+depends_on = []

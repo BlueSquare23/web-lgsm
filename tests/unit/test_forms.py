@@ -1,10 +1,11 @@
 import pytest
 import os
 from werkzeug.datastructures import MultiDict
-from app.forms.auth import *
-from app.forms.views import *
-from app.forms.helpers import *
-from app.models import GameServer
+from app.interface.forms.auth import *
+from app.interface.forms.views import *
+from app.interface.forms.helpers import *
+
+from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
 
 # Helper function to create form data with app context
@@ -61,15 +62,10 @@ def test_setup_form_password_mismatch(app):
 
 
 # Test AddForm
-def test_add_form_valid_local(app, db_session, monkeypatch):
-    # Mock get_servers() to return our test server name
-    def mock_get_servers():
-        return ["gmodserver"]  # Only include the server we're testing
-    
-    monkeypatch.setattr("app.forms.views.get_servers", mock_get_servers)
+def test_add_form_valid_local(app, db_session):
 
     # Create a test server in the database for the AnyOf validator
-    test_server = GameServer(
+    test_server = GameServerModel(
         install_type='local',
         install_name='TestServer',
         install_path='/path/to/server',
@@ -121,7 +117,7 @@ def test_settings_form_valid(app):
 # Test UploadTextForm with database validation
 def test_upload_text_form_valid(app, db_session):
     # Create a test server in the database
-    test_server = GameServer(
+    test_server = GameServerModel(
         install_type='local',
         install_name='Test Server',
         install_path='/path/to/server',
@@ -146,7 +142,7 @@ def test_upload_text_form_valid(app, db_session):
 # Test custom validators with database
 def test_server_exists_validator(app, db_session):
     # Create a test server in the database
-    test_server = GameServer(
+    test_server = GameServerModel(
         install_type='local',
         install_name='Test Server',
         install_path='/path/to/server',

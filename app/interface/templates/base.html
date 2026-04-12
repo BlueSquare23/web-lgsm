@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- jQuery Lib -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+
+    <!-- Bootstrap CSS Only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='js/node_modules/@xterm/xterm/css/xterm.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="{{ url_for('static', filename='js/node_modules/@xterm/xterm/lib/xterm.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/node_modules/@xterm/addon-fit/lib/addon-fit.js') }}"></script>
+
+    <!-- Sortable JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+
+  <body>
+
+    <!-- Handle Alerts from Backend (Jinja2) -->
+    <div id="alert-container" style="width: 100%; z-index: 1000;">
+    {%- with messages = get_flashed_messages(with_categories=True) -%}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == "error" %}
+                  <div class="alert alert-danger alert-dismissible fade show m-0" role="alert">
+                    {{ message + "\n" }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% else %}
+                  <div class="alert alert-success alert-dismissible fade show m-0" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {%- endwith %}
+    </div>
+
+    <!-- Handle Alerts from Frontend (JavaScript) -->
+    <script src="static/js/alerts.js"></script>
+
+    <!-- Bootstrap Navbar https://getbootstrap.com/docs/5.1/components/navbar/ -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-white">
+      <div class="container-fluid">
+        <a class="navbar-brand" title="Home" href="/home">
+          <img src="/static/img/favicon.ico" alt="" width="30" height="24" class="d-inline-block align-text-top" />
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbar">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/home">Home</a>
+            </li>
+            {% if user.is_authenticated %}
+              {% set parsed_json = user.permissions|from_json %}
+              {% if user.role == 'admin' or 'settings' in parsed_json.routes %}
+            <li class="nav-item">
+              <a class="nav-link" href="/settings">Settings</a>
+            </li>
+              {% endif %}
+              {% if user.role == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="/edit_users">Edit Users</a>
+            </li>
+              {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" onclick="return confirm('Are you sure you want to log out?');" href="/logout">Logout</a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Login</a>
+            </li>
+            {% endif %}
+          </ul>
+          {% if user.is_authenticated %}
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <span class="navbar-text p-3">Logged in as {{ user.username }}</span>
+            </li>
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <div class="container pb-5">
+      {%- block content -%}
+      {%- endblock +%}    </div>
+      <br/>
+
+    <!-- Bootstrap JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+    <div id="footer-container" class="container-fluid border-top border-white fixed-bottom bg-dark pt-2">
+      <a style="text-decoration: none;" href="/about"><p class="text-center text-light mt-2">Web LGSM - Version: 1.9.1</p></a>
+    </div>
+  </body>
+</html>

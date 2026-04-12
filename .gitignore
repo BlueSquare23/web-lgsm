@@ -1,12 +1,13 @@
 *.log
 *.env
+*.secret
 *.db
 *.misc
 *.swp
 *.pem
 *.bak
 linuxgsm.sh
-lgsm
+./lgsm
 venv
 __pycache__
 Mockcraft

@@ -1,0 +1,213 @@
+import os
+import json
+import getpass
+
+from threading import Thread
+from flask_login import login_required, current_user
+from flask import (
+    jsonify,
+    render_template,
+    request,
+    flash,
+    url_for,
+    redirect,
+    current_app,
+)
+
+from app.utils import *
+from app.interface.forms.views import AddForm
+from app.interface.forms.validation_errors import validation_errors
+
+# Constants.
+CWD = os.getcwd()
+USER = getpass.getuser()
+VENV = "/opt/web-lgsm/"
+from app.utils.paths import PATHS
+
+from app.container import container
+
+from . import main_bp
+
+######### Install Page #########
+
+@main_bp.route("/install", methods=["GET", "POST"])
+@login_required
+def install():
+    config = container.get_template_config().execute()
+
+    # Check if user has permissions to install route.
+    if not container.check_user_access().execute(current_user.id, "install"):
+        flash("Your user does not have access to this page", category="error")
+        return redirect(url_for("main.home"))
+
+    # Pull in install server list from game_servers.json file.
+    install_list = container.list_installable_game_servers().execute()
+    if not install_list:
+        flash("Error loading game_servers.json file!", category="error")
+        return redirect(url_for("main.home"))
+
+    # Initialize blank install_name, used for update-text-area.js.
+    install_name = ""
+
+    # Check for / install the main linuxgsm.sh script.
+    lgsmsh = "linuxgsm.sh"
+    container.check_and_get_lgsmsh().execute(f"bin/{lgsmsh}")
+
+    # Check if any installs are currently running.
+    running_installs = container.list_running_game_server_installs().execute()
+
+    form = AddForm()
+
+    if request.method == "GET":
+        server_id = request.args.get("server_id")
+        cancel = request.args.get("cancel")
+        if server_id != None and cancel == "true":
+            server = container.get_game_server().execute(server_id)
+            if server == None:
+                flash(
+                    "Problem canceling installation! Game server id not found.",
+                    category="error",
+                )
+                return redirect(url_for("main.install"))
+
+            # Check if install thread is still running.
+            if server.id not in running_installs:
+                flash(
+                    "Install for server not currently running!",
+                    category="error",
+                )
+                return redirect(url_for("main.install"))
+
+            # Log proc info so can see what's going on.
+            proc_info = container.get_process().execute(server.id)
+
+            current_app.logger.info(log_wrap("proc_info", proc_info))
+
+            if proc_info.pid:
+                success = container.cancel_game_server_install().execute(proc_info.pid)
+                if success:
+                    flash("Installation Canceled!")
+                else:
+                    flash("Problem canceling installation!", category="error")
+
+        # For displaying Installing ServerName...
+        if server_id != None:
+            server = container.get_game_server().execute(server_id)
+            if server == None:
+                flash(
+                    "Can't get details for server.",
+                    category="error",
+                )
+                return redirect(url_for("main.install"))
+
+            install_name = server.install_name
+
+        return render_template(
+            "install.html",
+            user=current_user,
+            web_lgsm_user=USER,
+            servers=install_list,
+            install_name=install_name,
+            server_id=server_id,
+            _config=config,
+            running_installs=running_installs,
+            create_new_user=config.getboolean('settings','install_create_new_user'),
+            form=form,
+        )
+
+    # Handle POSTs
+
+    # Handle Invalid form submissions.
+    if not form.validate_on_submit():
+        validation_errors(form)
+        return redirect(url_for("main.install"))
+
+# For debug
+#    return jsonify(form.data)
+    current_app.logger.debug(jsonify(form.data))
+
+    # Form data.
+    install_name = form.install_name.data
+    install_path = form.install_path.data
+    install_type = 'local'  # Hardcode to local for now is fine.
+    script_name = form.script_name.data
+    username = form.username.data
+
+    # Just to be doubly sure.
+    install_name = install_name.replace(" ", "_")
+    install_name = install_name.replace(":", "")
+    
+    game_server = {
+        "id": None,  # New game server dont have IDs yet.
+        "install_name": install_name,
+        "install_path": install_path,
+        "install_type": install_type,
+        "script_name": script_name,
+        "username": username
+    }
+
+    # If install already exists.
+    if container.query_game_server().execute(**game_server):
+        current_app.logger.debug(log_wrap('Install Already Exists!', game_server))
+        flash("An installation with those details already exits!", category="error")
+        return redirect(url_for("main.install"))
+
+    # Add server to DB.
+    server_id = container.edit_game_server().execute(**game_server)
+    if not server_id:
+        flash("Problem adding installation details to database", category="error")
+        return redirect(url_for("main.install"))
+
+    current_app.logger.info(log_wrap("server_id", server_id))
+
+    # Update web user's permissions to give access to new game server post install.
+    if current_user.role != "admin":
+        user_perms = json.loads(current_user.permissions)
+        user_perms["server_ids"].append(server_id)
+
+#        current_user.permissions = json.dumps(user_perms)
+
+        user = container.get_user().execute(current_user.id)
+        user.permissions = json.dumps(user_perms)
+
+        container.edit_user().execute(**user.__dict__)
+
+    cmd = [
+        PATHS["sudo"],
+        "-n",
+        os.path.join(VENV, "bin/python"),
+        PATHS["ansible_connector"],
+        "--install",
+        str(server_id),
+    ]
+
+    install_daemon = Thread(
+        target=container.run_command().execute,
+        args=(cmd, None, server_id, current_app.app_context()),
+        daemon=True,
+        name=f"web_lgsm_install_{server_id}",
+    )
+    install_daemon.start()
+
+    clear_daemon = Thread(
+        target=container.clear_install_buffer_output().execute,
+        args=(server_id, current_app.app_context()),
+        daemon=True,
+        name=f"clear_install_{server_id}",
+    )
+    clear_daemon.start()
+
+    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', installed game server '{install_name}'")
+
+    return render_template(
+        "install.html",
+        user=current_user,
+        web_lgsm_user=USER,
+        servers=install_list,
+        _config=config,
+        install_name=install_name,
+        server_id=server_id,
+        running_installs=running_installs,
+        form=form,
+    )
+

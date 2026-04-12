@@ -4,8 +4,8 @@ from flask import url_for, request
 import configparser
 from bs4 import BeautifulSoup
 
-from app.models import User, GameServer
-
+from app.infrastructure.persistence.models.user_model import UserModel
+from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
 def debug_response(response):
     """
@@ -95,12 +95,12 @@ def toggle_send_cmd(enable=False):
 
 
 def check_install_finished(server_id):
-    server = GameServer.query.filter_by(id=server_id).first()
+    server = GameServerModel.query.filter_by(id=server_id).first()
     return server.install_finished
 
 
 def get_server_id(server_name):
-    server = GameServer.query.filter_by(install_name=server_name).first()
+    server = GameServerModel.query.filter_by(install_name=server_name).first()
     return server.id
 
 

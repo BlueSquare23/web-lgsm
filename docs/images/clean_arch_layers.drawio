@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0" version="29.3.2">
+  <diagram name="Page-1" id="Fd8vQKZh8SH0zE-qXRfc">
+    <mxGraphModel dx="1426" dy="739" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-6" edge="1" parent="1" source="gptJOyaRBVL7IDSYUN-j-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="gptJOyaRBVL7IDSYUN-j-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Application&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="140" x="370" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-5" edge="1" parent="1" source="gptJOyaRBVL7IDSYUN-j-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="gptJOyaRBVL7IDSYUN-j-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Interface&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="140" x="370" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Domain&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="140" x="370" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-7" edge="1" parent="1" source="gptJOyaRBVL7IDSYUN-j-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="gptJOyaRBVL7IDSYUN-j-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;Infrastructure&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="140" x="370" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-8" parent="1" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Clean Architecture Layers&lt;/h1&gt;&lt;blockquote&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;p dir=&quot;auto&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Dependencies always point inward!&lt;/font&gt;&lt;/p&gt;&lt;/blockquote&gt;&lt;div class=&quot;snippet-clipboard-content notranslate position-relative overflow-auto&quot;&gt;&lt;pre class=&quot;notranslate&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;code&gt;interface -&amp;gt; application -&amp;gt; domain&lt;br&gt;infrastructure -&amp;gt; domain&lt;/code&gt;&lt;/font&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul dir=&quot;auto&quot;&gt;&lt;li&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Domain depends on nothing.&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Application depends only on domain.&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Interface depends on application (never on infrastructure directly).&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Infrastructure depends only on domain (to implement interfaces).&lt;/font&gt;&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="240" width="500" x="530" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-13" parent="1" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/icon-cache1/Bootstrap_Vol_3-2297/outlet-1015.svg" value="" vertex="1">
+          <mxGeometry height="78" width="78" x="272" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-14" parent="1" style="image;html=1;image=img/lib/clip_art/general/Plug_128x128.png" value="" vertex="1">
+          <mxGeometry height="80" width="80" x="270" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;pre class=&quot;overflow-visible! px-0!&quot; data-start=&quot;2076&quot; data-end=&quot;2139&quot;&gt;&lt;code class=&quot;whitespace-pre! language-python&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;span class=&quot;hljs-title class_&quot;&gt;SqlAlchemyAuditRepository&lt;br&gt;(Adapter)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="30" width="258" x="181" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;pre class=&quot;overflow-visible! px-0!&quot; data-start=&quot;2076&quot; data-end=&quot;2139&quot;&gt;&lt;code class=&quot;whitespace-pre! language-python&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;span class=&quot;hljs-title class_&quot;&gt;AuditRepository&lt;br&gt;(Port)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="40" width="258" x="181" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;pre class=&quot;overflow-visible! px-0!&quot; data-start=&quot;2076&quot; data-end=&quot;2139&quot;&gt;&lt;code class=&quot;whitespace-pre! language-python&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;span class=&quot;hljs-title class_&quot;&gt;Audit&lt;br&gt;(Domain Entity)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="35" width="258" x="450" y="422.5" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;pre class=&quot;overflow-visible! px-0!&quot; data-start=&quot;2076&quot; data-end=&quot;2139&quot;&gt;&lt;code class=&quot;whitespace-pre! language-python&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;span class=&quot;hljs-title class_&quot;&gt;LogAuditEvent&lt;br&gt;(Use-Case)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="30" width="258" x="182" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;pre class=&quot;overflow-visible! px-0!&quot; data-start=&quot;2076&quot; data-end=&quot;2139&quot;&gt;&lt;code class=&quot;whitespace-pre! language-python&quot;&gt;&lt;span&gt;&lt;span&gt;&lt;span class=&quot;hljs-title class_&quot;&gt;log_audit_event&lt;br&gt;(container)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;" vertex="1">
+          <mxGeometry height="70" width="258" x="182" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-21" parent="1" style="text;whiteSpace=wrap;html=1;" value="&lt;div&gt;Wires LogAuditEvent&lt;/div&gt;&lt;div&gt;to SqlAlchemyAuditRepository&lt;br&gt;via dep inversion&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="200" x="225" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-23" edge="1" parent="1" source="gptJOyaRBVL7IDSYUN-j-18" style="curved=1;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="gptJOyaRBVL7IDSYUN-j-17" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="360" />
+              <mxPoint x="400" y="380" />
+              <mxPoint x="520" y="350" />
+              <mxPoint x="580" y="380" />
+            </Array>
+            <mxPoint x="400" y="440" as="sourcePoint" />
+            <mxPoint x="579" y="405" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="imports" vertex="1">
+          <mxGeometry height="30" width="60" x="490" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="gptJOyaRBVL7IDSYUN-j-28" parent="1" style="text;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;The Smell Test&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;If you ever see:&lt;br&gt;&lt;br&gt;&amp;nbsp; from infrastructure import ... inside application -&amp;gt; wrong&lt;br&gt;&amp;nbsp; from application import ... inside infrastructure -&amp;gt; wrong&lt;br&gt;&amp;nbsp; from infrastructure import ... inside blueprint -&amp;gt; wrong&lt;br&gt;&lt;br&gt;If you see:&lt;br&gt;&lt;br&gt;&amp;nbsp; Infrastructure implementing a domain interface -&amp;gt; correct&lt;br&gt;&amp;nbsp; Application importing domain -&amp;gt; correct&lt;br&gt;&amp;nbsp; Blueprint importing application -&amp;gt; correct&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size: 16px;&quot;&gt;&lt;b&gt;One Sentence Summary&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&amp;nbsp; Infrastructure and Interface are outer layers.&lt;br&gt;&amp;nbsp; Application and Domain are inner layers.&lt;br&gt;&amp;nbsp; Outer layers depend inward.&lt;br&gt;&amp;nbsp; Inner layers never depend outward." vertex="1">
+          <mxGeometry height="320" width="340" x="550" y="480" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

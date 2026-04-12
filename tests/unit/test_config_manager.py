@@ -3,8 +3,8 @@ import pytest
 import os
 import tempfile
 import configparser
-from app.config.config_manager import ConfigManager
-from app.config.defaults import DEFAULTS
+from app.infrastructure.system.config.config_manager import ConfigManager
+from app.infrastructure.system.config.defaults import DEFAULTS
 
 class TestConfigManager:
 

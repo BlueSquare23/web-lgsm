@@ -89,9 +89,9 @@ def register_extensions(app):
 
 def register_blueprints(app):
     """Register blueprints with the app"""
-    from .blueprints.main import main_bp
-    from .blueprints.auth import auth_bp
-    from .blueprints.api import api_bp
+    from .interface.blueprints.main import main_bp
+    from .interface.blueprints.auth import auth_bp
+    from .interface.blueprints.api import api_bp
 
     app.register_blueprint(main_bp, url_prefix="/")
     app.register_blueprint(auth_bp, url_prefix="/")
@@ -126,13 +126,16 @@ def register_template_filters(app):
     def from_json_filter(s):
         return json.loads(s)
 
+# We're using the AuthUser wrapper to convert the domain user entity into an
+# auth user for flask login stuff.
 def register_user_loader():
     """Register the user loader for Flask-Login"""
-    from .models import User
+    from app.interface.auth.auth_user import AuthUser
 
     @login_manager.user_loader
     def load_user(id):
-        return db.session.get(User, int(id))
+        auth_user = AuthUser(id)
+        return auth_user
 
 def create_app():
     """Application factory function"""
@@ -140,12 +143,52 @@ def create_app():
     setup_logging()
 
     # Initialize app
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="interface/templates", static_folder='interface/static')
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{app.root_path}/{DB_NAME}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            # JavaScript
+            "script-src 'self' "
+            "'unsafe-inline' 'unsafe-eval' "
+            "https://ajax.googleapis.com "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://cdnjs.buymeacoffee.com; "
+            # CSS
+            "style-src 'self' "
+            "'unsafe-inline' "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com; "
+            # Images
+            "img-src 'self' data: blob: https:; "
+            # Fonts
+            "font-src 'self' "
+            "https://cdn.jsdelivr.net "
+            "https://cdnjs.cloudflare.com "
+            "https://cdn.buymeacoffee.com; "
+            # Web Workers (required for xterm.js)
+            "worker-src 'self' blob:; "
+            # WebSocket / API connections (xterm + backend comms)
+            "connect-src 'self' ws: wss: https:; "
+            # Iframes / embedded widgets (Buy Me a Coffee, etc.)
+            "frame-src 'self' "
+            "https://www.buymeacoffee.com "
+            "https://buymeacoffee.com; "
+            # Prevent clickjacking (modern equivalent of X-Frame-Options)
+            "frame-ancestors 'self';"
+        )
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        return response
 
     # Remove default handler and add audit logger
     app.logger.removeHandler(default_handler)

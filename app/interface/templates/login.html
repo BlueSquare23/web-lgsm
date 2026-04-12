@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+      <br />
+
+      <div class="container bg-dark border border-secondary rounded-3 p-2">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          <h3 align="enter" style="color: white;">
+            Login
+          </h3>
+          <div class="form-group">
+
+            {{ form.username.label(class="text-white") }}
+            {{ form.username() }}
+
+            <div class="form-group mb-1">
+              {{ form.password.label(class="text-white") }}
+              <div class="password-container">
+                {{ form.password() }}
+                <span class="password-toggle" id="togglePassword">
+                  <i class="bi bi-eye text-white"></i>
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group mt-3">
+              {{ form.otp_code.label(class="form-label text-white") }}
+              <div class="input-group">
+                <span class="input-group-text bg-dark text-white border-white">
+                  <i class="bi bi-lock"></i>
+                </span>
+                {{ form.otp_code(class="white-placeholder form-control bg-dark border-white text-white", 
+                                placeholder="Enter 6-digit code") }}
+              </div>
+              <small class="text-white-50">
+                <i class="bi bi-info-circle"></i> 
+                If 2fa is enabled for your user.
+              </small>
+            </div>
+
+            <center>
+              {{ form.submit() }}
+            </center>
+          </div>
+        </form>
+      </div>
+
+    <script src="/static/js/toggle-pass-visability.js"></script>
+
+{% endblock %}

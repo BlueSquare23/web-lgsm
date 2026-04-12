@@ -1,6 +1,9 @@
 ## Version 1.8.0 Todos
 
-### v1.8.0 Pt 6. Post Release PR / Tutorials
+### PR / Tutorials
+
+* [ ] **Get this up on docker hub and let people install by just pulling container image**
+  - Then add to the readme pull from docker as alt way to install.
 
 * [ ] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
@@ -81,6 +84,13 @@
 
 ## Main Goals for v1.9 -> v1.10
 
+* **THE BIG FIVE!**
+  - File Manager
+  - Interactive Terminal
+  - Frontend Overhaul
+  - Docker in Docker
+  - Promotion & Community
+
 * [ ] **Revamp the interface design and layout**
   - I'm not much of a front end guy. However, this project has simply come too
     far with the original design / layout of the main pages and it needs an
@@ -146,18 +156,7 @@
   - All user input coming into the app, even through the API should go through
     a form class for valiation.
 
-* [x] **Create new neutral backend service layer interface class(es) to house business logic and be used by both route and api code**
-  - The idea here is twofold:
-    1. I want the app to have a mature api, where basically anything you can do
-       through the web, you can also do through a curl cmd.
-    2. I also want the app's route logic to still use things like Flask-WTF/WTForms validation.
-  - To accomplish this, I'm going to slowly transition existing routes to use
-    new service layer classes. New features will just be built this way from
-    the start. Old features will be transitioned over time.
-  - See new cron.py for example of `CronService` class to act as intermediary
-    between API and DB (model). 
-
-* [ ] **Reduce redundancies in disparate isomorphic representations of the same data**
+* [x] **Reduce redundancies in disparate isomorphic representations of the same data**
   - I have too many different representations of the same underlying data.
     - There's the data in the DB.
     - There's the data on disk, in flat json files.
@@ -184,7 +183,7 @@
     - Right now you can manage them over ssh, but never got around to making
       install over ssh work.
 
-* [ ] **Rethink main design to sandbox things even more**
+* [x] **Rethink main design to sandbox things even more**
   - Right now the web -> db -> ansible connector as root way of administering
     the system has me nervous.
   - There's validation, there's sanitization. But the whole approach seems bad.
@@ -193,7 +192,7 @@
     necessaity to package up all the escalted dirty work in one script.
   - But its overloaded and its data channels are too wide and I suspect leaky.
     - A new approach is needed.
-  - Running as the new user through sudo maybe the preferable way over
+  - [x] Running as the new user through sudo maybe the preferable way over
     backwardsass ssh to localhost approach.
 
 * [ ] **Get fully working shell interface through web terminal**
@@ -252,310 +251,320 @@
   - I want to transition the app to use web sockets for this communication
     instead.
 
+* [ ] **Get app up on docker hub**
+  - Should distribute via dockerhub too. Right now have experimental docker
+    compose, that needs some love too.
+  - But we'll get way more users if we just publish on docker and let people
+    run it in a container they can teardown whenever.
+
 * [x] **Overhaul & Redesign test code**
   - [x] Every single test should be idempotent (they're not rn).
   - [x] No test should depend on any other test (they all depend on each other rn).
   - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
   - [ ] Bonus points: If I can get some Selenium tests in here.
 
-## Version 1.9.0 Todos
+## Version 1.9.2 Todos
 
-* [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
-  - I would get more control over specific package builds and would be platform independent.
-  - But then I'd have to use that to manage all the packages n'@ and people are
-    less familiar with these sorta 3rd party pkg managers.
+### New Features, Highlevel Release Goals
 
-* [x] **Move config management stuff into its own class**
-  - I'm making an effort to clean up the `utils.py` file.
-  - First thing to do is take those ugly functions in the utils file and move
-    them into their own class and update the app code and tests.
-  - [x] Then write some unit tests for the new class n'@.
+* [ ] **Add install new game servers to containers**
+  - Instead of installing as new system users, allow install game servers
+    inside of containers.
+  - Might even be able to use the pre-made containers from LGSM.
+  - And/Or tell users manually create the ports.
+  - And/Or just let them directly access and edit the yaml via web file editor.
 
-* [x] **Refactor main app `__init__.py`, offload flask extensions code to own file(s)**
-  - I'm using flask extensions for logging and DB stuff, etc.
-  - This code is clogging up the main `__init__.py` and that things a mess.
-  - I know there's better ways to organize flask extension stuff, I've just
-    never really looked into it.
-  - Time to do that!
-
-* [x] **Break up apps blueprints into dir**
+* [ ] **Look into Docker in Docker (DinD) deployment**
+  - If this is viable and not too annoying, I think it could be the main way
+    for distributing, deploying, and updating the app.
+  - I don't think the bare metal install will ever go away, but if we can wrap
+    it in layers of containers, that significantly boots our security without
+    requiring too many fundamental app rewrites.
+  - Idea is:
 ```
-└── blueprints/
-     ├── main/
-     │     home.py
-     │     controls.py
-     │     settings.py
-     │     ...
-     ├── auth/
-     │     login.py
-     │     logout.py
-     │     two_factor.py
-     │     ...
-     └── api/
-           cron.py
-           console.py
-           ...
+Host Machine
+└── Web App Container (with DinD)
+    ├── Inner Docker Daemon (runs inside)
+    └── Game Server Container A (managed by inner daemon)
+    └── Game Server Container B (managed by inner daemon)
+```
+  - Then new default setup would be install new game servers to sub containers,
+    instead of to users on the system.
+
+
+## Version 1.9.1 Todos
+
+### New Features, Highlevel Release Goals
+
+* [x] **Continue re-architecture efforts**
+  - Problems:
+    - Too many "services" that aren't services.
+    - Lacking conceptual models for what they are.
+      - As a result haven't decided where to put them yet.
+    - Not a clean arch currently, therefore ugly dep inversion happening for manager classes.
+      - Need to figure out how do I give both my routes access to services and
+        my managers access to services while avoiding circular imports. 
+      - I could just use dynamic imports, but I'm convinced there's a better way
+        if I could just figure out how to better lay out all the pieces.
+    - Managers shouldn't depend on services, but right now they do depend on
+      services. So I'm using dep inversion. But that's nasty and I don't like
+      any of that. And its kinda just a word soup anyways with servics vs
+      managers not really meaning much.
+  - Solution:
+    - A Clean Arch Transition: I'm going to go feature by feature and convert
+      them to be clean arch.
+    - Probably going to start small till I get what I'm doing and then will do
+      all the bigger stuff too.
+    - This will give us a clear dependency graph and a skeleton we can use to
+      continue the project's growth.
+
+* [x] **Do a basic security audit, identify and patch holes, and improve validation**
+  - Okay there's plenty of things about this app and codebase that are _suss_.
+    Not intonationally, its just if you're going to build something like this
+    it involves risks.
+  - But at the very least we can go through and find holes and try to patch
+    them up.
+  - Mostly right now I'm concerned with things slipping past validation, and
+    with the amount of shell code that should really be python. If we can cut
+    those things down, we gain a lot more security.
+  - [x] Also some pip requirements need updated.
+  - **NOTE:** _This should happen after the main bulk of the rearch cleanup otherwise we're just security testing and patching code that's about to be changed._
+
+* [x] **Cron Add Listing of All Jobs for Admins**
+  - For jobs that are in the crontab, but not in the database (aka ones not
+    controlled by the app), show them for admins, but greyed out.
+  - User Requested: https://github.com/BlueSquare23/web-lgsm/issues/49
+
+* [ ] **Add collapsible sitemap accordion panel to righthand side**
+  - Goal is get to any page from any page by opening up side panel and going
+    into that section.
+  - Hypothetical Sitemap Layout Tree:
+```
+Home
+    GameServers
+        Edit GameServer Cfg File
+        Add or Edit GameServer Install Details
+        Edit GameServer Jobs
+        Install New GameServer
+        GameServer Controls
+    App
+        Settings
+    Admin
+        Edit Users
+        Audit
+    Auth
+        Setup 2FA
+        Logout
+    Misc
+        About
+        Changelog
+        Swagger Docs
+```
+  - That kinda doesn't work exactly cause like for game server pages you need
+    to specify what gameserver you're working with. But its roughly how things
+    are.
+  - Notes for Nick:
+```
+So we're using Bootstrap 5.3:
+https://getbootstrap.com/docs/5.3/getting-started/introduction/
+
+I think you should be able to use this Accordion stuff they have.
+https://getbootstrap.com/docs/5.3/components/accordion/
+
+And then wrap that accordion in a collapsible side thing. And maybe that open / close button into the existing navbar.
+https://getbootstrap.com/docs/5.3/components/collapse/#horizontal
+
+If you need any icons, we're also using bootstrap icons, so you can just use any of these css classes like this <i class="bi bi-0-circle"></i>
+https://icons.getbootstrap.com/
 ```
 
-* [x] **Break up models into separate class files.**
+* [x] **Cleanup Home template install list jinja via routecode**
+  - I can get rid or the nested ifs in the template file by getting the game
+    server list for the give user and only passing that to the template.
+
+* [x] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
+  - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55
+  - Two Parts of this:
+  - Part 1: Fronend
+    - [x] New JS to do sort by alpha, asc/desc
+    - [x] New html for home template
+    - [x] New frontend changes using `SortableJS` to make list dragable
+  - Part 2: Backend
+    - [x] New column in DB & field in domain entity for `sort_order`
+    - [x] New `/api/update-order/<GSUUID>` api route for catching updates
+    - [x] Change list on SqlAlchGameServerRepo to list by sort order `GameServerModel.query.order_by(GameServerModel.sort_order).all()`
+
+* [x] **Add unit tests for untested classes**
+
+* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
+  - For the biggest stuff either fix there on the spot (if able) or make a todo
+    below for later.
+  - But want to try to clean up some of that backlog.
+  - Just run `grep -R TODO app/*` to find em all!
+
+* [x] **Do a Docs Audit/Refresh**
+  - Basically there's old dead info in some of the docs files still. I just
+    need to go through each one read it and check its info is still up to date.
+
+### The Meat
+
+* [ ] **Add Login IP address to Audit Log for Logins**
+  - Should say: `User 'username' logged in from 1.1.1.1`
+
+* [ ] **Address CodeQL Alerts**
+  - https://github.com/BlueSquare23/web-lgsm/runs/62909674268
+  - Yeah I know accepting keys blindly is bad, but need to do more research to
+    see what we can really do about it.
+
+* [x] **Redo Cron as clean arch**
+  - [x] We need an abstraction in the core. Aka domain layer `Cron` domain entity class.
+  - [x] We need a `CronRepository` in the domain layer too.
+  - [x] In the application layer we need to define some Usecases.
+  - Aka these need converted to cron use case classes:
+    - [x] `list`
+    - [x] `delete`
+    - [x] `create`
+    - [?] `edit` - The app sorta presents this as a different use case, but its
+      the same form, same validation, same thing if its creating brand new or
+      editing existing, still needs all the same info. So for now not making an
+      identical usecase.
+  - [x] Probably we can reuse a lot of existing code for the Infrastructure layer,
+    but it will need split.
+    - [x] We can put the mysql stuff in one class like the `SqlAlchemyAuditRepo` stuff
+    - [x] Then the system cli cron stuff will need to be split out.
+  - [x] Container Wiring needs updated to pull everything together.
+  - [x] Route code will need updates to use new calls!
+  - Only thing I'm nervous about is all the interaction with still non-clean
+    CmdService stuff. But we'll clean that up in time and update the infra
+    accordingly.
+
+* [x] **Redo User as clean arch**
+  - Building from the middle outward!
+  - Domain Layer
+    - [x] We need a `User` domain entity.
+    - [x] We need a `UserRepository` repo parent class as well.
+  - Application Layer
+    - [x] We need to identify and convert route code, utils, and User related
+      access code into usecases.
+    - All the usual suspects to start with:
+      - [x] `get(user_id):`
+      - [x] `update(user):`
+      - [x] `list():`
+      - [x] `delete(user_id):`
+      - [x] `get_totp_uri(user_id):`
+      - [x] `verify_totp(user_id, token):`
+      - [x] `has_access(user_id, route, server_id=None):`
+  - Infrastructure Layer
+    - [x] We need to move the existing User model into `infrastructure/persistence/models/user_model.py` and rename to `UserModel`
+    - [x] We need to create an `SqlAlchemyUserModel` class in `infrastructure/persistence/repositories/user_repo.py` and define access methods for usecases
+  - Wiring
+    - [x] We need to wire it all through the `container.py`
+  - Interface Layer
+    - [x] We need to replace the calls in route code to use new usecases instead of direct DB access.
+  - [x] **Figure out how to get auth stuff into app now.**
+    - I'm kinda dumb. I just refactored all this only to realize after the fact
+      that I cant use the domain entity User object for auth stuff cause its
+      missing all the auth stuff that comes with sqlalchmey and usermixin.
+    - So I kinda fucked myself...
+    - Cause under clean arch, route code shouldn't use the DB object directly. But
+      like that's how all the flask route `@login_required` decoraters work,
+      that's how the `current_user.is_active` or `current_user.is_authenticated` works...
+    - So maybe as a compromise, I'll just let the main `app/__init__.py` use
+      the real flask sqlalchemy model object.
+      - And then we can do like a boundry context layer or something for
+        translating that from route code into domain entity reprsentation of a
+        user.
+
+* [x] **Redo GameServer as clean arch**
+  - We need:
+  - [x] **Domain Entity**
+  - [x] **Domain Repository Port**
+  - [x] **Application Usecases**
+  - [x] **Infrastructure SqlAlch Repository Adapter**
+  - [x] **Infrastructure System Adapter(s)**
+    - We need these for install and delete. Will need some additional use cases to go along with them.
+    - Just a thin layer for interacting with ansi connector using domain object.
+  - [x] **Container Wiring**
+  - [x] **Interface Route Code**
+
+* [x] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
+  - Aka convert existing route code db calls into clean arch.
+  - Right now I still have the classic OG problem of the route code doing too much.
+  - Basically, a ton of the current routecode sorta things can happen in application/usecases
+  - This will thin out the routes and make the connection to the DB clean arch.
+
+* [x] **Figure out cleaner pattern(s) for container stuff**
+  - Right now container is easy and since what I'm mainly worried about is
+    refactoring the app code, then a conatiner with same interface for
+    accessing all usecases is fine right now.
+  - But I know it could be made a little bit more cleaver and usable.
+  - Probably could have some factory stuff producing the needful.
+
+* [x] **Reorganize blueprints & other interface layer stuff into app/interface dir**
+  - This will be easier to do after other stuff is cleaned up because then
+    should mostly just be renaming imports, I think...
+
+* [x] **Convert blocklist to use clean arch**
+  - This is the first "service" I'm converting to be clean architecture.
+  - [x] Remove request specific parts into interface layer.
+  - [x] Move rest into infrastructure layer repository.
+    - In this case its an in mem repository. But same as any other sql, file, etc.
+  - [x] Create usecases and wire them up through container.
+  - [x] Replace routecode calls to new use cases.
+
+* [x] **Convert system metrics to use clean arch**
+  - [x] Move into infrastructure layer repository.
+    - In this case its an in mem repository. But same as any other sql, file, etc.
+  - [x] Create usecases and wire them up through container.
+  - [x] Replace routecode calls to new use cases.
+
+* [x] **Convert ProcInfo to proper domain obj + repo aka use clean arch**
+  - [x] Move `proc_info` object into domain entity. 
+  - [x] Create domain layer repo skel.
+  - [x] Move ProcInfoRegistry into infrastructure layer ProcInfoRepository.
+    - In this case its an in mem repository. But same as any other sql, file, etc.
+  - [x] Create usecases and wire them up through container.
+  - [x] Replace routecode calls to new use cases.
+
+* [x] **Convert CommandExecutor (aka run_command) to use clean arch**
+  - [x] Move CommandExecutor into infrastructure layer.
+  - [x] Create usecase for run and wire it up through container.
+  - [x] Replace routecode calls to new use case.
+
+* [x] **Convert ConfigManager to use clean arch**
+  - [x] Move ConfigManager into infrastructure layer.
+  - [x] Create usecase for run and wire it up through container.
+  - [x] Replace routecode calls to new use case.
+
+* [x] **Figure out how logger fits into clean architecture**
+  - I was way overthinking this, the logger is already installed in our main
+    `__init__.py` and so we can use it anywhere in the app and it'll make it to
+    the log.
+  - No need to build out DI. Python logger has DI included automagically by default.
+
+* [x] **Figure out how exception handling fits into clean architecture**
+  - https://www.geeksforgeeks.org/python/define-custom-exceptions-in-python/
+  - https://blog.miguelgrinberg.com/post/the-ultimate-guide-to-error-handling-in-python
+  - https://codesignal.com/learn/courses/clean-code-with-modules-and-packages/lessons/introduction-to-exception-handling-in-python
+  - I was over thinking this too. I can just do, throw exception in infra
+    layer, catch it in flask route code. That's a way simpler approach.
+  - Also see result object below, can handle most of it cleaner.
+
+* [x] **Remove cron stuff from ansible connector**
+  - Now that we have the new user module service (soon to be refactored under
+    clean arch), we can just use that to run cron commands as alt users more
+    securely and faster without having to become root.
+  - Instead we need:
+    - [x] New user module service script for cron.
+    - [x] Update cron manager to call that instead of connector.
+    - [x] Rip out old cron stuff in connector.
+
+* [x] **This shouldn't be fatal, `root_install.sh` MAKE FIX!**
 ```
-└── models/
-    ├── __init__.py
-    ├── user.py
-    └── game_server.py
-    etc.
+####### Installing Web-LGSM Ansible Connector...
+####### Setting up Share Modules Dir...
+mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
 ```
-
-* [x] **Convert blocklist.py into blocklist_service.py class and make singleton**
-  - Right now just threw that in there quick and dirty as a module level singleton. 
-  - But with all the other restructures, needs its own class file made proper singleton n'@.
-
-* [x] **Make real singleton to hold proc_info objects**
-  - I've been using a module level singleton, but this sucks.
-  - Might as well just put it in a real class.
-
-* [x] **Experiment with alt architecture of system user management**
-  - SSH is great. But SSH to localhost is a dirty hack. A working dirty hack.
-    But still not ideal.
-  - I did this originally because its an easy way to handle user auth and
-    isolation. Also I wanted to add the ablity to admin remote machines so why
-    get 2 for 1.
-  - But as the project grows and I continue to re-architect other things, this
-    "solution" has become a hindrance.
-  - I need a different way to manage users on the system.
-  - **PROBLEM!**
-    - If I do it via sudo then I need to manage updating sudoers.d files again.
-      - Not terrible because I could just validate accepted users to give
-        access to and only allow create sudoers rules for those users. Template
-        it all, make it secure.
-      - But then also this isn't _Pythonic_
-        - Or perhaps could it be...
-    - So then real problem is, if we're not going to do it via some prebuild
-      access control mechanism like sudo, how tf are we going to do it?
-    - Option 1: **Root Daemon, Drop Privs**
-      - Yuck, I hate the idea of this already.
-    - Option 2: **Root Sudoers Script, Drop Privs**
-      - This is what we have already with the ansible connector.
-      - I'm not saying we overload the ansible connector with even more duties.
-        - Plus it'd be extreemly slow and not real time anymore to run it through
-          the connector.
-      - But this would be a new script using the same approach of user has
-        NOPASS access to run as root in order to drop privs, is what I mean.
-      - Thing is, this is also not very secure. I'm not even really happy with
-        the current design of the connector script. So the idea of building a
-        parallel channel that works the same way is not great...
-    - Option 3: **Magic Fairy Comes and does it for me!**
-      - I like this idea the best. Just then I don't have to do anything and
-        get to take all the credit!
-      - Problem is world too complex, nothing that simple.
-    - Option 4: **Ship python script to user, exec under their context via sudo**
-      - I'm liking this idea more and more. Basically install playbook would
-        setup not only the lgsm game server dir but also a web-lgsm dir as each
-        new system user.
-      - Then the python script would be invoked via sudo -u newuser still. But
-        it would be python -> shell -> python. Which imho is much better than
-        python -> shell + user input -> rce ya pwned.
-      - Actually, thinking about it, doesn't even need to be installed as that
-        user. Can be installed in system level dir and just that user has perms
-        to execute it.
-        - Yeah simplifies things a lot.
-      - The communication channel back could just be json.
-      - But how to send info hrrmm...
-        - Yeah client scripts wouldn't be able to access the DB as alt user so
-          they need to be sent any variable info the need.
-        - Well let's think a little bit more about what these system user client
-          scripts/functions/libs are going to need to do exactly...
-          - We're going to need one to read the game servers tmux socket file for
-            status indicators.
-          - One to edit crontab as the user (perhaps, have working version through connector, but its not great).
-          - One to run game server commands as new user (perhaps, might not need to wrap those tbh).
-          - One to find all config file paths for cfg editor.
-          - One for reading files as the user.
-          - One for writing files as the user.
-          - Potentially more for exploring files as the user in the future...
-        - So yeah they're going to need to be sent a lot of info.
-        - Which means I need a protocol / system that can do this. 
-        - Steps are:
-          - App runs script as user via sudo -u
-          - Data in via ??? (json?)
-          - Data out via ??? (json?)
-        - I kinda don't want to just use stdin and stdout because they're leaky,
-          unreliable, and I don't want to run long complicated commands via
-          subprocess.popen sudo -u. That's just ugly.
-        - So was thinking, maybe each user get's an API key or something, and
-          they can send data back via post to web app's API perhaps?
-        - But getting data back isn't really the problem. Its sending the data
-          in the first place, in a way that can be validated and locked down
-          made secure.
-          - Perhaps could do secure fetch via api or something, where client
-            code as new user gets url or id and fetches data via api first.
-        - But then that all sounds like overkill and I'd have to do api key
-          managment and stuff. Nahh I don't like via the web app api.
-        - Maybe there's some simple clever crytographic way I could sign the
-          data payloads or something so the client code knows this is a legit
-          request coming from web app. But tbh at this point not main prio,
-          since still better than existing ssh access to do whatever as other
-          users anyways.
-        - All this to me sounds like we need a new SysUserMgmtService class or
-          maybe multiple new classes.
-    - Going to use json sent via stdin and got via stdout
-      - I contemplated using domain sockets and having two daemons and even
-        built a little poc with a couple of scripts. But this is all overkill.
-      - Just Keep it simple stupid, json via normal input output streams.
-  - **PLAN/SOLUTION**
-    - New script & module that is meant to be run as alt system users via sudo -u.
-    - New step to install playbook to add sudoers rule for web-lgsm -> new user automatically.
-    - Remove old steps for adding ssh keys n'@.
-    - Remove old route code for creating new ssh keys for installs.
-    - Going to use json sent via stdin and got via stdout.
-
-* [x] **New Class for Command Execution Service**
-  - Before I get started with re-building the "run as other users" system, I
-    want to modularize the command executor service.
-  - So right now utils is bloated, blah blah blah.
-  - I think we can do this new cmd exec service in a clever way. We want it to
-    do both remote ssh execs, and local same user execs.
-  - So let's use dependency inversion!
-  - Instead of casing on if local or remote in method and branching there, lets
-    just pass in the cmd exec interface we need and it'll have the same methods
-    for if ssh or if local exec.
-
-* [x] **Integrate new CommandExecService into app code**
-  - I made them work via backward compat `utils.py` functions for right now so
-    wouldn't have to change rest of the route code.
-  - But obv goal is to now just call CommandExecService directly from route
-    code and ditch utils file for that.
-  - Many things can just be a find and replace for `run_command` but the
-    stuff in threads, might need to think abt little bit.
-
-* [x] **Add new shared modules dir setup to root_install.sh**
-
-* [x] **Rework install form to accept more options!!!**
-  - Users should be able to set other things via the install form!
-  - They should be able to set:
-    - `install_name`
-    - `install_path`
-    - `username`
-  - Not right away, but in the future:
-    - `install_type`
-    - `install_host`
-
-* [x] **Integrate new sudoers setup into install**
-  - Need to find and re-add the steps for editing sudoers rules to install playbook.
-
-* [x] **New Shared Modules Class(es)**
-  - Took me a long ass time but finally figure it out. I don't really need to
-    do that much special.
-  - I just need to push some classes up into a new `/opt/web-lgsm/shared` dir.
-    - These will be for code used by both the main app and the additional user stuff.
-
-* [x] **Continue breaking apart utils.py into service classes and adding methods to db classes**
-  - The `utils.py` file is the last big whale of a file that needs chopped up.
-  - This gives us an opportunity to do some basic redesigns in the process.
-    - There's a lot of stuff in the utils.py file that can be either turned
-      into new service classes, added to the existing database classes as
-      methods, or refactored away completely.
-    - There will still be some neutral true utils stuff remaining, but plan is
-      to significantly boil it down.
-    - See `docs/DESIGN_OOD.md` for more details about how.
-
-* [ ] **Write unit tests for new service layer classes before get too behind**
-  - Gotta write tests for ~these~ Basically everything in new services dir:
-    * [ ] `BlocklistService`
-    * [ ] `ControlsService`
-    * [ ] `ProcInfoService`
-
-* [x] **Make redirect to github on about page open in new tab.**
-
-* [x] **Add buy me a coffee link to about page author section**
-  - My buddies opinion is that it should be prominent on the page.
-  - I don't really care to much tbh, but I'll do it for him.
-
-* [x] **Need a secure way to add custom additional game server users to whitelist**
-  - Right now, customizations to the additional users whitelist will get blow
-    away on update.
-  - So need to add them _somewhere_ where they won't get uninstalled and will
-    automatically be imported.
-  - Decided to put customization here: `/usr/local/share/web-lgsm_custom_users.yml` 
-    - Then they'll survive updates and still be root only accessible.
-  - [x] Integrated into username whitelist check for install playbook!
-  - [x] Make some documentation about them.
-
-* [x] **Add cleanup sudoers rules on game server delete**
-  - Should be simple to just have the connector do this when running delete playbook.
-
-* [x] **On add form submit, run sudoers add with new info**
-  - This is going to need a new playbook that's basically just a sub set of the
-    install playbook but for setting up new sudoers rules.
-
-* [x] **Detect game servers that are missing sudoers rules somehow and if we can, add them automatically, otherwise throw warn flash to user.** 
-  - Need an easy way to see if we got a rule to access that game server user.
-    Just going to parse stdout.
-
-* [x] **!!!STOP!!!: Its time to step back and learn a bit more about Domain Driven Design**
-  - See re-arch todo below, but tldr need a better way to organize all my new
-    classes before things start getting too outta hand.
-  - This code is still fresh and molten in its core, we need to reform and
-    rehome it (change dir structure) just a bit more before bad habits get
-    ingrained.
-  - But before I can do that I need to learn more about DDD. I should watch
-    some tutorials, takes some notes, and build some practice projects before
-    moving on.
-
-* [x] **Do more rearchitecting, solve "Everything's a Service" problem.**
-  - I fucked up. But it's cool I can save it.
-  - I got so carried away turning code into classes that I kinda didn't think
-    about how I was going to organize and name those functions.
-    - Kinda an important part.
-  - But its cool, just gotta figure out a new model to use for organizing dirs
-    and rename some things, change some imports.
-  - The code itself doesn't really need changed, I just have to figure out how
-    to organize it in a logical reasonable way. 
-
-* [x] **Wrap up ~v1.8.7~ v1.9.0 Release**
-  - Okay this refactor job has been enough change for one release.
-  - I'd love to keep adding more and expanding, but I gotta call it here, tuck
-    in the corners and get another release out before I get too carried away.
-  - There's always more time for refactoring later, but with amount of work
-    I've done so far this release, time to call it and package the rest of it
-    up before adding more stuff on.
-
-## Version 1.8.x Todos
-
-* [ ] **Change docstrings to use Sphinx and look into auto generated readthedocs with it**
-  - I've been using a made up fake docstring format. Time to change that to be Sphinx.
-  - https://docs.python-guide.org/writing/documentation/#sphinx
-  - https://www.sphinx-doc.org/en/master/
-
-* [ ] **Add cool retro term style customization options**
-  - I played around with some css for adding cool term effects to the xterm.js
-    window. Would need a lot of integration to pass user prefs back to the
-    javascript code where they're set. So will play around with that more another
-    time.
-
-* [ ] **Sudo pass form again for when adding things that need edit as root**
-  - There are things I want the app to do as root, but I don't want to put them in the no auth connector.
-  - So I need a pass, which means I need a form again to get a pass from the user for elevating privs.
-  - Specifically, for example when adding game servers manually, app will now need to edit sudoers rules.
-    - For game servers with default names no prob, can validate and add without auth. 
-    - But for new unique usernames, will need to add sudoers rules. Not going
-      to allow arbitrary sudoers rule username injection obv so will need sudo
-      path to auth and add unknown usernames to validation list first. Then
-      normal playbook to add sudoer rules for user.
-
-
-* [ ] **Need way to add sudoers rules for legacy game server system users**
-  - Basically, once someone upgrades to this release (v1.8.7), it'll break
-    their old local non-same user game server installs.
-  - To fix this just need to detect hosts that don't have sudoers rules for yet
-    and prompt user to add them.
-  - For game servers in 
-
-
-* [ ] **Cleanup render template calls with kwargs packing**
-  - I can just shove all the stuff in a kwargs dict before calling render
-    template. Would make things look nicer, easier to read.
-
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 
@@ -571,14 +580,9 @@
 ]
 ```
 
-* [x] **Remove custom tmux socket file name caching in favor of flask cache**
-  - I wrote the custom caching stuff before I was really using flask cache.
-  - Now I need to rip all that code out and replace it with buitin cache code.
-  - Not super urgent though cause old code works fine.
-
-* [ ] **Add reverse_proxy main.conf var to [server] section for setting name through rev proxy**
-  - [ ] Then pipe this var through to API where it get's hostname and if
-    `rev_proxy` name is set, use that instead.
+* [x] **Look into Arbor impact analysis engine**
+  - https://github.com/Anandb71/arbor
+  - Not what I was looking for.
 
 * [ ] **I need a public site for the project**
   - Not only do I need to catch form posts for usage stats and crash reports,
@@ -588,7 +592,7 @@
   - I'm thinking I just make a branch of the main flask app an spend a few
     bucks on a .com.
   - We can throw it up on my VPS at work its fine.
-  
+
 * [ ] **Add option for anonymous usage statistics.** (This might have to wait :sigh:)
   - This is not technically difficult, as in setting this up from a software
     perspective would be relatively simple.
@@ -607,16 +611,68 @@
     catch 500's and send a stack trace and maybe some anonomized vars dump back
     to me somehow. (Email sucks so prolly just post to a site I control)
 
-* [ ] **For install list do sort by alpha two columns header**
+* [x] **For install list do sort by alpha two columns header**
   - At the top of the install page, add some buttons to sort by alphabetical
     order for both columns.
   - Right now order is ascending by server short name.
 
-* [ ] **Change sort order of game servers on main page**
+* [x] **Change sort order of game servers on main page**
   - User wants the ability to change the ordering of the GameServer items on
     the home page.
   - Either sort alphabetically or custom order.
   - [Related Issue](https://github.com/BlueSquare23/web-lgsm/issues/55)
+
+
+### The Rest
+
+* [x] **Use controls.json for form validation & list**
+  - INSTEAD, HARDCODE `force-update` FOR NOW, THEN OVERHAUL AVAILABLE COMMAND DETECTION!!!
+  - I think that form is using a hardcoded list of valid controls for game
+    servers so it blocks other controls for things like `force-update`.
+  - I think this might hint at a bigger issue though and we should be doing
+    more to detect available server controls. 
+  - Related Issue: https://github.com/BlueSquare23/web-lgsm/issues/49
+
+* [ ] **Find way to detect available server controls on a per server basis**
+  - I'm thinking the existing `json/controls.json` file isn't going to cut it anymore.
+  - I'm pretty sure there are plenty of servers that don't have the exact same
+    normal options and ones that have special options. 
+  - So I'm thinking at first controls page load for new server we detect options
+    and store them to DB for GameServer.
+
+* [ ] **Break up form classes into one class per file**
+  - Just makes things easier to find.
+  - I don't care if some will be tiny, that's a hint more validation might be needed...
+
+* [ ] **Add two new main.conf proxy related things**
+  - 1. Add `trusted_domains` list to [server] section for reverse proxied
+    setups so swagger docs display correct name.
+  - 2. Copy this guys changes for situation where app needs to use http proxy
+    to talk to outside world.
+    - https://github.com/BlueSquare23/web-lgsm/compare/master...rqdmap:web-lgsm:master
+    - Since these are just env vars, think I can just put them in the app init
+      and then pass the env in. Not sure why he put them in the old
+      run_cmd_popen, perhaps because they were not needed elsewhere.
+
+* [x] **Clean up html and stray JS**
+  - There's javascript in html templates still cause I'm lazy. Needs put in its
+    own script fils(s) and linked.
+  - Also just html in comments still and misc stuff like that.
+
+* [ ] **Write unit tests for new untested classes**
+  - Classes still somewhat molten, once more arch decisions made and classes
+    harden, then more through testing makes sense. Right now this code is
+    working but some what temporary.
+
+* [ ] **Change docstrings to use Sphinx and look into auto generated readthedocs with it**
+  - I've been using a made up fake docstring format. Time to change that to be Sphinx.
+  - https://docs.python-guide.org/writing/documentation/#sphinx
+  - https://www.sphinx-doc.org/en/master/
+  - This might be the sort of thing I can get help with from an llm, but we'll see.
+
+* [ ] **Cleanup render template calls with kwargs packing**
+  - I can just shove all the stuff in a kwargs dict before calling render
+    template. Would make things look nicer, easier to read.
 
 * [ ] **Continue fixing up tests**
   2. [ ] For Assert step, CHECK MORE STUFF VIA THE DB DIRECTLY!!!
@@ -627,8 +683,26 @@
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
 
+## Version 1.9.x Todos
 
-## Version 1.8.x Todos
+* [ ] **More Cron Improvements**
+  - [ ] Add `@reboot`, `@daily`, `@hourly`, etc. to cron scheduler.
+  - [ ] Add option to send stderr or stderr & stdout to file (default /dev/null)
+  - [x] Make schedule expression to English description more natural sounding.
+  - [x] Add greyed out list for jobs that lack `server_id` and `job_id` for admins only.
+  - [ ] Add "adopt" for unmanaged jobs to add them to DB and associate with game server.
+
+* [ ] **Add Sudo Pass Form for cmds that need it**
+  - Things like app update (and maybe even install again) need a sudo password
+    to run.
+  - Not sure how to hack this into existing sudo invoked stuff atm cause its
+    gonna wanna read stdin. Problem for tomorrow me!
+
+* [ ] **Fix the in app update!**
+  - This requires sudo password form.
+  - I think this is still broken which sucks.
+  - You should be able to update the app from the web panel.
+
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something
@@ -650,23 +724,6 @@
   - By default I want to set this to just `/home/<user>/<server_name>`.
   - But then allow people to put it where ever for their own purposes.
   - Write tests for this.
-
-* [ ] **Allow multiple auto installs of same game server as new user, just increment
-  the name.**
-  - So first mcserver install would just be mcserver but then a second one the
-    user would be mcserver2, mcserver3, etc.
-
-* [ ] **Make PATHS options configurable in main.conf**
-  - What I'm thinking is that the main.conf could have a section for [paths]
-    and then specific utils paths could be set in there and passed through to
-    the web app.
-    - For example:
-    ```
-    [paths]
-    cat = /bin/cat
-    ```
-  - [!] Might kinda be a security issue, have to think more about how to do
-    this safely. Maybe only allow paths under the user real PATH var...
 
 * [ ] **Make cfg editor work for `install_type` docker.**
   - Never got around to making this work for the v1.8 release. Just had too
@@ -695,13 +752,6 @@
       requests to the controls endpoints easily to start / stop / restart etc.
     - However nothings in real REST format, can't do it in json, its all GET
       requests when it should be POST's if it were an api, etc.
-
-* [ ] **Introduce more oop concepts to project / slowly transition to more oop.**
-  - [ ] Modularize utils functions using SOLID principals.
-    - This whole project can be broken apart more. Too many functions don't
-      really make sense and are doing too much.
-    - Everything should just do one thing.
-
 
 * [ ] **Build out support for Fedora, Rocky Linux, & AlmaLinux.**
   - These are all of the linuxes supported by the base lgsm project.
@@ -799,6 +849,18 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - Can't add a priv key so can't connect the ci tests to a remote host.
     - This would just be for me to run manually every so often to check
       everything over remote ssh is all good.
+
+
+* [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
+  - I would get more control over specific package builds and would be platform independent.
+  - But then I'd have to use that to manage all the packages n'@ and people are
+    less familiar with these sorta 3rd party pkg managers.
+
+* [ ] **Add cool retro term style customization options**
+  - I played around with some css for adding cool term effects to the xterm.js
+    window. Would need a lot of integration to pass user prefs back to the
+    javascript code where they're set. So will play around with that more another
+    time.
 
 ## Disclaimer
 

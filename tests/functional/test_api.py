@@ -1,7 +1,9 @@
 import json
 import pytest
 from flask import url_for
-from app.models import GameServer
+
+from app.infrastructure.persistence.models.game_server_model import GameServerModel
+
 from utils import *
 
 # TODO: Put each set of functions in their own classes. Then can call them with
@@ -42,7 +44,7 @@ def check_api_response(response, expected_status, expected_data=None):
 
 def get_server_id(install_name):
     """Helper to get server ID by install name"""
-    server = GameServer.query.filter_by(install_name=install_name).first()
+    server = GameServerModel.query.filter_by(install_name=install_name).first()
     return str(server.id) if server else None
 
 
@@ -186,7 +188,7 @@ def test_delete_server_success(authed_client, add_mock_server, test_vars):
         assert response.data == b""
         
         # Verify server was actually deleted
-        server = GameServer.query.filter_by(id=server_id).first()
+        server = GameServerModel.query.filter_by(id=server_id).first()
         assert server is None
 
 
@@ -237,7 +239,7 @@ def test_manage_cron_invalid_server_id(authed_client):
             "/api/cron/invalid_server",
             json={
                 "command": "start",
-                "cron_expression": "* * * * *"
+                "schedule": "* * * * *"
             }
         )
         assert response.status_code == 404
@@ -287,7 +289,7 @@ def test_manage_cron_post_create_job(authed_client, add_mock_server, test_vars):
             f"/api/cron/{server_id}",
             json={
                 "command": "start",
-                "cron_expression": "* * * * *",
+                "schedule": "* * * * *",
                 "comment": "Test job"
             }
         )
@@ -297,20 +299,20 @@ def test_manage_cron_post_create_job(authed_client, add_mock_server, test_vars):
 
 
 def test_manage_cron_post_invalid_cron(authed_client, add_mock_server, test_vars):
-    """Test POST with invalid cron expression"""
+    """Test POST with invalid cron schedule"""
     server_id = get_server_id(test_vars["test_server"])
     with authed_client:
         response = authed_client.post(
             f"/api/cron/{server_id}",
             json={
                 "command": "start",
-                "cron_expression": "invalid expression",
+                "schedule": "invalid schedule",
                 "comment": "Test job"
             }
         )
         assert response.status_code == 400
         response_data = json.loads(response.data)
-        assert response_data == {"Error": "Invalid cron expression"}
+        assert response_data == {"Error": "Invalid cron schedule"}
 
 
 def test_manage_cron_post_custom_command(authed_client, add_mock_server, test_vars):
@@ -323,7 +325,7 @@ def test_manage_cron_post_custom_command(authed_client, add_mock_server, test_va
             json={
                 "command": "send",
                 "custom": "say Hello",
-                "cron_expression": "* * * * *"
+                "schedule": "* * * * *"
             }
         )
         assert response.status_code == 201
@@ -334,7 +336,7 @@ def test_manage_cron_post_custom_command(authed_client, add_mock_server, test_va
             json={
                 "command": "custom",
                 "custom": "special_command",
-                "cron_expression": "* * * * *"
+                "schedule": "* * * * *"
             }
         )
         assert response.status_code == 201
@@ -358,3 +360,45 @@ def test_manage_cron_delete_nonexistent_job(authed_client, add_mock_server, test
         response = authed_client.delete(f"/api/cron/{server_id}/nonexistent_job")
         debug_response(response)
         assert response.status_code == 500
+
+
+def test_post_server_list_order(authed_client, add_mock_server, test_vars):
+    """Test POST update-order"""
+    server_name = test_vars["test_server"]
+    server_id = get_server_id(server_name)
+    with authed_client:
+        response = authed_client.post(
+            f"/api/update-order",
+            json={
+                "order": [{
+                    "id":server_id,
+                    "name":server_name
+                }]
+            }
+        )
+
+        assert response.status_code == 200
+        response_data = json.loads(response.data)
+        assert response_data == { "success": "Sort order updated successfully"}
+
+def test_load_spec(authed_client, add_mock_server, test_vars):
+    with authed_client:
+        response = authed_client.get("/api/spec")
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+
+        # basic structure check
+        assert "paths" in data
+        paths = data["paths"]
+
+        # check a few important routes exist
+        assert "/cmd-output/{server_id}" in paths
+        assert "/cron/{server_id}" in paths
+        assert "/server-status/{server_id}" in paths
+        assert "/system-usage" in paths
+
+        # optional: check methods exist for a route
+        assert "get" in paths["/system-usage"]
+        assert "post" in paths["/cron/{server_id}"]
+

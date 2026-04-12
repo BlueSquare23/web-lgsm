@@ -10,8 +10,10 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-from app.models import *
-from app.services.cron import CronService
+from app.infrastructure.persistence.models.audit_model import AuditModel
+from app.infrastructure.persistence.models.cron_model import CronModel
+
+from app.infrastructure.system.cron.cron_scheduler import CronScheduler
 from app import db
 from utils import *
 
@@ -409,7 +411,7 @@ def test_audit_responses(db_session, client, authed_client, add_mock_server, tes
     with client:
         # Setup fake db entries.
         for i in range(100):
-            db.session.add(Audit(
+            db.session.add(AuditModel(
                 user_id='1',
                 message=f"Test entry {i+1}"
             ))
@@ -475,7 +477,7 @@ def test_jobs_responses(db_session, client, authed_client, add_mock_server, test
     test_server = test_vars["test_server"]
 
     server_id = get_server_id(test_server)
-    cron_service = CronService(server_id=server_id)
+    cron_scheduler = CronScheduler()
 
     with client:
 
@@ -483,7 +485,7 @@ def test_jobs_responses(db_session, client, authed_client, add_mock_server, test
         assert response.status_code == 200  # Return's 200 to GET requests.
         csrf_token = get_csrf_token(response)
 
-        assert Job.query.first() is None
+        assert CronModel.query.first() is None
 
         # Test add job via POST.
         data = {
@@ -493,7 +495,7 @@ def test_jobs_responses(db_session, client, authed_client, add_mock_server, test
             "command": "start",
             "comment": "Test job",
             "custom": "",
-            "cron_expression": "30 1 * * *"
+            "schedule": "30 1 * * *"
         }
 
         response = client.post("/jobs", data=data, follow_redirects=True)
@@ -501,10 +503,10 @@ def test_jobs_responses(db_session, client, authed_client, add_mock_server, test
         alert_msgs = extract_alert_messages(response, 'success')
         assert 'Cronjob updated successfully!' in alert_msgs
 
-        assert Job.query.first() is not None
+        assert CronModel.query.first() is not None
 
-        jobs_list = cron_service.list_jobs()
-        job_id = jobs_list[0]["job_id"]
+        jobs_list = cron_scheduler.list(server_id)
+        job_id = jobs_list[0].job_id
 
         # Test update job via POST.
         data = {
@@ -514,18 +516,18 @@ def test_jobs_responses(db_session, client, authed_client, add_mock_server, test
             "command": "stop",
             "comment": "Test job comment updated",
             "custom": "",
-            "cron_expression": "30 2 * * *"
+            "schedule": "30 2 * * *"
         }
         response = client.post("/jobs", data=data, follow_redirects=True)
         assert response.status_code == 200
         alert_msgs = extract_alert_messages(response, 'success')
         assert 'Cronjob updated successfully!' in alert_msgs
 
-        newjob = Job.query.first()
+        newjob = CronModel.query.first()
         assert newjob.id == job_id  # Aka job_id didn't change when updating job.
         assert newjob.command == "stop"
         assert newjob.comment == "Test job comment updated"
-        assert newjob.expression == "30 2 * * *"
+        assert newjob.schedule == "30 2 * * *"
 
 
 ### Controls page tests.

@@ -9,7 +9,7 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-from app.models import User, GameServer
+
 from utils import *
 
 def full_game_server_install(client, username=getpass.getuser(), cancel=False):

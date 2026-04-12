@@ -4,7 +4,7 @@ import pytest
 import onetimepass
 from flask import url_for, request
 from game_servers import game_servers
-from app.models import User, GameServer
+from app.infrastructure.persistence.models.user_model import UserModel
 from bs4 import BeautifulSoup
 from utils import *
 
@@ -202,7 +202,7 @@ def test_setup_responses(db_session, client, test_vars):
         # TODO: Add test where we create fresh user with otp Disabled too just
         # to have tests proving that works fine as well.
 
-        newuser = User.query.first()
+        newuser = UserModel.query.first()
         assert newuser is not None
         assert newuser.username == username
         assert newuser.otp_enabled == True

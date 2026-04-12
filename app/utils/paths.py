@@ -10,4 +10,5 @@ PATHS = {
     "find": "/usr/bin/find",
     "ssh-keygen": "/usr/bin/ssh-keygen",
     "rm": "/usr/bin/rm",
+    "crontab":"/usr/bin/crontab",
 }

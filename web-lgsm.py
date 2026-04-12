@@ -94,8 +94,9 @@ import configparser
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, create_app
-from app.models.user import User
-from app.utils import check_and_get_lgsmsh
+from app.infrastructure.persistence.models.user_model import UserModel
+#from app.infrastructure.system.lgsm.lgsm_manager import LgsmManager
+from app.container import container
 
 # Import config data.
 CONFIG_FILE = "main.conf"
@@ -119,7 +120,7 @@ except KeyError as e:
 os.environ["LOG_LEVEL"] = LOG_LEVEL
 
 # Global options hash.
-O = {"verbose": False, "check": False, "auto": False, "test_full": False, "noback": False}
+O = {"verbose": False, "check": False, "auto": False, "noback": False}
 
 def stop_server():
     result = subprocess.run(["pkill", "gunicorn"], capture_output=True)
@@ -386,8 +387,12 @@ def change_password():
         print(f"Error: {message}")
         return
 
+    # TODO: For now the web-lgsm script connecting directly to the DB to do
+    # this is fine. But eventually, we can make this an app usecase too and
+    # have the script use the infrastructure interface to do user stuff.
+
     # Find the user in the database
-    user = User.query.filter_by(username=username).first()
+    user = UserModel.query.filter_by(username=username).first()
 
     if user is None:
         print("Error: User not found!")
@@ -403,8 +408,13 @@ def change_password():
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
     lgsmsh = SCRIPTPATH + "/bin/linuxgsm.sh"
-    check_and_get_lgsmsh(lgsmsh)
+#    check_and_get_lgsmsh(lgsmsh)
+    from app import create_app
+    app = create_app()
+    with app.app_context():
+        container.check_and_get_lgsmsh().execute(lgsmsh)
 
+    return
     servers_list = os.popen(f"{lgsmsh} list").read()
 
     short_names = []
@@ -566,7 +576,14 @@ def update_weblgsm():
     return
 
 
-def run_tests():
+def run_tests(target):
+    """
+    Pytest wrapper
+
+    Args:
+        target: 'full', None, 'tests/functional/some_test.py::some_test'
+    """
+
     # If in container don't backup db.
     if "CONTAINER" not in os.environ:
         # Backup Database.
@@ -588,7 +605,8 @@ def run_tests():
     probability = 0.15
 
     try:
-        if O["test_full"]:
+        # Run all tests (including integration tests)
+        if target == 'full':
             # Backup Existing MC install, if one exists.
             mcdir = os.path.join(SCRIPTPATH, "Minecraft")
             if os.path.isdir(mcdir):
@@ -605,12 +623,19 @@ def run_tests():
                 
             run_command_popen(run_tests)
 
-        else:
+        # Otherwise run all non-integration tests. 
+        elif target == 'main':
             run_tests = "coverage run -m pytest --cache-clear -vvv tests/ -m 'not integration'"
 
             # Random chance tests get run in reverse order.
             if random.random() < probability:
                 run_tests = "coverage run -m pytest --reverse --cache-clear -vvv tests/ -m 'not integration'"
+
+            run_command_popen(run_tests)
+
+        # Run supplied tests.
+        elif target:
+            run_tests = f"coverage run -m pytest --cache-clear -vvv {target}"
 
             run_command_popen(run_tests)
 
@@ -631,8 +656,12 @@ def add_valid_gs_user(gs_user):
 def reset_totp():
     username = input("Enter username: ")
 
+    # TODO: For now the web-lgsm script connecting directly to the DB to do
+    # this is fine. But eventually, we can make this an app usecase too and
+    # have the script use the infrastructure interface to do user stuff.
+
     # Find the user in the database
-    user = User.query.filter_by(username=username).first()
+    user = UserModel.query.filter_by(username=username).first()
 
     if user is None:
         print("Error: User not found!")
@@ -659,31 +688,30 @@ def print_help():
     """Prints help menu"""
     print(
         """
-  ╔═══════════════════════════════════════════════════════════╗  
-  ║ Usage: web-lgsm.py [options]                              ║
-  ║                                                           ║
-  ║   Options:                                                ║
-  ║                                                           ║
-  ║   -h, --help          Prints this help menu               ║
-  ║   -V, --version       Prints web-lgsm version             ║
-  ║   -s, --start         Starts the server (default no args) ║
-  ║   -q, --stop          Stop the server                     ║
-  ║   -r, --restart       Restart the server                  ║
-  ║   -m, --status        Show server status                  ║
-  ║   -d, --debug         Start server in debug mode          ║
-  ║   -v, --verbose       More verbose output                 ║
-  ║   -p, --passwd        Change web user password            ║
-  ║   -u, --update        Update web-lgsm version             ║
-  ║   -c, --check         Check if an update is available     ║
-  ║   -n, --noback        Don't backup web-lgsm for updates   ║
-  ║   -a, --auto          Run an auto update                  ║
-  ║   -f, --fetch_json    Fetch latest game servers json      ║
-  ║   -t, --test          Run project's pytest tests (short)  ║
-  ║   -x, --test_full     Run ALL project's pytest tests      ║
-  ║   -j, --valid [user]  Add valid gs_user to allow list     ║
-  ║   -P, --reset_totp    Reset user's 2fa access             ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
+  ╔══════════════════════════════════════════════════════════════╗  
+  ║ Usage: web-lgsm.py [options]                                 ║
+  ║                                                              ║
+  ║   Options:                                                   ║
+  ║                                                              ║
+  ║   -h, --help             Prints this help menu               ║
+  ║   -V, --version          Prints web-lgsm version             ║
+  ║   -s, --start            Starts the server (default no args) ║
+  ║   -q, --stop             Stop the server                     ║
+  ║   -r, --restart          Restart the server                  ║
+  ║   -m, --status           Show server status                  ║
+  ║   -d, --debug            Start server in debug mode          ║
+  ║   -v, --verbose          More verbose output                 ║
+  ║   -p, --passwd           Change web user password            ║
+  ║   -u, --update           Update web-lgsm version             ║
+  ║   -c, --check            Check if an update is available     ║
+  ║   -n, --noback           Don't backup web-lgsm for updates   ║
+  ║   -a, --auto             Run an auto update                  ║
+  ║   -f, --fetch_json       Fetch latest game servers json      ║
+  ║   -t, --test [full|main] Run project's pytest tests          ║
+  ║   -j, --valid [user]     Add valid gs_user to allow list     ║
+  ║   -P, --reset_totp       Reset user's 2fa access             ║
+  ║                                                              ║
+  ╚══════════════════════════════════════════════════════════════╝
     """
     )
     exit()
@@ -714,12 +742,11 @@ def main(argv):
             "noback",
             "auto",
             "fetch_json",
-            "test",
-            "test_full",
+            "test=",
             "valid=",
             "reset_totp",
         ]
-        opts, args = getopt.getopt(argv, "hVsmrqdvpucnaftxj:P", longopts)
+        opts, args = getopt.getopt(argv, "hVsmrqdvpucnaft:j:P", longopts)
     except getopt.GetoptError as e:
         print(e)
         print_help()
@@ -737,8 +764,6 @@ def main(argv):
             O["check"] = True
         if opt in ("-a", "--auto"):
             O["auto"] = True
-        if opt in ("-x", "--test_full"):
-            O["test_full"] = True
         if opt in ("-n", "--noback"):
             O["noback"] = True
 
@@ -773,10 +798,10 @@ def main(argv):
             return
         elif opt in ("-f", "--fetch_json"):
             print("Disabled till can fix to also update imgs")
-#            update_gs_list()
+            update_gs_list()
             return
-        elif opt in ("-t", "--test", "-x", "--test_full"):
-            run_tests()
+        elif opt in ("-t", "--test"):
+            run_tests(arg)
             return
         elif opt in ("-j", "--valid"):
             add_valid_gs_user(arg)

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM Home{% endblock %}
+
+{% block content %}
+      {% set parsed_json = user.permissions|from_json %}
+      {% include 'spinners.html' %}
+
+      <br />
+      <h2 style="color: white;">Installed Servers</h2>
+
+      {% if not servers %}
+        <ul class="list-group border border-white">
+          <li class="list-group-item">No game servers available to list...</li>
+        </ul>
+      {% else %}
+
+        <div class="controls d-flex justify-content-end">
+          <button id="toggle-btn" class="btn btn-outline-primary">Enable Reorder</button>
+
+          <select id="sort-select" class="btn btn-outline-primary">
+            <option value="default">Custom Order</option>
+            <option value="asc">Name (A → Z)</option>
+            <option value="desc">Name (Z → A)</option>
+          </select>
+        </div>
+
+        <form id="delete-selected-form">
+          <div id="server-list" class="list-group form-check form-switch border border-secondary locked">
+            {# Hacky ass solution to printing no servers when user has none #}
+            {% set has_server = {'has': False} %}
+            {% for server in servers %}
+              {% if not server.install_finished %}
+                <div class="list-group-item list-group-item-action" data-id="{{server.id}}" data-name="{{server.install_name}}">
+                  <div class="d-flex align-items-center">
+                    <a href="/install?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                      <!-- Glow via text-shadow -->
+                      <span class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}&nbsp&nbsp;&nbsp <b>Installation Not Finished!</b>
+                    </a>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
+                    </div>
+                    <span class="drag-handle">☰</span>
+                  </div>
+                </div>
+              {% else %}
+{# TODO: if server.install_failed message #}
+                {% if user.role == 'admin' or server.id in parsed_json.server_ids %}
+                  {% if has_server.update({'has': True}) %} {% endif %}
+                <div class="list-group-item list-group-item-action" data-id="{{server.id}}" data-name="{{server.install_name}}">
+                  <div class="d-flex align-items-center">
+                    <a href="/controls?server_id={{server.id}}" class="game_server_link text-decoration-none flex-grow-1">
+                      <!-- Glow via text-shadow -->
+                      <span id="{{server.id}}" class="status-indicator" style="font-size:125%;color:grey;text-shadow: 0 0 5px grey, 0 0 10px black">● </span>&nbsp;&nbsp;{{server.install_name}}&nbsp;&nbsp&nbsp {{server.username}}&nbsp&nbsp;&nbsp {{server.install_type}}{% if server.install_failed %}&nbsp&nbsp;&nbsp <b>Installation Failed!</b>{% endif %}
+                    </a>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="server_id" value="{{server.id}}" />
+                    </div>
+                    <span class="drag-handle">☰</span>
+                  </div>
+                </div>
+                {% else %}
+                  {% if loop.last and not has_server.has %}
+                <ul class="list-group border border-white">
+                  <li class="list-group-item">Your user does not have access to any game servers yet...</li>
+                </ul>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <br />
+          <button class="btn btn-outline-danger" style="float: right !important;" type="submit">Delete Selected</button>
+        </form>
+        <script src="/static/js/update-status-indicators.js"></script>
+      {% endif %}
+
+      {% if _config.getboolean('aesthetic', 'show_stats', True) %}
+        <h2 class="pt-3" style="color: white;">Game Server Stats <img onclick="toggleStats();" id="chevron" style="width:2.5%; cursor:pointer;" src="/static/img/chevron-up.png" alt="Show/Hide Game Server Stats" title="Show/Hide Game Server Stats"></h2>
+        <div class="container bg-dark border border-white rounded-3" id="game-server-stats">
+          <div class="row">
+            <div class="p-2 col">
+              <h4>Disk</h4>
+              <canvas id="diskChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>CPU</h4>
+              <canvas id="cpuChart"></canvas>
+              <canvas id="loadChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>Mem</h4>
+              <canvas id="memChart"></canvas>
+            </div>
+            <div class="p-2 col">
+              <h4>Network</h4>
+              <canvas id="networkChart"></canvas>
+            </div>
+          </div>
+
+          <a href="/api/system-usage">View JSON</a>
+          <script>
+            const userColor = "{{_config.get('aesthetic', 'text_color')}}";
+            const usedColor = "{{_config.get('aesthetic', 'graphs_primary')}}";
+            const freeColor = "{{_config.get('aesthetic', 'graphs_secondary')}}";
+            const stats = document.getElementById('game-server-stats');
+            const chevron = document.getElementById('chevron');
+          </script>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+        <script src="/static/js/graph-charts.js"></script>
+        <script src="/static/js/toggle-stats.js"></script>
+
+        {% if _config.getboolean('aesthetic','show_barrel_roll') %}
+          <!-- Mission Critical Barrel-Roll Code -->
+          <script src="/static/js/do-a-barrel-roll.js"></script>
+          <button  class="btn btn-outline-warning m-3" onclick="doBarrelRoll()">Do a Barrel Roll</button>
+        {% endif %}
+
+      {% endif %}
+
+      <br>
+
+      <h2 style="color: white;">Other Options</h2>
+      <div class="list-group border border-secondary">
+        {% if user.role == 'admin' or 'install' in parsed_json.routes %}
+        <a href="/install" class="list-group-item list-group-item-action">Install a New Game Server</a>
+        {% endif %}
+        {% if user.role == 'admin' or 'add' in parsed_json.routes %}
+        <a href="/add" class="list-group-item list-group-item-action">Add or Edit Existing LGSM Installation Details</a>
+        {% endif %}
+        {% if user.is_authenticated and user.role == 'admin' %}
+          <a href="/edit_users" class="list-group-item list-group-item-action">Create or Edit Web LGSM User(s)</a>
+        {% endif %}
+        {% if user.role == 'admin' or 'jobs' in parsed_json.routes %}
+        <a href="/jobs" class="list-group-item list-group-item-action">Create or Edit Web-LGSM Jobs</a>
+        {% endif %}
+        {% if user.role == 'admin' or 'audit' in parsed_json.routes %}
+        <a href="/audit" class="list-group-item list-group-item-action">View Audit Log</a>
+        {% endif %}
+        <a href="/2fa_setup" class="list-group-item list-group-item-action">Setup Two Factor Auth</a>
+      </div>
+
+      <br>
+
+      <!-- Import JavaScript -->
+      <script src="/static/js/show-spinners.js"></script>
+      <script src="/static/js/show-alert.js"></script>
+      <script src="/static/js/delete-selected-form.js"></script>
+      <script src="/static/js/home_sort.js"></script>
+
+{% endblock %}

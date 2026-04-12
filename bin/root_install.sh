@@ -12,6 +12,12 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/g
 # Debug mode.
 [[ $1 =~ '-d' ]] && set -x && echo $EUID && ls -lah && printenv
 
+# Needs jq to get lgsm apt reqs.
+if ! which jq &>/dev/null; then
+    echo -e "${GREEN}####### Installing \`jq\`...${RESET}"
+    apt-get install -y jq
+fi
+
 ## Globals.
 
 # Colors!

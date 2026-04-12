@@ -69,10 +69,10 @@ different concerns and responsibilities.
   Interface (aka Routes, Forms, Templates, etc)
           |
           v
-  Use Cases (Application)
+  Application (Use Cases)
           |
           v
-  Entities (Domain)
+  Domain (Entities)
           ^
           |
   Infrastructure (DB, CMDs, filesystem, tmux, OS, etc)

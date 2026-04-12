@@ -65,10 +65,10 @@ We're using a basic Clean Architecture with 4 layers:
   Interface (aka Routes, Forms, Templates, etc)
           |
           v
-  Use Cases (Application)
+  Application (ApplicationUse Cases)
           |
           v
-  Entities (Domain)
+  Domain (Entities)
           ^
           |
   Infrastructure (DB, CMDs, filesystem, tmux, OS, etc)
@@ -243,7 +243,7 @@ Classes)_.
 
 In practice in our app the repository looks like this. 
 
-First off in our domain layer we have:
+First off in our _Domain Layer_ we have:
 
 * A Domain Entity: [`app/domain/entities/game_server.py`](../app/domain/entities/game_server.py)
 
@@ -255,7 +255,7 @@ class GameServer:
     ...
 ```
 
-* An Interface Adapter: [`app/domain/repositories/game_server_repo.py`](../app/domain/repositories/game_server_repo.py)
+* And a Repository Port: [`app/domain/repositories/game_server_repo.py`](../app/domain/repositories/game_server_repo.py)
 
 ```python
 class GameServerRepository:
@@ -268,10 +268,10 @@ class GameServerRepository:
     ...
 ```
 
-We then inherit from that abstract Repository class in our infrastructure
-layer.
+Then in our _Infrastructure Layer_ we inherit from that abstract repository
+class in our concrete `SqlAlchemyGameServerRepository` adapter.
 
-* Concrete Infrastructure Port: [`app/infrastructure/persistence/repositories/game_server_repo.py`](../app/infrastructure/persistence/repositories/game_server_repo.py)
+* Concrete Infrastructure Adapter: [`app/infrastructure/persistence/repositories/game_server_repo.py`](../app/infrastructure/persistence/repositories/game_server_repo.py)
 
 ```python
 import os
@@ -333,5 +333,4 @@ limited to databases by any means. You can use it anytime you need to isolate
 the way data is stored from the actions you take on that data. So for example
 we're also using repositories to keep track of a pool of in memory process info
 objects as well as an in memory dictionary of login failed IPs.
-
 

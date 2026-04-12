@@ -4,8 +4,6 @@
 let previousStdOutput = [];
 let previousStdErrput = [];
 
-var spinners = document.getElementById("spinners");
-
 /* OLD THEME */
 var term = new Terminal({
   theme: {
@@ -136,9 +134,9 @@ function updateTerminal(sId){
       // If not in console mode, display none spinners after proc finishes.
       if (!sConsole) {
         if (respJSON.process_lock === true){
-          spinners.style.display = "block";
+          showSpinners();
         } else {
-          spinners.style.display = "none";
+          hideSpinners();
           clearInterval(interval);
         }
       }
@@ -151,7 +149,7 @@ if (typeof serverId === 'undefined' || serverId === null || !serverId) {
   term.write('No Output Yet!\n\r');
 } else if (typeof sConsole !== 'undefined' && sConsole) {
   // If live console output mode is enabled, start the loop.
-  spinners.style.display = "block";
+  showSpinners();
   var interval = setInterval(function() {
     refreshOutput(serverId).then(function() {
       return updateTerminal(serverId);
@@ -161,4 +159,16 @@ if (typeof serverId === 'undefined' || serverId === null || !serverId) {
   var interval = setInterval(function() {
     updateTerminal(serverId);
   }, 1000);
+}
+
+// On page load, check if a process is already running
+if (serverId) {
+  fetch(`/api/cmd-output/${serverId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.process_lock === true) {
+        showSpinners();
+      }
+    })
+    .catch(err => console.error(err));
 }

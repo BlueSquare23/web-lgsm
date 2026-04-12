@@ -24,6 +24,8 @@
                   <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
                     <span class="visually-hidden">Loading...</span>
                   </div>
+                <!-- Include spinners.html for compatibility -->
+                {% include 'spinners.html' %}
                   <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
                     <span id="spinner-text">Processing</span><span class="loading-dots"></span>
                   </span>
@@ -254,6 +256,12 @@
       let installName = "{{ install_name|capitalize }}";
     {% else %}
       let installName = null;
+    {% endif %}
+    
+    {% if spinner_context is defined and spinner_context is not none %}
+      let spinnerContext = "{{ spinner_context }}";
+    {% else %}
+      let spinnerContext = null;
     {% endif %}
   </script>
 

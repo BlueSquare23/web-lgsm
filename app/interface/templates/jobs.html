@@ -5,8 +5,6 @@
 
         {% set parsed_json = user.permissions|from_json %}
         <br>
-        {% include 'spinners.html' %}
-
         <br />
         <h2>Web-LGSM Job Scheduler</h2>
         <hr />
@@ -178,7 +176,6 @@
         </div>
         {% endif %}
 
-        <script src="/static/js/show-spinners.js"></script>
         <script src="/static/js/jobs.js"></script>
 
 {% endblock %}

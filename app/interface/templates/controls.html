@@ -5,6 +5,9 @@
 {% block content %}
 <div class="container px-4 py-4">
 
+  {# User permissions json for rendering control #}
+  {% set user_perms = user.permissions|from_json %}
+
   <!-- Server Header Card with Integrated Spinner -->
   <div class="row mb-4">
     <div class="col-12">
@@ -78,8 +81,7 @@
   </div>
 
   {% if _config.getboolean('settings', 'cfg_editor', False) %}
-    {% set parsed_json = user.permissions|from_json %}
-    {% if user.role == 'admin' or 'edit' in parsed_json.routes %}
+    {% if user.role == 'admin' or 'edit' in user_perms.routes %}
       {% if cfg_paths|length %}
         <!-- Configuration Files Section -->
         <div class="row mb-4">
@@ -109,6 +111,7 @@
 
   <!-- Quick Actions Section -->
   <div class="row mb-4 g-3">
+    {% if user.role == 'admin' or 'add' in user_perms.routes %}
     <div class="col-md-6">
       <div class="card bg-dark border-secondary h-100">
         <div class="card-body text-center">
@@ -121,20 +124,23 @@
         </div>
       </div>
     </div>
+    {% endif %}
     
     {% if show_jobs_edit %}
-    <div class="col-md-6">
-      <div class="card bg-dark border-secondary h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-calendar3 fs-1 text-success mb-3"></i>
-          <h5 class="text-light">Scheduled Tasks</h5>
-          <p class="text-white small">Manage automated jobs and backups</p>
-          <a href="{{ url_for('main.jobs', server_id=server_id) }}" class="btn btn-outline-success w-100">
-            <i class="bi bi-clock-history me-1"></i>Edit {{ server_name|capitalize }} Jobs
-          </a>
+      {% if user.role == 'admin' or 'jobs' in user_perms.routes %}
+      <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-body text-center">
+            <i class="bi bi-calendar3 fs-1 text-success mb-3"></i>
+            <h5 class="text-light">Scheduled Tasks</h5>
+            <p class="text-white small">Manage automated jobs and backups</p>
+            <a href="{{ url_for('main.jobs', server_id=server_id) }}" class="btn btn-outline-success w-100">
+              <i class="bi bi-clock-history me-1"></i>Edit {{ server_name|capitalize }} Jobs
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+      {% endif %}
     {% endif %}
   </div>
 
@@ -154,7 +160,7 @@
                 <div class="col-12">
                   <div class="d-flex align-items-center p-3 bg-secondary bg-opacity-10 rounded-3">
                     <div class="flex-shrink-0">
-                      <button id="send_cmd_btn" class="btn btn-outline-info open-button" onclick="openForm('{{server_id}}', '{{control.short_ctrl}}', 'send_cmd_form');">
+                      <button id="send_cmd_btn" class="btn btn-outline-info open-button ctrl-btn" onclick="openForm('{{server_id}}', '{{control.short_ctrl}}', 'send_cmd_form');">
                         <i class="bi bi-chat-dots me-1"></i>{{ control.long_ctrl }}
                       </button>
                     </div>
@@ -172,7 +178,7 @@
                     {{ controls_form.control(value=control.short_ctrl) }}
                     
                     <div class="d-grid">
-                      <button onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-light" type="submit">
+                      <button onclick="window.scrollTo(0,0);showSpinners();" class="btn btn-outline-light ctrl-btn" type="submit">
                         {# Control-specific icons #}
                         {% if control.short_ctrl == 'st' %}
                           <i class="bi bi-play-fill text-success me-1"></i>

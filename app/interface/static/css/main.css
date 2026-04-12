@@ -167,6 +167,10 @@ hr {
     margin-right: 5px;
 }
 
+/* 
+  Spinner dots ...
+*/
+
 .loading-dots::after {
   content: '';
   animation: loadingDots 1.5s steps(4, end) infinite;
@@ -188,7 +192,7 @@ hr {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
 }
 
-.btn {
+.ctrl-btn {
   transition: all 0.2s ease;
   text-transform: uppercase;
   font-weight: 500;
@@ -225,5 +229,4 @@ hr {
     font-size: 1.5rem;
   }
 }
-
 

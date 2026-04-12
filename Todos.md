@@ -408,6 +408,9 @@ https://icons.getbootstrap.com/
 
 ### The Meat
 
+* [ ] **Add Login IP address to Audit Log for Logins**
+  - Should say: `User 'username' logged in from 1.1.1.1`
+
 * [ ] **Address CodeQL Alerts**
   - https://github.com/BlueSquare23/web-lgsm/runs/62909674268
   - Yeah I know accepting keys blindly is bad, but need to do more research to

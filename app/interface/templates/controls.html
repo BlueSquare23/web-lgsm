@@ -29,7 +29,7 @@
                   </span>
                 </div>
               </div>
-              <span class="badge bg-info">Status: Running</span>
+              <span id="server-status-badge" class="badge bg-secondary">Status: Unknown</span>
             </div>
           </div>
         </div>
@@ -257,6 +257,42 @@
     {% else %}
       let installName = null;
     {% endif %}
+
+function updateHeaderStatus(status) {
+  const badge = $('#server-status-badge');
+
+  if (status === true) {
+    badge
+      .removeClass('bg-danger bg-secondary')
+      .addClass('bg-success')
+      .text('Status: Running');
+  } else if (status === false) {
+    badge
+      .removeClass('bg-success bg-secondary')
+      .addClass('bg-danger')
+      .text('Status: Stopped');
+  } else {
+    // null or error state
+    badge
+      .removeClass('bg-success bg-danger')
+      .addClass('bg-secondary')
+      .text('Status: Unknown');
+  }
+}
+
+function getServerStatusHeader() {
+  $.getJSON(`/api/server-status/${serverId}`, function(data) {
+    updateHeaderStatus(data.status);
+  }).fail(function() {
+    updateHeaderStatus(null);
+  });
+}
+
+// Run on page load
+getServerStatusHeader();
+
+// Optional: refresh every 30s (faster than homepage since it's a detail view)
+setInterval(getServerStatusHeader, 30000);
   </script>
 
   <!-- Import JavaScript -->
@@ -264,6 +300,7 @@
   <script src="/static/js/show-spinners.js"></script>
   <script src="/static/js/show-alert.js"></script>
   <script src="/static/js/delete-btn.js"></script>
+
 
   <!-- Bootstrap Icons CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">

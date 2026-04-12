@@ -137,6 +137,7 @@ function updateTerminal(sId){
           showSpinners();
         } else {
           hideSpinners();
+          getServerStatusHeader();
           clearInterval(interval);
         }
       }

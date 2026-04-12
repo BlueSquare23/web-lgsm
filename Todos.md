@@ -219,6 +219,12 @@
 
 ### New Features, Highlevel Release Goals
 
+* [ ] **Overhaul Controls Page Frontent**
+  - This page has been bland and boring for a long time. Time to give it some
+    love and a front end overhaul.
+  - [ ] Fix live console output.
+  - [ ] Rewrite xtermjs code to fix live console output & to fix carriage returns prints. 
+
 * [ ] **Get Basic POC FileManager Setup**
   - UI:
     - [ ] Page for browsing files.

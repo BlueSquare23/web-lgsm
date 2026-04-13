@@ -2,134 +2,228 @@
 {% block title %}Web LGSM Settings{% endblock %}
 
 {% block content %}
-      <br />
+<div class="container px-4 py-4">
 
-      <div class="container bg-dark border border-white rounded-3 p-2">
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <h3 align="center" style="color: white;">Web-LGSM Settings</h3>
-            <div class="form-group" style="color: white;">
-                <div class="row mb-4">
-                    <div class="col">
-                        {{ form.text_color.label(class="form-label") }}
-                        {{ form.text_color(class="form-control form-control-color") }}
-                    </div>
-                    <div class="col">
-                        {{ form.graphs_primary.label(class="form-label") }}
-                        {{ form.graphs_primary(class="form-control form-control-color") }}
-                    </div>
-                    <div class="col">
-                        {{ form.graphs_secondary.label(class="form-label") }}
-                        {{ form.graphs_secondary(class="form-control form-control-color") }}
-                    </div>
-                </div>
-
-                <div class="form-floating mb-4">
-                    {{ form.terminal_height(class="form-control") }}
-                    {{ form.terminal_height.label(class="form-label", style="color:black;") }}
-                </div>
-
-                <div class="mb-4">
-                    <h5>User Deletion Settings</h5>
-                    {% for subfield in form.delete_user %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                    <p class="text-light mt-2">
-                        📍 <i><u>Note: When the system users are deleted, game server files owned by them are automatically deleted as well.</u></i>
-                    </p>
-                </div>
-
-                <div class="mb-4">
-                    <h5>File Deletion Settings</h5>
-                    {% for subfield in form.remove_files %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-4">
-                    <h5>New Installation User Settings</h5>
-                    {% for subfield in form.install_new_user %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-4">
-                    <h5>Terminal Output Settings</h5>
-                    {% for subfield in form.newline_ending %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-4">
-                    <h5>Error Display Settings</h5>
-                    {% for subfield in form.show_stderr %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-4">
-                    <h5>Terminal Behavior Settings</h5>
-                    {% for subfield in form.clear_output_on_reload %}
-                        <div class="form-check">
-                            {{ subfield(class="form-check-input") }}
-                            {{ subfield.label(class="form-check-label") }}
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <hr class="my-4">
-
-                <div class="mb-4">
-                    <div class="form-check form-switch">
-                        {{ form.show_stats(class="form-check-input") }}
-                        {{ form.show_stats.label(class="form-check-label") }}
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <div class="form-check form-switch">
-                        {{ form.purge_cache(class="form-check-input") }}
-                        {{ form.purge_cache.label(class="form-check-label") }}
-                        <small class="text-light d-block mt-1">
-                            <i>Helps fix broken status indicators after game server reinstallation / upgrades.</i>
-                        </small>
-                    </div>
-                </div>
-
-<!-- BROKEN, NEEDS SUDO PASS FORM
-                <div class="mb-4">
-                    <div class="form-check form-switch">
-                        {{ form.update_weblgsm(class="form-check-input") }}
-                        {{ form.update_weblgsm.label(class="form-check-label") }}
-                        <small class="text-light d-block mt-1">
-                            <i>📍 Note: Checking this box will restart your Web LGSM instance if an update is available!</i>
-                        </small>
-                    </div>
-                </div>
--->
-
-                <br>
-
-                <div class="floating-submit">
-                    {{ form.submit(class="btn btn-outline-primary") }}
-                </div>
-            </div>
-        </form>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h1 class="display-6 mb-0 text-light">
+            <i class="bi bi-gear-fill me-2 text-primary"></i>Settings
+          </h1>
+          <p class="text-white mb-0 mt-1">Customize Web LGSM behavior and appearance</p>
+        </div>
       </div>
-      <script src="/static/js/settings.js"></script>
+    </div>
+  </div>
+
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    <!-- Appearance Settings -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark border-secondary">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-palette-fill me-2 text-info"></i>Appearance
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-4">
+              <div class="col-md-4">
+                {{ form.text_color.label(class="form-label text-light") }}
+                {{ form.text_color(class="form-control form-control-color bg-dark border-secondary") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.graphs_primary.label(class="form-label text-light") }}
+                {{ form.graphs_primary(class="form-control form-control-color bg-dark border-secondary") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.graphs_secondary.label(class="form-label text-light") }}
+                {{ form.graphs_secondary(class="form-control form-control-color bg-dark border-secondary") }}
+              </div>
+            </div>
+
+            <div class="form-floating mt-4">
+              {{ form.terminal_height(class="form-control bg-dark text-light border-secondary") }}
+              {{ form.terminal_height.label(class="text-white") }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User & File Management -->
+    <div class="row mb-4 g-4">
+      <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-person-x-fill me-2 text-danger"></i>User Deletion
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.delete_user %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+            <small class="text-white d-block mt-3">
+              <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+              Deleting system users will also remove owned server files.
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-trash-fill me-2 text-warning"></i>File Deletion
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.remove_files %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Installation Settings -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark border-secondary">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-person-plus-fill me-2 text-success"></i>Installation User Settings
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.install_new_user %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal Settings -->
+    <div class="row mb-4 g-4">
+      <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-terminal-fill me-2 text-primary"></i>Terminal Output
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.newline_ending %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-bug-fill me-2 text-danger"></i>Error Display
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.show_stderr %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal Behavior -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark border-secondary">
+          <div class="card-header bg-dark border-secondary">
+            <h5 class="mb-0 text-light">
+              <i class="bi bi-arrow-repeat me-2 text-info"></i>Terminal Behavior
+            </h5>
+          </div>
+          <div class="card-body">
+            {% for subfield in form.clear_output_on_reload %}
+              <div class="form-check mb-2">
+                {{ subfield(class="form-check-input") }}
+                {{ subfield.label(class="form-check-label text-light") }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toggles -->
+    <div class="row mb-4 g-4">
+      <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-body">
+            <div class="form-check form-switch">
+              {{ form.show_stats(class="form-check-input") }}
+              {{ form.show_stats.label(class="form-check-label text-light") }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-body">
+            <div class="form-check form-switch">
+              {{ form.purge_cache(class="form-check-input") }}
+              {{ form.purge_cache.label(class="form-check-label text-light") }}
+            </div>
+            <small class="text-white d-block mt-2">
+              Helps fix broken status indicators after reinstalls/upgrades.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Footer -->
+    <div class="row mt-4">
+      <div class="col-12 d-flex justify-content-between">
+        <div></div>
+        <div class="floating-submit">
+          <button class="btn btn-outline-primary">
+            <i class="bi bi-save-fill me-1"></i>Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+</div>
+
+<script src="/static/js/settings.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 {% endblock %}

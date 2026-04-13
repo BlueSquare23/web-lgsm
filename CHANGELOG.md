@@ -13,6 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Audit Page Revamped 
+- 2fa Setup Page Revamped 
+- About Page Revamped 
+
+Consistent header card
+
+Dark themed Bootstrap cards
+
+Cleaner form layout
+
+Styled table container
+
+Improved pagination UI
+
+Consistent icons + spacing
+
+Better visual hierarchy
+
 - Total Settings page refresh, complete with icons, proper layout, & spacing.
 - Total Job page refresh, complete with icons, proper layout, & spacing.
 - Total Install page refresh, complete with icons, proper layout, & spacing.

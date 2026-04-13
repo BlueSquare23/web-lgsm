@@ -77,23 +77,23 @@
 
               <div class="col-md-6">
                 <label class="form-label text-light">Installation Title</label>
-                {{ form.install_name(class="form-control bg-dark text-light border-secondary") }}
+                {{ form.install_name(class="form-control bg-dark text-light border-secondary white-placeholder") }}
               </div>
 
               <div class="col-md-6">
                 <label class="form-label text-light">LGSM Script Name</label>
-                {{ form.script_name(class="form-control bg-dark text-light border-secondary") }}
+                {{ form.script_name(class="form-control bg-dark text-light border-secondary white-placeholder") }}
               </div>
 
               <div class="col-12">
                 <label class="form-label text-light">Installation Directory Path</label>
-                {{ form.install_path(class="form-control bg-dark text-light border-secondary") }}
+                {{ form.install_path(class="form-control bg-dark text-light border-secondary white-placeholder") }}
               </div>
 
               <div class="col-md-6">
                 <label class="form-label text-light">System Username</label>
-                {{ form.username(class="form-control bg-dark text-light border-secondary") }}
-                <small class="text-muted">
+                {{ form.username(class="form-control bg-dark text-light border-secondary white-placeholder") }}
+                <small class="text-white">
                   Defaults to the web-lgsm process user if left empty
                 </small>
               </div>
@@ -107,8 +107,8 @@
                   <i class="bi bi-globe me-1 text-info"></i>
                   Remote Host
                 </label>
-                {{ form.install_host(class="form-control bg-dark text-light border-secondary") }}
-                <small class="text-muted">
+                {{ form.install_host(class="form-control bg-dark text-light border-secondary white-placeholder") }}
+                <small class="text-white">
                   Enter IP address or hostname of the remote server
                 </small>
               </div>

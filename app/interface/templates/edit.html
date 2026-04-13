@@ -1,60 +1,154 @@
 {% extends "base.html" %}
-{% block title %}Web-LGSM Config Editor{% endblock %}
+{% block title %}Web LGSM Config Editor{% endblock %}
 
 {% block content %}
-      <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
-      <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"></script>
-      <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"></link>
-      <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/cobalt.css"></link>
 
-      <br />
-      <div class="container">
+<!-- CodeMirror -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/cobalt.css">
 
-        <h2 style="color: white;">Editing Config: {{cfg_file_name}}</h2>
-        <b>Full Path: {{cfg_file}}</b>
-        <hr />
+<div class="container px-4 py-4">
 
-        <div class="row">
-          <div class="col">
-            <textarea id="edit-text-area" name="file_contents" form="save-edit">{{file_contents}}</textarea>
-          </div>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-body">
+          <h1 class="display-6 text-light mb-1">
+            <i class="bi bi-file-earmark-code-fill me-2 text-warning"></i>Config Editor
+          </h1>
+          <p class="text-white mb-0">
+            Editing: <span class="text-info">{{ cfg_file_name }}</span>
+          </p>
+          <small class="text-white">
+            Full path: {{ cfg_file }}
+          </small>
         </div>
-        <br />
-
-
-        <div class="row">
-
-          <div class="col">
-            <form method="POST" id="save-edit" action="/edit">
-              {{ upload_form.csrf_token }}
-              {{ upload_form.server_id(value=server_id) }}
-              {{ upload_form.cfg_path(value=cfg_file) }}
-              {{ upload_form.save_submit(class="btn btn-outline-primary") }}
-            </form>
-          </div>
-
-          <div class="col">
-            <!-- Download form -->
-            <form method="GET" id="download-cfg" action="/edit">
-              {{ download_form.csrf_token }}
-              {{ download_form.server_id(value=server_id) }}
-              {{ download_form.cfg_path(value=cfg_file) }}
-              {{ download_form.download_submit(class="btn btn-outline-primary") }}
-            </form>
-
-          </div>
-
-          <div class="col">
-            <a href="/controls?server_id={{server_id}}" class="btn btn-outline-primary" tabindex="-1" role="button" aria-disabled="true">Back to Controls ↩️ </a>
-          </div>
-
-        </div>
-        <br />
-        <br />
-        <b><u>Please note, specific lgsm instance.cfg files are not supported by the web-lgsm editor at this time.</u></b>
-        <p>If you already have an instance.cfg file for your server you'll need to edit it over SSH. Likewise please note, all auto-installed servers will have their _default.cfg's copied to a common.cfg on setup in order to allow the config file to survive lgsm updates. Please see <a href="https://docs.linuxgsm.com/configuration/linuxgsm-config">the official lgsm docs on the subject</a> for more information.</p>
       </div>
-      <br />
+    </div>
+  </div>
 
-      <script language="javascript" type="text/javascript" src="/static/js/edit-text-area.js"></script>
+  <!-- Editor -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-header bg-dark border-secondary d-flex align-items-center">
+          <i class="bi bi-code-slash me-2 text-primary"></i>
+          <h5 class="mb-0 text-light">File Contents</h5>
+        </div>
+
+        <div class="card-body p-0">
+          <textarea id="edit-text-area"
+                    name="file_contents"
+                    form="save-edit"
+                    class="form-control bg-dark text-light border-0 rounded-0"
+                    style="min-height: 500px;">{{ file_contents }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="row mb-4 g-3">
+
+    <!-- Save -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-save-fill fs-1 text-primary mb-3"></i>
+          <h5 class="text-light">Save Changes</h5>
+          <p class="text-white small">Write modifications back to server</p>
+
+          <form method="POST" id="save-edit" action="/edit">
+            {{ upload_form.csrf_token }}
+            {{ upload_form.server_id(value=server_id) }}
+            {{ upload_form.cfg_path(value=cfg_file) }}
+
+            {{ upload_form.save_submit(class="btn btn-outline-primary w-100") }}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-download fs-1 text-success mb-3"></i>
+          <h5 class="text-light">Download File</h5>
+          <p class="text-white small">Save a local copy of this config</p>
+
+          <form method="GET" id="download-cfg" action="/edit">
+            {{ download_form.csrf_token }}
+            {{ download_form.server_id(value=server_id) }}
+            {{ download_form.cfg_path(value=cfg_file) }}
+
+            {{ download_form.download_submit(class="btn btn-outline-success w-100") }}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-arrow-left-circle-fill fs-1 text-secondary mb-3"></i>
+          <h5 class="text-light">Navigation</h5>
+          <p class="text-white small">Return to server controls</p>
+
+          <a href="/controls?server_id={{ server_id }}"
+             class="btn btn-outline-secondary w-100">
+            Back to Controls
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Warning -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-danger shadow-sm">
+        <div class="card-header bg-dark border-danger">
+          <h5 class="mb-0 text-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Important Notice
+          </h5>
+        </div>
+
+        <div class="card-body text-white">
+          <p class="mb-2 fw-semibold text-warning">
+            Specific LGSM instance.cfg files are not supported by the web editor.
+          </p>
+
+          <p class="mb-2">
+            If you already have an <code>instance.cfg</code>, it must be edited over SSH.
+          </p>
+
+          <p class="mb-0">
+            Auto-installed servers copy their <code>_default.cfg</code> into a shared <code>common.cfg</code>
+            to ensure persistence across LGSM updates. See the official documentation for more details:
+            <a href="https://docs.linuxgsm.com/configuration/linuxgsm-config"
+               target="_blank" rel="noopener noreferrer"
+               class="text-info">
+              LGSM Config Docs
+            </a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Editor Script -->
+<script src="/static/js/edit-text-area.js"></script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 {% endblock %}

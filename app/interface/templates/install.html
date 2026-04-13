@@ -49,7 +49,7 @@
               <a href="/install?server_id={{server_id}}" 
                  class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
                 {{ server_name }}
-                <i class="bi bi-box-arrow-up-right text-muted"></i>
+                <i class="bi bi-box-arrow-up-right text-white"></i>
               </a>
             {% endfor %}
           </div>
@@ -86,7 +86,7 @@
           <label class="form-label text-light fw-semibold">
             <i class="bi bi-search me-1"></i>Search Game Server
           </label>
-          <input type="text" class="form-control bg-dark text-light border-secondary"
+          <input type="text" class="form-control bg-dark text-light border-secondary white-placeholder"
                  id="search-form" placeholder="Example: Minecraft">
         </div>
       </div>
@@ -155,7 +155,7 @@
               </div>
             </div>
             {% endfor %}
-          <div id="no-results" class="text-center text-muted mt-4 d-none">
+          <div id="no-results" class="text-center text-white mt-4 d-none">
             <i class="bi bi-search fs-3"></i>
             <p class="mb-0">No servers found</p>
           </div>
@@ -211,7 +211,7 @@
           <label class="form-label text-light mt-3">Username</label>
           {{ form.username(class="form-control bg-dark text-light border-secondary") }}
 
-          <small class="text-muted">Defaults to web-lgsm user if empty</small>
+          <small class="text-white">Defaults to web-lgsm user if empty</small>
         </div>
 
         <div class="modal-footer border-secondary">

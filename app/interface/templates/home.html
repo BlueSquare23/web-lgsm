@@ -7,6 +7,18 @@
       <br />
       <h2 style="color: white;">Installed Servers</h2>
 
+      <!-- Spinner element right in the header -->
+      <div id="header-spinner" style="display: none;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
+            <span id="spinner-text">Processing</span><span class="loading-dots"></span>
+          </span>
+        </div>
+      </div>
+
       {% if not servers %}
         <ul class="list-group border border-white">
           <li class="list-group-item">No game servers available to list...</li>

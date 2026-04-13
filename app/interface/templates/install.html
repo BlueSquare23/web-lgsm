@@ -14,6 +14,19 @@
               <i class="bi bi-cloud-download-fill me-2 text-primary"></i>Install Server
             </h1>
             <p class="text-white mb-0 mt-1">Deploy a new LGSM game server</p>
+            <div class="d-flex align-items-center gap-3">
+              <!-- Spinner element right in the header -->
+              <div id="header-spinner" style="display: none;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
+                    <span id="spinner-text">Installing</span><span class="loading-dots"></span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -156,7 +169,7 @@
   <div class="row mt-4">
     <div class="col-12 d-flex justify-content-between">
       {% if server_id %}
-      <a class="btn btn-outline-danger"
+      <a id="cancel-button" class="btn btn-outline-danger"
          onclick="return confirm('Cancel install for {{ install_name }}?');"
          href="/install?server_id={{server_id}}&cancel=true">
         <i class="bi bi-x-circle me-1"></i>Cancel Install

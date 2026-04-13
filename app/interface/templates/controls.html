@@ -21,18 +21,18 @@
               <p class="text-white mb-0 mt-1">Server ID: {{ server_id }}</p>
             </div>
             <div class="d-flex align-items-center gap-3">
-              <!-- Spinner element right in the header -->
-              <div id="header-spinner" style="display: none;">
-                <div class="d-flex align-items-center gap-2">
-                  <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
-                    <span class="visually-hidden">Loading...</span>
-                  </div>
-                  <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
-                    <span id="spinner-text">Processing</span><span class="loading-dots"></span>
-                  </span>
-                </div>
-              </div>
               <span id="server-status-badge" class="badge bg-secondary">Status: Unknown</span>
+            </div>
+          </div>
+          <!-- Spinner element right in the header -->
+          <div id="header-spinner" style="display: none;">
+            <div class="d-flex align-items-center gap-2">
+              <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
+                <span id="spinner-text">Processing</span><span class="loading-dots"></span>
+              </span>
             </div>
           </div>
         </div>

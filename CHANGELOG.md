@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Total Settings page refresh, complete with icons, proper layout, & spacing.
+- Total Job page refresh, complete with icons, proper layout, & spacing.
 - Total Install page refresh, complete with icons, proper layout, & spacing.
 - Total Controls page refresh, complete with icons, proper layout, & spacing.
 

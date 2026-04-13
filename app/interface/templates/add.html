@@ -2,79 +2,165 @@
 {% block title %}Add or Edit Existing Server{% endblock %}
 
 {% block content %}
-      <br />
-      {% include 'game_servers.html' %}
-      <br />
+<div class="container px-4 py-4">
 
-      <div class="container bg-dark border border-white rounded-3 p-2">
-        <form method="POST">
-          <h3 class="text-white">
-            Add or Edit Existing LGSM Installation Details
-          </h3>
-          {% if server_json is defined and server_json is not none %}
-          <h4 class="text-white"> 
-              Currently Editing {{ (server_json|from_json).install_name }}
-          </h4>
-          {% endif %}
-          <div class="form-group" style="color: white;">
-            <!-- Hidden includes CSRF token -->
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="display-6 mb-0 text-light">
+              <i class="bi bi-hdd-network-fill me-2 text-primary"></i>
+              Add / Edit Server
+            </h1>
+            <p class="text-white mb-0 mt-1">
+              Manage existing LGSM installations
+            </p>
+
+            {% if server_json is defined and server_json is not none %}
+            <div class="mt-2">
+              <span class="badge bg-warning text-dark">
+                <i class="bi bi-pencil-fill me-1"></i>
+                Editing {{ (server_json|from_json).install_name }}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Existing Servers Include -->
+  <div class="row mb-4">
+    <div class="col-12">
+      {% include 'game_servers.html' %}
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-sliders2-vertical me-2 text-success"></i>
+            Server Configuration
+          </h5>
+        </div>
+
+        <div class="card-body">
+          <form method="POST">
             {{ form.hidden_tag() }}
 
-            <!-- Radio Buttons -->
-            {% for subfield in form.install_type %}
-                <div class="form-check">
+            <!-- Install Type -->
+            <div class="mb-4">
+              <label class="form-label text-light fw-semibold">
+                <i class="bi bi-diagram-3-fill me-1"></i>
+                Installation Type
+              </label>
+
+              <div class="d-flex flex-wrap gap-3">
+                {% for subfield in form.install_type %}
+                  <div class="form-check">
                     {{ subfield(class="form-check-input", onchange="toggleShowRemoteHostField()") }}
-                    {{ subfield.label(class="form-check-label") }}
-                </div>
-            {% endfor %}
-
-            <!-- Text Inputs -->
-            <label class="pt-2" for="install_name">Installation Title</label>
-            {{ form.install_name(class="form-control") }}
-
-            <label class="pt-2" for="install_path">Installation directory path</label>
-            {{ form.install_path(class="form-control") }}
-
-            <label class="pt-2" for="script_name">LGSM script name</label>
-            {{ form.script_name(class="form-control") }}
-
-            <label class="pt-2" for="username">Game server system username</label>
-            {{ form.username(class="form-control") }}
-            <i>If left empty will default to the user the web-lgsm process is running as.</i>
-
-            <br/>
-
-            <!-- Hidden Remote Host Field -->
-            <div id="remote_host" style="display: none;">
-                <label class="pt-2" for="install_host">Remote server's IP address or hostname</label>
-                {{ form.install_host(class="form-control") }}
+                    {{ subfield.label(class="form-check-label text-light") }}
+                  </div>
+                {% endfor %}
+              </div>
             </div>
 
-            <br />
-            <center>
-              <button class="btn btn-outline-primary m-3" type="submit">Submit</button>
-            </center>
-          </div>
-        </form>
-      </div>
+            <!-- Main Inputs -->
+            <div class="row g-3">
 
-      <script>
-        function toggleShowRemoteHostField() {
-          const remoteHost = document.getElementById('remote_host');
-          if (document.getElementById('install_type-1').checked) {
-            remoteHost.style.display = 'block';
-            remoteHost.children[1].required = true;
-          } else {
-            remoteHost.style.display = 'none';
-            remoteHost.children[1].required = false;
-          }
-        }
-      </script>
-      {% if server_json is not none %}
-        <script>
-          const jsonData = JSON.parse({{server_json | tojson}});
-        </script>
-        <script src="/static/js/edit_server.js"></script>
-      {% endif %}
+              <div class="col-md-6">
+                <label class="form-label text-light">Installation Title</label>
+                {{ form.install_name(class="form-control bg-dark text-light border-secondary") }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-light">LGSM Script Name</label>
+                {{ form.script_name(class="form-control bg-dark text-light border-secondary") }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label text-light">Installation Directory Path</label>
+                {{ form.install_path(class="form-control bg-dark text-light border-secondary") }}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-light">System Username</label>
+                {{ form.username(class="form-control bg-dark text-light border-secondary") }}
+                <small class="text-muted">
+                  Defaults to the web-lgsm process user if left empty
+                </small>
+              </div>
+
+            </div>
+
+            <!-- Remote Host (Hidden Section) -->
+            <div id="remote_host" class="mt-4" style="display: none;">
+              <div class="p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary">
+                <label class="form-label text-light">
+                  <i class="bi bi-globe me-1 text-info"></i>
+                  Remote Host
+                </label>
+                {{ form.install_host(class="form-control bg-dark text-light border-secondary") }}
+                <small class="text-muted">
+                  Enter IP address or hostname of the remote server
+                </small>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="mt-4 d-flex justify-content-between">
+              <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle me-1"></i>Back
+              </a>
+
+              <button class="btn btn-primary px-4" type="submit">
+                <i class="bi bi-save-fill me-1"></i>
+                {% if server_json %}
+                  Update Server
+                {% else %}
+                  Add Server
+                {% endif %}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scripts -->
+<script>
+  function toggleShowRemoteHostField() {
+    const remoteHost = document.getElementById('remote_host');
+    const remoteInput = remoteHost.querySelector('input');
+
+    if (document.getElementById('install_type-1').checked) {
+      remoteHost.style.display = 'block';
+      remoteInput.required = true;
+    } else {
+      remoteHost.style.display = 'none';
+      remoteInput.required = false;
+    }
+  }
+</script>
+
+{% if server_json is not none %}
+<script>
+  const jsonData = JSON.parse({{server_json | tojson}});
+</script>
+<script src="/static/js/edit_server.js"></script>
+{% endif %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 {% endblock %}

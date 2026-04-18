@@ -85,13 +85,13 @@
 ## Main Goals for v1.9 -> v1.10
 
 * **THE BIG FIVE!**
-  - File Manager
-  - Interactive Terminal
-  - Frontend Overhaul
-  - Docker in Docker
-  - Promotion & Community
+  - [ ] File Manager
+  - [ ] Interactive Terminal
+  - [x] Frontend Overhaul
+  - [ ] Docker in Docker
+  - [ ] Promotion & Community
 
-* [ ] **Revamp the interface design and layout**
+* [x] **Revamp the interface design and layout**
   - I'm not much of a front end guy. However, this project has simply come too
     far with the original design / layout of the main pages and it needs an
     overhaul.
@@ -130,7 +130,7 @@
     - And that works fine, but its nothing to write home about. I want this to
       be spiffy and to shine.
 
-* [ ] **Improve overall design & documentation for project**
+* [x] **Improve overall design & documentation for project**
   - I want to actually properly try to design, document, and build out parts of
     this app. Full honest, I've never really done real software design before
     and this app up until this point (2025) was build with nothing but loose design 
@@ -215,7 +215,7 @@
   - But we'll get way more users if we just publish on docker and let people
     run it in a container they can teardown whenever.
 
-## Version 1.9.2 Todos
+## Version 1.9.x Todos
 
 ### New Features, Highlevel Release Goals
 

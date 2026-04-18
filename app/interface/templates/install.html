@@ -2,252 +2,255 @@
 {% block title %}Web LGSM Install Server{% endblock %}
 
 {% block content %}
-      <script src="{{ url_for('static', filename='js/open-close-form.js') }}"></script>
+<div class="container px-4 py-4">
 
-      <br />
-
-      <!-- TODO: At some point make this more module. Its the same form as the add/edit form basically. So probs can be cleaned up and made importable in both pages. -->
-      <!-- Modal for advanced settings -->
-      <div class="modal fade" id="advancedSettingsModal" tabindex="-1" aria-labelledby="advancedSettingsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-          <div class="modal-content bg-dark border border-white border-rounded">
-            <div class="modal-header">
-              <h5 class="modal-title text-white" id="advancedSettingsModalLabel">Advanced Installation Settings</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <div class="container bg-dark border border-white rounded-3 p-2">
-                <form method="POST" id="advancedSettingsForm" action="/install">
-                  <h3 class="text-white">
-                    Edit Installation Details
-                  </h3>
-                  <div id="editingHeader" style="display: none;">
-                    <h4 class="text-white" id="currentEditName"></h4>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="display-6 mb-0 text-light">
+              <i class="bi bi-cloud-download-fill me-2 text-primary"></i>Install Server
+            </h1>
+            <p class="text-white mb-0 mt-1">Deploy a new LGSM game server</p>
+            <div class="d-flex align-items-center gap-3">
+              <!-- Spinner element right in the header -->
+              <div id="header-spinner" style="display: none;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1.2rem; height: 1.2rem;">
+                    <span class="visually-hidden">Loading...</span>
                   </div>
-                  <div class="form-group" style="color: white;">
-                    <!-- Hidden includes CSRF token -->
-                    {{ form.hidden_tag() }}
-      
-                    <!-- For these to be hidden on this page -->
-                    <input type="hidden" id="modal_script_name" name="script_name" value="">
-                    <!-- Hardcoded to local for now till remote install implemented -->
-                    <input type="hidden" id="modal_install_type" name="install_type" value="local">
-      
-                    <!-- Text Inputs -->
-                    <label class="pt-2" for="install_name">Installation Title</label>
-                    {{ form.install_name(class="form-control") }}
-      
-                    <label class="pt-2" for="install_path">Installation directory path</label>
-                    {{ form.install_path(class="form-control") }}
-      
-                    <label class="pt-2" for="username">Game server system username</label>
-                    {{ form.username(class="form-control") }}
-                    <i>If left empty will default to the user the web-lgsm process is running as.</i>
-      
-                    <br/>
-                  </div>
-                </form>
+                  <span class="text-success" style="font-size: 0.9rem; font-weight: 500;">
+                    <span id="spinner-text">Installing</span><span class="loading-dots"></span>
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="modal-footer border-secondary">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" form="advancedSettingsForm" class="btn btn-primary">Install</button>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="container">
-        {% if running_installs|length > 0 %}
-          <h2>Currently Running Installs</h2>
-          <ul>
-          {% for server_id, server_name in running_installs.items() %}
-            <div class="list-group-item list-group-item-action">
-              <div class="d-flex align-items-center">
-                <a href="/install?server_id={{server_id}}" class="game_server_link text-decoration-none flex-grow-1">{{server_name}}</a>
-              </div>
-            </div>
-          {% endfor %}
-          </ul>
-        {% endif %}
-        <br />
-
-        {% include 'spinners.html' %}
-
-        <div class="row">
-          {% include 'xtermjs.html' %}
-
+  <!-- Running Installs -->
+  {% if running_installs|length > 0 %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-arrow-repeat me-2 text-warning"></i>Currently Running Installs
+          </h5>
         </div>
-
-        <br />
-
-        <h2>Search</h2>
-        <div class="row">
-          <div class="col">
-            <div class="mb-3">
-              <label for="search-form" style="color:white" class="form-label">Game Server:</label>
-              <input type="text" class="form-control" id="search-form" placeholder="Example: Minecraft">
-            </div>
+        <div class="card-body">
+          <div class="list-group list-group-flush">
+            {% for server_id, server_name in running_installs.items() %}
+              <a href="/install?server_id={{server_id}}" 
+                 class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                {{ server_name }}
+                <i class="bi bi-box-arrow-up-right text-white"></i>
+              </a>
+            {% endfor %}
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
-        <br />
-        <h2 class="text-white">Install a New LGSM Server</h2>
-        <hr />
-        
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
-          {% for script_name, (full_name, app_img) in servers.items() %}
-          <div id="form-{{script_name}}" class="col">
-            <div class="card bg-dark h-100 overflow-hidden">
-              <div class="ratio ratio-16x9">  {# Maintains a consistent aspect ratio #}
-                  <img src="{{app_img}}" 
-                     class="card-img-top object-fit-cover" 
-                     alt="{{full_name}}"
-                     loading="lazy"
-                     decoding="async"
-                     style="object-position: center;">
-              </div>
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-white">{{full_name}}</h5>
-                {% set clean_name = full_name.replace(" ", "_") %}
-                {% set clean_name = clean_name.replace(" ", "_") %}
+  <!-- Terminal -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-terminal-fill me-2 text-primary"></i>Install Output
+          </h5>
+        </div>
+        <div class="card-body bg-dark border border-white rounded-3 p-0 m-3">
+          <div id="terminal"
+               style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;"
+               class="rounded-3 p-3">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                {% if web_lgsm_user %}
-                  {% set username = web_lgsm_user %}
-                {% endif %}
+  <!-- Search -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <label class="form-label text-light fw-semibold">
+            <i class="bi bi-search me-1"></i>Search Game Server
+          </label>
+          <input type="text" class="form-control bg-dark text-light border-secondary white-placeholder"
+                 id="search-form" placeholder="Example: Minecraft">
+        </div>
+      </div>
+    </div>
+  </div>
 
-                {% if create_new_user %}
-                  {% set username = script_name %}
-                {% endif %}
+  <!-- Install Grid -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-grid-1x2-fill me-2 text-success"></i>Available Servers
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            {% for script_name, (full_name, app_img) in servers.items() %}
+            <div class="col-md-6 col-lg-4 col-xl-3" id="form-{{script_name}}" data-short-name="{{script_name}}" data-long-name="{{full_name}}">
+              <div class="card bg-dark border-secondary h-100 shadow-sm">
 
-                {% set install_path = '/home/' + username + '/GameServers/' + clean_name + '/' %}
+                <div class="ratio ratio-16x9">
+                  <img src="{{app_img}}" class="card-img-top object-fit-cover" alt="{{full_name}}">
+                </div>
 
-                <!-- Quick Install Form - Just assume they want defaults -->
-                <form method="POST" class="form-group mt-auto" action="/install">
-                    <!-- Hidden includes CSRF token -->
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title text-light">{{full_name}}</h5>
+
+                  {% set clean_name = full_name.replace(" ", "_") %}
+                  {% if web_lgsm_user %}
+                    {% set username = web_lgsm_user %}
+                  {% endif %}
+                  {% if create_new_user %}
+                    {% set username = script_name %}
+                  {% endif %}
+                  {% set install_path = '/home/' + username + '/GameServers/' + clean_name + '/' %}
+
+                  <!-- Quick Install -->
+                  <form method="POST" class="mt-auto" action="/install">
                     {{ form.hidden_tag() }}
-                  <!-- Hardcoded to local for now till remote install implemented -->
-                  <input type="hidden" name="install_type" value="local">
-                  <input type="hidden" name="script_name" value="{{script_name}}">
-                  <input type="hidden" name="install_name" value="{{clean_name}}">
-                  <input type="hidden" name="install_path" value="{{install_path}}">
-                  <input type="hidden" name="username" value="{{username}}">
-                  <button type="submit" 
-                          onclick="return confirm('Are you sure you want to install {{full_name}}?');" 
-                          class="btn btn-outline-primary w-100 mb-2">
-                    Install {{script_name}}
-                  </button>
-                </form>
+                    <input type="hidden" name="install_type" value="local">
+                    <input type="hidden" name="script_name" value="{{script_name}}">
+                    <input type="hidden" name="install_name" value="{{clean_name}}">
+                    <input type="hidden" name="install_path" value="{{install_path}}">
+                    <input type="hidden" name="username" value="{{username}}">
 
-                <!-- Advanced Settings - Otherwise pass data to modal form via js -->
-                <button type="button" 
-                        class="btn btn-outline-secondary w-100 advanced-settings-btn"
-                        data-bs-toggle="modal" 
-                        data-bs-target="#advancedSettingsModal"
-                        data-script-name="{{script_name}}"
-                        data-full-name="{{full_name}}"
-                        data-install-path="{{install_path}}"
-                        data-username="{{username}}">
-                  Advanced Settings
-                </button>
+                    <button type="submit"
+                            onclick="return confirm('Install {{full_name}}?');"
+                            class="btn btn-outline-primary w-100 mb-2">
+                      <i class="bi bi-download me-1"></i>Quick Install
+                    </button>
+                  </form>
+
+                  <!-- Advanced -->
+                  <button class="btn btn-outline-secondary w-100 advanced-settings-btn"
+                          data-bs-toggle="modal"
+                          data-bs-target="#advancedSettingsModal"
+                          data-script-name="{{script_name}}"
+                          data-full-name="{{full_name}}"
+                          data-install-path="{{install_path}}"
+                          data-username="{{username}}">
+                    <i class="bi bi-sliders me-1"></i>Advanced Settings
+                  </button>
+
+                </div>
               </div>
             </div>
+            {% endfor %}
+          <div id="no-results" class="text-center text-white mt-4 d-none">
+            <i class="bi bi-search fs-3"></i>
+            <p class="mb-0">No servers found</p>
           </div>
-          {% endfor %}
+          </div>
         </div>
-        <br />
+      </div>
+    </div>
+  </div>
 
-      <!-- Set global vars for update-xterm.js -->
-      {# TODO v1.9 Put this in its own template file, used here and on controls #}
-      <script>
-        var serverId = "{{ server_id }}";
-        var textColor = "{{ _config.get('aesthetic','text_color') }}";
-      {# If show_stderr var True #}
-      {% if _config.get('settings','show_stderr') %}
-        let showStderr = true;
-      {% else %}
-        let showStderr = false;
-      {% endif %}
-      {# If console var True #}
-      {% if console is defined and console %}
-        let sConsole = true;
-      {% else %}
-        let sConsole = false;
-      {% endif %}
-        if (serverId != "None") {
-          updateTerminal(serverId);
-        }
-      </script>
-      <script src="/static/js/update-xterm.js"></script>
-      <script src="/static/js/update-install-search.js"></script>
-
-<!-- JavaScript to handle modal data -->
-<script>
-
-document.addEventListener('DOMContentLoaded', function() {
-  // Handle advanced settings button click
-  const advancedSettingsButtons = document.querySelectorAll('.advanced-settings-btn');
-  
-  advancedSettingsButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const scriptName = this.getAttribute('data-script-name');
-      const fullName = this.getAttribute('data-full-name');
-      const installPath = this.getAttribute('data-install-path');
-      const username = this.getAttribute('data-username');
-      const install_type = 'local';
-
-      console.log(scriptName);
-      console.log(fullName);
-      console.log(installPath);
-      console.log(username);
-
-      // Set the script name in the modal form
-      document.getElementById('modal_script_name').value = scriptName;
-      
-      // Pre-fill the script name field if it exists in the form
-      const scriptNameField = document.querySelector('#advancedSettingsForm input[name="script_name"]');
-      if (scriptNameField) {
-        scriptNameField.value = scriptName;
-      }
-
-      const installNameField = document.querySelector('#advancedSettingsForm input[name="install_name"]');
-      if (installNameField) {
-        installNameField.value = fullName;
-      }
-
-      const installPathField = document.querySelector('#advancedSettingsForm input[name="install_path"]');
-      if (installPathField) {
-        installPathField.value = installPath;
-      }
-
-      const usernameField = document.querySelector('#advancedSettingsForm input[name="username"]');
-      if (usernameField) {
-        usernameField.value = username;
-      }
-      
-      // Update modal title or display editing info
-      const editingHeader = document.getElementById('editingHeader');
-      const currentEditName = document.getElementById('currentEditName');
-      
-      // Show editing header if editing existing
-      editingHeader.style.display = 'block';
-      currentEditName.textContent = `Currently Editing ${fullName}`;
-    });
-  });
-  
-  // Reset modal when closed
-  const modal = document.getElementById('advancedSettingsModal');
-  modal.addEventListener('hidden.bs.modal', function() {
-    document.getElementById('modal_script_name').value = '';
-    document.getElementById('editingHeader').style.display = 'none';
-  });
-});
-</script>
-
+  <!-- Footer Actions -->
+  <div class="row mt-4">
+    <div class="col-12 d-flex justify-content-between">
       {% if server_id %}
-        <a id="cancel-button" title="Cancel auto-install process" onclick="return confirm('Are you sure you want to cancel running install for {{ install_name }}?');" class="btn btn-outline-danger" href="/install?server_id={{server_id}}&cancel=true" role="button">Cancel Install</a>
+      <a id="cancel-button" class="btn btn-outline-danger"
+         onclick="return confirm('Cancel install for {{ install_name }}?');"
+         href="/install?server_id={{server_id}}&cancel=true">
+        <i class="bi bi-x-circle me-1"></i>Cancel Install
+      </a>
       {% endif %}
-      <button id="top-button" onclick="window.scrollTo(0,0);" type="button" style="text-decoration: underline;" class="btn btn-outline-primary d-sm-none d-md-block d-none d-sm-block">
-        /\ Top /\
+
+      <button onclick="window.scrollTo({top:0, behavior:'smooth'})" id="top-button" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-up-circle me-1"></i>Back to Top
       </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal (styled to match theme) -->
+<div class="modal fade" id="advancedSettingsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-light">
+          <i class="bi bi-sliders me-2"></i>Advanced Installation Settings
+        </h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" id="advancedSettingsForm" action="/install">
+        <div class="modal-body">
+          {{ form.hidden_tag() }}
+
+          <input type="hidden" id="modal_script_name" name="script_name">
+          <input type="hidden" name="install_type" value="local">
+
+          <label class="form-label text-light">Installation Title</label>
+          {{ form.install_name(class="form-control bg-dark text-light border-secondary") }}
+
+          <label class="form-label text-light mt-3">Install Path</label>
+          {{ form.install_path(class="form-control bg-dark text-light border-secondary") }}
+
+          <label class="form-label text-light mt-3">Username</label>
+          {{ form.username(class="form-control bg-dark text-light border-secondary") }}
+
+          <small class="text-white">Defaults to web-lgsm user if empty</small>
+        </div>
+
+        <div class="modal-footer border-secondary">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary">
+            <i class="bi bi-download me-1"></i>Install
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  var serverId = "{{ server_id }}";
+  var textColor = "{{ _config.get('aesthetic','text_color') }}";
+{# If show_stderr var True #}
+{% if _config.get('settings','show_stderr') %}
+  let showStderr = true;
+{% else %}
+  let showStderr = false;
+{% endif %}
+{# If console var True #}
+{% if console is defined and console %}
+  let sConsole = true;
+{% else %}
+  let sConsole = false;
+{% endif %}
+  if (serverId != "None") {
+    updateTerminal(serverId);
+  }
+</script>
+<script src="/static/js/update-install-search.js"></script>
+<script src="/static/js/update-xterm.js"></script>
+<script src="/static/js/show-spinners.js"></script>
+<script src="/static/js/controls-header-status.js"></script>
+<script src="static/js/install-settings-modal.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
 {% endblock %}

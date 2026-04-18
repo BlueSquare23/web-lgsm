@@ -1,34 +1,25 @@
-// Used for search box on install page.
 const searchForm = document.getElementById('search-form');
-const allInstallForms = document.querySelectorAll('form.form-group');
+const installCards = document.querySelectorAll('[id^="form-"]');
+const noResults = document.getElementById('no-results');
 
-searchForm.addEventListener('input', (event) =>  {
-  const inputValue = event.target.value;
+searchForm.addEventListener('input', (event) => {
+  const searchValue = event.target.value.toLowerCase();
+  let visibleCount = 0;
 
-  hideNonMatching(inputValue);
-})
+  installCards.forEach(card => {
+    const shortName = card.dataset.shortName.toLowerCase();
+    const longName = card.dataset.longName.toLowerCase();
 
-function hideNonMatching(searchStr) {
-  allInstallForms.forEach(form => {
-    const shortName = form[3].value;
-    const longName = form[4].value;
-
-    const divId = 'form-'.concat(shortName);
-    const installFormDiv = document.getElementById(divId);
-
-    const lShortName = shortName.toLowerCase();
-    const lLongName = longName.toLowerCase();
-    const lSearchStr = searchStr.toLowerCase();
-
-    if (lShortName.includes(lSearchStr) || lLongName.includes(lSearchStr)) {
-      installFormDiv.style.display = null;
-      installFormDiv.style.height = null;
+    if (
+      shortName.includes(searchValue) ||
+      longName.includes(searchValue)
+    ) {
+      card.style.display = '';
+      visibleCount++;
     } else {
-      installFormDiv.style.display = 'none';
-      installFormDiv.style.height = '';
-      console.log(installFormDiv.style.height);
+      card.style.display = 'none';
     }
   });
-}
 
-
+  noResults.classList.toggle('d-none', visibleCount !== 0);
+});

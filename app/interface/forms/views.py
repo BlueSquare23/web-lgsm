@@ -316,7 +316,7 @@ class UploadTextForm(FlaskForm):
         ],
     )
     file_contents = TextAreaField("File Contents", validators=[InputRequired()])
-    save_submit = SubmitField("Save File 💾")
+    save_submit = SubmitField("Save File")
 
 
 class DownloadCfgForm(FlaskForm):
@@ -336,7 +336,7 @@ class DownloadCfgForm(FlaskForm):
             ValidConfigFile(),
         ],
     )
-    download_submit = SubmitField("Download Config File ⏬")
+    download_submit = SubmitField("Download Config File")
 
 
 # Form instead of FlaskForm to bypass csrf validation, since just GET req to

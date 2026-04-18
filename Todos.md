@@ -85,13 +85,13 @@
 ## Main Goals for v1.9 -> v1.10
 
 * **THE BIG FIVE!**
-  - File Manager
-  - Interactive Terminal
-  - Frontend Overhaul
-  - Docker in Docker
-  - Promotion & Community
+  - [ ] File Manager
+  - [ ] Interactive Terminal
+  - [x] Frontend Overhaul
+  - [ ] Docker in Docker
+  - [ ] Promotion & Community
 
-* [ ] **Revamp the interface design and layout**
+* [x] **Revamp the interface design and layout**
   - I'm not much of a front end guy. However, this project has simply come too
     far with the original design / layout of the main pages and it needs an
     overhaul.
@@ -130,7 +130,7 @@
     - And that works fine, but its nothing to write home about. I want this to
       be spiffy and to shine.
 
-* [ ] **Improve overall design & documentation for project**
+* [x] **Improve overall design & documentation for project**
   - I want to actually properly try to design, document, and build out parts of
     this app. Full honest, I've never really done real software design before
     and this app up until this point (2025) was build with nothing but loose design 
@@ -140,40 +140,10 @@
   - Major goal moving forward is to properly think, read, test, mockup, design,
     document, then build.
 
-* [x] **Straighten out plans for new models for data and actions / Begin OOP Redesigns**
-  - This project has been poorly designed and modeled up until this point.
-  - I am now beginning the process of redesigning the project piecemeal while
-    maintaining functionality.
-  - What I really need to do is:
-    - Figure out what Objects I need
-    - Figure out what they need to do
-    - Figure out how they need to relate to each other
-    - Figure out how to get from here to there, bit by bit
-  - https://realpython.com/solid-principles-python/
-
 * [ ] **Validation logic should happen in the form classes**
   - FlaskForm/Wtforms is our user input handling & validation layer.
   - All user input coming into the app, even through the API should go through
     a form class for valiation.
-
-* [x] **Reduce redundancies in disparate isomorphic representations of the same data**
-  - I have too many different representations of the same underlying data.
-    - There's the data in the DB.
-    - There's the data on disk, in flat json files.
-    - There's the data on disk about game server state.
-    - There's the data returned from game server commands.
-    - There's the validation of the data in the form classes.
-    - There's the validation of the data in the utils.
-    - There's data in the `processes_global.py` singleton in memory.
-    - Its all over the place.
-  - I think the idea of creating neutral service classes that can be used by
-    the API or by the Route code to talk to the DB is a good start.
-    - But part of me also wonders if its just more bloat.
-  - Basically, I can see the same shapes and imprints of those shapes all over.
-    But I have yet to come up with a good way to like bring all that together
-    under like the same class or something.
-  - I'm optimistic that as I redesign and make more things OOP, some of the old
-    poppycock-nonsense will naturally unfold.
 
 * [ ] **Enable remote install over ssh via ansible connector**
   - From the very beginning when I first wrote the ansible connector I imagined
@@ -182,18 +152,6 @@
     game on serverB.
     - Right now you can manage them over ssh, but never got around to making
       install over ssh work.
-
-* [x] **Rethink main design to sandbox things even more**
-  - Right now the web -> db -> ansible connector as root way of administering
-    the system has me nervous.
-  - There's validation, there's sanitization. But the whole approach seems bad.
-    - Too much happening as root!
-  - I've waffled with this so much and decided on the connector script as a
-    necessaity to package up all the escalted dirty work in one script.
-  - But its overloaded and its data channels are too wide and I suspect leaky.
-    - A new approach is needed.
-  - [x] Running as the new user through sudo maybe the preferable way over
-    backwardsass ssh to localhost approach.
 
 * [ ] **Get fully working shell interface through web terminal**
   - This would be a direct passthrough to a live shell session running as the
@@ -257,15 +215,37 @@
   - But we'll get way more users if we just publish on docker and let people
     run it in a container they can teardown whenever.
 
-* [x] **Overhaul & Redesign test code**
-  - [x] Every single test should be idempotent (they're not rn).
-  - [x] No test should depend on any other test (they all depend on each other rn).
-  - [x] I need to learn more about how to actually fucking properly use pytest (rtfm).
-  - [ ] Bonus points: If I can get some Selenium tests in here.
-
-## Version 1.9.2 Todos
+## Version 1.9.x Todos
 
 ### New Features, Highlevel Release Goals
+
+* [x] **Overhaul Controls Page Frontent**
+  - This page has been bland and boring for a long time. Time to give it some
+    love and a front end overhaul.
+  - [x] Fix live console output.
+
+* [ ] **Rewrite xtermjs code to fix live console output & to fix carriage returns prints.**
+
+* [ ] **Add more Custom Themeing options to config**
+  - So I've already got a couple of color options for the config.
+
+* [ ] **Get Basic POC FileManager Setup**
+  - UI:
+    - [ ] Page for browsing files.
+    - [ ] Collapsible list of files and directories on the system on the left.
+    - [ ] Click file it opens the file, click dir opens the dir.
+    - [ ] Transition edit page to be just inside file manager now.
+  - Backend:
+    - [ ] Some sort of directory manager class, similar to file manager.
+    - [ ] Use cases and container wiring to go along with it all.
+    - [ ] Clean up / rebuild existing edit route and page.
+    - [ ] Locked down to under users home dir.
+
+* [x] **Play around with new Controls page UI**
+  - It looks like shit and basically hasn't changed in a long ass time. We're
+    trying to come up with a more consistent "Control Panel-esq" design
+    language and I think the control panel would be a good place to start figuring
+    out what that looks like.
 
 * [ ] **Add install new game servers to containers**
   - Instead of installing as new system users, allow install game servers
@@ -295,45 +275,6 @@ Host Machine
 ## Version 1.9.1 Todos
 
 ### New Features, Highlevel Release Goals
-
-* [x] **Continue re-architecture efforts**
-  - Problems:
-    - Too many "services" that aren't services.
-    - Lacking conceptual models for what they are.
-      - As a result haven't decided where to put them yet.
-    - Not a clean arch currently, therefore ugly dep inversion happening for manager classes.
-      - Need to figure out how do I give both my routes access to services and
-        my managers access to services while avoiding circular imports. 
-      - I could just use dynamic imports, but I'm convinced there's a better way
-        if I could just figure out how to better lay out all the pieces.
-    - Managers shouldn't depend on services, but right now they do depend on
-      services. So I'm using dep inversion. But that's nasty and I don't like
-      any of that. And its kinda just a word soup anyways with servics vs
-      managers not really meaning much.
-  - Solution:
-    - A Clean Arch Transition: I'm going to go feature by feature and convert
-      them to be clean arch.
-    - Probably going to start small till I get what I'm doing and then will do
-      all the bigger stuff too.
-    - This will give us a clear dependency graph and a skeleton we can use to
-      continue the project's growth.
-
-* [x] **Do a basic security audit, identify and patch holes, and improve validation**
-  - Okay there's plenty of things about this app and codebase that are _suss_.
-    Not intonationally, its just if you're going to build something like this
-    it involves risks.
-  - But at the very least we can go through and find holes and try to patch
-    them up.
-  - Mostly right now I'm concerned with things slipping past validation, and
-    with the amount of shell code that should really be python. If we can cut
-    those things down, we gain a lot more security.
-  - [x] Also some pip requirements need updated.
-  - **NOTE:** _This should happen after the main bulk of the rearch cleanup otherwise we're just security testing and patching code that's about to be changed._
-
-* [x] **Cron Add Listing of All Jobs for Admins**
-  - For jobs that are in the crontab, but not in the database (aka ones not
-    controlled by the app), show them for admins, but greyed out.
-  - User Requested: https://github.com/BlueSquare23/web-lgsm/issues/49
 
 * [ ] **Add collapsible sitemap accordion panel to righthand side**
   - Goal is get to any page from any page by opening up side panel and going
@@ -378,33 +319,11 @@ If you need any icons, we're also using bootstrap icons, so you can just use any
 https://icons.getbootstrap.com/
 ```
 
-* [x] **Cleanup Home template install list jinja via routecode**
-  - I can get rid or the nested ifs in the template file by getting the game
-    server list for the give user and only passing that to the template.
-
-* [x] **Add more control over display of main servers listing on home page. Add sort, custom order, etc**
-  - User requested feature: https://github.com/BlueSquare23/web-lgsm/issues/55
-  - Two Parts of this:
-  - Part 1: Fronend
-    - [x] New JS to do sort by alpha, asc/desc
-    - [x] New html for home template
-    - [x] New frontend changes using `SortableJS` to make list dragable
-  - Part 2: Backend
-    - [x] New column in DB & field in domain entity for `sort_order`
-    - [x] New `/api/update-order/<GSUUID>` api route for catching updates
-    - [x] Change list on SqlAlchGameServerRepo to list by sort order `GameServerModel.query.order_by(GameServerModel.sort_order).all()`
-
-* [x] **Add unit tests for untested classes**
-
 * [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
   - For the biggest stuff either fix there on the spot (if able) or make a todo
     below for later.
   - But want to try to clean up some of that backlog.
   - Just run `grep -R TODO app/*` to find em all!
-
-* [x] **Do a Docs Audit/Refresh**
-  - Basically there's old dead info in some of the docs files still. I just
-    need to go through each one read it and check its info is still up to date.
 
 ### The Meat
 
@@ -415,156 +334,6 @@ https://icons.getbootstrap.com/
   - https://github.com/BlueSquare23/web-lgsm/runs/62909674268
   - Yeah I know accepting keys blindly is bad, but need to do more research to
     see what we can really do about it.
-
-* [x] **Redo Cron as clean arch**
-  - [x] We need an abstraction in the core. Aka domain layer `Cron` domain entity class.
-  - [x] We need a `CronRepository` in the domain layer too.
-  - [x] In the application layer we need to define some Usecases.
-  - Aka these need converted to cron use case classes:
-    - [x] `list`
-    - [x] `delete`
-    - [x] `create`
-    - [?] `edit` - The app sorta presents this as a different use case, but its
-      the same form, same validation, same thing if its creating brand new or
-      editing existing, still needs all the same info. So for now not making an
-      identical usecase.
-  - [x] Probably we can reuse a lot of existing code for the Infrastructure layer,
-    but it will need split.
-    - [x] We can put the mysql stuff in one class like the `SqlAlchemyAuditRepo` stuff
-    - [x] Then the system cli cron stuff will need to be split out.
-  - [x] Container Wiring needs updated to pull everything together.
-  - [x] Route code will need updates to use new calls!
-  - Only thing I'm nervous about is all the interaction with still non-clean
-    CmdService stuff. But we'll clean that up in time and update the infra
-    accordingly.
-
-* [x] **Redo User as clean arch**
-  - Building from the middle outward!
-  - Domain Layer
-    - [x] We need a `User` domain entity.
-    - [x] We need a `UserRepository` repo parent class as well.
-  - Application Layer
-    - [x] We need to identify and convert route code, utils, and User related
-      access code into usecases.
-    - All the usual suspects to start with:
-      - [x] `get(user_id):`
-      - [x] `update(user):`
-      - [x] `list():`
-      - [x] `delete(user_id):`
-      - [x] `get_totp_uri(user_id):`
-      - [x] `verify_totp(user_id, token):`
-      - [x] `has_access(user_id, route, server_id=None):`
-  - Infrastructure Layer
-    - [x] We need to move the existing User model into `infrastructure/persistence/models/user_model.py` and rename to `UserModel`
-    - [x] We need to create an `SqlAlchemyUserModel` class in `infrastructure/persistence/repositories/user_repo.py` and define access methods for usecases
-  - Wiring
-    - [x] We need to wire it all through the `container.py`
-  - Interface Layer
-    - [x] We need to replace the calls in route code to use new usecases instead of direct DB access.
-  - [x] **Figure out how to get auth stuff into app now.**
-    - I'm kinda dumb. I just refactored all this only to realize after the fact
-      that I cant use the domain entity User object for auth stuff cause its
-      missing all the auth stuff that comes with sqlalchmey and usermixin.
-    - So I kinda fucked myself...
-    - Cause under clean arch, route code shouldn't use the DB object directly. But
-      like that's how all the flask route `@login_required` decoraters work,
-      that's how the `current_user.is_active` or `current_user.is_authenticated` works...
-    - So maybe as a compromise, I'll just let the main `app/__init__.py` use
-      the real flask sqlalchemy model object.
-      - And then we can do like a boundry context layer or something for
-        translating that from route code into domain entity reprsentation of a
-        user.
-
-* [x] **Redo GameServer as clean arch**
-  - We need:
-  - [x] **Domain Entity**
-  - [x] **Domain Repository Port**
-  - [x] **Application Usecases**
-  - [x] **Infrastructure SqlAlch Repository Adapter**
-  - [x] **Infrastructure System Adapter(s)**
-    - We need these for install and delete. Will need some additional use cases to go along with them.
-    - Just a thin layer for interacting with ansi connector using domain object.
-  - [x] **Container Wiring**
-  - [x] **Interface Route Code**
-
-* [x] **Find any remaining calls in route code to database and convert into entities, usecases, repositories**
-  - Aka convert existing route code db calls into clean arch.
-  - Right now I still have the classic OG problem of the route code doing too much.
-  - Basically, a ton of the current routecode sorta things can happen in application/usecases
-  - This will thin out the routes and make the connection to the DB clean arch.
-
-* [x] **Figure out cleaner pattern(s) for container stuff**
-  - Right now container is easy and since what I'm mainly worried about is
-    refactoring the app code, then a conatiner with same interface for
-    accessing all usecases is fine right now.
-  - But I know it could be made a little bit more cleaver and usable.
-  - Probably could have some factory stuff producing the needful.
-
-* [x] **Reorganize blueprints & other interface layer stuff into app/interface dir**
-  - This will be easier to do after other stuff is cleaned up because then
-    should mostly just be renaming imports, I think...
-
-* [x] **Convert blocklist to use clean arch**
-  - This is the first "service" I'm converting to be clean architecture.
-  - [x] Remove request specific parts into interface layer.
-  - [x] Move rest into infrastructure layer repository.
-    - In this case its an in mem repository. But same as any other sql, file, etc.
-  - [x] Create usecases and wire them up through container.
-  - [x] Replace routecode calls to new use cases.
-
-* [x] **Convert system metrics to use clean arch**
-  - [x] Move into infrastructure layer repository.
-    - In this case its an in mem repository. But same as any other sql, file, etc.
-  - [x] Create usecases and wire them up through container.
-  - [x] Replace routecode calls to new use cases.
-
-* [x] **Convert ProcInfo to proper domain obj + repo aka use clean arch**
-  - [x] Move `proc_info` object into domain entity. 
-  - [x] Create domain layer repo skel.
-  - [x] Move ProcInfoRegistry into infrastructure layer ProcInfoRepository.
-    - In this case its an in mem repository. But same as any other sql, file, etc.
-  - [x] Create usecases and wire them up through container.
-  - [x] Replace routecode calls to new use cases.
-
-* [x] **Convert CommandExecutor (aka run_command) to use clean arch**
-  - [x] Move CommandExecutor into infrastructure layer.
-  - [x] Create usecase for run and wire it up through container.
-  - [x] Replace routecode calls to new use case.
-
-* [x] **Convert ConfigManager to use clean arch**
-  - [x] Move ConfigManager into infrastructure layer.
-  - [x] Create usecase for run and wire it up through container.
-  - [x] Replace routecode calls to new use case.
-
-* [x] **Figure out how logger fits into clean architecture**
-  - I was way overthinking this, the logger is already installed in our main
-    `__init__.py` and so we can use it anywhere in the app and it'll make it to
-    the log.
-  - No need to build out DI. Python logger has DI included automagically by default.
-
-* [x] **Figure out how exception handling fits into clean architecture**
-  - https://www.geeksforgeeks.org/python/define-custom-exceptions-in-python/
-  - https://blog.miguelgrinberg.com/post/the-ultimate-guide-to-error-handling-in-python
-  - https://codesignal.com/learn/courses/clean-code-with-modules-and-packages/lessons/introduction-to-exception-handling-in-python
-  - I was over thinking this too. I can just do, throw exception in infra
-    layer, catch it in flask route code. That's a way simpler approach.
-  - Also see result object below, can handle most of it cleaner.
-
-* [x] **Remove cron stuff from ansible connector**
-  - Now that we have the new user module service (soon to be refactored under
-    clean arch), we can just use that to run cron commands as alt users more
-    securely and faster without having to become root.
-  - Instead we need:
-    - [x] New user module service script for cron.
-    - [x] Update cron manager to call that instead of connector.
-    - [x] Rip out old cron stuff in connector.
-
-* [x] **This shouldn't be fatal, `root_install.sh` MAKE FIX!**
-```
-####### Installing Web-LGSM Ansible Connector...
-####### Setting up Share Modules Dir...
-mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
-```
 
 * [ ] **Make web-lgsm.py update json work again for new game servers**
   - I broke this when I added pictures. 
@@ -579,10 +348,6 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
    ...
 ]
 ```
-
-* [x] **Look into Arbor impact analysis engine**
-  - https://github.com/Anandb71/arbor
-  - Not what I was looking for.
 
 * [ ] **I need a public site for the project**
   - Not only do I need to catch form posts for usage stats and crash reports,
@@ -611,27 +376,8 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
     catch 500's and send a stack trace and maybe some anonomized vars dump back
     to me somehow. (Email sucks so prolly just post to a site I control)
 
-* [x] **For install list do sort by alpha two columns header**
-  - At the top of the install page, add some buttons to sort by alphabetical
-    order for both columns.
-  - Right now order is ascending by server short name.
-
-* [x] **Change sort order of game servers on main page**
-  - User wants the ability to change the ordering of the GameServer items on
-    the home page.
-  - Either sort alphabetically or custom order.
-  - [Related Issue](https://github.com/BlueSquare23/web-lgsm/issues/55)
-
 
 ### The Rest
-
-* [x] **Use controls.json for form validation & list**
-  - INSTEAD, HARDCODE `force-update` FOR NOW, THEN OVERHAUL AVAILABLE COMMAND DETECTION!!!
-  - I think that form is using a hardcoded list of valid controls for game
-    servers so it blocks other controls for things like `force-update`.
-  - I think this might hint at a bigger issue though and we should be doing
-    more to detect available server controls. 
-  - Related Issue: https://github.com/BlueSquare23/web-lgsm/issues/49
 
 * [ ] **Find way to detect available server controls on a per server basis**
   - I'm thinking the existing `json/controls.json` file isn't going to cut it anymore.
@@ -653,11 +399,6 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
     - Since these are just env vars, think I can just put them in the app init
       and then pass the env in. Not sure why he put them in the old
       run_cmd_popen, perhaps because they were not needed elsewhere.
-
-* [x] **Clean up html and stray JS**
-  - There's javascript in html templates still cause I'm lazy. Needs put in its
-    own script fils(s) and linked.
-  - Also just html in comments still and misc stuff like that.
 
 * [ ] **Write unit tests for new untested classes**
   - Classes still somewhat molten, once more arch decisions made and classes
@@ -688,8 +429,6 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
 * [ ] **More Cron Improvements**
   - [ ] Add `@reboot`, `@daily`, `@hourly`, etc. to cron scheduler.
   - [ ] Add option to send stderr or stderr & stdout to file (default /dev/null)
-  - [x] Make schedule expression to English description more natural sounding.
-  - [x] Add greyed out list for jobs that lack `server_id` and `job_id` for admins only.
   - [ ] Add "adopt" for unmanaged jobs to add them to DB and associate with game server.
 
 * [ ] **Add Sudo Pass Form for cmds that need it**
@@ -702,7 +441,6 @@ mkdir: cannot create directory ‘/opt/web-lgsm/utils’: File exists
   - This requires sudo password form.
   - I think this is still broken which sucks.
   - You should be able to update the app from the web panel.
-
 
 * [ ] **Add new export database information**
   - I want to allow users to export their database to csv or json or something

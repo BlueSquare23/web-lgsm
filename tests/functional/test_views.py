@@ -33,8 +33,12 @@ def test_home_content(db_session, client, authed_client, test_vars):
         assert b"Logout" in response.data
         assert b"Installed Servers" in response.data
         assert b"Other Options" in response.data
-        assert b"Install a New Game Server" in response.data
-        assert b"Add or Edit Existing LGSM Installation" in response.data
+        assert b"Install New Server" in response.data
+        assert b"Edit LGSM Installations" in response.data
+        assert b"Manage Users" in response.data
+        assert b"Scheduled Jobs" in response.data
+        assert b"Audit Log" in response.data
+        assert b"Two-Factor Auth" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -70,21 +74,22 @@ def test_add_content(db_session, client, authed_client, test_vars):
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Add or Edit Existing LGSM Installation" in response.data
+        assert b"Add / Edit Server" in response.data
+        assert b"Manage existing LGSM installations" in response.data
         assert b"Game server is installed locally" in response.data
         assert b"Game server is installed on a remote machine" in response.data
         assert b"Game server is in a docker container" in response.data
         assert b"Installation Title" in response.data
         assert b"Enter a unique name for this install" in response.data
-        assert b"Installation directory path" in response.data
+        assert b"Installation Directory Path" in response.data
         assert b"Enter the full path to the game server directory" in response.data
-        assert b"LGSM script name" in response.data
+        assert b"LGSM Script Name" in response.data
         assert b"Enter the name of the game server script" in response.data
-        assert b"Game server system username" in response.data
+        assert b"System Username" in response.data
         assert b"Enter system user game server is installed under" in response.data
-        assert b"Remote server's IP address or hostname" in response.data
+        assert b"Remote Host" in response.data
         assert b"Enter remote server&#39;s IP address or hostname. For example, &#34;gmod.domain.tld&#34;" in response.data
-        assert b"Submit" in response.data
+        assert b"Add Server" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -392,12 +397,12 @@ def test_audit_content(db_session, client, authed_client, test_vars):
         assert b"Filter by User" in response.data
         assert b"Search Messages" in response.data
         assert b"Search" in response.data
-        assert b"Reset Filters" in response.data
+        assert b"Reset" in response.data
         assert b"Event ID" in response.data
         assert b"User ID" in response.data
         assert b"Username" in response.data
         assert b"Event Message" in response.data
-        assert b"Date/Time" in response.data
+        assert b"Date / Time" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -439,7 +444,7 @@ def test_jobs_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Web-LGSM Job Scheduler" in response.data
+        assert b"Job Scheduler" in response.data
         assert b"Select Game Server" in response.data
         assert b"Mockcraft" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
@@ -451,11 +456,11 @@ def test_jobs_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Web-LGSM Job Scheduler" in response.data
+        assert b"Job Scheduler" in response.data
         assert b"Select Game Server" in response.data
         assert b"Mockcraft" in response.data
-        assert b"Cron Jobs for Mockcraft" in response.data
-        assert b"Add New Cron Job" in response.data
+        assert b"Mockcraft Jobs" in response.data
+        assert b"Add Job" in response.data
         assert b"Cron Job Editor" in response.data
         assert b"Command" in response.data
         assert b"Comment" in response.data
@@ -466,8 +471,8 @@ def test_jobs_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Month" in response.data
         assert b"Day of Week" in response.data
         assert b"Cron Expression" in response.data
-        assert b"Close" in response.data
-        assert b"Save Changes" in response.data
+        assert b"Cancel" in response.data
+        assert b"Save Job" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -548,9 +553,9 @@ def test_controls_content(db_session, client, authed_client, add_mock_server, te
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Output:" in response.data
-        assert f"Server Controls for {test_server}".encode() in response.data
-        assert b"Top" in response.data
+        assert b"Console Output" in response.data
+        assert b"Server Controls" in response.data
+        assert b"Back to Top" in response.data
         assert b"Delete Server" in response.data
 
         # Check all cmds are there.
@@ -720,14 +725,15 @@ def test_install_content(db_session, client, authed_client, test_vars):
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Install a New LGSM Server" in response.data
+        assert b"Install Server" in response.data
+        assert b"Deploy a new LGSM game server" in response.data
 
         # Compares against game_servers dictionary file.
         for script_name, full_name in game_servers.items():
             assert script_name.encode() in response.data
             assert full_name.encode() in response.data
 
-        assert b"Top" in response.data
+        assert b"Back to Top" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -821,7 +827,8 @@ def test_settings_content(db_session, client, authed_client, test_vars):
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Web LGSM Settings" in response.data
+        assert b"Settings" in response.data
+        assert b"Customize Web LGSM behavior and appearance" in response.data
         assert b"Output Text Color" in response.data
         assert b"Stats Primary Color" in response.data
         assert b"Stats Secondary Color" in response.data
@@ -832,12 +839,7 @@ def test_settings_content(db_session, client, authed_client, test_vars):
         )
         assert b"Install new game servers under system user" in response.data
         assert b"Show Live Server Stats on Home Page" in response.data
-        assert b"Check for and update the Web LGSM" in response.data
-        assert (
-            b"Note: Checking this box will restart your Web LGSM instance"
-            in response.data
-        )
-        assert b"Apply" in response.data
+        assert b"Save Settings" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -1096,14 +1098,14 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Editing Config:" in response.data
-        assert b"Full Path: " in response.data
-        assert b"#### Game Server Settings ####" in response.data
-        assert b"#### Testing..." in response.data
-        assert b"Save File" in response.data
-        assert b"Download Config File" in response.data
+        assert b"Config Editor" in response.data
+        assert b"Editing:" in response.data
+        assert b"Full path:" in response.data
+        assert b"File Contents" in response.data
+        assert b"Save Changes" in response.data
+        assert b"Download File" in response.data
         assert b"Back to Controls" in response.data
-        assert b"Please note," in response.data
+        assert b"Important Notice" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -1159,13 +1161,13 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Editing Config:" in response.data
-        assert b"Full Path: " in response.data
+        assert b"Config Editor" in response.data
+        assert b"Full path: " in response.data
         assert b"#### Testing..." in response.data
         assert b"Save File" in response.data
-        assert b"Download Config File" in response.data
+        assert b"Download File" in response.data
         assert b"Back to Controls" in response.data
-        assert b"Please note," in response.data
+        assert b"Important Notice" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
         ## Download testing.
@@ -1356,7 +1358,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
 
         # Test install page.
         response = client.get("/install", follow_redirects=True)
-        msg = b"Install a New LGSM Server"
+        msg = b"Install Server"
         check_response(response, msg, resp_code, "main.install")
 
         # Test delete page.
@@ -1371,7 +1373,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
         # Test add page.
         response = client.get("/add", follow_redirects=True)
         csrf_token = get_csrf_token(response)
-        msg = b"Add or Edit Existing LGSM Installation Details"
+        msg = b"Add / Edit Server"
         check_response(response, msg, resp_code, "main.add")
 
         ## Test legit server add.
@@ -1400,7 +1402,7 @@ def test_new_user_has_ALL_permissions(client, user_authed_client_all_perms, test
 
         # Test game server controls page.
         response = client.get(f"/controls?server_id={server_id}", follow_redirects=True)
-        msg = b"Server Controls for Mockcraft"
+        msg = b"Server Controls"
         check_response(response, msg, resp_code, "main.controls")
 
         # Test settings page.

@@ -1,43 +1,50 @@
 // Function to update the status indicator based on server status.
 function updateStatusIndicator(serverId, status) {
-  // Default to green, set to red if explicitly false.
-  let statusColor = '#00FF11';
+
+  let statusColor = '#00FF11'; // default green
+
   if (status === false) {
-     statusColor = 'red';
-  } else if (status === null) { 
-    // If explicitly null, stay grey. Aka problem with ssh conn.
+    statusColor = 'red';
+  } else if (status === null) {
+    // keep grey if unknown / SSH failure
     return;
-  } 
+  }
 
-  const indicator = $(`#${serverId}`);
+  // Find the indicator using data attribute (safe & scalable)
+  const indicator = $(`.status-indicator[data-server-id="${serverId}"]`);
 
-  // Set the style of the status indicator.
+  if (!indicator.length) return;
+
   indicator.css({
     'color': statusColor,
-    'text-shadow': `${statusColor} 0px 0px 5px, ` +
-                   `${statusColor} 0px 0px 10px, ` +
-                   `${statusColor} 0px 0px 20px, ` +
-                   `${statusColor} 0px 0px 30px`
+    'text-shadow':
+      `${statusColor} 0px 0px 5px, ` +
+      `${statusColor} 0px 0px 10px, ` +
+      `${statusColor} 0px 0px 20px, ` +
+      `${statusColor} 0px 0px 30px`
   });
 }
 
-// Function to get the server status via the API and update the indicator.
-function getServerStatus() {
-  $('.status-indicator').each(function() {
-    // Get the server id from the span element.
-    const serverId = $(this).attr('id');
 
-    // Make an API request to get the server status.
-    $.getJSON(`/api/server-status/${serverId}`, function(data) {
-      // Update the indicator based on the status.
+// Function to fetch all server statuses
+function getServerStatus() {
+
+  $('.status-indicator').each(function () {
+
+    const serverId = $(this).data('server-id');
+
+    if (!serverId) return;
+
+    $.getJSON(`/api/server-status/${serverId}`, function (data) {
       updateStatusIndicator(serverId, data.status);
     });
+
   });
 }
 
-// Initial call to update the indicators when the page loads.
+
+// Initial load
 getServerStatus();
 
-// Refresh every 300000 milliseconds (aka 5 minutes).
+// Refresh every 5 minutes
 setInterval(getServerStatus, 300000);
-

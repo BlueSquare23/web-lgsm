@@ -1,10 +1,9 @@
-// Make spinners appear.
 function showSpinners() {
-  const spinners = document.getElementById('spinners');
-  spinners.style.display = 'block';
+  const el = document.getElementById('header-spinner');
+  if (el) el.style.display = 'block';
 }
 
 function hideSpinners() {
-  const spinners = document.getElementById('spinners');
-  spinners.style.display = 'none';
+  const el = document.getElementById('header-spinner');
+  if (el) el.style.display = 'none';
 }

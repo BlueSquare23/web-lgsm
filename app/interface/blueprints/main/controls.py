@@ -183,6 +183,8 @@ def controls():
             flash("Server is Off! No Console Output!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
+        jobs_edit = True if server.install_type == 'local' else False
+
         # Console mode is trigger in JS, set off by console=True. Nothing
         # for backend console happens here. See /api/update-console route!
         return render_template(
@@ -191,6 +193,7 @@ def controls():
             server_id=server_id,
             server_name=server.install_name,
             server_controls=controls_list,
+            show_jobs_edit=jobs_edit,
             _config=config,
             cfg_paths=cfg_paths,
             select_cfg_form=select_cfg_form,

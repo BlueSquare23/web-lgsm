@@ -333,16 +333,15 @@ def test_2fa_contents(db_session, client, authed_client, test_vars):
         assert response.status_code == 200
 
         # Check content matches.
-        assert b"Two-Factor Auth Setup" in response.data
-        assert b"You're almost done! Please scan the QR code below with your authenticator app" in response.data
-        assert b"Scan this QR code with your authenticator app" in response.data
-        assert b"Manual Entry Option" in response.data
-        assert b"If you can't scan the QR code, enter this secret key manually" in response.data
-        assert b"Make sure to set the time-based option in your authenticator app" in response.data
-        assert b"Enter Verification Code" in response.data
-        assert b"OTP Code" in response.data
+        assert b"Two-Factor Authentication" in response.data
+        assert b"Scan the QR code below using your authenticator app to enable 2FA" in response.data
+        assert b"Manual Setup Key" in response.data
+        assert b"If you cannot scan the QR code, enter this key manually in your authenticator app" in response.data
+        assert b"Ensure time-based (TOTP) mode is enabled in your app" in response.data
+        assert b"Verify Setup" in response.data
+        assert b"Authentication Code" in response.data
         assert b"Enter 6-digit code" in response.data
-        assert b"Need an authenticator app? Try 2FAS Auth, Authy, or Google Authenticator" in response.data
+        assert b"Recommended apps: Google Authenticator, Authy, 2FAS" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
@@ -422,7 +421,7 @@ def test_edit_user_contents(db_session, client, authed_client, test_vars):
 
         assert b"New User" in response.data
         assert b"test" in response.data
-        assert b"User Settings:" in response.data
+        assert b"User Management" in response.data
         assert b"Username" in response.data
         assert b"Password" in response.data
         assert b"Confirm Password" in response.data
@@ -430,7 +429,7 @@ def test_edit_user_contents(db_session, client, authed_client, test_vars):
         assert (
             b"Regular User - Configure limited user permissions below" in response.data
         )
-        assert b"Allowed to Pages" in response.data
+        assert b"Allowed Pages" in response.data
         assert b"Can install new game servers" in response.data
         assert b"Can add/edit existing game servers" in response.data
         assert b"Can modify web-lgsm settings page" in response.data
@@ -449,12 +448,8 @@ def test_edit_user_contents(db_session, client, authed_client, test_vars):
         assert b"backup" in response.data
         assert b"console" in response.data
         assert b"send" in response.data
-        assert b"Allow Access to Game Servers" in response.data
+        assert b"Game Server Access" in response.data
         assert b"No game servers installed yet" in response.data
-        assert (
-            b"You can adjust what servers this user has access to after installing or adding a game server"
-            in response.data
-        )
 
 
 def test_edit_user_responses(db_session, client, authed_client, test_vars):

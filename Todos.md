@@ -219,11 +219,15 @@
 
 ### New Features, Highlevel Release Goals
 
-* [ ] **Overhaul Controls Page Frontent**
+* [x] **Overhaul Controls Page Frontent**
   - This page has been bland and boring for a long time. Time to give it some
     love and a front end overhaul.
-  - [ ] Fix live console output.
-  - [ ] Rewrite xtermjs code to fix live console output & to fix carriage returns prints. 
+  - [x] Fix live console output.
+
+* [ ] **Rewrite xtermjs code to fix live console output & to fix carriage returns prints.**
+
+* [ ] **Add more Custom Themeing options to config**
+  - So I've already got a couple of color options for the config.
 
 * [ ] **Get Basic POC FileManager Setup**
   - UI:
@@ -237,7 +241,7 @@
     - [ ] Clean up / rebuild existing edit route and page.
     - [ ] Locked down to under users home dir.
 
-* [ ] **Play around with new Controls page UI**
+* [x] **Play around with new Controls page UI**
   - It looks like shit and basically hasn't changed in a long ass time. We're
     trying to come up with a more consistent "Control Panel-esq" design
     language and I think the control panel would be a good place to start figuring

@@ -91,7 +91,7 @@
 
               <div class="mb-3">
                 {{ form.username.label(class="form-label text-light") }}
-                {{ form.username(class="form-control bg-dark text-light border-secondary",
+                {{ form.username(class="form-control bg-dark text-light border-secondary white-placeholder",
                   value=(selected_user if selected_user != 'newuser' else ''),
                   placeholder="Enter username") }}
               </div>
@@ -99,7 +99,7 @@
               <div class="mb-3">
                 {{ form.password1.label(class="form-label text-light") }}
                 <div class="password-container">
-                  {{ form.password1(class="form-control bg-dark text-light border-secondary") }}
+                  {{ form.password1(class="form-control bg-dark text-light border-secondary white-placeholder") }}
                   <span class="password-toggle" id="togglePassword1">
                     <i class="bi bi-eye text-white"></i>
                   </span>
@@ -109,7 +109,7 @@
               <div class="mb-3">
                 {{ form.password2.label(class="form-label text-light") }}
                 <div class="password-container">
-                  {{ form.password2(class="form-control bg-dark text-light border-secondary") }}
+                  {{ form.password2(class="form-control bg-dark text-light border-secondary white-placeholder") }}
                   <span class="password-toggle" id="togglePassword2">
                     <i class="bi bi-eye text-white"></i>
                   </span>
@@ -240,7 +240,7 @@
                 </div>
                 {% endfor %}
               {% else %}
-                <p class="text-white mb-0">No servers installed yet.</p>
+                <p class="text-white mb-0">No game servers installed yet.</p>
               {% endif %}
             </div>
           </div>

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Web LGSM File Manager{% endblock %}
+
+{% block content %}
+
+<!-- CodeMirror -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/cobalt.css">
+
+<div class="container px-4 py-4">
+
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-body">
+          <h1 class="display-6 text-light mb-1">
+            <i class="bi bi-folder-fill me-2 text-warning"></i>File Manager
+          </h1>
+          <p class="text-white mb-0">
+            Current Path:
+            <span class="text-info">{{ current_path }}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <!-- File Browser -->
+    <div class="col-md-4 mb-4">
+      <div class="card bg-dark border-secondary shadow-sm h-100">
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-folder2-open me-2 text-primary"></i>Files
+          </h5>
+        </div>
+
+        <div class="card-body p-2">
+
+          <ul class="list-group list-group-flush">
+
+            <!-- Parent Directory -->
+            {% if current_path != "/" %}
+            <li class="list-group-item bg-dark border-secondary">
+              <form method="GET" action="/files">
+                <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
+                <input id="path" name="path" type="hidden" value="{{ parent_path }}">
+
+                <button class="btn btn-link text-secondary p-0 w-100 text-start">
+                  <i class="bi bi-arrow-up-circle me-2"></i>..
+                </button>
+              </form>
+            </li>
+            {% endif %}
+
+            <!-- Directory + File Listing -->
+            {% for item in files %}
+            <li class="list-group-item bg-dark border-secondary">
+
+              <form method="GET" action="/files">
+                <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
+                <input id="path" name="path" type="hidden" value="{{ item.path }}">
+
+                <button class="btn btn-link p-0 w-100 text-start
+                  {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
+
+                  {% if item.type == 'dir' %}
+                    <i class="bi bi-folder-fill me-2"></i>
+                    {{ item.name }}/
+                  {% else %}
+                    <i class="bi bi-file-earmark-text me-2"></i>
+                    {{ item.name }}
+                  {% endif %}
+
+                </button>
+              </form>
+
+            </li>
+            {% endfor %}
+
+          </ul>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="col-md-8 mb-4">
+      <div class="card bg-dark border-secondary shadow-sm h-100">
+        <div class="card-header bg-dark border-secondary">
+          <h5 class="mb-0 text-light">
+            <i class="bi bi-code-slash me-2 text-primary"></i>
+            {% if selected_file %}
+              Editing: {{ selected_file }}
+            {% else %}
+              No file selected
+            {% endif %}
+          </h5>
+        </div>
+
+        <div class="card-body p-0">
+          <textarea id="edit-text-area"
+                    name="file_contents"
+                    form="save-edit"
+                    class="form-control bg-dark text-light border-0 rounded-0"
+                    style="min-height: 500px;">{{ file_contents or "" }}</textarea>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Actions -->
+  <div class="row mb-4 g-3">
+
+    <!-- Save -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-save-fill fs-1 text-primary mb-3"></i>
+          <h5 class="text-light">Save File</h5>
+          <p class="text-white small">Write changes to disk</p>
+
+          <form method="POST" id="save-edit" action="/files">
+            {{ save_form.csrf_token }}
+            {{ save_form.server_id(value=server_id) }}
+            {{ save_form.cfg_path(value=selected_file) }}
+
+            {{ save_form.save_submit(class="btn btn-outline-primary w-100") }}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-download fs-1 text-success mb-3"></i>
+          <h5 class="text-light">Download</h5>
+          <p class="text-white small">Download selected file</p>
+
+          <form method="GET" action="/files">
+            {{ download_form.csrf_token }}
+            {{ download_form.server_id(value=server_id) }}
+            {{ download_form.cfg_path(value=selected_file) }}
+
+            {{ download_form.download_submit(class="btn btn-outline-success w-100") }}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-secondary h-100 shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-upload fs-1 text-secondary mb-3"></i>
+          <h5 class="text-light">Upload</h5>
+          <p class="text-white small">Upload File</p>
+
+          <form method="GET" action="/files">
+            {{ upload_form.csrf_token }}
+            {{ upload_form.server_id(value=server_id) }}
+            {{ upload_form.cfg_path(value=selected_file) }}
+
+            {{ upload_form.upload_submit(class="btn btn-outline-secondary w-100") }}
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Editor Script -->
+<script src="/static/js/edit-text-area.js"></script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+{% endblock %}

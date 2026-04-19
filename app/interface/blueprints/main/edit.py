@@ -14,7 +14,7 @@ from flask import (
 
 from app.utils import *
 #from app.models import GameServer
-from app.interface.forms.views import UploadTextForm, DownloadCfgForm, SelectCfgForm
+from app.interface.forms.views import SaveForm, DownloadForm, SelectCfgForm
 from app.interface.forms.validation_errors import validation_errors
 
 from app.container import container
@@ -38,8 +38,8 @@ def edit():
         flash("Config Editor Disabled", category="error")
         return redirect(url_for("main.home"))
 
-    upload_form = UploadTextForm()
-    download_form = DownloadCfgForm()
+    upload_form = UploadForm()
+    download_form = DownloadForm()
 
     if request.method == "GET":
         current_app.logger.debug(request.args.keys())

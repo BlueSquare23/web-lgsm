@@ -231,11 +231,16 @@
 
 * [ ] **Get Basic POC FileManager Setup**
   - UI:
-    - [ ] Page for browsing files.
-    - [ ] Collapsible list of files and directories on the system on the left.
-    - [ ] Click file it opens the file, click dir opens the dir.
+    - [ ] A delete file button.
+    - [ ] Show hidden files button.
+    - [ ] Search files button.
+    - [ ] List of files needs to be put in scrollable list.
+    - [x] Page for browsing files.
+    - [x] List of files and directories on the system on the left.
+    - [x] Click file it opens the file, click dir opens the dir.
     - [ ] Transition edit page to be just inside file manager now.
   - Backend:
+    - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.
     - [ ] Clean up / rebuild existing edit route and page.

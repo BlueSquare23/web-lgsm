@@ -298,7 +298,7 @@ class SettingsForm(FlaskForm):
 # TODO: The below three classes for the edit page are very similar and could
 # probably be more cleverly combined into one. I don't have the time to do that
 # rn, so will figure that out another time. I just need a working edit page atm.
-class UploadTextForm(FlaskForm):
+class SaveForm(FlaskForm):
     """Form for editing and saving config file content"""
 
     server_id = HiddenField(
@@ -319,7 +319,7 @@ class UploadTextForm(FlaskForm):
     save_submit = SubmitField("Save File")
 
 
-class DownloadCfgForm(FlaskForm):
+class DownloadForm(FlaskForm):
     """Form for downloading config file"""
 
     server_id = HiddenField(
@@ -338,6 +338,25 @@ class DownloadCfgForm(FlaskForm):
     )
     download_submit = SubmitField("Download Config File")
 
+class UploadForm(FlaskForm):
+    """Form for upload file content"""
+
+    server_id = HiddenField(
+        "Server ID",
+        validators=[
+            InputRequired(),
+            ServerExists(),
+        ],
+    )
+    cfg_path = HiddenField(
+        "Config Path",
+        validators=[
+            InputRequired(),
+            ValidConfigFile(),
+        ],
+    )
+    file_contents = TextAreaField("File Contents", validators=[InputRequired()])
+    upload_submit = SubmitField("Upload File")
 
 # Form instead of FlaskForm to bypass csrf validation, since just GET req to
 # load page.

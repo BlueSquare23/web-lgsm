@@ -231,7 +231,10 @@
 
 * [ ] **Get Basic POC FileManager Setup**
   - UI:
-    - [ ] A delete file button.
+    - [x] A delete file button.
+    - [ ] Fix selected file so its highlighted (something's wonky there)
+    - [ ] Create new file - modal pops up with option to name file
+    - [ ] Rename file - modal pops open with rename option
     - [x] Show hidden files button.
     - [x] Search files, just frontend js.
     - [x] List of files needs to be put in scrollable list.
@@ -243,6 +246,7 @@
     - [ ] New perms for file editor 
     - [ ] File/dir delete api route
   - Route Code:
+    - [ ] Ensure `read_file` only read's plain text files.
     - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.

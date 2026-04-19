@@ -148,7 +148,7 @@ class SqlAlchemyUserRepository(UserRepository):
             return True
 
         valid_routes = ["install", "edit", "add", "delete", "settings", "controls",
-                        "update-console", "cmd-output", "server-statuses", "jobs"]
+                        "update-console", "cmd-output", "server-statuses", "jobs", "files"]
 
         assert route in valid_routes, f"Invalid route: {route}"
 

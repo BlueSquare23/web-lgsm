@@ -28,6 +28,13 @@
     </div>
   </div>
 
+  <!-- Existing Servers Include -->
+  <div class="row mb-4">
+    <div class="col-12">
+      {% include 'game_servers.html' %}
+    </div>
+  </div>
+
   <div class="row">
 
     <!-- File Browser -->
@@ -77,13 +84,13 @@
 
             <!-- Directory + File Listing -->
             {% for item in files %}
-            <li class="list-group-item bg-dark border-secondary">
+            <li class="list-group-item bg-dark border-secondary d-flex align-items-center">
 
-              <form method="GET" action="/files">
+              <form method="GET" action="/files" class="flex-grow-1">
                 <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
                 <input id="path" name="path" type="hidden" value="{{ item.path }}">
 
-                <button class="btn btn-link p-0 w-100 text-start
+                <button class="btn btn-link p-0 text-start w-100 
                   {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
 
                   {% if item.type == 'dir' %}
@@ -96,6 +103,13 @@
 
                 </button>
               </form>
+
+              <!-- Delete button -->
+              <!-- NOTE: We urlencode the path twice, first layer auto unwrapped by flask api handler, second manually unwrapped in api route code -->
+              <button class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
+                      onclick="deleteFile('{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
+                <i class="bi bi-trash"></i>
+              </button>
 
             </li>
             {% endfor %}
@@ -204,6 +218,7 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <script>
+/* File Search */
 document.getElementById("fileSearch").addEventListener("keyup", function() {
   let filter = this.value.toLowerCase();
   let items = document.querySelectorAll(".list-group-item");
@@ -214,11 +229,39 @@ document.getElementById("fileSearch").addEventListener("keyup", function() {
   });
 });
 
+/* Toggle Hidden Files */
 document.getElementById("toggleHidden").addEventListener("change", function() {
   const url = new URL(window.location.href);
   url.searchParams.set("show_hidden", this.checked ? "1" : "0");
   window.location.href = url.toString();
 });
+
+/* File Delete */
+async function deleteFile(serverId, filePath, fileName) {
+  if (!confirm(`Delete ${fileName}?`)) return;
+
+  console.log(`/api/files/delete/${serverId}/${filePath}`);
+  try {
+    const response = await fetch(`/api/files/delete/${serverId}/${filePath}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete file");
+    }
+
+    window.location.reload();
+
+    //OR MAYBE... (nicer UX): remove element without reload
+    // event.target.closest("li").remove();
+
+  } catch (err) {
+    alert("Error deleting file: " + err.message);
+  }
+}
 </script>
 
 {% endblock %}

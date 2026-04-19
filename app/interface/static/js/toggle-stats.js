@@ -1,3 +1,4 @@
+const stats = document.getElementById('game-server-stats');
 function toggleStats() {
   if (stats.style.display === 'none'){
       stats.style.display = 'block';

@@ -9,6 +9,8 @@ from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
 
+from urllib.parse import quote_plus
+
 # Import extensions
 from .extensions import db, login_manager, migrate, cache
 
@@ -125,6 +127,12 @@ def register_template_filters(app):
     @app.template_filter("from_json")
     def from_json_filter(s):
         return json.loads(s)
+
+    @app.template_filter("urlencode")
+    def urlencode_filter(s):
+        if s is None:
+            return ""
+        return quote_plus(s)
 
 # We're using the AuthUser wrapper to convert the domain user entity into an
 # auth user for flask login stuff.

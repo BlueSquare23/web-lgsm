@@ -20,6 +20,8 @@ externalDocs:
 servers:
   - url: https://your-web-lgsm-domain/api/
 tags:
+  - name: files 
+    description: View and modify system files
   - name: cron 
     description: View and modify system crontab
   - name: update-console
@@ -37,6 +39,59 @@ consumes:
 produces:
   - application/json
 paths:
+  /files/delete/{server_id}/{file_path}:
+    delete:
+      tags: ['files']
+      summary: Delete a file by path 
+      description: Deletes the specified file for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server to delete file for 
+          schema:
+            type: string
+        - name: file_path
+          in: path
+          required: true
+          description: Full path to file to delete (URL Encoded)
+          schema:
+            type: string
+      responses:
+        '204':
+          description: File deleted successfully (no content)
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Server not found!"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Insufficient permission"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Problem deleting server, see error logs for more details."
   /cron/{server_id}:
     get:
       tags: ['cron']

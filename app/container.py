@@ -87,6 +87,7 @@ from app.application.use_cases.config.batch_update_config import BatchUpdateConf
 from app.infrastructure.system.file_system.file_manager import FileManager
 from app.application.use_cases.file_system.read_file import ReadFile
 from app.application.use_cases.file_system.write_file import WriteFile 
+from app.application.use_cases.file_system.delete_file import DeleteFile 
 
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
@@ -391,7 +392,7 @@ class Container:
             config_manager=self.config_manager()
         )
 
-    ## File System
+    ## Files
 
     def read_file(self):
         return ReadFile(
@@ -400,6 +401,11 @@ class Container:
 
     def write_file(self):
         return WriteFile(
+            file_manager=self.file_manager()
+        )
+
+    def delete_file(self):
+        return DeleteFile(
             file_manager=self.file_manager()
         )
 

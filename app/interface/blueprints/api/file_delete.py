@@ -2,7 +2,7 @@ import json
 
 from urllib.parse import unquote
 
-from flask import Response, flash
+from flask import Response, flash, current_app
 from flask_login import login_required, current_user
 from flask_restful import Resource
 
@@ -10,7 +10,9 @@ from app import db
 
 from . import api
 
-from app.interface.use_cases import get_game_server, check_user_access
+from app.utils import log_wrap
+
+from app.interface.use_cases import get_game_server, check_user_access, delete_file
 
 ######### API File Delete #########
 
@@ -49,11 +51,16 @@ class FileDelete(Resource):
         current_app.logger.info(log_wrap(f"{current_user} deleting {file_path}: ", server_id))
         current_app.logger.info(file_path)
 
-# TODO: Write this
-#        remove_file(file_path, server)
-
-        return {"server_id": server_id, "file_path": file_path}
-#        return "", 204
+        if delete_file(server, file_path):
+            return "", 204
+        else:
+            resp_dict = {
+                "Error": f"Problem deleting file"
+            }
+            response = Response(
+                json.dumps(resp_dict, indent=4), status=500, mimetype="application/json"
+            )
+            return response
 
 api.add_resource(FileDelete, "/files/delete/<string:server_id>/<string:file_path>")
 

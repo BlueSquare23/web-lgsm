@@ -107,7 +107,7 @@
               <!-- Delete button -->
               <!-- NOTE: We urlencode the path twice, first layer auto unwrapped by flask api handler, second manually unwrapped in api route code -->
               <button class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
-                      onclick="deleteFile('{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
+                      onclick="deleteFile(this, '{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
                 <i class="bi bi-trash"></i>
               </button>
 
@@ -237,7 +237,7 @@ document.getElementById("toggleHidden").addEventListener("change", function() {
 });
 
 /* File Delete */
-async function deleteFile(serverId, filePath, fileName) {
+async function deleteFile(btn, serverId, filePath, fileName) {
   if (!confirm(`Delete ${fileName}?`)) return;
 
   console.log(`/api/files/delete/${serverId}/${filePath}`);
@@ -252,11 +252,9 @@ async function deleteFile(serverId, filePath, fileName) {
     if (!response.ok) {
       throw new Error("Failed to delete file");
     }
+    showAlert(`Successfully deleted ${fileName}!`);
 
-    window.location.reload();
-
-    //OR MAYBE... (nicer UX): remove element without reload
-    // event.target.closest("li").remove();
+    btn.closest("li").remove();
 
   } catch (err) {
     alert("Error deleting file: " + err.message);

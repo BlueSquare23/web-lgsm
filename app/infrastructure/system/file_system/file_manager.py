@@ -57,3 +57,16 @@ class FileManager:
         """
         self.server = server
         return self.interface.write(file_path, content)
+
+    def delete(self, server, file_path):
+        """
+        Delete a file on the server.
+        
+        Args:
+            file_path (str): Path to the file
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        self.server = server
+        return self.interface.delete(file_path)

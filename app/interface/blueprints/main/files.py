@@ -26,10 +26,18 @@ def files():
 
         server_id = request.args.get('server_id')
         path = request.args.get('path')
+        show_hidden = request.args.get("show_hidden", 1, type=int)
+
         current_path = None
         selected_file = None
         file_contents = None
         parent_path = None
+
+        # Try cast to bool
+        try:
+            show_hidden = bool(show_hidden)
+        except:
+            show_hidden = False
 
         # If target path is a dir, fetch listing of files & sub dirs.
         files = []
@@ -38,7 +46,7 @@ def files():
 
             if is_dir(path):
                 current_path = path
-                files = list_dir_contents(path)
+                files = list_dir_contents(path, show_hidden)
 
             # strip file name and get listing of basedir
             else:
@@ -50,7 +58,7 @@ def files():
                 if base_dir == "":
                     base_dir = "."
 
-                files = list_dir_contents(base_dir)
+                files = list_dir_contents(base_dir, show_hidden)
 
             # If file read contents
             if selected_file:
@@ -82,6 +90,7 @@ def files():
             file_contents=file_contents,
             save_form=save_form,
             upload_form=upload_form,
+            show_hidden=show_hidden,
             download_form=download_form,
         )
 
@@ -100,12 +109,15 @@ def files():
 def is_dir(path):
     return os.path.isdir(path)
 
-def list_dir_contents(directory):
+def list_dir_contents(directory, show_hidden=True):
     files = []
 
     with os.scandir(directory) as entries:
         for entry in entries:
             item_type = 'dir' if entry.is_dir(follow_symlinks=False) else 'file'
+
+            if not show_hidden and entry.name.startswith("."):
+                continue
             
             files.append({
                 "name": entry.name,

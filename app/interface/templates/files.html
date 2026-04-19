@@ -39,23 +39,41 @@
           </h5>
         </div>
 
-        <div class="card-body p-2">
+        <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
 
           <ul class="list-group list-group-flush">
 
-            <!-- Parent Directory -->
-            {% if current_path != "/" %}
-            <li class="list-group-item bg-dark border-secondary">
-              <form method="GET" action="/files">
-                <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
-                <input id="path" name="path" type="hidden" value="{{ parent_path }}">
+            <!-- Search Bar -->
+            <div class="mb-2 px-2 pt-1">
+              <input type="text" id="fileSearch"
+                     class="form-control form-control-sm bg-dark text-light border-secondary white-placeholder"
+                     placeholder="Search files...">
+            </div>
 
-                <button class="btn btn-link text-secondary p-0 w-100 text-start">
+            <div class="d-flex justify-content-between align-items-center px-2">
+            
+              <!-- Parent Directory -->
+              {% if current_path != "/" %}
+              <form method="GET" action="/files" class="m-0">
+                <input name="server_id" type="hidden" value="{{ server_id }}">
+                <input name="path" type="hidden" value="{{ parent_path }}">
+            
+                <button class="btn btn-link text-secondary p-0 text-end">
                   <i class="bi bi-arrow-up-circle me-2"></i>..
                 </button>
               </form>
-            </li>
-            {% endif %}
+              {% endif %}
+            
+              <!-- Show Hidden Files -->
+              <div class="form-check form-switch text-light m-0">
+                <input class="form-check-input" type="checkbox" id="toggleHidden"
+                       {% if show_hidden %}checked{% endif %}>
+                <label class="form-check-label" for="toggleHidden">
+                  Show hidden files
+                </label>
+              </div>
+            
+            </div>
 
             <!-- Directory + File Listing -->
             {% for item in files %}
@@ -184,5 +202,23 @@
 <!-- Bootstrap Icons -->
 <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<script>
+document.getElementById("fileSearch").addEventListener("keyup", function() {
+  let filter = this.value.toLowerCase();
+  let items = document.querySelectorAll(".list-group-item");
+
+  items.forEach(item => {
+    let text = item.innerText.toLowerCase();
+    item.style.display = text.includes(filter) ? "" : "none";
+  });
+});
+
+document.getElementById("toggleHidden").addEventListener("change", function() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("show_hidden", this.checked ? "1" : "0");
+  window.location.href = url.toString();
+});
+</script>
 
 {% endblock %}

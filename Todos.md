@@ -232,9 +232,9 @@
 * [ ] **Get Basic POC FileManager Setup**
   - UI:
     - [x] A delete file button.
-    - [ ] Fix selected file so its highlighted (something's wonky there)
-    - [ ] Create new file - modal pops up with option to name file
-    - [ ] Rename file - modal pops open with rename option
+    - [x] Fix selected file so its highlighted (something's wonky there)
+    - [x] Create new file - modal pops up with option to name file
+    - [x] Rename file - modal pops open with rename option
     - [x] Show hidden files button.
     - [x] Search files, just frontend js.
     - [x] List of files needs to be put in scrollable list.
@@ -242,9 +242,11 @@
     - [x] List of files and directories on the system on the left.
     - [x] Click file it opens the file, click dir opens the dir.
     - [ ] Replace edit page with new file manager instead.
+    - [ ] Save search bar search to session var
   - API:
     - [ ] New perms for file editor 
-    - [ ] File/dir delete api route
+    - [x] File/dir delete api route
+    - [ ] File/dir create api route
   - Route Code:
     - [ ] Ensure `read_file` only read's plain text files.
     - [ ] A working upload button.

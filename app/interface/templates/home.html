@@ -252,7 +252,7 @@
       <div class="row g-3">
 
         {% if user.role == 'admin' or 'install' in parsed_json.routes %}
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/install" class="btn btn-outline-primary w-100">
             Install New Server
           </a>
@@ -260,7 +260,7 @@
         {% endif %}
 
         {% if user.role == 'admin' or 'add' in parsed_json.routes %}
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/add" class="btn btn-outline-secondary w-100">
             Edit LGSM Installations
           </a>
@@ -268,7 +268,7 @@
         {% endif %}
 
         {% if user.is_authenticated and user.role == 'admin' %}
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/edit_users" class="btn btn-outline-warning w-100">
             Manage Users
           </a>
@@ -276,7 +276,7 @@
         {% endif %}
 
         {% if user.role == 'admin' or 'jobs' in parsed_json.routes %}
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/jobs" class="btn btn-outline-success w-100">
             Scheduled Jobs
           </a>
@@ -284,18 +284,26 @@
         {% endif %}
 
         {% if user.role == 'admin' or 'audit' in parsed_json.routes %}
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/audit" class="btn btn-outline-info w-100">
             Audit Log
           </a>
         </div>
         {% endif %}
 
-        <div class="col-md-4">
+        <div class="col-md-6">
           <a href="/2fa_setup" class="btn btn-outline-light w-100">
             Two-Factor Auth
           </a>
         </div>
+
+        {% if user.role == 'admin' or 'files' in parsed_json.routes %}
+        <div class="col-md-6 d-flex">
+          <a href="/files" class="btn btn-outline-danger w-100">
+            File Manager
+          </a>
+        </div>
+        {% endif %}
 
       </div>
 

@@ -70,3 +70,18 @@ class FileManager:
         """
         self.server = server
         return self.interface.delete(file_path)
+
+    def rename(self, server, file_path, new_name):
+        """
+        Rename a file on the server.
+        
+        Args:
+            file_path (str): Path to the file
+            new_name (str): New basename of file
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        self.server = server
+        return self.interface.rename(file_path, new_name)
+

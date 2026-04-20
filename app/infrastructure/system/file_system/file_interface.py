@@ -6,10 +6,18 @@ class FileInterface:
         self.server = server
         self.logger = logger
     
-    def read_file(self, file_path):
+    def read(self, file_path):
         """Read file content - to be implemented by subclasses"""
         raise NotImplementedError
     
-    def write_file(self, file_path, content):
+    def write(self, file_path, content):
         """Write content to file - to be implemented by subclasses"""
+        raise NotImplementedError
+
+    def delete(self, file_path):
+        """Rename file - to be implemented by subclasses"""
+        raise NotImplementedError
+
+    def rename(self, file_path, new_name):
+        """Rename file - to be implemented by subclasses"""
         raise NotImplementedError

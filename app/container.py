@@ -88,6 +88,7 @@ from app.infrastructure.system.file_system.file_manager import FileManager
 from app.application.use_cases.file_system.read_file import ReadFile
 from app.application.use_cases.file_system.write_file import WriteFile 
 from app.application.use_cases.file_system.delete_file import DeleteFile 
+from app.application.use_cases.file_system.rename_file import RenameFile 
 
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
@@ -406,6 +407,11 @@ class Container:
 
     def delete_file(self):
         return DeleteFile(
+            file_manager=self.file_manager()
+        )
+
+    def rename_file(self):
+        return RenameFile(
             file_manager=self.file_manager()
         )
 

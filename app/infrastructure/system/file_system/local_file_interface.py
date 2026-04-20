@@ -17,7 +17,7 @@ class LocalFileInterface(FileInterface):
 
 
     def read(self, file_path):
-        self.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("reading file_path", file_path))
         args = [ file_path ]
 
         kwargs = dict()
@@ -38,7 +38,7 @@ class LocalFileInterface(FileInterface):
 
 
     def write(self, file_path, content):
-        self.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("writing file_path", file_path))
 
         # Encode the str to bytes.
         encoded_bytes = content.encode('utf-8')
@@ -56,7 +56,7 @@ class LocalFileInterface(FileInterface):
 
 
     def delete(self, file_path):
-        self.logger.info(log_wrap("file_path", file_path))
+        self.logger.info(log_wrap("deleting file_path", file_path))
 
         args = [ file_path ]
 
@@ -65,3 +65,14 @@ class LocalFileInterface(FileInterface):
             kwargs = { 'as_user': self.server.username }
 
         return self.executor.call('delete_file', *args, **kwargs)
+
+    def rename(self, file_path, new_name):
+        self.logger.info(log_wrap("renaming file_path", file_path))
+
+        args = [ file_path, new_name ]
+
+        kwargs = dict()
+        if self.server.username != LocalFileInterface.USER:
+            kwargs = { 'as_user': self.server.username }
+
+        return self.executor.call('rename_file', *args, **kwargs)

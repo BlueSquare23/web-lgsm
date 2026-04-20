@@ -230,6 +230,10 @@
   - So I've already got a couple of color options for the config.
 
 * [ ] **Get Basic POC FileManager Setup**
+  - I need to figure out if I'm just pushing dir stuff through file pipes or
+    making new dir only pipes...
+  - [ ] Replace edit page with new file manager instead.
+    - Links to confs on controls page will be replace with quick links to new file manager page.
   - UI:
     - [x] A delete file button.
     - [x] Fix selected file so its highlighted (something's wonky there)
@@ -241,19 +245,21 @@
     - [x] Page for browsing files.
     - [x] List of files and directories on the system on the left.
     - [x] Click file it opens the file, click dir opens the dir.
-    - [ ] Replace edit page with new file manager instead.
     - [ ] Save search bar search to session var
   - API:
+    - [ ] New file routes need validation and hardened against directory traversal attempts.
     - [ ] New perms for file editor 
     - [x] File/dir delete api route
-    - [ ] File/dir create api route
-  - Route Code:
+    - [x] File/dir create api route
+      - [ ] Make create route work, some bug with write "" right now.
+    - [x] File/dir rename api route
+  - Core Code:
     - [ ] Ensure `read_file` only read's plain text files.
     - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.
-    - [ ] Clean up / rebuild existing edit route and page.
-    - [ ] Locked down to under users home dir.
+    - [ ] Clean up / rip out remaining references to edit route and page.
+    - [x] Locked down to under users home dir.
 
 * [x] **Play around with new Controls page UI**
   - It looks like shit and basically hasn't changed in a long ass time. We're

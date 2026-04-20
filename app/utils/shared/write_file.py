@@ -23,5 +23,5 @@ def write_file(file_path, encoded_content):
         return True
 
     except Exception as e:
-        return e
+        return False
 

@@ -38,3 +38,10 @@ function dismissAll() {
   });
 }
 dismissAll();
+
+/* Flash alerts thrown in session storage */
+const msg = sessionStorage.getItem("flashMessage");
+if (msg) {
+  showAlert(msg);
+  sessionStorage.removeItem("flashMessage");
+}

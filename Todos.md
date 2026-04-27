@@ -248,18 +248,24 @@
     - [ ] Save search bar search to session var
   - API:
     - [ ] New file routes need validation and hardened against directory traversal attempts.
-    - [ ] New perms for file editor 
+    - [ ] New perms for file editor, replace edit perms with file perms.
     - [x] File/dir delete api route
     - [x] File/dir create api route
       - [ ] Make create route work, some bug with write "" right now.
     - [x] File/dir rename api route
   - Core Code:
-    - [ ] Ensure `read_file` only read's plain text files.
+    - [x] Ensure `read_file` only read's plain text files.
     - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.
     - [ ] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
+  - Future Features:
+    - Non-day1 stuff.
+    - [ ] It'd be cool if could return info about mime type with file contents.
+      Then we could set the CodeMirror extension to be the same so syntax
+      hightlight always works. We might even just be able to use the file extention
+      tbh.
 
 * [x] **Play around with new Controls page UI**
   - It looks like shit and basically hasn't changed in a long ass time. We're

@@ -9,10 +9,6 @@ def write_file(file_path, encoded_content):
     Returns:
         bool: True if write successful, False otherwise.
     """
-    # Check that file exists before allowing writes to it.
-    if not os.path.isfile(file_path):
-        return False
-
     try:
         # Decode base64 content str.
         content = base64.b64decode(encoded_content).decode('utf-8')

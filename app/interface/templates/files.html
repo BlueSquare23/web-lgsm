@@ -398,7 +398,7 @@ document.getElementById("renameForm").addEventListener("submit", async function(
 
     if (!response.ok) throw new Error("Rename failed");
 
-    sessionStorage.setItem("flashMessage", `Successfully renamed ${renameFileName}!`);
+    sessionStorage.setItem("flashMessage", `Successfully renamed ${newName}!`);
     location.reload(); // simplest way to refresh list
 
   } catch (err) {
@@ -445,8 +445,13 @@ document.getElementById("createFileForm").addEventListener("submit", async funct
 
     if (!response.ok) throw new Error("Create failed");
 
-    sessionStorage.setItem("flashMessage", `Successfully created ${createFileName}!`);
-    location.reload();
+    sessionStorage.setItem("flashMessage", `Successfully created ${fileName}!`);
+
+    // Reload to new file path.
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set("server_id", serverId);
+    currentUrl.searchParams.set("path", `${currentPath}/${fileName}`);
+    window.location.href = currentUrl.toString();
 
   } catch (err) {
     alert("Error creating file: " + err.message);

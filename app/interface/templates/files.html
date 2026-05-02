@@ -190,7 +190,10 @@
           <form method="POST" id="save-edit" action="/files">
             {{ save_form.csrf_token }}
             {{ save_form.server_id(value=server_id) }}
-            {{ save_form.cfg_path(value=selected_file) }}
+            {% if current_path and selected_file %}
+              {% set path = current_path + "/" + selected_file %}
+              {{ save_form.path(value=path) }}
+            {% endif %}
 
             {{ save_form.save_submit(class="btn btn-outline-primary w-100") }}
           </form>
@@ -209,7 +212,10 @@
           <form method="GET" action="/files">
             {{ download_form.csrf_token }}
             {{ download_form.server_id(value=server_id) }}
-            {{ download_form.cfg_path(value=selected_file) }}
+            {% if current_path and selected_file %}
+              {% set path = current_path + "/" + selected_file %}
+              {{ download_form.path(value=path) }}
+            {% endif %}
 
             {{ download_form.download_submit(class="btn btn-outline-success w-100") }}
           </form>
@@ -228,7 +234,7 @@
           <form method="GET" action="/files">
             {{ upload_form.csrf_token }}
             {{ upload_form.server_id(value=server_id) }}
-            {{ upload_form.cfg_path(value=selected_file) }}
+            {{ upload_form.path(value=selected_file) }}
 
             {{ upload_form.upload_submit(class="btn btn-outline-secondary w-100") }}
           </form>

@@ -257,7 +257,8 @@
     - [x] File/dir rename api route
   - Core Code:
     - [x] Ensure `read_file` only read's plain text files.
-    - [ ] A working save button.
+    - [x] A working save button.
+    - [x] A working Download button.
     - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.
@@ -270,7 +271,7 @@
       hightlight always works. We might even just be able to use the file extention
       tbh.
 
-* [ ] **Refactor forms**
+* [x] **Refactor forms**
   - First off all forms need to be broken up into their own form class files.
   - We'll wire it up as a forms package.
     - The base import stuff will all go in a junk file.

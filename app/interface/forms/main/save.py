@@ -2,6 +2,6 @@ from ..base import *
 
 class SaveForm(FlaskForm):
     server_id = HiddenField(validators=[InputRequired(), ServerExists()])
-    cfg_path = HiddenField(validators=[InputRequired(), ValidConfigFile()])
+    path = HiddenField(validators=[InputRequired()])
     file_contents = TextAreaField(validators=[InputRequired()])
     save_submit = SubmitField("Save File")

@@ -1,8 +1,9 @@
 import os
+import io
 import json
 
 from flask_login import login_required, current_user
-from flask import request, render_template, current_app, redirect, url_for, flash
+from flask import request, render_template, current_app, redirect, url_for, flash, send_file
 
 from app.utils import log_wrap
 
@@ -10,7 +11,7 @@ from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_e
 
 from . import main_bp
 
-from app.interface.use_cases import read_file, write_file, get_game_server, list_user_game_servers
+from app.interface.use_cases import read_file, write_file, get_game_server, list_user_game_servers, log_audit_event 
 
 ######### File Manager Page #########
 
@@ -35,6 +36,33 @@ def files():
         file_contents = None
         parent_path = None
         server_json = None
+
+        if "download_submit" in request.args.keys():
+            download_form = DownloadForm(request.args)
+            if not download_form.validate():
+                validation_errors(download_form)
+                return redirect(url_for("main.home"))
+
+            server_id = download_form.server_id.data
+            path = download_form.path.data
+            server = get_game_server(server_id)
+
+            log_audit_event(current_user.id,  f"User '{current_user.username}', downloaded config '{path}'")
+
+            file_contents = read_file(server, path)
+
+            if file_contents is None:
+                flash("Problem retrieving file contents", category="error")
+                return redirect(url_for("main.home"))
+
+            filename = os.path.basename(path)
+
+            return send_file(
+                io.BytesIO(file_contents.encode("utf-8")),
+                as_attachment=True,
+                download_name=filename,
+                mimetype="text/plain",
+            )
 
         # TODO: If server id and path are none, just plop the user down in
         # web-lgsm users home dir. Might have to think more abt how this fits
@@ -118,12 +146,34 @@ def files():
             server_json=server_json,
         )
 
-#    # Handle Invalid form submissions.
-#    if not upload_form.validate_on_submit():
-#        validation_errors(upload_form)
-#        return redirect(url_for("main.home"))
+    ## POSTs
 
-#    return f"Server ID: {server_id}, Target Path: {path}"
+    # Handle Invalid form submissions.
+    forms = [save_form, upload_form]
+    for form in forms:
+        if not form.validate_on_submit():
+            validation_errors(form)
+            return redirect(url_for("main.files"))
+
+    # Process form submissions.
+    server_id = save_form.server_id.data
+    path = save_form.path.data
+    new_file_contents = upload_form.file_contents.data
+    server = get_game_server(server_id)
+
+    if write_file(server, path, new_file_contents):
+        flash("File updated!", category="success")
+        log_audit_event(current_user.id, f"User '{current_user.username}', edited '{path}'")
+    else:
+        flash("Error writing to file!", category="error")
+
+    return redirect(url_for("main.files", server_id=server_id, path=path))
+
+
+
+
+
+
 
 
 

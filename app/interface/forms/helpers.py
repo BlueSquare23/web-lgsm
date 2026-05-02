@@ -9,6 +9,9 @@ from app.container import container
 
 from .base import *
 
+with open("json/accepted_cfgs.json", "r") as gs_cfgs:
+    VALID_CONFIGS = json.load(gs_cfgs)["accepted_cfgs"]
+
 
 class ServerExists:
     """Validator that checks if a server ID exists in the database"""

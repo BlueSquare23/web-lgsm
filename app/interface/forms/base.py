@@ -42,6 +42,3 @@ BAD_CHARS_MSG = (
     + r"""Bad Chars: $ ' " \ # = [ ] ! < > | ; { } ( ) * , ? ~ &"""
 )
 
-with open("json/accepted_cfgs.json", "r") as gs_cfgs:
-    VALID_CONFIGS = json.load(gs_cfgs)["accepted_cfgs"]
-

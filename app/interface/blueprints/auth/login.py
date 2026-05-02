@@ -70,7 +70,7 @@ def login():
     if current_user.is_authenticated:
         logout_user()
 
-    four_weeks_delta = timedelta(days=28)
+    two_weeks_delta = timedelta(days=14)
 
     # Handle 2fa Logins.
     if user.otp_enabled:
@@ -79,7 +79,7 @@ def login():
             auth_user = AuthUser(user.id)
             current_app.logger.info(auth_user.id)
 
-            login_user(auth_user, remember=True, duration=four_weeks_delta)
+            login_user(auth_user, remember=True, duration=two_weeks_delta)
             confirm_login()
             container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
             flash("Please setup two factor authentication!", category="success")
@@ -93,7 +93,7 @@ def login():
     flash("Logged in!", category="success")
     auth_user = AuthUser(user.id)
     current_app.logger.info(auth_user)
-    login_user(auth_user, remember=True, duration=four_weeks_delta)
+    login_user(auth_user, remember=True, duration=two_weeks_delta)
     confirm_login()
     container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
     return redirect(url_for("main.home"))

@@ -245,16 +245,19 @@
     - [x] Page for browsing files.
     - [x] List of files and directories on the system on the left.
     - [x] Click file it opens the file, click dir opens the dir.
+    - [x] Add perms to files list
+    - [ ] Make files list auto scroll to selected file on refresh.
     - [ ] Save search bar search to session var
   - API:
     - [ ] New file routes need validation and hardened against directory traversal attempts.
-    - [ ] New perms for file editor, replace edit perms with file perms.
+    - [x] New perms for file editor, replace edit perms with file perms.
     - [x] File/dir delete api route
     - [x] File/dir create api route
-      - [ ] Make create route work, some bug with write "" right now.
+      - [x] Make create route work, some bug with write "" right now.
     - [x] File/dir rename api route
   - Core Code:
     - [x] Ensure `read_file` only read's plain text files.
+    - [ ] A working save button.
     - [ ] A working upload button.
     - [ ] Some sort of directory manager class, similar to file manager.
     - [ ] Use cases and container wiring to go along with it all.
@@ -266,6 +269,38 @@
       Then we could set the CodeMirror extension to be the same so syntax
       hightlight always works. We might even just be able to use the file extention
       tbh.
+
+* [ ] **Refactor forms**
+  - First off all forms need to be broken up into their own form class files.
+  - We'll wire it up as a forms package.
+    - The base import stuff will all go in a junk file.
+    - We also have the helpers.py in there for other misc forms helper utils.
+    - Not super clean, but ehh better than everything in two big form classes files.
+  - Then similar forms need rewritten to be smarter.
+    - [ ] For example, the Upload, Download, and Save forms all have a server
+      id, path, and submit button. So those three classes can inherit from a
+      general FileForm class or something and then the only part that's
+      different is if it needs a TextAreaField required for Save vs nothing for
+      Download vs _something..._ for upload (still haven't figure out upload yet).
+
+* [ ] **Add sliding session expiration (aka session renewed every request) to user login**
+  - Basically, we want so that if the user visits the web app often enough,
+    just keep them logged in indefinitely. But we don't want to have really
+    long session tokens because, csrf, click jacking, other problems.
+  - I gotta read more about this, figure out how it fits in with Flask-Login
+    and if it conflicts with their "Remember Me" mechanism.
+  - https://flask-login.readthedocs.io/en/latest/
+  - Also I wonder if I can just cheese it and say "if authed already, just
+    update remember me cookie expiration." That might require a full
+    `login_user` call, idk yet. But think that might be fine...
+
+* [ ] **Change secret generation to use recommended python instead**
+  - https://flask.palletsprojects.com/en/stable/quickstart/#sessions
+  - From the docs:
+```shell
+python3 -c 'import secrets; print(secrets.token_hex())'
+b7e4a7e242e81ad0c6b2eba7ce90f52bbf9e56407a8ebcbec2ac0bfa6a752def
+```
 
 * [x] **Play around with new Controls page UI**
   - It looks like shit and basically hasn't changed in a long ass time. We're

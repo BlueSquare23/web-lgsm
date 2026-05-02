@@ -7,7 +7,7 @@ from cron_converter import Cron
 from werkzeug.datastructures import MultiDict
 
 from app.utils import *
-from app.interface.forms.views import ValidateID
+from app.interface.forms import ValidateID
 
 from . import api
 

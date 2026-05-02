@@ -95,53 +95,57 @@
 
             <!-- Directory + File Listing -->
             {% for item in files %}
-            <div class="rounded border-secondary list-group-item file-item rounded p-1 {% if item.name == selected_file %}active" aria-current="true{% endif %}">
-              <li class="d-flex align-items-center">
+              <div class="rounded border-secondary list-group-item file-item rounded p-1 {% if item.name == selected_file %}active" aria-current="true{% endif %}">
+                <div class="row align-items-center g-2">
+                  <div class="col-md-6">
+                    <form method="GET" action="/files" class="flex-grow-1">
+                      <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
+                      <input id="path" name="path" type="hidden" value="{{ item.path }}">
 
-                <form method="GET" action="/files" class="flex-grow-1">
-                  <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
-                  <input id="path" name="path" type="hidden" value="{{ item.path }}">
+                      <button class="btn btn-link p-0 text-start w-100 
+                        {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
 
-                  <button class="btn btn-link p-0 text-start w-100 
-                    {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
+                        {% if item.type == 'dir' %}
+                          <i class="bi bi-folder-fill me-2"></i>
+                          {{ item.name }}/
+                        {% else %}
+                          <i class="bi bi-file-earmark-text me-2"></i>
+                          {{ item.name }}
+                        {% endif %}
 
-                    {% if item.type == 'dir' %}
-                      <i class="bi bi-folder-fill me-2"></i>
-                      {{ item.name }}/
-                    {% else %}
-                      <i class="bi bi-file-earmark-text me-2"></i>
-                      {{ item.name }}
-                    {% endif %}
+                      </button>
+                    </form>
+                  </div>
 
-                  </button>
-                </form>
+                  <div class="col-md-3">
+                    {{item.perms}}
+                  </div>
 
-                <!-- Rename button -->
-                <button
-                  title="Rename {{ item.type | capitalize }}"
-                  class="btn btn-sm btn-outline-warning ms-2 flex-shrink-0"
-                  data-bs-toggle="modal"
-                  data-bs-target="#renameModal"
-                  data-server-id="{{ server_id }}"
-                  data-file-path="{{ item.path | urlencode | urlencode }}"
-                  data-file-name="{{ item.name }}"
-                >
-                  <i class="bi bi-pencil-square"></i>
-                </button>
+                  <div class="col-md-3">
+                    <!-- Rename button -->
+                    <button
+                      title="Rename {{ item.type | capitalize }}"
+                      class="btn btn-sm btn-outline-warning ms-2 flex-shrink-0"
+                      data-bs-toggle="modal"
+                      data-bs-target="#renameModal"
+                      data-server-id="{{ server_id }}"
+                      data-file-path="{{ item.path | urlencode | urlencode }}"
+                      data-file-name="{{ item.name }}"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
 
-                <!-- Delete button -->
-                <!-- NOTE: We urlencode the path twice, first layer auto unwrapped by flask api handler, second manually unwrapped in api route code -->
-                <button title="Delete {{ item.type | capitalize }}" class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
-                        onclick="deleteFile(this, '{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
-                  <i class="bi bi-trash"></i>
-                </button>
-
-              </li>
-            </div>
+                    <!-- Delete button -->
+                    <!-- NOTE: We urlencode the path twice, first layer auto unwrapped by flask api handler, second manually unwrapped in api route code -->
+                    <button title="Delete {{ item.type | capitalize }}" class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
+                            onclick="deleteFile(this, '{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             {% endfor %}
-
           </ul>
-
         </div>
       </div>
     </div>

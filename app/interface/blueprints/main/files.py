@@ -6,8 +6,7 @@ from flask import request, render_template, current_app, redirect, url_for, flas
 
 from app.utils import log_wrap
 
-from app.interface.forms.views import SaveForm, UploadForm, DownloadForm
-from app.interface.forms.validation_errors import validation_errors
+from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_errors
 
 from . import main_bp
 
@@ -36,6 +35,10 @@ def files():
         file_contents = None
         parent_path = None
         server_json = None
+
+        # TODO: If server id and path are none, just plop the user down in
+        # web-lgsm users home dir. Might have to think more abt how this fits
+        # in with game server file system caging.
 
         # Try cast to bool
         try:
@@ -84,9 +87,9 @@ def files():
             if selected_file:
                 file_contents = read_file(server, path)
 
-#        files = [{"name": 'fart.txt', 'path': '/home/blah/fart', 'type':'file'},
-#                 {"name": 'blah.txt', 'path': '/home/blah/blah', 'type':'file'},
-#                 {"name": 'test', 'path': '/home/blah/test', 'type':'dir'}]
+#        files = [{"name": 'fart.txt', 'path': '/home/blah/fart', 'type':'file', 'perms', '-rw-r--r--'},
+#                 {"name": 'blah.txt', 'path': '/home/blah/blah', 'type':'file', 'perms', '-rw-r--r--'},
+#                 {"name": 'test', 'path': '/home/blah/test', 'type':'dir', 'perms', 'drwxrwxr-x'}]
 #
     
         #{
@@ -127,6 +130,7 @@ def files():
 # TODO: Convert these into application use cases and any required infrastructure and user module service scripts.
 
 #import os
+import stat
 
 def is_dir(path):
     return os.path.isdir(path)
@@ -140,11 +144,20 @@ def list_dir_contents(directory, show_hidden=True):
 
             if not show_hidden and entry.name.startswith("."):
                 continue
+
+            info = entry.stat()
+
+            # Get raw octal permissions (e.g., 0o644)
+            perms_octal = oct(info.st_mode & 0o777)
+            
+            # Get readable string (e.g., '-rw-r--r--')
+            perms = stat.filemode(info.st_mode)
             
             files.append({
                 "name": entry.name,
                 "path": entry.path,
-                "type": item_type
+                "type": item_type,
+                "perms": perms
             })
 
     return files

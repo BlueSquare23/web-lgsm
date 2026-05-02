@@ -5,11 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.9.3 - unreleased]
+
+### Added
+
+- Add new file manager interface viewing, editing, uploading, and downloading files.
+
+### Changed
+
+- Replace old hardcoded file edit page with new file manager.
+
 ## [v1.9.2 - 2026-04-18]
 
 ### Added
 
 - Add new consistent layout and styling to all app's pages.
+
+### Fixed
+
+- Restructured forms classes. Broke things up, one form class per file.
 
 ### Changed
 

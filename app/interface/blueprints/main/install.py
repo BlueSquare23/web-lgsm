@@ -15,8 +15,9 @@ from flask import (
 )
 
 from app.utils import *
-from app.interface.forms.views import AddForm
-from app.interface.forms.validation_errors import validation_errors
+#from app.interface.forms.views import AddForm
+#from app.interface.forms.validation_errors import validation_errors
+from app.interface.forms import AddForm, validation_errors
 
 # Constants.
 CWD = os.getcwd()

@@ -80,7 +80,7 @@
     </form>
   </div>
 
-  {% if _config.getboolean('settings', 'cfg_editor', False) %}
+  {% if _config.getboolean('settings', 'file_manager', False) %}
     {% if user.role == 'admin' or 'edit' in user_perms.routes %}
       {% if cfg_paths|length %}
         <!-- Configuration Files Section -->
@@ -96,7 +96,7 @@
                 <div class="d-flex flex-wrap gap-2">
                   {% for cfg_path in cfg_paths %}
                     {% set cfg_file = cfg_path.split('/')[-1] %}
-                    <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
+                    <a href="/files?server_id={{server_id}}&path={{cfg_path}}" class="btn btn-outline-warning">
                       <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
                     </a>
                   {% endfor %}

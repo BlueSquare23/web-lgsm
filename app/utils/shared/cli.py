@@ -1,39 +1,36 @@
 import sys
 import json
+
 from .find_cfg_paths import find_cfg_paths
 from .read_file import read_file
 from .write_file import write_file
 from .delete_file import delete_file
 from .rename_file import rename_file
 from .edit_cron import edit_cron
+from .list_dir import list_dir
+
+# functions mapping
+functions = {
+    "find_cfg_paths": find_cfg_paths,
+    "read_file": read_file,
+    "write_file": write_file,
+    "delete_file": delete_file,
+    "rename_file": rename_file,
+    "edit_cron": edit_cron,
+    "list_dir": list_dir,
+}
 
 if __name__ == "__main__":
-    # Parse command line arguments.
     data = json.loads(sys.argv[1])
-    func_name = data['func']
-    args = data['args']
-    kwargs = data['kwargs']
 
-    results = dict()
+    func_name = data["func"]
+    args = data.get("args", [])
+    kwargs = data.get("kwargs", {})
 
-    # TODO: Find a better way to pack this that's less redundant.
-    # Call the function.
-    if func_name == 'find_cfg_paths':
-        result = find_cfg_paths(*args, **kwargs)
+    if func_name not in functions:
+        raise ValueError(f"Unknown function: {func_name}")
 
-    if func_name == 'read_file':
-        result = read_file(*args, **kwargs)
-
-    if func_name == 'write_file':
-        result = write_file(*args, **kwargs)
-
-    if func_name == 'delete_file':
-        result = delete_file(*args, **kwargs)
-
-    if func_name == 'rename_file':
-        result = rename_file(*args, **kwargs)
-
-    if func_name == 'edit_cron':
-        result = edit_cron(*args, **kwargs)
+    result = functions[func_name](*args, **kwargs)
 
     print(json.dumps(result))
+

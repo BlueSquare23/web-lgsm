@@ -232,7 +232,7 @@
 * [ ] **Get Basic POC FileManager Setup**
   - I need to figure out if I'm just pushing dir stuff through file pipes or
     making new dir only pipes...
-  - [ ] Replace edit page with new file manager instead.
+  - [x] Replace edit page with new file manager instead.
     - Links to confs on controls page will be replace with quick links to new file manager page.
   - UI:
     - [x] A delete file button.
@@ -248,6 +248,8 @@
     - [x] Add perms to files list
     - [ ] Make files list auto scroll to selected file on refresh.
     - [ ] Save search bar search to session var
+    - [ ] Make sure path is always URL encoded in url bar, not strictly
+      necessary, but just to be consistent and look more professional.
   - API:
     - [ ] New file routes need validation and hardened against directory traversal attempts.
     - [x] New perms for file editor, replace edit perms with file perms.
@@ -270,6 +272,62 @@
       Then we could set the CodeMirror extension to be the same so syntax
       hightlight always works. We might even just be able to use the file extention
       tbh.
+
+* [ ] **File/Dir Manager User Permissions**
+  - Global disable in the main.conf(.local) for the entire file manager.
+  - Admins can do anything.
+  - Non admin users can be given full access or read only access.
+
+* [x] **File/Dir Manager Ignore List Mechanism**
+  - We need a way for users to hardcode a ~list~ set of files & dirs that are off limits to the app.
+  - Should have just a list of dirs and anything under them is no go.
+  - Needs to be stored as root and ignored if not there.
+  - Not overwritten by updates.
+  - The app should read this ~list~ set in, cache it, then reference it (and recheck
+    timestamp to update cache) every time a request comes in to the Route or
+    API routes.
+  - The ~list~ set should also be checked every user module script run.
+  - **The Plan**
+    - New optional yaml file:
+```
+/usr/local/share/web-lgsm_exclude.yml
+```
+    - Formatted like this:
+```yaml
+exclude_files:
+  - file123.txt
+  - "*.sh"
+
+exclude_dirs:
+  - /home/user123/some/path
+  - /home/user456/another_path
+```
+  - [x] Those will get imported by user module scripts.
+  - [x] We'll wire up usecases through the user module service to call validator module scripts.
+  - [ ] Caching / timestamp checking somewhere (infra layer, so perhaps new infra layer adapter(s)/repo(s))
+  - [x] These new user mod service scripts will be directly imported by other user
+    mod service scripts for validation in that layer. They'll also be directly
+    imported by user mod service in infra layer to include them in the app and be
+    made accessible via usecases.
+  - What's great about this approach is I can prototype it all just in the route
+    code for same user installs which is very oldschool how I used to write all
+    the route code.
+
+* [ ] **Validation for file manager**
+  - Breaking this out into its own todo to keep above list clean / short.
+  - Basically, I want reusable validation.
+  - We need to validate in the forms. 
+  - We also need to validate in the user module scripts.
+  - I'm thinking maybe we can create a neutral form class that we somehow use in both place...
+    - But then it'd be weird because it'd have to be up in opt shared utils so the mod scripts could import.
+    - Cause root shit shouldn't import from writeable as the user files.
+  - If we do have to reuse code, wouldn't be the worst thing.
+  - **Types of Validation**
+    - [x] Words of affirmation. The file manager deserves to feel loved too!
+    - [x] Hardcoded ignore list paths. (lock down allowed paths)
+    - [ ] No special chars in file names. Avoid .. or / or $blah etc.
+    - [ ] File name length limits, put in forms class.
+    - [ ] Upload file size limits.
 
 * [x] **Refactor forms**
   - First off all forms need to be broken up into their own form class files.

@@ -90,6 +90,10 @@ from app.application.use_cases.file_system.write_file import WriteFile
 from app.application.use_cases.file_system.delete_file import DeleteFile 
 from app.application.use_cases.file_system.rename_file import RenameFile 
 
+# Dirs 
+from app.infrastructure.system.file_system.dir_manager import DirectoryManager
+from app.application.use_cases.file_system.list_dir import ListDir
+
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
 from app.application.use_cases.controls.list_controls import ListControls
@@ -157,6 +161,9 @@ class Container:
 
     def file_manager(self):
         return FileManager()
+
+    def dir_manager(self):
+        return DirectoryManager()
 
     def sudoers_service(self):
         return SudoersService()
@@ -413,6 +420,13 @@ class Container:
     def rename_file(self):
         return RenameFile(
             file_manager=self.file_manager()
+        )
+
+    ## Dirs
+
+    def list_dir(self):
+        return ListDir(
+            dir_manager=self.dir_manager()
         )
 
     ## Controls

@@ -10,9 +10,6 @@ from flask import (
 )
 
 from app.utils import *
-#from app.interface.forms.validation_errors import validation_errors
-#from app.interface.forms.valid_command import valid_command
-#from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app.interface.forms import validation_errors, ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app import cache
 
@@ -88,7 +85,7 @@ def controls():
         cache_key = f"cfg_paths_{server_id}"
         cfg_paths = cache.get(cache_key)
 
-        if not container.getboolean_config().execute("settings","cfg_editor"):
+        if not container.getboolean_config().execute("settings","file_manager"):
             cfg_paths = []
 
         elif cfg_paths is None:  # Not in cache.
@@ -159,8 +156,8 @@ def controls():
         flash("Your user does not have access to this server", category="error")
         return redirect(url_for("main.home"))
 
-    # If cfg editor is disabled in the main.conf.
-    if not config.getboolean('settings',"cfg_editor"):
+    # If file manager is disabled in the main.conf.
+    if not config.getboolean('settings',"file_manager"):
         cfg_paths = []
     else:
         current_app.logger.info("Getting cfg_paths")

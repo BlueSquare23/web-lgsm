@@ -11,7 +11,8 @@ from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_e
 
 from . import main_bp
 
-from app.interface.use_cases import read_file, write_file, get_game_server, list_user_game_servers, log_audit_event 
+from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event
+
 
 ######### File Manager Page #########
 
@@ -64,10 +65,6 @@ def files():
                 mimetype="text/plain",
             )
 
-        # TODO: If server id and path are none, just plop the user down in
-        # web-lgsm users home dir. Might have to think more abt how this fits
-        # in with game server file system caging.
-
         # Try cast to bool
         try:
             show_hidden = bool(show_hidden)
@@ -95,9 +92,9 @@ def files():
         if path:
             parent_path = os.path.abspath(os.path.join(path, ".."))
 
-            if is_dir(path):
+            if os.path.isdir(path):
                 current_path = path
-                files = list_dir_contents(path, show_hidden)
+                files = list_dir(server, path, show_hidden)
 
             # strip file name and get listing of basedir
             else:
@@ -109,25 +106,11 @@ def files():
                 if base_dir == "":
                     base_dir = "."
 
-                files = list_dir_contents(base_dir, show_hidden)
+                files = list_dir(server, base_dir, show_hidden)
 
             # If file read contents
             if selected_file:
                 file_contents = read_file(server, path)
-
-#        files = [{"name": 'fart.txt', 'path': '/home/blah/fart', 'type':'file', 'perms', '-rw-r--r--'},
-#                 {"name": 'blah.txt', 'path': '/home/blah/blah', 'type':'file', 'perms', '-rw-r--r--'},
-#                 {"name": 'test', 'path': '/home/blah/test', 'type':'dir', 'perms', 'drwxrwxr-x'}]
-#
-    
-        #{
-        #    "name": "server.cfg",
-        #    "path": "/home/lgsm/serverfiles/server.cfg",
-        #    "type": "file"  # or "dir"
-        #}
-
-#        selected_file = 'fart.txt'
-#        file_contents = 'blah'
 
         return render_template(
             "files.html",
@@ -171,49 +154,9 @@ def files():
 
 
 
-
-
-
-
-
-
-# TODO: Convert these into application use cases and any required infrastructure and user module service scripts.
-
-#import os
-import stat
-
-def is_dir(path):
-    return os.path.isdir(path)
-
-def list_dir_contents(directory, show_hidden=True):
-    files = []
-
-    with os.scandir(directory) as entries:
-        for entry in entries:
-            item_type = 'dir' if entry.is_dir(follow_symlinks=False) else 'file'
-
-            if not show_hidden and entry.name.startswith("."):
-                continue
-
-            info = entry.stat()
-
-            # Get raw octal permissions (e.g., 0o644)
-            perms_octal = oct(info.st_mode & 0o777)
-            
-            # Get readable string (e.g., '-rw-r--r--')
-            perms = stat.filemode(info.st_mode)
-            
-            files.append({
-                "name": entry.name,
-                "path": entry.path,
-                "type": item_type,
-                "perms": perms
-            })
-
-    return files
-
 from pathlib import Path
 
+# TODO: I think this is basically going to be redone by above subs.
 def is_safe_path(path, username):
     base_dir = Path(f"/home/{username}").resolve()
     target_path = Path(path).resolve()

@@ -31,7 +31,7 @@ class FileCreate(Resource):
         name = data["name"]
 
         # Check permissions
-        if not check_user_access(current_user.id, "files", server_id):
+        if not check_user_access(current_user.id, "files_edit", server_id):
             resp_dict = {
                 "Error": f"Insufficient permission to create files for {server.install_name}"
             }
@@ -42,6 +42,7 @@ class FileCreate(Resource):
         full_path = os.path.join(path, name)
 
         if write_file(server, full_path, ""):
+            log_audit_event(current_user.id, f"User '{current_user.username}', created file '{file_path}'")
             return "", 201
         else:
             resp_dict = {"Error": "Problem creating file"}

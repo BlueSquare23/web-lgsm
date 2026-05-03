@@ -29,7 +29,6 @@ def edit_users():
         flash("Only Admins are allowed to edit users!", category="error")
         return redirect(url_for("main.home"))
 
-#    installed_servers = GameServer.query.all()
     installed_servers = container.list_game_servers().execute()
     all_server_ids = [server.id for server in installed_servers]
     all_controls = [
@@ -47,7 +46,6 @@ def edit_users():
         "send",
     ]
 
-#    all_users = User.query.all()
     all_users = container.list_users().execute()
     form = EditUsersForm()
 
@@ -67,7 +65,6 @@ def edit_users():
         # api route for delete user, button triggers js fetch req DELETE to API.
         delete = request.args.get("delete")
 
-#        user_ident = User.query.filter_by(username=selected_user).first()
         user_ident = container.query_user().execute('username', selected_user)
         if user_ident == None and selected_user != "newuser":
             return redirect(url_for("auth.edit_users", username="newuser"))
@@ -162,7 +159,6 @@ def edit_users():
 
     user_ident = None
     if selected_user != "newuser":
-#        user_ident = User.query.filter_by(username=username).first()
         user_ident = container.query_user().execute('username', username)
         if user_ident == None:
             flash("Invalid user selected!", category="error")

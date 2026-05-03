@@ -147,8 +147,8 @@ class SqlAlchemyUserRepository(UserRepository):
         if user.role == "admin":
             return True
 
-        valid_routes = ["install", "edit", "add", "delete", "settings", "controls",
-                        "update-console", "cmd-output", "server-statuses", "jobs", "files"]
+        valid_routes = ["install", "files", "files_edit", "add", "delete", "settings", "controls",
+                        "update-console", "cmd-output", "server-statuses", "jobs"]
 
         assert route in valid_routes, f"Invalid route: {route}"
 

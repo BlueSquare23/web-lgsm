@@ -39,7 +39,7 @@ class FileRename(Resource):
         new_name = data["new_name"]
 
         # Check permissions
-        if not check_user_access(current_user.id, "files", server_id):
+        if not check_user_access(current_user.id, "files_edit", server_id):
             resp_dict = {
                 "Error": f"Insufficient permission to rename files for {server.install_name}"
             }
@@ -48,6 +48,7 @@ class FileRename(Resource):
         current_app.logger.info(log_wrap(f"{current_user} renaming {file_path} -> {new_name}: ", server_id))
 
         if rename_file(server, file_path, new_name):
+            log_audit_event(current_user.id, f"User '{current_user.username}', renamed file '{file_path}' to '{new_name}'")
             return "", 204
         else:
             resp_dict = {"Error": "Problem renaming file"}

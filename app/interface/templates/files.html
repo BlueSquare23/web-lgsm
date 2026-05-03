@@ -231,11 +231,16 @@
           <h5 class="text-light">Upload</h5>
           <p class="text-white small">Upload File</p>
 
-          <form method="GET" action="/files">
+          <form method="POST" action="/files" enctype="multipart/form-data">
             {{ upload_form.csrf_token }}
             {{ upload_form.server_id(value=server_id) }}
-            {{ upload_form.path(value=selected_file) }}
-
+          
+            {% if current_path %}
+              {{ upload_form.path(value=current_path) }}
+            {% endif %}
+          
+            {{ upload_form.file(class="form-control mb-2") }}
+          
             {{ upload_form.upload_submit(class="btn btn-outline-secondary w-100") }}
           </form>
         </div>

@@ -38,13 +38,16 @@ class LocalFileInterface(FileInterface):
 
 
     def write(self, file_path, content):
+        """byte-safe file writer"""
         self.logger.info(log_wrap("writing file_path", file_path))
 
-        # Encode the str to bytes.
-        encoded_bytes = content.encode('utf-8')
+        # Accept both str and bytes
+        if isinstance(content, str):
+            content_bytes = content.encode("utf-8")
+        else:
+            content_bytes = content  # already bytes
 
-        # Encode the bytes to base64 str.
-        encoded_content = base64.b64encode(encoded_bytes).decode('utf-8')
+        encoded_content = base64.b64encode(content_bytes).decode("utf-8")
 
         args = [ file_path, encoded_content ]
 

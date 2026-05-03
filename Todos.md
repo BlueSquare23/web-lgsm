@@ -258,13 +258,18 @@
       - [x] Make create route work, some bug with write "" right now.
     - [x] File/dir rename api route
   - Core Code:
+    - [x] Add Audit logging for it all
+      - [x] create file
+      - [x] delete file
+      - [x] edit file
+      - [x] rename file
     - [x] Ensure `read_file` only read's plain text files.
     - [x] A working save button.
     - [x] A working Download button.
-    - [ ] A working upload button.
-    - [ ] Some sort of directory manager class, similar to file manager.
-    - [ ] Use cases and container wiring to go along with it all.
-    - [ ] Clean up / rip out remaining references to edit route and page.
+    - [x] A working upload button.
+    - [x] Some sort of directory manager class, similar to file manager.
+    - [x] Use cases and container wiring to go along with it all.
+    - [x] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
   - Future Features:
     - Non-day1 stuff.
@@ -273,7 +278,7 @@
       hightlight always works. We might even just be able to use the file extention
       tbh.
 
-* [ ] **File/Dir Manager User Permissions**
+* [x] **File/Dir Manager User Permissions**
   - Global disable in the main.conf(.local) for the entire file manager.
   - Admins can do anything.
   - Non admin users can be given full access or read only access.

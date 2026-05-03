@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add new file manager interface viewing, editing, uploading, and downloading files.
+- Add custom exclude mechanism (with globs) for exempting files and dirs from the file manager.
 
 ### Changed
 

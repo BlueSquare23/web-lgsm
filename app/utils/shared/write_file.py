@@ -3,21 +3,21 @@ import base64
 
 def write_file(file_path, encoded_content):
     """
-    Share module write file function. Decodes base64 encoded string, and writes
+    Share module write file function. Decodes base64 to raw bytes, and writes
     to file_path.
 
     Returns:
         bool: True if write successful, False otherwise.
     """
     try:
-        # Decode base64 content str.
-        content = base64.b64decode(encoded_content).decode('utf-8')
+        # Decode base64 to raw bytes
+        content = base64.b64decode(encoded_content)
 
-        with open(file_path, "w") as f:
-            f.write(content.replace("\r", ""))
+        with open(file_path, "wb") as f:
+            f.write(content)
 
         return True
 
-    except Exception as e:
+    except Exception:
         return False
 

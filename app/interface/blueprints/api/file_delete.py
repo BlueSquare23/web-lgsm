@@ -12,7 +12,7 @@ from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import get_game_server, check_user_access, delete_file
+from app.interface.use_cases import get_game_server, check_user_access, delete_file, log_audit_event
 
 ######### API File Delete #########
 
@@ -37,9 +37,8 @@ class FileDelete(Resource):
             )
             return response
 
-
         # Check if user has permissions to files delete route & server.
-        if not check_user_access(current_user.id, "files", server_id):
+        if not check_user_access(current_user.id, "files_edit", server_id):
             resp_dict = {
                 "Error": f"Insufficient permission to delete files for {server.install_name}"
             }
@@ -52,6 +51,7 @@ class FileDelete(Resource):
         current_app.logger.info(file_path)
 
         if delete_file(server, file_path):
+            log_audit_event(current_user.id, f"User '{current_user.username}', deleted file '{file_path}'")
             return "", 204
         else:
             resp_dict = {

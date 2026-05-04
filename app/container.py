@@ -96,6 +96,7 @@ from app.application.use_cases.file_system.list_dir import ListDir
 
 # Validators
 from app.application.use_cases.validators.filename_length import FilenameLength
+from app.application.use_cases.validators.safe_path import SafePath
 
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
@@ -436,6 +437,9 @@ class Container:
 
     def is_filename_length_valid(self):
         return FilenameLength()
+
+    def is_safe_path(self):
+        return SafePath()
 
     ## Controls
 

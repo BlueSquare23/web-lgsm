@@ -1,3 +1,4 @@
+import os
 import json
 
 from urllib.parse import unquote
@@ -12,7 +13,7 @@ from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import get_game_server, check_user_access, delete_file, log_audit_event
+from app.interface.use_cases import get_game_server, check_user_access, delete_file, log_audit_event, is_safe_path
 
 ######### API File Delete #########
 
@@ -36,6 +37,11 @@ class FileDelete(Resource):
                 json.dumps(resp_dict, indent=4), status=400, mimetype="application/json"
             )
             return response
+
+        directory, filename = os.path.split(file_path)
+        if not is_safe_path(directory, server.username):
+            resp_dict = {"Error": "Not allowed access to this directory"}
+            return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 
         # Check if user has permissions to files delete route & server.
         if not check_user_access(current_user.id, "files_edit", server_id):

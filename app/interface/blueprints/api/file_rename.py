@@ -10,7 +10,7 @@ from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, rename_file, is_filename_length_valid
+from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, rename_file, is_filename_length_valid, is_safe_path
 
 
 ######### API File Rename #########
@@ -29,6 +29,11 @@ class FileRename(Resource):
         except Exception as e:
             resp_dict = {"Error": f"Problem unwrapping path url encoding: {e}"}
             return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
+
+        directory, filename = os.path.split(file_path)
+        if not is_safe_path(directory, server.username):
+            resp_dict = {"Error": "Not allowed access to this directory"}
+            return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 
         # Get new name from request body
         data = request.get_json()

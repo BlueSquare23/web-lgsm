@@ -85,7 +85,7 @@
 ## Main Goals for v1.9 -> v1.10
 
 * **THE BIG FIVE!**
-  - [ ] File Manager
+  - [x] File Manager
   - [ ] Interactive Terminal
   - [x] Frontend Overhaul
   - [ ] Docker in Docker
@@ -219,11 +219,6 @@
 
 ### New Features, Highlevel Release Goals
 
-* [x] **Overhaul Controls Page Frontent**
-  - This page has been bland and boring for a long time. Time to give it some
-    love and a front end overhaul.
-  - [x] Fix live console output.
-
 * [ ] **Rewrite xtermjs code to fix live console output & to fix carriage returns prints.**
 
 * [ ] **Add more Custom Themeing options to config**
@@ -251,7 +246,7 @@
     - [ ] Make sure path is always URL encoded in url bar, not strictly
       necessary, but just to be consistent and look more professional.
   - API:
-    - [ ] New file routes need validation and hardened against directory traversal attempts.
+    - [x] New file routes need validation and hardened against directory traversal attempts.
     - [x] New perms for file editor, replace edit perms with file perms.
     - [x] File/dir delete api route
     - [x] File/dir create api route

@@ -12,7 +12,7 @@ from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_e
 
 from . import main_bp
 
-from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access
+from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access, is_safe_path
 
 
 ######### File Manager Page #########
@@ -156,6 +156,11 @@ def files():
             new_file_contents = save_form.file_contents.data
             server = get_game_server(server_id)
 
+            # Security check
+            if not is_safe_path(path, server.username):
+                flash("Invalid path!", "error")
+                return redirect(url_for("main.files", server_id=server_id))
+
             if write_file(server, path, new_file_contents):
                 flash("File updated!", "success")
                 log_audit_event(current_user.id, f"User '{current_user.username}', edited '{path}'")
@@ -181,7 +186,7 @@ def files():
             save_path = os.path.join(path, filename)
 
             # Security check
-            if not is_safe_path(save_path, server.username):
+            if not is_safe_path(path, server.username):
                 flash("Invalid upload path!", "error")
                 return redirect(url_for("main.files", server_id=server_id))
 
@@ -193,18 +198,4 @@ def files():
             flash("File uploaded!", "success")
 
             return redirect(url_for("main.files", server_id=server_id, path=path))
-
-
-# TODO: Figure out where to put this long term...
-from pathlib import Path
-
-def is_safe_path(path, username):
-    base_dir = Path(f"/home/{username}").resolve()
-    target_path = Path(path).resolve()
-
-    try:
-        target_path.relative_to(base_dir)
-        return True
-    except ValueError:
-        return False
 

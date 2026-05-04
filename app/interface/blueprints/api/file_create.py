@@ -10,7 +10,7 @@ from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, write_file, is_filename_length_valid
+from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, write_file, is_filename_length_valid, is_safe_path
 
 
 ######### API File Create #########
@@ -30,6 +30,10 @@ class FileCreate(Resource):
 
         path = data["path"]
         name = data["name"]
+
+        if not is_safe_path(path, server.username):
+            resp_dict = {"Error": "Not allowed access to this directory"}
+            return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 
         # Sanitize filename
         name = secure_filename(name)

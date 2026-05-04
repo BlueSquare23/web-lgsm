@@ -46,3 +46,14 @@ class DirectoryManager:
         self.server = server
         return self.interface.list(directory, show_hidden)
 
+    def check_excluded(self, server, path):
+        """
+        Checks if file or directory path is excluded.
+
+        Args:
+            server (GameServer): GameServer object
+            path (str): Path to directory or file to check 
+        """
+        self.server = server
+        return self.interface.check_excluded(path)
+        

@@ -2,7 +2,7 @@ import os
 import stat
 from .matches import matches
 from .load_exclusions import load_exclusions
-from .is_path_under_excluded_dir import is_path_under_excluded_dir
+from .is_excluded import is_excluded
 
 def list_dir(directory, show_hidden=True):
     """
@@ -13,10 +13,10 @@ def list_dir(directory, show_hidden=True):
     if not os.path.isdir(directory):
         return files
 
-    (dir_exact, dir_globs), (file_exact, file_globs) = load_exclusions()
-
-    if matches(directory, dir_exact, dir_globs) or is_path_under_excluded_dir(directory, dir_exact, dir_globs):
+    if is_excluded(directory):
         return files
+
+    (dir_exact, dir_globs), (file_exact, file_globs) = load_exclusions()
 
     with os.scandir(directory) as entries:
         for entry in entries:

@@ -85,8 +85,10 @@ def files():
             if server:
                 server_json = json.dumps(server.__dict__)
 
+                current_app.logger.debug(log_wrap("path", path))
                 if path:
-                    if not is_safe_path(path, server.username):
+                    if not is_safe_path(server, path):
+                        current_app.logger.debug(log_wrap("is_safe_path", False))
                         flash("Cannot go above game server user's home dir!", category="error")
                         return redirect(url_for("main.files", server_id=server_id, path=f"/home/{server.username}"))
 
@@ -157,7 +159,7 @@ def files():
             server = get_game_server(server_id)
 
             # Security check
-            if not is_safe_path(path, server.username):
+            if not is_safe_path(server, path):
                 flash("Invalid path!", "error")
                 return redirect(url_for("main.files", server_id=server_id))
 
@@ -186,7 +188,7 @@ def files():
             save_path = os.path.join(path, filename)
 
             # Security check
-            if not is_safe_path(path, server.username):
+            if not is_safe_path(server, path):
                 flash("Invalid upload path!", "error")
                 return redirect(url_for("main.files", server_id=server_id))
 

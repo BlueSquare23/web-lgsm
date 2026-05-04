@@ -17,4 +17,7 @@ class SSHDirInterface(DirInterface):
         """Not implemented for remote yet..."""
         raise NotImplementedError
 
+    def check_excluded(self, file_path):
+        """Not implemented for remote yet..."""
+        raise NotImplementedError
 

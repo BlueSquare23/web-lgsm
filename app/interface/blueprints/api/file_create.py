@@ -31,7 +31,7 @@ class FileCreate(Resource):
         path = data["path"]
         name = data["name"]
 
-        if not is_safe_path(path, server.username):
+        if not is_safe_path(server, path):
             resp_dict = {"Error": "Not allowed access to this directory"}
             return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 

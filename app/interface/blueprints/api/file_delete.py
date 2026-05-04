@@ -39,7 +39,7 @@ class FileDelete(Resource):
             return response
 
         directory, filename = os.path.split(file_path)
-        if not is_safe_path(directory, server.username):
+        if not is_safe_path(server, directory):
             resp_dict = {"Error": "Not allowed access to this directory"}
             return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 

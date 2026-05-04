@@ -254,6 +254,13 @@
     - [x] File/dir rename api route
     - [x] Swagger docs for new api routes
   - Core Code:
+    - [x] Make `is_safe_path` also check custom excludes.
+      - can do the exact same thing as user mod service scripts
+```python
+    (dir_exact, dir_globs), (file_exact, file_globs) = load_exclusions()
+    if matches(directory, dir_exact, dir_globs) or is_path_under_excluded_dir(directory, dir_exact, dir_globs):
+        return files
+```
     - [x] Add Audit logging for it all
       - [x] create file
       - [x] delete file

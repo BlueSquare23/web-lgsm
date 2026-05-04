@@ -8,6 +8,7 @@ from .delete_file import delete_file
 from .rename_file import rename_file
 from .edit_cron import edit_cron
 from .list_dir import list_dir
+from .is_excluded import is_excluded
 
 # functions mapping
 functions = {
@@ -18,6 +19,7 @@ functions = {
     "rename_file": rename_file,
     "edit_cron": edit_cron,
     "list_dir": list_dir,
+    "is_excluded": is_excluded,
 }
 
 if __name__ == "__main__":

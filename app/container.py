@@ -94,6 +94,9 @@ from app.application.use_cases.file_system.rename_file import RenameFile
 from app.infrastructure.system.file_system.dir_manager import DirectoryManager
 from app.application.use_cases.file_system.list_dir import ListDir
 
+# Validators
+from app.application.use_cases.validators.filename_length import FilenameLength
+
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
 from app.application.use_cases.controls.list_controls import ListControls
@@ -428,6 +431,11 @@ class Container:
         return ListDir(
             dir_manager=self.dir_manager()
         )
+
+    ## Validators
+
+    def is_filename_length_valid(self):
+        return FilenameLength()
 
     ## Controls
 

@@ -10,7 +10,7 @@ from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import get_game_server, check_user_access, rename_file
+from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, rename_file, is_filename_length_valid
 
 
 ######### API File Rename #########
@@ -37,6 +37,14 @@ class FileRename(Resource):
             return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
 
         new_name = data["new_name"]
+
+        # Sanitize filename
+        new_name = secure_filename(name)
+
+        valid, error = is_filename_length_valid(new_name, 100)
+        if not valid:
+            resp_dict = {"Error": error}
+            return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
 
         # Check permissions
         if not check_user_access(current_user.id, "files_edit", server_id):

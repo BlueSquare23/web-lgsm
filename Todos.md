@@ -257,6 +257,7 @@
     - [x] File/dir create api route
       - [x] Make create route work, some bug with write "" right now.
     - [x] File/dir rename api route
+    - [x] Swagger docs for new api routes
   - Core Code:
     - [x] Add Audit logging for it all
       - [x] create file
@@ -309,7 +310,6 @@ exclude_dirs:
 ```
   - [x] Those will get imported by user module scripts.
   - [x] We'll wire up usecases through the user module service to call validator module scripts.
-  - [ ] Caching / timestamp checking somewhere (infra layer, so perhaps new infra layer adapter(s)/repo(s))
   - [x] These new user mod service scripts will be directly imported by other user
     mod service scripts for validation in that layer. They'll also be directly
     imported by user mod service in infra layer to include them in the app and be
@@ -318,7 +318,7 @@ exclude_dirs:
     code for same user installs which is very oldschool how I used to write all
     the route code.
 
-* [ ] **Validation for file manager**
+* [x] **Validation for file manager**
   - Breaking this out into its own todo to keep above list clean / short.
   - Basically, I want reusable validation.
   - We need to validate in the forms. 
@@ -330,9 +330,9 @@ exclude_dirs:
   - **Types of Validation**
     - [x] Words of affirmation. The file manager deserves to feel loved too!
     - [x] Hardcoded ignore list paths. (lock down allowed paths)
-    - [ ] No special chars in file names. Avoid .. or / or $blah etc.
-    - [ ] File name length limits, put in forms class.
-    - [ ] Upload file size limits.
+    - [x] No special chars in file names. Avoid .. or / or $blah etc. (sanitize with werkzeug.utils `secure_filename`)
+    - [x] File name length limits, put in forms class.
+    - [x] Upload file size limits.
 
 * [x] **Refactor forms**
   - First off all forms need to be broken up into their own form class files.

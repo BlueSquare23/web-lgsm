@@ -195,9 +195,9 @@ def files():
             return redirect(url_for("main.files", server_id=server_id, path=path))
 
 
+# TODO: Figure out where to put this long term...
 from pathlib import Path
 
-# TODO: I think this is basically going to be replaced by the other use cases I'm creating.
 def is_safe_path(path, username):
     base_dir = Path(f"/home/{username}").resolve()
     target_path = Path(path).resolve()

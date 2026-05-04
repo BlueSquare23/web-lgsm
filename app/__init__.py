@@ -158,6 +158,9 @@ def create_app():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
 
+    # Upload size limit
+    app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
+
     @app.after_request
     def add_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'

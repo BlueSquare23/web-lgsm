@@ -4,12 +4,13 @@ import json
 from flask import Response, request, current_app
 from flask_login import login_required, current_user
 from flask_restful import Resource
+from werkzeug.utils import secure_filename
 
 from . import api
 
 from app.utils import log_wrap
 
-from app.interface.use_cases import get_game_server, check_user_access, write_file
+from app.interface.use_cases import log_audit_event, get_game_server, check_user_access, write_file, is_filename_length_valid
 
 
 ######### API File Create #########
@@ -30,6 +31,14 @@ class FileCreate(Resource):
         path = data["path"]
         name = data["name"]
 
+        # Sanitize filename
+        name = secure_filename(name)
+
+        valid, error = is_filename_length_valid(name, 100)
+        if not valid:
+            resp_dict = {"Error": error}
+            return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
+
         # Check permissions
         if not check_user_access(current_user.id, "files_edit", server_id):
             resp_dict = {
@@ -42,7 +51,7 @@ class FileCreate(Resource):
         full_path = os.path.join(path, name)
 
         if write_file(server, full_path, ""):
-            log_audit_event(current_user.id, f"User '{current_user.username}', created file '{file_path}'")
+            log_audit_event(current_user.id, f"User '{current_user.username}', created file '{path}/{name}'")
             return "", 201
         else:
             resp_dict = {"Error": "Problem creating file"}

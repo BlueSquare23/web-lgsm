@@ -92,6 +92,152 @@ paths:
                   Error:
                     type: string
                     example: "Problem deleting server, see error logs for more details."
+  /files/rename/{server_id}/{file_path}:
+    post:
+      tags: ['files']
+      summary: Rename a file by path
+      description: Renames the specified file for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+        - name: file_path
+          in: path
+          required: true
+          description: Full path to file to rename (URL Encoded)
+          schema:
+            type: string
+      requestBody:
+        description: New file name
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_name:
+                  type: string
+                  description: New name for the file
+      responses:
+        '204':
+          description: File renamed successfully (no content)
+        '400':
+          description: Bad request (invalid path, missing new_name, or filename too long)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Missing new_name in request body"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Insufficient permission to rename files"
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Server not found!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Problem renaming file"
+
+  /files/create/{server_id}:
+    post:
+      tags: ['files']
+      summary: Create a new file
+      description: Creates a new file at the specified path for the specified game server
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          description: ID of the game server
+          schema:
+            type: string
+      requestBody:
+        description: File creation details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: Directory path where file will be created
+                name:
+                  type: string
+                  description: Name of the file to create
+      responses:
+        '201':
+          description: File created successfully (no content)
+        '400':
+          description: Bad request (missing path/name or filename too long)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Missing path or name in request body"
+        '403':
+          description: Forbidden (permission denied)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Insufficient permission to create files"
+        '404':
+          description: Server not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Server not found!"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Problem creating file"
   /cron/{server_id}:
     get:
       tags: ['cron']

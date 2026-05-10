@@ -96,8 +96,8 @@
                 <div class="d-flex flex-wrap gap-2">
                   {% for cfg_path in cfg_paths %}
                     {% set cfg_file = cfg_path.split('/')[-1] %}
-                    <a href="/files?server_id={{server_id}}&path={{cfg_path}}" class="btn btn-outline-warning">
-                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
+                    <a href="/files?server_id={{server_id}}&path={{cfg_path | urlencode }}" class="btn btn-outline-warning">
+                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file | urlencode }}
                     </a>
                   {% endfor %}
                 </div>

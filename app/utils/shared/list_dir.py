@@ -20,7 +20,9 @@ def list_dir(directory, show_hidden=True):
 
     with os.scandir(directory) as entries:
         for entry in entries:
-            item_type = 'dir' if entry.is_dir(follow_symlinks=False) else 'file'
+            info = entry.stat(follow_symlinks=False)
+
+            item_type = 'dir' if stat.S_ISDIR(info.st_mode) else 'file'
 
             if not show_hidden and entry.name.startswith("."):
                 continue
@@ -32,11 +34,6 @@ def list_dir(directory, show_hidden=True):
                 if matches(entry.name, file_exact, file_globs):
                     continue
 
-            info = entry.stat()
-
-            # Get raw octal permissions (e.g., 0o644)
-            perms_octal = oct(info.st_mode & 0o777)
-            
             # Get readable string (e.g., '-rw-r--r--')
             perms = stat.filemode(info.st_mode)
             
@@ -44,7 +41,8 @@ def list_dir(directory, show_hidden=True):
                 "name": entry.name,
                 "path": entry.path,
                 "type": item_type,
-                "perms": perms
+                "perms": perms,
+                "size": info.st_size
             })
 
     return files

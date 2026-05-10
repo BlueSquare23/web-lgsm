@@ -224,7 +224,7 @@
 * [ ] **Add more Custom Themeing options to config**
   - So I've already got a couple of color options for the config.
 
-* [ ] **Get Basic POC FileManager Setup**
+* [x] **Get Basic FileManager Setup**
   - I need to figure out if I'm just pushing dir stuff through file pipes or
     making new dir only pipes...
   - [x] Replace edit page with new file manager instead.
@@ -241,11 +241,12 @@
     - [x] List of files and directories on the system on the left.
     - [x] Click file it opens the file, click dir opens the dir.
     - [x] Add perms to files list
-    - [ ] Make files list auto scroll to selected file on refresh.
-    - [ ] Save search bar search to session var
-    - [ ] Make sure path is always URL encoded in url bar, not strictly
-    - [ ] On file delete, fix js to remove item from list. (currently broken)
-      necessary, but just to be consistent and look more professional.
+    - [x] Make files list auto scroll to selected file on refresh.
+    - [x] Save search bar search to session var
+    - [x] Add X to clear search bar
+    - [x] Make sure path is always URL encoded in url bar, not strictly
+          necessary, but just to be consistent and look more professional.
+    - [x] On file delete, fix js to remove item from list. (currently broken)
   - API:
     - [x] New file routes need validation and hardened against directory traversal attempts.
     - [x] New perms for file editor, replace edit perms with file perms.
@@ -275,6 +276,7 @@
     - [x] Use cases and container wiring to go along with it all.
     - [x] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
+    - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
   - Future Features:
     - Non-day1 stuff.
     - [ ] It'd be cool if could return info about mime type with file contents.
@@ -394,12 +396,6 @@ exclude_dirs:
 python3 -c 'import secrets; print(secrets.token_hex())'
 b7e4a7e242e81ad0c6b2eba7ce90f52bbf9e56407a8ebcbec2ac0bfa6a752def
 ```
-
-* [x] **Play around with new Controls page UI**
-  - It looks like shit and basically hasn't changed in a long ass time. We're
-    trying to come up with a more consistent "Control Panel-esq" design
-    language and I think the control panel would be a good place to start figuring
-    out what that looks like.
 
 * [ ] **Add install new game servers to containers**
   - Instead of installing as new system users, allow install game servers

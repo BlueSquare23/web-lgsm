@@ -63,9 +63,21 @@
 
             <!-- Search Bar -->
             <div class="mb-2 px-2 pt-1 sticky-top">
-              <input type="text" id="fileSearch"
-                     class="form-control form-control-sm bg-dark text-light border-secondary white-placeholder"
-                     placeholder="Search files...">
+              <div class="position-relative">
+            
+                <input type="text"
+                       id="fileSearch"
+                       class="form-control form-control-sm bg-dark text-light border-secondary white-placeholder pe-5"
+                       placeholder="Search files...">
+            
+                <button type="button"
+                        id="clearSearch"
+                        class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-1 text-secondary border-0 bg-transparent"
+                        style="z-index: 5; display: none;">
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+            
+              </div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center px-2">
@@ -97,7 +109,7 @@
             {% for item in files %}
               <div class="rounded border-secondary list-group-item file-item rounded p-1 {% if item.name == selected_file %}active" aria-current="true{% endif %}">
                 <div class="row align-items-center g-2">
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <form method="GET" action="/files" class="flex-grow-1">
                       <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
                       <input id="path" name="path" type="hidden" value="{{ item.path }}">
@@ -117,6 +129,9 @@
                     </form>
                   </div>
 
+                  <div class="col-md-2">
+                    {{item.size | filesizeformat}}
+                  </div>
                   <div class="col-md-3">
                     {{item.perms}}
                   </div>
@@ -154,7 +169,7 @@
     <div class="col-md-8 mb-4">
       <div class="card bg-dark border-secondary shadow-sm h-100">
         <div class="card-header bg-dark border-secondary">
-          <h5 class="mb-0 text-light">
+          <h5 id="editorTitle" class="mb-0 text-light">
             <i class="bi bi-code-slash me-2 text-primary"></i>
             {% if selected_file %}
               {% set item = files | selectattr('name', 'equalto', selected_file) | first %}
@@ -347,16 +362,16 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <script>
-/* File Search */
-document.getElementById("fileSearch").addEventListener("keyup", function() {
-  let filter = this.value.toLowerCase();
-  let items = document.querySelectorAll(".file-item");
+/* Scroll to selected */
+document.addEventListener("DOMContentLoaded", function () {
+  const selectedFile = document.querySelector(".file-item.active");
 
-  items.forEach(item => {
-    console.log(item);
-    let text = item.innerText.toLowerCase();
-    item.style.display = text.includes(filter) ? "" : "none";
-  });
+  if (selectedFile) {
+    selectedFile.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
 });
 
 /* Toggle Hidden Files */
@@ -384,7 +399,34 @@ async function deleteFile(btn, serverId, filePath, fileName) {
     }
     showAlert(`Successfully deleted ${fileName}!`);
 
-    btn.closest("li").remove();
+    btn.closest(".file-item").remove();
+    window.scrollTo(0, 0);  // So they see flashed message
+
+    /* Remove deleted file from URL */
+    const url = new URL(window.location.href);
+    
+    const currentPath = url.searchParams.get("path");
+    
+    if (currentPath && decodeURIComponent(currentPath).endsWith(`/${fileName}`)) {
+      url.searchParams.delete("path");
+    
+      window.history.replaceState({}, "", url);
+    }
+
+    /* Reset editor title */
+    const editorTitle = document.getElementById("editorTitle");
+    
+    if (editorTitle) {
+      editorTitle.innerHTML = `
+        <i class="bi bi-code-slash me-2 text-primary"></i>
+        No file selected
+      `;
+    }
+
+    // Clear codeMirror editor.
+    if (editor) {
+      editor.setValue('');
+    }
 
   } catch (err) {
     alert("Error deleting file: " + err.message);
@@ -484,6 +526,51 @@ document.getElementById("createFileForm").addEventListener("submit", async funct
   } catch (err) {
     alert("Error creating file: " + err.message);
   }
+});
+
+const fileSearch = document.getElementById("fileSearch");
+const clearSearch = document.getElementById("clearSearch");
+
+/* Apply filtering */
+function filterFiles(filter) {
+  const items = document.querySelectorAll(".file-item");
+
+  items.forEach(item => {
+    const text = item.innerText.toLowerCase();
+    item.style.display = text.includes(filter.toLowerCase()) ? "" : "none";
+  });
+
+  /* Toggle clear button visibility */
+  clearSearch.style.display = filter ? "block" : "none";
+}
+
+/* Restore previous search */
+document.addEventListener("DOMContentLoaded", function () {
+  const savedSearch = sessionStorage.getItem("fileSearch");
+
+  if (savedSearch) {
+    fileSearch.value = savedSearch;
+    filterFiles(savedSearch);
+  }
+});
+
+/* Typing in search */
+fileSearch.addEventListener("input", function() {
+  const filter = this.value;
+
+  sessionStorage.setItem("fileSearch", filter);
+  filterFiles(filter);
+});
+
+/* Clear search */
+clearSearch.addEventListener("click", function () {
+  fileSearch.value = "";
+
+  sessionStorage.removeItem("fileSearch");
+
+  filterFiles("");
+
+  fileSearch.focus();
 });
 </script>
 

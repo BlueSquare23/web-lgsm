@@ -1,6 +1,7 @@
 import os
-import getpass
+import gzip
 import base64
+import getpass
 import logging
 
 from app.utils.helpers import log_wrap
@@ -16,7 +17,20 @@ class LocalFileInterface(FileInterface):
         self.executor = executor
 
 
+    def _decompress(self, encoded_data):
+        compressed_bytes = base64.b64decode(encoded_data)
+        original_bytes = gzip.decompress(compressed_bytes)
+        return original_bytes
+
+
     def read(self, file_path):
+        """
+        Reads local files via user module service read_file and auto decodes
+        base64 content on successful reads.
+
+        Returns:
+            dict with keys: status, mime_type, data
+        """
         self.logger.info(log_wrap("reading file_path", file_path))
         args = [ file_path ]
 
@@ -24,17 +38,19 @@ class LocalFileInterface(FileInterface):
         if self.server.username != LocalFileInterface.USER:
             kwargs = { 'as_user': self.server.username }
 
-        encoded = self.executor.call('read_file', *args, **kwargs)
-        if not encoded:
-            return None
+        file = self.executor.call('read_file', *args, **kwargs)
 
-        stripped = encoded.strip()
-        if stripped == 'null':
-            return None
+        # Decompress and decode contents on success
+        if file['status'] == 'success':
+#            self.logger.debug(log_wrap("encoded", file['data']))
+            try:
+                text = self._decompress(file["data"]).decode("utf-8")
+                file['data'] = text
+            except:
+                file['status'] = 'decompression_error'
+                file['data'] = None
 
-        self.logger.debug(log_wrap("encoded", encoded))
-        
-        return base64.b64decode(encoded).decode('utf-8', errors='ignore')
+        return file
 
 
     def write(self, file_path, content):

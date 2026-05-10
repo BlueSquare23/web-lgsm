@@ -244,6 +244,7 @@
     - [ ] Make files list auto scroll to selected file on refresh.
     - [ ] Save search bar search to session var
     - [ ] Make sure path is always URL encoded in url bar, not strictly
+    - [ ] On file delete, fix js to remove item from list. (currently broken)
       necessary, but just to be consistent and look more professional.
   - API:
     - [x] New file routes need validation and hardened against directory traversal attempts.
@@ -280,6 +281,32 @@
       Then we could set the CodeMirror extension to be the same so syntax
       hightlight always works. We might even just be able to use the file extention
       tbh.
+    - [ ] Full support for file manager over SSH and in docker via module scripts.
+      - These module scripts are handy, might as well use them over ssh and
+        inside of a container if we can.
+      - So they need shipped and installed there somehow...
+
+* [ ] **Write File Manager Tests!!**
+  - [ ] Basic Content Tests
+  - [ ] Basic Reposes Tests
+  - [ ] Basic API Endpoint Tests
+  - [ ] Unit Tests for FileManager
+  - [ ] Integration Tests for edit file as alt user after install
+
+* [ ] **Use User Module Script over SSH and inside of Containers**
+  - They work great as same and alt user.
+  - Its very nice to have an interface that wraps up and runs the same code run
+    in two different ways.
+  - All the pieces are already there:
+    - We have an ssh remote runner.
+    - We run docker cmds via cli runner.
+  - Instead of running shell over docker tunnel or ssh we run shell to module
+    script's `cli.py` and bobs your uncle.
+  - Wanna do it smartly tho, keep things from becoming too coupled...
+  - But its all infra layer stuff and with this out of the way we no longer
+    have to worry about maintaining both shell for docker and ssh server and
+    pure python for local. It can all be PURE PYTHON! Better for security and
+    maintainability.
 
 * [x] **File/Dir Manager User Permissions**
   - Global disable in the main.conf(.local) for the entire file manager.

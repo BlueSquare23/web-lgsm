@@ -1,7 +1,7 @@
-import subprocess
+import os
 import sys
 import json
-import os
+import logging
 from datetime import datetime
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
@@ -17,8 +17,9 @@ class UserModuleService:
 
     In/out via stdin/out json.
     """
-    def __init__(self, module_dir='/opt/web-lgsm/utils'):
+    def __init__(self, module_dir='/opt/web-lgsm/utils', logger=logging.getLogger(__name__)):
         self.module_dir = os.path.abspath(module_dir)
+        self.logger = logger
 
     def call(self, func_name, *args, as_user=None, **kwargs):
         """Call a function, optionally as another user"""
@@ -52,11 +53,12 @@ class UserModuleService:
         if proc_info == None or proc_info.exit_status > 0:
             return {}
 
-        try:
-            module_out = "\n".join(proc_info.stdout)
-            struct = json.loads(module_out)
-            InMemProcInfoRepository().remove(cmd_id)  # Cleanup proc_info obj
-            return struct
-        except:
-            return module_out
-            
+        # Undo post process on output for mod scripts.
+        for index, line in enumerate(proc_info.stdout):
+            proc_info.stdout[index] = line.replace("\r", "").replace("\n", "")
+
+        module_out = "".join(proc_info.stdout)
+        struct = json.loads(module_out)
+        InMemProcInfoRepository().remove(cmd_id)  # Cleanup proc_info obj
+        return struct
+

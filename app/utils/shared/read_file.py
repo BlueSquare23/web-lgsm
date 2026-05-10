@@ -1,4 +1,5 @@
 import os
+import gzip
 import base64
 import mimetypes
 
@@ -6,11 +7,18 @@ def read_file(file_path):
     """
     Shared file read module. Reads files and returns base64 encoded contents.
     Only processes plain text files.
+
+    Returns:
+        dict with keys: status, mime_type, data
     """
     try:
         # Check if file exists
         if not os.path.isfile(file_path):
-            return None
+            return {
+                "status": "not_found", 
+                "mime_type": None,
+                "data": None
+            }
 
         # Check MIME type
         mime_type, _ = mimetypes.guess_type(file_path)
@@ -23,19 +31,32 @@ def read_file(file_path):
                 'application/javascript',
                 'application/x-yaml'
             ]:
-                return None
+                return {
+                    "status": "unsupported_type",
+                    "mime_type": mime_type,
+                    "data": None
+                }
 
         # Read the file's content as bytes.
         with open(file_path, 'rb') as f:
             file_bytes = f.read()
 
-            # Encode the bytes into Base64 bytes
-            encoded_bytes = base64.b64encode(file_bytes)
+        # Gzip compress
+        compressed_bytes = gzip.compress(file_bytes)
 
-            # Decode the Base64 bytes to a standard string
-            encoded_string = encoded_bytes.decode('utf-8')
-            return encoded_string
+        # Base64 encode compressed bytes
+        encoded_string = base64.b64encode(compressed_bytes).decode('utf-8')
+
+        return {
+            "status": "success",
+            "mime_type": mime_type or "text/plain",
+            "data": encoded_string
+        }
 
     except Exception:
-        return None
+        return {
+            "status": "error",
+            "mime_type": None,
+            "data": None
+        }
     

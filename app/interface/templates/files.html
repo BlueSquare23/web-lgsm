@@ -157,7 +157,20 @@
           <h5 class="mb-0 text-light">
             <i class="bi bi-code-slash me-2 text-primary"></i>
             {% if selected_file %}
-              Editing: {{ selected_file }}
+              {% set item = files | selectattr('name', 'equalto', selected_file) | first %}
+
+              {% if item %}
+                {% if item.type == 'file' and file.status == 'unsupported_type' %}
+                  <i class="text-danger bi bi-sign-do-not-enter"></i>
+                  Cannot display mimetype {{file.mime_type}} for editing
+                {% elif item.type == 'file' and file.status != 'success' %}
+                  <i class="text-danger bi bi-sign-do-not-enter"></i>
+                  Problem loading selected file...
+                {% else %}
+                  Editing: {{ selected_file }}
+                {% endif %}
+              {% endif %}
+
             {% else %}
               No file selected
             {% endif %}
@@ -169,7 +182,7 @@
                     name="file_contents"
                     form="save-edit"
                     class="form-control bg-dark text-light border-0 rounded-0"
-                    style="min-height: 500px;">{{ file_contents or "" }}</textarea>
+                    style="min-height: 500px;">{{ file.data or "" }}</textarea>
         </div>
       </div>
     </div>

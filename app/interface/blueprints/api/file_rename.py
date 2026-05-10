@@ -1,3 +1,4 @@
+import os
 import json
 
 from urllib.parse import unquote
@@ -5,6 +6,7 @@ from urllib.parse import unquote
 from flask import Response, request, current_app
 from flask_login import login_required, current_user
 from flask_restful import Resource
+from werkzeug.utils import secure_filename
 
 from . import api
 
@@ -44,7 +46,7 @@ class FileRename(Resource):
         new_name = data["new_name"]
 
         # Sanitize filename
-        new_name = secure_filename(name)
+        new_name = secure_filename(new_name)
 
         valid, error = is_filename_length_valid(new_name, 100)
         if not valid:

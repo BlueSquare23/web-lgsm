@@ -13,21 +13,34 @@ class SSHFileInterface(FileInterface):
         self.client_interface = client_interface
 
     def read(self, file_path):
+        """
+        Returns:
+            dict with keys: status, mime_type, data
+        """
         self.logger.info(log_wrap("file_path", file_path))
         hostname = self.server.install_host
         username = self.server.username
-        
+
         try:
             client = self.client_interface.get_client(username, hostname)
-            
+
             with client.open_sftp() as sftp:
                 with sftp.open(file_path, "r") as file:
                     content = file.read()
-            
-            return content.decode()
+
+            return {
+                'status': 'success',
+                'mime_type': None,
+                'data': content.decode()
+            }
+
         except Exception as e:
             self.logger.debug(e)
-            return None
+            return {
+                'status': 'error',
+                'mime_type': None,
+                'data': None
+            }
     
     def write(self, file_path, content):
         self.logger.info(log_wrap("file_path", file_path))

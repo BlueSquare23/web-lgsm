@@ -13,7 +13,7 @@ class SSHDirInterface(DirInterface):
         self.client_interface = client_interface
 
  
-    def list(self, file_path):
+    def list(self, directory, show_hidden):
         """Not implemented for remote yet..."""
         raise NotImplementedError
 

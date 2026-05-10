@@ -40,12 +40,12 @@ def files():
         path = request.args.get('path')
         show_hidden = request.args.get("show_hidden", 1, type=int)
 
-        current_path = None
-        selected_file = None
-        file_contents = None
-        parent_path = None
-        server_json = None
+        try:
+            show_hidden = bool(show_hidden)
+        except:
+            show_hidden = False
 
+        # Handle download form
         if "download_submit" in request.args.keys():
             download_form = DownloadForm(request.args)
             if not download_form.validate():
@@ -58,69 +58,83 @@ def files():
 
             log_audit_event(current_user.id,  f"User '{current_user.username}', downloaded config '{path}'")
 
-            file_contents = read_file(server, path)
+            file = read_file(server, path)
 
-            if file_contents is None:
-                flash("Problem retrieving file contents", category="error")
+            if file['status'] != 'success':
+                flash("Problem retrieving file contents: {file['status']}", category="error")
                 return redirect(url_for("main.home"))
 
             filename = os.path.basename(path)
 
             return send_file(
-                io.BytesIO(file_contents.encode("utf-8")),
+                io.BytesIO(file['data'].encode("utf-8")),
                 as_attachment=True,
                 download_name=filename,
                 mimetype="text/plain",
             )
 
-        # Try cast to bool
-        try:
-            show_hidden = bool(show_hidden)
-        except:
-            show_hidden = False
-
-        if server_id:
-            server = get_game_server(server_id)
-
-            if server:
-                server_json = json.dumps(server.__dict__)
-
-                current_app.logger.debug(log_wrap("path", path))
-                if path:
-                    if not is_safe_path(server, path):
-                        current_app.logger.debug(log_wrap("is_safe_path", False))
-                        flash("Cannot go above game server user's home dir!", category="error")
-                        return redirect(url_for("main.files", server_id=server_id, path=f"/home/{server.username}"))
-
-                if not path:
-                    path = server.install_path
-        else:
-            path = None
-
-        # If target path is a dir, fetch listing of files & sub dirs.
+        server = None
+        file = None
+        server_json = None
+        current_path = None
+        parent_path = None
+        selected_file = None
         files = []
-        if path:
-            parent_path = os.path.abspath(os.path.join(path, ".."))
 
-            if os.path.isdir(path):
-                current_path = path
-                files = list_dir(server, path, show_hidden)
+        # No server selected render empty template
+        if not server_id:
+            flash("Please select a game server!")
+            return render_template(
+                "files.html",
+                user=current_user,
+                server_id=server_id,
+                current_path=current_path,
+                parent_path=parent_path,
+                files=files,
+                file=file,
+                selected_file=selected_file,
+                save_form=save_form,
+                upload_form=upload_form,
+                show_hidden=show_hidden,
+                download_form=download_form,
+                game_servers=game_servers,
+                server_json=server_json,
+            )
 
-            # strip file name and get listing of basedir
-            else:
-                selected_file = os.path.basename(path)
-                base_dir = os.path.dirname(path)
-                current_path = base_dir
+        server = get_game_server(server_id)
 
-                # handle case where file is in current directory
-                if base_dir == "":
-                    base_dir = "."
+        if not server:
+            flash("Server not found", category="error")
+            return redirect(url_for("main.files"))
 
-                files = list_dir(server, base_dir, show_hidden)
+        if server.install_type == 'remote' or server.install_type == 'docker':
+            flash(f"File manager doesn't support {server.install_type} game servers yet...", category="error")
+            return redirect(url_for("main.files"))
 
-            # If file read contents
-            if selected_file:
-                file_contents = read_file(server, path)
+        server_json = json.dumps(server.__dict__)
+
+        # Resolve path.
+        if not path:
+            path = server.install_path
+        elif not is_safe_path(server, path):
+            current_app.logger.debug(log_wrap("path", path))
+            current_app.logger.debug(log_wrap("is_safe_path", False))
+            flash("Cannot go above game server user's home dir!", category="error")
+            return redirect(url_for("main.files", server_id=server_id, path=f"/home/{server.username}"))
+
+        # At this point, server and path are guaranteed valid
+        current_path = path
+        parent_path = os.path.abspath(os.path.join(path, ".."))
+
+        if os.path.isdir(path):
+            files = list_dir(server, path, show_hidden)
+
+        else:
+            selected_file = os.path.basename(path)
+            base_dir = os.path.dirname(path) or "."
+            current_path = base_dir
+            files = list_dir(server, base_dir, show_hidden)
+            file = read_file(server, path)
 
         return render_template(
             "files.html",
@@ -129,8 +143,8 @@ def files():
             current_path=current_path,
             parent_path=parent_path,
             files=files,
+            file=file,
             selected_file=selected_file,
-            file_contents=file_contents,
             save_form=save_form,
             upload_form=upload_form,
             show_hidden=show_hidden,

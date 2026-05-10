@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactor form classes for better developer ergonomics.
 - Replace old hardcoded file edit page with new file manager.
 
 ## [v1.9.2 - 2026-04-18]

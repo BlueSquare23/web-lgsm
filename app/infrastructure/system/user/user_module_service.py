@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import socket
 import logging
 from datetime import datetime
 
@@ -17,9 +18,10 @@ class UserModuleService:
 
     In/out via stdin/out json.
     """
-    def __init__(self, module_dir='/opt/web-lgsm/utils', logger=logging.getLogger(__name__)):
+    def __init__(self, module_dir='/opt/web-lgsm/utils', logger=logging.getLogger(__name__), socket_dir="/run/web-lgsm"):
         self.module_dir = os.path.abspath(module_dir)
         self.logger = logger
+        self.socket_dir = socket_dir
 
     def call(self, func_name, *args, as_user=None, **kwargs):
         """Call a function, optionally as another user"""
@@ -32,47 +34,71 @@ class UserModuleService:
             func = getattr(module, func_name)
             return func(*args, **kwargs)
 
-        # Otherwise execute via sudo -u via LocalCommandExecutor
 
-        # Module script args & kwargs
-        data = {
-            'func': func_name,
-            'args': args,
-            'kwargs': kwargs
-        }
+        sock_path = f"{self.socket_dir}/{as_user}.sock"
 
-        # Dump to json and encode as bytes
-        stdin = json.dumps(data).encode("utf-8")
-        self.logger.debug(stdin)
+        payload = json.dumps({
+            "func": func_name,
+            "args": args,
+            "kwargs": kwargs,
+        }).encode("utf-8")
 
-        # Subprocess cmd
-        cmd = [
-            'sudo', '-n', '-u', as_user,
-            f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
-            sys.executable, '-m', 'shared.cli',
-        ]
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(sock_path)
 
-        unique_time_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
-        cmd_id = 'user_module_service' + unique_time_str  # Keep proc_info id unique
+        sock.sendall(payload)
 
-        payload = {
-            "cmd_id": cmd_id,
-            "app_context": False,
-            "timeout": False,
-            "stdin": stdin
-        }
-        CommandExecutor().run(cmd, None, **payload)
-        proc_info = InMemProcInfoRepository().get(cmd_id)
+        response = sock.recv(65536)
+        sock.close()
 
-        if proc_info == None or proc_info.exit_status > 0:
-            return {}
+        data = json.loads(response.decode("utf-8"))
 
-        # Undo post process on output for mod scripts.
-        for index, line in enumerate(proc_info.stdout):
-            proc_info.stdout[index] = line.replace("\r", "").replace("\n", "")
+        if not data.get("ok"):
+            raise RuntimeError(data.get("error"))
 
-        module_out = "".join(proc_info.stdout)
-        struct = json.loads(module_out)
-        InMemProcInfoRepository().remove(cmd_id)  # Cleanup proc_info obj
-        return struct
+        return data.get("result")
 
+#        # Otherwise execute via sudo -u via LocalCommandExecutor
+#
+#        # Module script args & kwargs
+#        data = {
+#            'func': func_name,
+#            'args': args,
+#            'kwargs': kwargs
+#        }
+#
+#        # Dump to json and encode as bytes
+#        stdin = json.dumps(data).encode("utf-8")
+#        self.logger.debug(stdin)
+#
+#        # Subprocess cmd
+#        cmd = [
+#            'sudo', '-n', '-u', as_user,
+#            f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
+#            sys.executable, '-m', 'shared.cli',
+#        ]
+#
+#        unique_time_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
+#        cmd_id = 'user_module_service' + unique_time_str  # Keep proc_info id unique
+#
+#        payload = {
+#            "cmd_id": cmd_id,
+#            "app_context": False,
+#            "timeout": False,
+#            "stdin": stdin
+#        }
+#        CommandExecutor().run(cmd, None, **payload)
+#        proc_info = InMemProcInfoRepository().get(cmd_id)
+#
+#        if proc_info == None or proc_info.exit_status > 0:
+#            return {}
+#
+#        # Undo post process on output for mod scripts.
+#        for index, line in enumerate(proc_info.stdout):
+#            proc_info.stdout[index] = line.replace("\r", "").replace("\n", "")
+#
+#        module_out = "".join(proc_info.stdout)
+#        struct = json.loads(module_out)
+#        InMemProcInfoRepository().remove(cmd_id)  # Cleanup proc_info obj
+#        return struct
+#

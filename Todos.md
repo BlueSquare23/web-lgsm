@@ -306,7 +306,47 @@ OSError: [Errno 7] Argument list too long: 'sudo'
   - Since the user mod service is now the backbone of the file manager, we
     can't just be having it break on file reads and writes and stuff.
   - Good news is we just have to fix the input via the cli.py and the way the json is sent via the cmd.
-  
+
+* [ ] **Upgrade User Module Service to New User JSON-RPC Service**
+  - (still workshopping the name)
+  - Idea is each game server user gets their system user service agent.
+  - [ ] Add below to install playbook!
+```
+[Unit]
+Description=Web-LGSM User Module Agent
+After=network.target
+
+[Service]
+Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
+ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
+Restart=always
+WorkingDirectory=%h
+
+[Install]
+WantedBy=default.target
+```
+  - Enabled:
+```
+export XDG_RUNTIME_DIR=/run/user/$UID
+loginctl enable-linger $USER
+mkdir -p ~/.config/systemd/user/
+vim ~/.config/systemd/user/web-lgsm-agent.service
+systemctl --user enable web-lgsm-agent
+```
+  - This is setup at install / add time.
+  - This is a basic json rpc service working via a unix domain socket.
+  - Socket Permissions I think are going to be:
+```
+sudo mkdir /run/web-lgsm  # Will happen by install.sh
+sudo chown www-data:web-lgsm /run/web-lgsm
+sudo chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
+sudo chown mcserver:www-data /run/web-lgsm/mcserver.sock
+sudo chown 660 /run/web-lgsm/mcserver.sock
+```
+  - So the `/run/web-lgsm` dir is group owned by `web-lgsm` allowing anyone to
+    make socket files.
+  - But then each socket file is gs user owned and web user group.
+  - And no deleting other servers socket files!
 
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests

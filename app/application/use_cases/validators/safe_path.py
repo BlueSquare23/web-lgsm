@@ -7,13 +7,7 @@ class IsSafePath:
         self.dir_manager = dir_manager
 
     def execute(self, server, path):
-        base_dir = Path(f"/home/{server.username}").resolve()
-        target_path = Path(path).resolve()
-
-        # Check is below game server user home dir.
-        try:
-            target_path.relative_to(base_dir)
-        except ValueError:
+        if not self.dir_manager.traversal_safe(server, path):
             return False
 
         # Check if it's excluded.

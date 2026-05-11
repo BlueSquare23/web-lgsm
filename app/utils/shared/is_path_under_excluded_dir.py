@@ -7,7 +7,7 @@ def is_path_under_excluded_dir(path, dir_exact, dir_globs):
 
     Uses pathlib to prevent traversal attempts.
     """
-    p = Path(path)
+    p = Path(path).resolve()
 
     for parent in [p] + list(p.parents):
         parent_str = str(parent)

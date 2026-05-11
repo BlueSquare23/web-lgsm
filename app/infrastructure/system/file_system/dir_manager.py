@@ -46,6 +46,19 @@ class DirectoryManager:
         self.server = server
         return self.interface.list(directory, show_hidden)
 
+    def traversal_safe(self, server, path):
+        """
+        Checks if file or directory path is above game server users home
+        directory.
+
+        Args:
+            server (GameServer): GameServer object
+            path (str): Path to directory or file to check 
+
+        """
+        self.server = server
+        return self.interface.traversal_safe(path)
+
     def check_excluded(self, server, path):
         """
         Checks if file or directory path is excluded.

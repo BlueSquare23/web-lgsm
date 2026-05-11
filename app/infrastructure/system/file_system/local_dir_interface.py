@@ -25,6 +25,15 @@ class LocalDirInterface(DirInterface):
 
         return self.executor.call('list_dir', *args, **kwargs)
 
+    def traversal_safe(self, path):
+        args = [ path ]
+
+        kwargs = dict()
+        if self.server.username != LocalDirInterface.USER:
+            kwargs = { 'as_user': self.server.username }
+
+        return self.executor.call('traversal_safe', *args, **kwargs)
+
     def check_excluded(self, path):
         args = [ path ]
 

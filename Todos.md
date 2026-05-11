@@ -224,6 +224,14 @@
 * [ ] **Add more Custom Themeing options to config**
   - So I've already got a couple of color options for the config.
 
+* [ ] **Fix Form Classes that ChatGPT Fucked Up**
+  - I was being lazy and threw my old monolithic form files at chatgpt to break
+    up and told it "don't change anything." Well it removed all my placeholder
+    text cause its an idiot.
+  - Should've just copied and pasted to begin with, would've saved me more time
+    in the long run.
+  - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
+
 * [x] **Get Basic FileManager Setup**
   - I need to figure out if I'm just pushing dir stuff through file pipes or
     making new dir only pipes...
@@ -277,6 +285,8 @@
     - [x] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
     - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
+    - [ ] Rename Directories
+    - [ ] Delete Directories
   - Future Features:
     - Non-day1 stuff.
     - [ ] It'd be cool if could return info about mime type with file contents.
@@ -287,6 +297,16 @@
       - These module scripts are handy, might as well use them over ssh and
         inside of a container if we can.
       - So they need shipped and installed there somehow...
+
+* [x] **CRITICAL! Fix User Mod Service to use Stdin for JSON**
+  - Right now we're passing all json via command line flags. This breaks on large inputs!
+```
+OSError: [Errno 7] Argument list too long: 'sudo'
+```
+  - Since the user mod service is now the backbone of the file manager, we
+    can't just be having it break on file reads and writes and stuff.
+  - Good news is we just have to fix the input via the cli.py and the way the json is sent via the cmd.
+  
 
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests

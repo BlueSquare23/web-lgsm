@@ -3,6 +3,9 @@ import gzip
 import base64
 import mimetypes
 
+from .traversal_safe import traversal_safe
+from .is_excluded import is_excluded
+
 def read_file(file_path):
     """
     Shared file read module. Reads files and returns base64 encoded contents.
@@ -12,8 +15,8 @@ def read_file(file_path):
         dict with keys: status, mime_type, data
     """
     try:
-        # Check if file exists
-        if not os.path.isfile(file_path):
+        # Check file exists and path is allowed
+        if not os.path.isfile(file_path) or not traversal_safe(file_path) or is_excluded(file_path):
             return {
                 "status": "not_found", 
                 "mime_type": None,

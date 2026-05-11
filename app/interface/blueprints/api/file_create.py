@@ -31,17 +31,21 @@ class FileCreate(Resource):
         path = data["path"]
         name = data["name"]
 
-        if not is_safe_path(server, path):
-            resp_dict = {"Error": "Not allowed access to this directory"}
-            return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
-
         # Sanitize filename
         name = secure_filename(name)
 
+        full_path = os.path.join(path, name)
+
+        # Check file name length
         valid, error = is_filename_length_valid(name, 100)
         if not valid:
             resp_dict = {"Error": error}
             return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
+
+        # Check path is below gs user home dir and not excluded
+        if not is_safe_path(server, full_path):
+            resp_dict = {"Error": "Not allowed access to this file or directory"}
+            return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 
         # Check permissions
         if not check_user_access(current_user.id, "files_edit", server_id):
@@ -51,8 +55,6 @@ class FileCreate(Resource):
             return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")
 
         current_app.logger.info(log_wrap(f"{current_user} creating {path}/{name}: ", server_id))
-
-        full_path = os.path.join(path, name)
 
         if write_file(server, full_path, ""):
             log_audit_event(current_user.id, f"User '{current_user.username}', created file '{path}/{name}'")

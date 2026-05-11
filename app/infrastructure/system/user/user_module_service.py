@@ -24,6 +24,7 @@ class UserModuleService:
     def call(self, func_name, *args, as_user=None, **kwargs):
         """Call a function, optionally as another user"""
 
+        # Same user import the code and run it.
         if as_user is None:
             sys.path.insert(0, self.module_dir)
             import importlib
@@ -31,23 +32,36 @@ class UserModuleService:
             func = getattr(module, func_name)
             return func(*args, **kwargs)
 
-        # Execute via sudo, importing the same module
+        # Otherwise execute via sudo -u via LocalCommandExecutor
+
+        # Module script args & kwargs
         data = {
             'func': func_name,
             'args': args,
             'kwargs': kwargs
         }
 
+        # Dump to json and encode as bytes
+        stdin = json.dumps(data).encode("utf-8")
+        self.logger.debug(stdin)
+
+        # Subprocess cmd
         cmd = [
             'sudo', '-n', '-u', as_user,
             f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
             sys.executable, '-m', 'shared.cli',
-            json.dumps(data)
         ]
 
         unique_time_str = datetime.now().strftime('%Y%m%d%H%M%S%f')
         cmd_id = 'user_module_service' + unique_time_str  # Keep proc_info id unique
-        CommandExecutor().run(cmd, None, cmd_id)
+
+        payload = {
+            "cmd_id": cmd_id,
+            "app_context": False,
+            "timeout": False,
+            "stdin": stdin
+        }
+        CommandExecutor().run(cmd, None, **payload)
         proc_info = InMemProcInfoRepository().get(cmd_id)
 
         if proc_info == None or proc_info.exit_status > 0:

@@ -9,6 +9,7 @@ from .rename_file import rename_file
 from .edit_cron import edit_cron
 from .list_dir import list_dir
 from .is_excluded import is_excluded
+from .traversal_safe import traversal_safe
 
 # functions mapping
 functions = {
@@ -20,10 +21,16 @@ functions = {
     "edit_cron": edit_cron,
     "list_dir": list_dir,
     "is_excluded": is_excluded,
+    "traversal_safe": traversal_safe,
 }
 
 if __name__ == "__main__":
-    data = json.loads(sys.argv[1])
+    raw_input = sys.stdin.buffer.read()
+
+    if not raw_input.strip():
+        raise ValueError("No JSON input provided on stdin")
+
+    data = json.loads(raw_input)
 
     func_name = data["func"]
     args = data.get("args", [])

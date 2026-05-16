@@ -307,10 +307,33 @@ OSError: [Errno 7] Argument list too long: 'sudo'
     can't just be having it break on file reads and writes and stuff.
   - Good news is we just have to fix the input via the cli.py and the way the json is sent via the cmd.
 
-* [ ] **Upgrade User Module Service to New User JSON-RPC Service**
+* [ ] **Design MultiUserRCPSocketD Client & Server**
+  - A client class.
+  - A server class.
+  - Each game server user runs a **Server** instance.
+  - The web-lgsm flask app is the **Client** instance.
+  - Python `socket` is bytes.
+  - Payload format is:
+    - Two Raw Bytes specifying content header length
+    - UTF-8 JSON Content Header with Content-Length
+    - UTF-8 JSON Content Body read in till Content-Length
+    - Directly ~stolen from~ inspired by: https://realpython.com/python-sockets/ ;)
+  - Still debating how to launch the RPC server for each game server user... At
+    first I was thinking just per user systemd services, but that strikes me as
+    brittle and disjointed.
+    - Instead, I'm thinking a better approach might be if the main web-lgsm
+      init launched each daemon separately in a thread via a sudo -u gsuser
+      rule and just managed their state that way. 
+    - Then all the RPC server threads are only running when the app itself is running.
+    - And if a thread crashes or something the app can restart it.
+    - So that's maybe a new class... We'll cross that bridge when we get to it.
+  - 
+
+
+* [ ] **Upgrade User Module Service to New MultiUserRCPSocketD**
   - (still workshopping the name)
   - Idea is each game server user gets their system user service agent.
-  - [ ] Add below to install playbook!
+  - ~[ ] Add below to install playbook~ going another directions, ignore.
 ```
 [Unit]
 Description=Web-LGSM User Module Agent

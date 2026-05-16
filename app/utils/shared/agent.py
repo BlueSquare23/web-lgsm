@@ -4,6 +4,8 @@ import socket
 import traceback
 import logging
 
+from shared import MultiUserRCPSocketDServer
+
 from shared import (
     read_file,
     list_dir,
@@ -15,9 +17,7 @@ from shared import (
     traversal_safe,
 )
 
-logger = logging.getLogger("user-agent")
-
-SOCKET_PATH = None
+logger = logging.getLogger("rpc_sockd_server")
 
 
 # Function registry (important)
@@ -55,55 +55,10 @@ def handle_request(payload):
             "trace": traceback.format_exc(),
         }
 
-
-# Server loop
-def serve(socket_path):
-    global SOCKET_PATH
-    SOCKET_PATH = socket_path
-
-    if os.path.exists(socket_path):
-        os.remove(socket_path)
-
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.bind(socket_path)
-
-    # 660 so only owner/group can access
-    os.chmod(socket_path, 0o660)
-
-    sock.listen(128)
-
-    logger.info(f"UserAgent listening on {socket_path}")
-
-    while True:
-        conn, _ = sock.accept()
-
-        try:
-            data = conn.recv(65536)
-            if not data:
-                continue
-
-            payload = json.loads(data.decode("utf-8"))
-            response = handle_request(payload)
-
-            conn.sendall(json.dumps(response).encode("utf-8"))
-
-        except Exception as e:
-            err = {
-                "ok": False,
-                "error": "agent crash",
-                "detail": str(e),
-            }
-            conn.sendall(json.dumps(err).encode("utf-8"))
-
-        finally:
-            conn.close()
-
-
 # Entry point
 if __name__ == "__main__":
-    import sys
-
     user = os.getlogin()
     socket_path = f"/run/web-lgsm/{user}.sock"
 
-    serve(socket_path)
+    MultiUserRCPSocketDServer(None, handle_request).serve(socket_path)
+

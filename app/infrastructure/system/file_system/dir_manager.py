@@ -6,7 +6,7 @@ from .remote_dir_interface import SSHDirInterface
 from app.infrastructure.system.user.user_module_service import UserModuleService
 from app.utils.helpers import log_wrap
 
-class DirectoryManager:
+class DirectoryManager():
     def __init__(self, executor=UserModuleService()):
         """
         Initialize DirectoryManager with a server object.
@@ -30,6 +30,20 @@ class DirectoryManager:
             else:
                 self._interface = LocalDirInterface(self.server, self.executor)
         return self._interface
+
+    def is_dir(self, server, path):
+        """
+        Checks if path is a directory.
+        
+        Args:
+            server (GameServer): GameServer object
+            path (str): Path to check is a directory
+            
+        Returns:
+            bool: True if is dir, False otherwise.
+        """
+        self.server = server
+        return self.interface.is_dir(path)
     
     def list(self, server, directory, show_hidden):
         """

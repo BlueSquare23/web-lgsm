@@ -12,7 +12,7 @@ from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_e
 
 from . import main_bp
 
-from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access, is_safe_path
+from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access, is_safe_path, is_dir
 
 
 ######### File Manager Page #########
@@ -126,7 +126,7 @@ def files():
         current_path = path
         parent_path = os.path.abspath(os.path.join(path, ".."))
 
-        if os.path.isdir(path):
+        if is_dir(server, path):
             files = list_dir(server, path, show_hidden)
 
         else:

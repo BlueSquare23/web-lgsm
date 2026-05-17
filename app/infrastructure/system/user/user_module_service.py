@@ -26,37 +26,43 @@ class UserModuleService:
     def call(self, func_name, *args, as_user=None, **kwargs):
         """Call a function, optionally as another user"""
 
+        # Add module dir to path
+        sys.path.insert(0, self.module_dir)
+        import importlib
+        module = importlib.import_module('shared')
+
         # Same user import the code and run it.
         if as_user is None:
-            sys.path.insert(0, self.module_dir)
-            import importlib
-            module = importlib.import_module('shared')
             func = getattr(module, func_name)
             return func(*args, **kwargs)
 
+        from shared import MultiUserRCPService
 
-        sock_path = f"{self.socket_dir}/{as_user}.sock"
+        socket_path = f"{self.socket_dir}/{as_user}.sock"
 
         payload = json.dumps({
             "func": func_name,
             "args": args,
             "kwargs": kwargs,
-        }).encode("utf-8")
+        })
 
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(sock_path)
+        return MultiUserRCPService(None, None, logging.getLogger("rpc_client")).send(payload, socket_path)
 
-        sock.sendall(payload)
 
-        response = sock.recv(65536)
-        sock.close()
-
-        data = json.loads(response.decode("utf-8"))
-
-        if not data.get("ok"):
-            raise RuntimeError(data.get("error"))
-
-        return data.get("result")
+#        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+#        sock.connect(sock_path)
+#
+#        sock.sendall(payload)
+#
+#        response = sock.recv(65536)
+#        sock.close()
+#
+#        data = json.loads(response.decode("utf-8"))
+#
+#        if not data.get("ok"):
+#            raise RuntimeError(data.get("error"))
+#
+#        return data.get("result")
 
 #        # Otherwise execute via sudo -u via LocalCommandExecutor
 #

@@ -73,8 +73,12 @@ class MultiUserRCPService():
         return encoded
 
 
-    # Sends payloads to socket.
     def send(self, msg, socket_path=None):
+        """
+        Sends payloads to socket.
+
+        Returns result json from socket.
+        """
         if self.socket_path == None:
             self.socket_path = socket_path
 

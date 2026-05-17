@@ -5,6 +5,10 @@ class DirInterface:
     def __init__(self, server, logger=logging.getLogger(__name__)):
         self.server = server
         self.logger = logger
+
+    def is_dir(self, server, path):
+        """Check path is a directory - to be implemented by subclasses"""
+        raise NotImplementedError
     
     def list(self, server, path):
         """List dir contents - to be implemented by subclasses"""

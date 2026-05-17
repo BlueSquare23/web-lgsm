@@ -1,14 +1,15 @@
-import os
 import json
 import socket
-import traceback
+import getpass
 import logging
+import traceback
 
 from shared import MultiUserRCPService
 
 from shared import (
     read_file,
     list_dir,
+    is_dir,
     delete_file,
     rename_file,
     write_file,
@@ -24,6 +25,7 @@ logger = logging.getLogger("rpc_sockd_server")
 FUNCTIONS = {
     "read_file": read_file,
     "list_dir": list_dir,
+    "is_dir": is_dir,
     "delete_file": delete_file,
     "rename_file": rename_file,
     "write_file": write_file,
@@ -57,7 +59,7 @@ def handle_request(payload):
 
 # Entry point
 if __name__ == "__main__":
-    user = os.getlogin()
+    user = getpass.getuser()
     socket_path = f"/run/web-lgsm/{user}.sock"
     logging.basicConfig(level=3)
 

@@ -93,6 +93,7 @@ from app.application.use_cases.file_system.rename_file import RenameFile
 # Dirs 
 from app.infrastructure.system.file_system.dir_manager import DirectoryManager
 from app.application.use_cases.file_system.list_dir import ListDir
+from app.application.use_cases.file_system.is_dir import IsDir
 
 # Validators
 from app.application.use_cases.validators.filename_length import FilenameLength
@@ -430,6 +431,11 @@ class Container:
 
     def list_dir(self):
         return ListDir(
+            dir_manager=self.dir_manager()
+        )
+
+    def is_dir(self):
+        return IsDir(
             dir_manager=self.dir_manager()
         )
 

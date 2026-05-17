@@ -59,6 +59,7 @@ def handle_request(payload):
 if __name__ == "__main__":
     user = os.getlogin()
     socket_path = f"/run/web-lgsm/{user}.sock"
+    logging.basicConfig(level=3)
 
     MultiUserRCPSocketDServer(None, handle_request).serve(socket_path)
 

@@ -31,6 +31,8 @@ class MultiUserRCPSocketDServer():
         """
         Returns decoded utf-8 json message text read from conn.
         """
+        self.logger.info("Message received on socket")
+
         # First two bytes specify content length header length
         header_size_bytes = conn.recv(2)
         if not header_size_bytes:
@@ -39,13 +41,16 @@ class MultiUserRCPSocketDServer():
         # Next decode content length header.
         header_size = int.from_bytes(header_size_bytes, 'big')
         header_bytes = self.read_chunk(conn, header_size)
+        self.logger.debug(f"Header Size: {header_size}")
 
         header_json = header_bytes.decode('utf-8')
         header = json.loads(header_json)
+        self.logger.debug(f"Header: {header_json}")
 
         # Next read until content length.
         msg_bytes = self.read_chunk(conn, header['content_length'])
-        return json.loads(msg_bytes.decode('utf-8'))
+        msg_json = msg_bytes.decode('utf-8')
+        return json.loads(msg_json)
 
     # Server loop
     def serve(self, socket_path=None):
@@ -72,6 +77,7 @@ class MultiUserRCPSocketDServer():
 
                 # Read message
                 payload = self.read(conn)
+                self.logger.info(f"Payload: {payload}")
                 
                 response = self.request_handler(payload)
     

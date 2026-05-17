@@ -4,7 +4,7 @@ import socket
 import traceback
 import logging
 
-from shared import MultiUserRCPSocketDServer
+from shared import MultiUserRCPService
 
 from shared import (
     read_file,
@@ -61,5 +61,5 @@ if __name__ == "__main__":
     socket_path = f"/run/web-lgsm/{user}.sock"
     logging.basicConfig(level=3)
 
-    MultiUserRCPSocketDServer(None, handle_request).serve(socket_path)
+    MultiUserRCPService(None, handle_request, logging.getLogger("rpc_sockd_server")).serve(socket_path)
 

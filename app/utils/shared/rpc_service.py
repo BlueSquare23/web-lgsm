@@ -4,13 +4,16 @@ import socket
 import traceback
 import logging
 
-class MultiUserRCPSocketDServer():
+class MultiUserRCPService():
+    """
+    The base class for the Mult-User JSON RPC service.
+    """
 
-    def __init__(self, socket_path=None, request_handler=None):
+    def __init__(self, socket_path=None, request_handler=None, logger=logging.getLogger("rpc_sockd_service")):
         self.socket_path = socket_path
         self.request_handler = request_handler
+        self.logger = logger
 
-        self.logger = logging.getLogger("rpc_sockd_server")
 
     def read_chunk(self, conn, size):
         """
@@ -27,12 +30,11 @@ class MultiUserRCPSocketDServer():
 
         return payload
 
+
     def read(self, conn):
         """
         Returns decoded utf-8 json message text read from conn.
         """
-        self.logger.info("Message received on socket")
-
         # First two bytes specify content length header length
         header_size_bytes = conn.recv(2)
         if not header_size_bytes:
@@ -41,16 +43,62 @@ class MultiUserRCPSocketDServer():
         # Next decode content length header.
         header_size = int.from_bytes(header_size_bytes, 'big')
         header_bytes = self.read_chunk(conn, header_size)
-        self.logger.debug(f"Header Size: {header_size}")
 
         header_json = header_bytes.decode('utf-8')
         header = json.loads(header_json)
-        self.logger.debug(f"Header: {header_json}")
 
         # Next read until content length.
         msg_bytes = self.read_chunk(conn, header['content_length'])
-        msg_json = msg_bytes.decode('utf-8')
-        return json.loads(msg_json)
+        return msg_bytes.decode('utf-8')
+
+
+    def encode(self, msg):
+        """
+        Takes utf-8 json msg and converts to padded custom binary format.
+        """
+        encoded = b''
+        header = {
+          'content_length': len(msg)
+        }
+        header_json = json.dumps(header)
+        header_len = len(header_json)
+        header_size = header_len.to_bytes(2, 'big')
+
+        self.logger.info(header_len)
+        self.logger.info(header_size)
+
+        encoded += header_size
+        encoded += header_json.encode()
+        encoded += msg.encode()
+        return encoded
+
+
+    # Sends payloads to socket.
+    def send(self, msg, socket_path=None):
+        if self.socket_path == None:
+            self.socket_path = socket_path
+
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self.socket_path)
+
+        encoded = self.encode(msg)
+
+        self.logger.info(encoded)
+
+        sock.sendall(encoded)
+
+        response = self.read(sock)
+        sock.close()
+
+        data = json.loads(response)
+
+        self.logger.info(data)
+
+        if not data.get("ok"):
+            raise RuntimeError(data.get("error"))
+
+        return data.get("result")
+
 
     # Server loop
     def serve(self, socket_path=None):
@@ -68,31 +116,32 @@ class MultiUserRCPSocketDServer():
     
         sock.listen(128)
     
-        self.logger.info(f"UserAgent listening on {socket_path}")
+        self.logger.info(f"Listening on: {socket_path}")
     
         while True:
             conn, _ = sock.accept()
     
             try:
-
                 # Read message
                 payload = self.read(conn)
                 self.logger.info(f"Payload: {payload}")
-                
-                response = self.request_handler(payload)
-    
-# TODO: DO ENCODE WRAPPING HERE 
-                conn.sendall(json.dumps(response).encode("utf-8"))
-    
+
+                # Run payload
+                response = self.request_handler(json.loads(payload))
+
+                # Return response
+                response_json = json.dumps(response)
+                encoded = self.encode(response_json)
+                conn.sendall(encoded)
+
             except Exception as e:
-                err = {
+                err = { 
                     "ok": False,
-                    "error": "agent crash",
+                    "error": "RPC Server Error",
                     "detail": str(e),
                 }
-                conn.sendall(json.dumps(err).encode("utf-8"))
-    
+                conn.sendall(self.encode(json.dumps(err)))
+
             finally:
                 conn.close()
-
 

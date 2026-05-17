@@ -7,4 +7,4 @@ from .edit_cron import edit_cron
 from .list_dir import list_dir
 from .is_excluded import is_excluded
 from .traversal_safe import traversal_safe
-from .rpc_sockd_server import MultiUserRCPSocketDServer
+from .rpc_service import MultiUserRCPService

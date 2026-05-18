@@ -3,11 +3,11 @@ import os
 from .local_dir_interface import LocalDirInterface
 from .remote_dir_interface import SSHDirInterface
 
-from app.infrastructure.system.user.user_module_service import UserModuleService
+from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
 from app.utils.helpers import log_wrap
 
 class DirectoryManager():
-    def __init__(self, executor=UserModuleService()):
+    def __init__(self, executor=MultiUserRPCClient()):
         """
         Initialize DirectoryManager with a server object.
         

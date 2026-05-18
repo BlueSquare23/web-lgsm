@@ -307,7 +307,7 @@ OSError: [Errno 7] Argument list too long: 'sudo'
     can't just be having it break on file reads and writes and stuff.
   - Good news is we just have to fix the input via the cli.py and the way the json is sent via the cmd.
 
-* [ ] **Design MultiUserRCPSocketD Client & Server**
+* [x] **Design MultiUserRCPService Client & Server**
   - A client class.
   - A server class.
   - Each game server user runs a **Server** instance.
@@ -327,10 +327,17 @@ OSError: [Errno 7] Argument list too long: 'sudo'
     - Then all the RPC server threads are only running when the app itself is running.
     - And if a thread crashes or something the app can restart it.
     - So that's maybe a new class... We'll cross that bridge when we get to it.
-  - 
 
+* [x] **Design Init for MultiUserRCPService Servers**
+  - These are long running processes, lets run them in background threads on
+    app init.
+  - Need some mechanism for restarting if they die or something goes wrong.
+  - [x] **New Class for MultiUserRCPServerManager**
 
-* [ ] **Upgrade User Module Service to New MultiUserRCPSocketD**
+* [x] **Rename UserModuleService stuff to MultiUserRCPServiceClient and move things around**
+  - [x] I want to change this to just be the client code adapter thingy for the MultiUserRCPService.
+
+* [x] **Upgrade User Module Service to New MultiUserRCPService**
   - (still workshopping the name)
   - Idea is each game server user gets their system user service agent.
   - ~[ ] Add below to install playbook~ going another directions, ignore.
@@ -363,13 +370,14 @@ systemctl --user enable web-lgsm-agent
 sudo mkdir /run/web-lgsm  # Will happen by install.sh
 sudo chown www-data:web-lgsm /run/web-lgsm
 sudo chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
-sudo chown mcserver:www-data /run/web-lgsm/mcserver.sock
+sudo chmod g+s /var/run/web-lgsm/  # SET SGID (ALL SUB FILES INHERIT web-lgsm GROUP!)
 sudo chown 660 /run/web-lgsm/mcserver.sock
 ```
   - So the `/run/web-lgsm` dir is group owned by `web-lgsm` allowing anyone to
     make socket files.
   - But then each socket file is gs user owned and web user group.
   - And no deleting other servers socket files!
+  - Socket files automatically web-lgsm group owned.
 
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests

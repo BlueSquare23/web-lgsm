@@ -3,7 +3,6 @@ import getpass
 
 from app import cache
 
-from app.infrastructure.system.user.user_module_service import UserModuleService
 from app.infrastructure.system.file_system.file_manager import FileManager
 
 class TmuxSocketNameCache:

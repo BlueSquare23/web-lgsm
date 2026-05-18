@@ -1,4 +1,4 @@
-from .exclude_matches import matches
+from .matches import matches
 from pathlib import Path
 
 def is_path_under_excluded_dir(path, dir_exact, dir_globs):

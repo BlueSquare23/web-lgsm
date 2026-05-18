@@ -95,6 +95,11 @@ from app.infrastructure.system.file_system.dir_manager import DirectoryManager
 from app.application.use_cases.file_system.list_dir import ListDir
 from app.application.use_cases.file_system.is_dir import IsDir
 
+# RPC Service
+
+from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
+from app.application.use_cases.rpc_service.start_daemons import StartRPCServers
+
 # Validators
 from app.application.use_cases.validators.filename_length import FilenameLength
 from app.application.use_cases.validators.safe_path import IsSafePath
@@ -169,6 +174,9 @@ class Container:
 
     def dir_manager(self):
         return DirectoryManager()
+
+    def rpc_server_manager(self):
+        return MultiUserRPCServerManager()
 
     def sudoers_service(self):
         return SudoersService()
@@ -437,6 +445,13 @@ class Container:
     def is_dir(self):
         return IsDir(
             dir_manager=self.dir_manager()
+        )
+
+    ## RPC Service
+
+    def start_rpc_servers(self):
+        return StartRPCServers(
+            rpc_server_manager=self.rpc_server_manager()
         )
 
     ## Validators

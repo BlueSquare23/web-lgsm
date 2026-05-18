@@ -6,13 +6,13 @@ import logging
 from app.utils.paths import PATHS
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
-from app.infrastructure.system.user.user_module_service import UserModuleService 
+from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
 
 
 class CfgManager:
     USER = getpass.getuser()
 
-    def __init__(self, executor=UserModuleService(), proc_info_repo=InMemProcInfoRepository(), command_executor=CommandExecutor(), logger=logging.getLogger(__name__)):
+    def __init__(self, executor=MultiUserRPCClient(), proc_info_repo=InMemProcInfoRepository(), command_executor=CommandExecutor(), logger=logging.getLogger(__name__)):
         self.executor = executor
         self.proc_info_repo = proc_info_repo
         self.command_executor = command_executor

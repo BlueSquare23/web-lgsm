@@ -3,11 +3,11 @@ import os
 from .local_file_interface import LocalFileInterface
 from .remote_file_interface import SSHFileInterface
 
-from app.infrastructure.system.user.user_module_service import UserModuleService
+from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
 from app.utils.helpers import log_wrap
 
 class FileManager:
-    def __init__(self, executor=UserModuleService()):
+    def __init__(self, executor=MultiUserRPCClient()):
         """
         Initialize FileManager with a server object.
         

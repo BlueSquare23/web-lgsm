@@ -6,7 +6,7 @@ import traceback
 
 from shared import MultiUserRCPService
 
-from shared import (
+from .procedures import (
     read_file,
     list_dir,
     is_dir,
@@ -17,9 +17,6 @@ from shared import (
     is_excluded,
     traversal_safe,
 )
-
-logger = logging.getLogger("rpc_sockd_server")
-
 
 # Function registry (important)
 FUNCTIONS = {
@@ -33,7 +30,6 @@ FUNCTIONS = {
     "is_excluded": is_excluded,
     "traversal_safe": traversal_safe,
 }
-
 
 # Request handler
 def handle_request(payload):
@@ -61,7 +57,7 @@ def handle_request(payload):
 if __name__ == "__main__":
     user = getpass.getuser()
     socket_path = f"/run/web-lgsm/{user}.sock"
-    logging.basicConfig(level=3)
+    logging.basicConfig(level=1)
 
-    MultiUserRCPService(None, handle_request, logging.getLogger("rpc_sockd_server")).serve(socket_path)
+    MultiUserRCPService(None, handle_request, logging.getLogger("rpc_server")).serve(socket_path)
 

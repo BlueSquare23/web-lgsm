@@ -13,7 +13,7 @@ from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoR
 
 from app.domain.entities.job import Job
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
-from app.infrastructure.system.user.user_module_service import UserModuleService
+from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
 
 class CronScheduler:
     """
@@ -28,7 +28,7 @@ class CronScheduler:
     ]
 
     # Dep invert these to make testing easier
-    def __init__(self, command_service=CommandExecutor(), module_service=UserModuleService(), game_server_repo=SqlAlchemyGameServerRepository(), cron_repo=SqlAlchemyCronRepository()):
+    def __init__(self, command_service=CommandExecutor(), module_service=MultiUserRPCClient(), game_server_repo=SqlAlchemyGameServerRepository(), cron_repo=SqlAlchemyCronRepository()):
         self.command_service = command_service
         self.module_service = module_service
         self.game_server_repo = game_server_repo

@@ -30,7 +30,8 @@
 
 ---
 
-> **Note:** The Web-LGSM is an independent fan project and is not affiliated with the official [LGSM Project](https://linuxgsm.com/).
+> [!NOTE]
+> The Web-LGSM is an independent fan project and is not affiliated with the official [LGSM Project](https://linuxgsm.com/).
 
 ---
 
@@ -40,7 +41,7 @@ The Web-LGSM is a browser-based management interface for the [Linux Game Server 
 
 ## Features
 
-- **One-click installs** — Browse the full LGSM catalog and install any supported game server directly from the UI
+- **One-click installs** — Browse the full LGSM catalog and install over 130+ game server directly from the UI
 - **Live console output** — Watch commands execute in real time via the integrated web terminal
 - **File manager** — Download, upload, edit, and manage files from the comfort of the browser
 - **Schedule jobs** — Create scheduled jobs (updates, backups, restarts, etc) for your game servers through the web UI
@@ -50,20 +51,6 @@ The Web-LGSM is a browser-based management interface for the [Linux Game Server 
 - **Multi-user support** — Create logins for your friends, including builtin permissions management
 - **Audit logging** — See what recent actions have been taken by your web-lgsm panel users (admins only)
 - **App settings** — Configure core Web-LGSM behavior from the settings page
-
-## Screenshots
-
-| Setup | Home |
-|-------|------|
-| ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/homepage.gif) |
-
-| Install | Add Existing |
-|---------|-------------|
-| ![Install Page](docs/images/install.gif) | ![Add Page](docs/images/add.gif) |
-
-| Controls | Start / Stop |
-|----------|-------------|
-| [View](docs/images/server_controls.png) | ![Running Command](docs/images/start_stop.gif) |
 
 ## Requirements
 
@@ -103,7 +90,23 @@ A full installation and usage tutorial is available on YouTube:
 
 [![Web-LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
-> **Note:** This video covers v1.3. An updated version is in progress.
+> [!NOTE]
+> This video covers v1.3. An updated version is in progress.
+
+## Screenshots
+
+| Setup | Home |
+|-------|------|
+| ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/homepage.gif) |
+
+| Install | Add Existing |
+|---------|-------------|
+| ![Install Page](docs/images/install.gif) | ![Add Page](docs/images/add.gif) |
+
+| Controls | Start / Stop |
+|----------|-------------|
+| ![View](docs/images/server_controls.png) | ![Running Command](docs/images/start_stop.gif) |
+
 
 ## Usage
 
@@ -143,7 +146,8 @@ See [`docs/suggested_deployment.md`](docs/suggested_deployment.md) for a full de
 
 ## Contributing
 
-> **Note:** We're actively seeking contributors! See the [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more information.
+> [!NOTE]
+> We're actively seeking contributors! See the [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more information.
 
 Bug reports, security disclosures, and pull requests are all welcome.
 

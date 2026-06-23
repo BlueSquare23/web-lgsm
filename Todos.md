@@ -386,6 +386,16 @@ other::r-x
     Restarting the web app works, but no reason to make users do that when we
     already have a usecase for it.
 
+* [x] **Fix file upload to use tempfile instead of json rpc socket**
+  - Welp I learned real quick that I can't push files through the unix domain
+    socket for the json rpc service because the entire app will get killed by
+    the systems oom killer. 
+  - So instead we're going to just stream the bytes from the upload buffer
+    directly into a tempfile and then copy that tempfile into place via an rpc
+    procedure.
+  - That way no file content data for uploads has to go through the socket and
+    therefore we don't need to keep it in mem. Just from disk to disk.
+
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests
   - [ ] Basic Reposes Tests

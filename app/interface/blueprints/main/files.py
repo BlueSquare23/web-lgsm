@@ -196,22 +196,17 @@ def files():
             file = upload_form.file.data
             server = get_game_server(server_id)
 
-            # Sanitize filename
             filename = secure_filename(file.filename)
-
             save_path = os.path.join(path, filename)
 
-            # Security check
             if not is_safe_path(server, path):
                 flash("Invalid upload path!", "error")
                 return redirect(url_for("main.files", server_id=server_id))
 
-            # Read upload bytes.
-            file_contents = file.read()
-            write_file(server, save_path, file_contents)
+            # Pass the stream directly. No file.read(), content never fully buffered
+            write_file(server, save_path, file.stream)
 
             log_audit_event(current_user.id, f"Uploaded file '{save_path}'")
             flash("File uploaded!", "success")
 
             return redirect(url_for("main.files", server_id=server_id, path=path))
-

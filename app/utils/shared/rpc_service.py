@@ -22,14 +22,17 @@ class MultiUserRCPService():
 
         Returns binary payload.
         """
-        payload = b''
-        while len(payload) < size:
-            chunk = conn.recv(min(size - len(payload), 4096))
+        chunks = []
+        received = 0
+
+        while received < size:
+            chunk = conn.recv(min(size - received, 65536))
             if not chunk:
                 break
-            payload += chunk
+            chunks.append(chunk)
+            received += len(chunk)
 
-        return payload
+        return b''.join(chunks)   # one allocation at the end
 
 
     def read(self, conn):
@@ -65,8 +68,8 @@ class MultiUserRCPService():
         header_len = len(header_json)
         header_size = header_len.to_bytes(2, 'big')
 
-        self.logger.info(header_len)
-        self.logger.info(header_size)
+#        self.logger.info(header_len)
+#        self.logger.info(header_size)
 
         encoded += header_size
         encoded += header_json.encode()
@@ -88,7 +91,7 @@ class MultiUserRCPService():
 
         encoded = self.encode(msg)
 
-        self.logger.info(encoded)
+#        self.logger.info(encoded)
 
         sock.sendall(encoded)
 
@@ -97,7 +100,7 @@ class MultiUserRCPService():
 
         data = json.loads(response)
 
-        self.logger.info(data)
+#        self.logger.info(data)
 
         if not data.get("ok"):
             raise RuntimeError(data.get("error"))
@@ -116,9 +119,6 @@ class MultiUserRCPService():
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(socket_path)
 
-        # 660 so only owner/group can access
-#        os.chmod(socket_path, 0o660)
-
         sock.listen(128)
 
         self.logger.info(f"Listening on: {socket_path}")
@@ -129,7 +129,7 @@ class MultiUserRCPService():
             try:
                 # Read message
                 payload = self.read(conn)
-                self.logger.info(f"Payload: {payload}")
+#                self.logger.info(f"Payload: {payload}")
 
                 # Run payload
                 response = self.request_handler(json.loads(payload))

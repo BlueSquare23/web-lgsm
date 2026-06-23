@@ -3,6 +3,8 @@ import gzip
 import base64
 import getpass
 import logging
+import shutil
+import tempfile
 
 from app.utils.helpers import log_wrap
 from .file_interface import FileInterface
@@ -54,25 +56,60 @@ class LocalFileInterface(FileInterface):
 
 
     def write(self, file_path, content):
-        """byte-safe file writer"""
+        """
+        Byte-safe file writer. Accepts str, bytes, or a file-like stream.
+
+        Same-user path: writes raw bytes directly via write_file_bytes,
+        no base64 encoding needed.
+
+        Cross-user path: streams content into a temp file, then sends
+        only the path over the socket via move_from_tmp. The full file
+        content never travels through JSON or the socket.
+        """
         self.logger.info(log_wrap("writing file_path", file_path))
 
-        # Accept both str and bytes
-        if isinstance(content, str):
-            content_bytes = content.encode("utf-8")
-        else:
-            content_bytes = content  # already bytes
+        same_user = (self.server.username == LocalFileInterface.USER)
 
-        encoded_content = base64.b64encode(content_bytes).decode("utf-8")
+        if same_user:
+            # Direct call, no socket, no encoding overhead.
+            # Normalize to bytes first; for streams read them here since
+            # write_file_bytes takes bytes, not a file-like.
+            if isinstance(content, str):
+                content_bytes = content.encode("utf-8")
+            elif isinstance(content, (bytes, bytearray)):
+                content_bytes = content
+            else:
+                # File-like stream
+                content_bytes = content.read()
 
-        args = [ file_path, encoded_content ]
+            return self.executor.call('write_file_bytes', file_path, content_bytes)
 
-        kwargs = dict()
-        if self.server.username != LocalFileInterface.USER:
-            kwargs = { 'as_user': self.server.username }
+        # Cross-user path: stage to temp file, pass only the path over the socket.
+        # We never base64-encode the content at all.
+        tmp_fd, tmp_path = tempfile.mkstemp(dir="/tmp", prefix="wlgsm_upload_")
+        try:
+            with os.fdopen(tmp_fd, 'wb') as tmp_file:
+                if isinstance(content, str):
+                    tmp_file.write(content.encode("utf-8"))
+                elif isinstance(content, (bytes, bytearray)):
+                    tmp_file.write(content)
+                else:
+                    # File-like stream: copy in 256KB chunks, never fully buffered
+                    shutil.copyfileobj(content, tmp_file, length=256 * 1024)
 
-        return self.executor.call('write_file', *args, **kwargs)
+            # Temp file must be readable by the daemon running as the target user
+            os.chmod(tmp_path, 0o644)
 
+            return self.executor.call('move_from_tmp', tmp_path, file_path, as_user=self.server.username)
+
+        except Exception:
+            # Clean up temp file if we never got to send it
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+            raise
 
     def delete(self, file_path):
         self.logger.info(log_wrap("deleting file_path", file_path))

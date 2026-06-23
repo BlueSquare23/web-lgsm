@@ -45,6 +45,6 @@ class MultiUserRPCClient:
             resp = client.send(payload, socket_path)
             return resp
         except Exception as e:
-            return {"error": f"RCP client init failed with: {e}"}
+            return {"error": f"RCP client failed with: {e}"}
 
 

@@ -205,6 +205,20 @@
           </div>
         </div>
       </div>
+
+      <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-body">
+            <div class="form-check form-switch">
+              {{ form.reset_rpc_servers(class="form-check-input") }}
+              {{ form.reset_rpc_servers.label(class="form-check-label text-light") }}
+            </div>
+            <small class="text-white d-block mt-2">
+              Helps fix broken file manager.
+            </small>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Submit Footer -->

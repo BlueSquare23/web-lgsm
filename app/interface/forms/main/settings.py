@@ -23,6 +23,7 @@ class SettingsForm(FlaskForm):
 
     show_stats = BooleanField()
     purge_cache = BooleanField()
+    reset_rpc_servers = BooleanField()
     update_weblgsm = BooleanField()
 
     submit = SubmitField("Apply")

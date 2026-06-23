@@ -381,6 +381,11 @@ other::r-x
   - SGID on dir ensures new socket files are created group web-app-user
   - ACLs ensure other users can read and write to the directory
 
+* [x] **Add manual reset to rpc servers to settings page**
+  - I've already had a few times when I've needed to reset them manually.
+    Restarting the web app works, but no reason to make users do that when we
+    already have a usecase for it.
+
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests
   - [ ] Basic Reposes Tests

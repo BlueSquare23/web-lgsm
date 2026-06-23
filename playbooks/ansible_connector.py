@@ -207,6 +207,14 @@ def run_install_new_game_server(server_id):
     else:
         run_cmd(pre_install_cmd)
 
+    socket_setup_cmd = sudo_pre_cmd + ['/usr/bin/setfacl', '-m', f'u:{server.username}:rwx', '/run/web-lgsm/']
+
+    # Set facls for new game server user to rpc service socket dir
+    if O["dry"]:
+        print(socket_setup_cmd)
+    else:
+        run_cmd(socket_setup_cmd)
+
     install_reqs = [f"{server.install_path}/{server.script_name}", "auto-install"]
 
     # Then run as user to install actual game server.

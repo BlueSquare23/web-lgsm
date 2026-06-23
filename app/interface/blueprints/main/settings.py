@@ -82,6 +82,7 @@ def settings():
     graphs_secondary_pref = str(form.graphs_secondary.data).lower()
     show_stats_pref = str(form.show_stats.data).lower()
     purge_cache = str(form.purge_cache.data).lower()
+    reset_rpc = str(form.reset_rpc_servers.data).lower()
     install_new_user_pref = str(form.install_new_user.data).lower()
     newline_ending_pref = str(form.newline_ending.data).lower()
     show_stderr_pref = str(form.show_stderr.data).lower()
@@ -103,6 +104,9 @@ def settings():
 
     if purge_cache != None:
         cache.clear()
+
+    if reset_rpc != None:
+        container.start_rpc_servers().execute()
 
     # Batch update config via context handler.
     with container.batch_update_config().execute() as config:

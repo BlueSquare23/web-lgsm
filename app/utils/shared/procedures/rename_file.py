@@ -8,16 +8,16 @@ def rename_file(file_path, new_name):
     Returns:
         bool: True if rename successful, False otherwise.
     """
-    # Check that file exists before renaming it.
-    if not os.path.isfile(file_path):
-        return False
-
     try:
-        file = Path(file_path)
-        new_file = file.parent / new_name
-        file.rename(new_file)
+        path = Path(file_path)
+
+        if not path.exists():
+            return False
+
+        new_path = path.parent / new_name
+        path.rename(new_path)
+
         return True
 
-    except Exception as e:
+    except Exception:
         return False
-

@@ -16,6 +16,7 @@ from .procedures import (
     matches,
     is_excluded,
     traversal_safe,
+    find_cfg_paths,
 )
 
 # Function registry (important)
@@ -29,6 +30,7 @@ FUNCTIONS = {
     "matches": matches,
     "is_excluded": is_excluded,
     "traversal_safe": traversal_safe,
+    "find_cfg_paths": find_cfg_paths,
 }
 
 # Request handler

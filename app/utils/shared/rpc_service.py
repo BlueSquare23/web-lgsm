@@ -1,4 +1,5 @@
 import os
+import grp
 import json
 import socket
 import traceback
@@ -108,23 +109,23 @@ class MultiUserRCPService():
     def serve(self, socket_path=None):
         if self.socket_path == None:
             self.socket_path = socket_path
-    
+
         if os.path.exists(socket_path):
             os.remove(socket_path)
-    
+
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(socket_path)
-    
+
         # 660 so only owner/group can access
-        os.chmod(socket_path, 0o660)
-    
+#        os.chmod(socket_path, 0o660)
+
         sock.listen(128)
-    
+
         self.logger.info(f"Listening on: {socket_path}")
-    
+
         while True:
             conn, _ = sock.accept()
-    
+
             try:
                 # Read message
                 payload = self.read(conn)

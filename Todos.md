@@ -285,8 +285,9 @@
     - [x] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
     - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
-    - [ ] Rename Directories
-    - [ ] Delete Directories
+    - [ ] Create Directory
+    - [x] Rename Directory
+    - [x] Delete Directory
   - Future Features:
     - Non-day1 stuff.
     - [ ] It'd be cool if could return info about mime type with file contents.
@@ -339,45 +340,45 @@ OSError: [Errno 7] Argument list too long: 'sudo'
 
 * [x] **Upgrade User Module Service to New MultiUserRCPService**
   - (still workshopping the name)
-  - Idea is each game server user gets their system user service agent.
-  - ~[ ] Add below to install playbook~ going another directions, ignore.
-```
-[Unit]
-Description=Web-LGSM User Module Agent
-After=network.target
-
-[Service]
-Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
-ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
-Restart=always
-WorkingDirectory=%h
-
-[Install]
-WantedBy=default.target
-```
-  - Enabled:
-```
-export XDG_RUNTIME_DIR=/run/user/$UID
-loginctl enable-linger $USER
-mkdir -p ~/.config/systemd/user/
-vim ~/.config/systemd/user/web-lgsm-agent.service
-systemctl --user enable web-lgsm-agent
-```
   - This is setup at install / add time.
   - This is a basic json rpc service working via a unix domain socket.
   - Socket Permissions I think are going to be:
 ```
 sudo mkdir /run/web-lgsm  # Will happen by install.sh
-sudo chown www-data:web-lgsm /run/web-lgsm
+sudo chown blue:blue /run/web-lgsm
 sudo chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
 sudo chmod g+s /var/run/web-lgsm/  # SET SGID (ALL SUB FILES INHERIT web-lgsm GROUP!)
-sudo chown 660 /run/web-lgsm/mcserver.sock
+sudo apt install acl  # Will be handled by install.sh
+sudo setfacl -m u:mcserver:rwx /run/web-lgsm/  # Well be set by install / add
 ```
-  - So the `/run/web-lgsm` dir is group owned by `web-lgsm` allowing anyone to
-    make socket files.
-  - But then each socket file is gs user owned and web user group.
-  - And no deleting other servers socket files!
-  - Socket files automatically web-lgsm group owned.
+ 
+```
+» sudo ls -lah /run/web-lgsm/
+total 0
+drwxrwsr-t+  2 root      blue  100 May 18 11:50 .
+drwxr-xr-x  34 root      root 1.2K May 18 11:41 ..
+srwxrwxr-x   1 blue      blue    0 May 18 11:50 blue.sock
+srwxrwxr-x   1 mcserver  blue    0 May 18 11:50 mcserver.sock
+srwxrwxr-x   1 mtaserver blue    0 May 18 11:50 mtaserver.sock
+
+» sudo getfacl /run/web-lgsm/
+getfacl: Removing leading '/' from absolute path names
+# file: run/web-lgsm/
+# owner: root
+# group: blue
+# flags: -st
+user::rwx
+user:mcserver:rwx
+user:mtaserver:rwx
+group::rwx
+mask::rwx
+other::r-x
+```
+  - So Socket files are owned user:web-app-user
+  - Dir is sticky so no one can delete others files
+  - Users can't read / write each others files
+  - SGID on dir ensures new socket files are created group web-app-user
+  - ACLs ensure other users can read and write to the directory
 
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests

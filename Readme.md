@@ -50,6 +50,7 @@ The Web-LGSM is a browser-based management interface for the [Linux Game Server 
 - **Docker installs** — Add LGSM game servers that are installed inside of docker containers
 - **Multi-user support** — Create logins for your friends, including builtin permissions management
 - **Audit logging** — See what recent actions have been taken by your web-lgsm panel users (admins only)
+- **Two Factor Support** — Enable optional two factor authentication (via totp) on login page for enhanced security
 - **App settings** — Configure core Web-LGSM behavior from the settings page
 
 ## Requirements

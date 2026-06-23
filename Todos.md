@@ -285,10 +285,11 @@
     - [x] Clean up / rip out remaining references to edit route and page.
     - [x] Locked down to under users home dir.
     - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
-    - [ ] Create Directory
     - [x] Rename Directory
     - [x] Delete Directory
   - Future Features:
+    - [ ] Create Directory
+    - [ ] Move file / directory
     - Non-day1 stuff.
     - [ ] It'd be cool if could return info about mime type with file contents.
       Then we could set the CodeMirror extension to be the same so syntax

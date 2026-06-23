@@ -217,4 +217,19 @@ find $PLAYBOOKS_PATH -type f -exec chmod 644 {} \;
 find $PLAYBOOKS_PATH -type d -exec chmod 755 {} \;
 chmod 755 $apb $ansible_connector
 
+echo -e "${GREEN}####### Setting up Multi User RPC Socket Dir${RESET}"
+
+mkdir -p /run/web-lgsm
+chown root:$USERNAME /run/web-lgsm
+chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
+chmod g+s /var/run/web-lgsm/  # SGID so files are owned by web-lgsm user group
+
+# For unique game server users, set facls
+if [[ -f app/database.db ]]; then
+    users=$(sqlite3 $SCRIPTPATH/app/database.db '.mode json' 'select distinct username from game_server_model' | jq -r '.[].username')
+    for user in $users; do
+        setfacl -m u:$user:rwx /run/web-lgsm/
+    done
+fi 
+
 echo -e "${GREEN}####### Root Components Successfully Installed!${RESET}"

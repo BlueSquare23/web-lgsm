@@ -11,6 +11,7 @@
 /usr/bin/sudo /usr/bin/rm /usr/local/bin/ansible_connector.py
 /usr/bin/sudo /usr/bin/rm -rf /usr/local/share/web-lgsm
 /usr/bin/sudo /usr/bin/rm /etc/sudoers.d/$USER-$USER
+/usr/bin/sudo /usr/bin/rm -rf /run/web-lgsm
 
 set +x 
 

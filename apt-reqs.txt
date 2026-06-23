@@ -8,3 +8,4 @@ nodejs
 npm
 jq
 sqlite3
+acl

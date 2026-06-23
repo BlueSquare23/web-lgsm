@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Flesh out JSON RPC service for running code as alt users.
 - Refactor form classes for better developer ergonomics.
 - Replace old hardcoded file edit page with new file manager.
 

@@ -287,7 +287,11 @@
     - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
     - [x] Rename Directory
     - [x] Delete Directory
+    - [x] File Read Size Limit Check
+    - [x] Add check and auto restart dead rpc server threads
   - Future Features:
+    - [ ] Add Reason for file system failures
+      - Right now just has status (Success/Fail), should also push through reason for failures.
     - [ ] Create Directory
     - [ ] Move file / directory
     - Non-day1 stuff.
@@ -396,6 +400,10 @@ other::r-x
   - That way no file content data for uploads has to go through the socket and
     therefore we don't need to keep it in mem. Just from disk to disk.
 
+* [ ] **Fix current tests**
+  - Current tests are failing. Need to debug and make tweaks to make sure they
+    all pass again.
+
 * [ ] **Write File Manager Tests!!**
   - [ ] Basic Content Tests
   - [ ] Basic Reposes Tests
@@ -403,7 +411,7 @@ other::r-x
   - [ ] Unit Tests for FileManager
   - [ ] Integration Tests for edit file as alt user after install
 
-* [ ] **Use User Module Script over SSH and inside of Containers**
+* [ ] **Make Multi-User RPC Service work over SSH and inside of Containers**
   - They work great as same and alt user.
   - Its very nice to have an interface that wraps up and runs the same code run
     in two different ways.
@@ -530,7 +538,7 @@ Host Machine
     instead of to users on the system.
 
 
-## Version 1.9.1 Todos
+## Version 1.9.4 Todos
 
 ### New Features, Highlevel Release Goals
 

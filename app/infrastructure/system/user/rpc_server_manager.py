@@ -29,8 +29,9 @@ class MultiUserRPCServerManager:
         self.module_dir = os.path.abspath(module_dir)
         self._threads: dict[str, Thread] = {}
 
-    def _stop_thread(self, thread_name):
+    def stop(self, user):
         """Stop a running thread by name if one exists, then remove it from tracking."""
+        thread_name = f"rpc_server_thread_{user}"
         existing = self._threads.get(thread_name)
 
         if existing and existing.is_alive():
@@ -38,7 +39,6 @@ class MultiUserRPCServerManager:
             proc_info = self.executor.proc_info_repo.get(thread_name)
 
             if proc_info and proc_info.pid:
-#                self.executor.run([PATHS['sudo'], '-n', '-u', user, PATHS['kill'], '-9', str(proc_info.pid)])
                 os.kill(proc_info.pid, signal.SIGKILL)
             existing.join(timeout=5)
 
@@ -46,6 +46,26 @@ class MultiUserRPCServerManager:
                 self.logger.warning(f"Thread {thread_name} did not stop within timeout.")
 
         self._threads.pop(thread_name, None)
+
+    def start(self, user):
+        thread_name = f"rpc_server_thread_{user}"
+        self.logger.debug(f"Starting Thread: {thread_name}")
+
+        cmd = [
+            PATHS["sudo"],
+            '-n', '-u', user,
+            f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
+            sys.executable, '-m', 'shared.agent'
+        ]
+
+        daemon = Thread(
+            target=self.executor.run,
+            args=(cmd, None, thread_name, current_app.app_context()),
+            daemon=True,
+            name=thread_name,
+        )
+        daemon.start()
+        self._threads[thread_name] = daemon
 
     def launch(self):
         servers = self.game_server_repo.list()
@@ -60,23 +80,16 @@ class MultiUserRPCServerManager:
         self.logger.debug(users)
 
         for user in users:
-            cmd = [
-                PATHS["sudo"],
-                '-n', '-u', user,
-                f'PYTHONPATH=$PYTHONPATH:{self.module_dir}',
-                sys.executable, '-m', 'shared.agent'
-            ]
+            self.stop(user)
+            self.start(user)
 
-            thread_name = f"rpc_server_thread_{user}"
-            self.logger.debug(f"Starting Thread: {thread_name}")
+    def check(self, user):
+        thread_name = f"rpc_server_thread_{user}"
+        existing = self._threads.get(thread_name)
 
-            self._stop_thread(thread_name)
+        if existing and not existing.is_alive():
+            self.stop(user)       
+            self.start(user)       
 
-            daemon = Thread(
-                target=self.executor.run,
-                args=(cmd, None, thread_name, current_app.app_context()),
-                daemon=True,
-                name=thread_name,
-            )
-            daemon.start()
-            self._threads[thread_name] = daemon
+
+

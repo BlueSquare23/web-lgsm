@@ -3,6 +3,8 @@ import gzip
 import base64
 import mimetypes
 
+from pathlib import Path
+
 from .traversal_safe import traversal_safe
 from .is_excluded import is_excluded
 
@@ -19,6 +21,18 @@ def read_file(file_path):
         if not os.path.isfile(file_path) or not traversal_safe(file_path) or is_excluded(file_path):
             return {
                 "status": "not_found", 
+                "mime_type": None,
+                "data": None
+            }
+
+
+        # Check size < 500 MB
+        size_in_bytes = Path(file_path).stat().st_size
+        max_size = 500 * 1024 * 1024
+
+        if size_in_bytes > max_size:
+            return {
+                "status": "error",
                 "mime_type": None,
                 "data": None
             }

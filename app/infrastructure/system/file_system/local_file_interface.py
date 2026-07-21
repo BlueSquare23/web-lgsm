@@ -41,6 +41,7 @@ class LocalFileInterface(FileInterface):
             kwargs = { 'as_user': self.server.username }
 
         file = self.executor.call('read_file', *args, **kwargs)
+        self.logger.info(log_wrap("FILE", file))
 
         # Decompress and decode contents on success
         if file['status'] == 'success':
@@ -100,7 +101,18 @@ class LocalFileInterface(FileInterface):
             # Temp file must be readable by the daemon running as the target user
             os.chmod(tmp_path, 0o644)
 
-            return self.executor.call('move_from_tmp', tmp_path, file_path, as_user=self.server.username)
+            copy_result = self.executor.call('copy_from_tmp', tmp_path, file_path, as_user=self.server.username)
+            cleanup_result = self.executor.call('cleanup_tmp', tmp_path, as_user=LocalFileInterface.USER)
+
+            self.logger.info(log_wrap("############ COPY RESULT", copy_result))
+            self.logger.info(log_wrap("############ CLEANUP RESULT", cleanup_result))
+
+            if copy_result and cleanup_result:
+                return True
+            else:
+                return False
+            
+#            return self.executor.call('move_from_tmp', tmp_path, file_path, as_user=self.server.username)
 
         except Exception:
             # Clean up temp file if we never got to send it

@@ -7,14 +7,11 @@ import traceback
 from shared import MultiUserRCPService
 
 from .procedures import (
-    read_file,
     list_dir,
     is_dir,
     delete_file,
     rename_file,
-    write_file,
-    write_file_bytes,
-    copy_from_tmp,
+    copy_tmp,
     cleanup_tmp,
     matches,
     is_excluded,
@@ -22,16 +19,13 @@ from .procedures import (
     find_cfg_paths,
 )
 
-# Function registry (important)
+# Function registry
 FUNCTIONS = {
-    "read_file": read_file,
     "list_dir": list_dir,
     "is_dir": is_dir,
     "delete_file": delete_file,
     "rename_file": rename_file,
-    "write_file": write_file,
-    "write_file_bytes": write_file_bytes,
-    "copy_from_tmp": copy_from_tmp,
+    "copy_tmp": copy_tmp,
     "cleanup_tmp": cleanup_tmp,
     "matches": matches,
     "is_excluded": is_excluded,

@@ -218,7 +218,9 @@ def create_app():
     register_template_filters(app)
     register_user_loader()
 
-    with app.app_context():
-        launch_rpc_daemon_threads()
+    # Only start one copy of rpc server threads in debug mode.
+    if os.environ.get("DEBUG") != "YES" or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        with app.app_context():
+            launch_rpc_daemon_threads()
 
     return app

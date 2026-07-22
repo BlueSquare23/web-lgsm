@@ -232,6 +232,20 @@
     in the long run.
   - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
 
+* [x] **Rekajigger File Read & Write to use copy temp files instead of passing file content through socket!!!**
+  - We've already learned the hard way that we can't pass file content through the socket for file uploads (aka file writes). It'll hit the OOM killer and kill everything!
+  - I added a size restriction to file reads, and that works, but now read and write are asymmetrical and I don't like that.
+  - Also hampers size of files one can download.
+  - So instead I need to rework the classes that surround file upload and download and make it all work via temp files manipulated by rpc procedures!
+
+* [ ] **Build out better cleanup for rpc server threads**
+  - Right now nothing cleans up rpc threads after the main flask server is shut down. So they build up and leave zombies. Gotta fix that!!!
+  - Think this is mainly a problem for dev/debug mode. Can't reproduce for non-dev and think its because of flask reloader causing dupes. Will fix l8tr
+
+* [x] **Fix double starting of RPC servers on app startup!**
+  - For some reason I haven't quite figured out yet, when you start the app, it starts all of the rpc server threads twice. Doesn't break anything, but also why is it doing that? Its just messy and needs investigated / fixed!
+  - Figure it out! Silly flask debug reloader starts a watcher of `__init__.py`, that's where the double spawn is coming from. 
+
 * [x] **Get Basic FileManager Setup**
   - I need to figure out if I'm just pushing dir stuff through file pipes or
     making new dir only pipes...

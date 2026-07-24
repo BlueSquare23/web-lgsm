@@ -28,7 +28,7 @@ class LocalFileInterface(FileInterface):
         Reads local files via multi user rpc service.
 
         Returns:
-            dict with keys: status, mime_type, data
+            dict with keys: success, error, mime_type, data
         """
         self.logger.info(log_wrap("reading file_path", file_path))
 
@@ -39,13 +39,17 @@ class LocalFileInterface(FileInterface):
             result = self.executor.call('copy_tmp', 'download', file_path, **kwargs)
             self.logger.debug(result)
 
-            if result.get('status') != 'success':
+            if not result.get('success'):
                 return result
 
             tmp_path = result.get('tmpfile')
 
             with open(tmp_path, 'rb') as f:
                 result['data'] = f.read().decode('utf-8')
+            return result
+
+        except Exception as e:
+            result = {"success": False, "error": str(e), "mime_type": None}
             return result
 
         finally:
@@ -78,7 +82,7 @@ class LocalFileInterface(FileInterface):
 
             result = self.executor.call('copy_tmp', 'upload', file_path, tmp_path, **self._rpc_kwargs())
             self.logger.debug(result)
-            return result.get('status') == 'success'
+            return result.get('success')
         finally:
             # Tmp file is always ours (we staged it), so we always clean it up ourselves.
             self.executor.call('cleanup_tmp', tmp_path)

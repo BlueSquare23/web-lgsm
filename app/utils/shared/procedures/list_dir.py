@@ -1,5 +1,8 @@
 import os
+import grp
+import pwd
 import stat
+
 from .matches import matches
 from .load_exclusions import load_exclusions
 from .is_excluded import is_excluded
@@ -36,11 +39,21 @@ def list_dir(directory, show_hidden=True):
 
             # Get readable string (e.g., '-rw-r--r--')
             perms = stat.filemode(info.st_mode)
+
+            # Get uids/gids
+            uid = info.st_uid
+            gid = info.st_gid
+
+            # Convert IDs to human-readable names
+            user = pwd.getpwuid(uid).pw_name
+            group = grp.getgrgid(gid).gr_name
             
             files.append({
                 "name": entry.name,
                 "path": entry.path,
                 "type": item_type,
+                "user": user,
+                "group": group,
                 "perms": perms,
                 "size": info.st_size
             })

@@ -108,39 +108,30 @@
             <!-- Directory + File Listing -->
             {% for item in files %}
               <div class="rounded border-secondary list-group-item file-item rounded p-1 {% if item.name == selected_file %}active" aria-current="true{% endif %}">
-                <div class="row align-items-center g-2">
-                  <div class="col-md-4">
-                    <form method="GET" action="/files" class="flex-grow-1">
-                      <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
-                      <input id="path" name="path" type="hidden" value="{{ item.path }}">
+                <div class="d-flex align-items-center">
+                  <form method="GET" action="/files" class="flex-grow-1 me-2 text-truncate">
+                    <input id="server_id" name="server_id" type="hidden" value="{{ server_id }}">
+                    <input id="path" name="path" type="hidden" value="{{ item.path }}">
 
-                      <button class="btn btn-link p-0 text-start w-100 
-                        {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
+                    <button class="btn btn-link p-0 text-start text-truncate w-100
+                      {% if item.type == 'dir' %}text-info{% else %}text-light{% endif %}">
 
-                        {% if item.type == 'dir' %}
-                          <i class="bi bi-folder-fill me-2"></i>
-                          {{ item.name }}/
-                        {% else %}
-                          <i class="bi bi-file-earmark-text me-2"></i>
-                          {{ item.name }}
-                        {% endif %}
+                      {% if item.type == 'dir' %}
+                        <i class="bi bi-folder-fill me-2"></i>
+                        {{ item.name }}/
+                      {% else %}
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        {{ item.name }}
+                      {% endif %}
 
-                      </button>
-                    </form>
-                  </div>
+                    </button>
+                  </form>
 
-                  <div class="col-md-2">
-                    {{item.size | filesizeformat}}
-                  </div>
-                  <div class="col-md-3">
-                    {{item.perms}}
-                  </div>
-
-                  <div class="col-md-3">
+                  <div class="flex-shrink-0">
                     <!-- Rename button -->
                     <button
                       title="Rename {{ item.type | capitalize }}"
-                      class="btn btn-sm btn-outline-warning ms-2 flex-shrink-0"
+                      class="btn btn-sm btn-outline-warning ms-2"
                       data-bs-toggle="modal"
                       data-bs-target="#renameModal"
                       data-server-id="{{ server_id }}"
@@ -152,11 +143,15 @@
 
                     <!-- Delete button -->
                     <!-- NOTE: We urlencode the path twice, first layer auto unwrapped by flask api handler, second manually unwrapped in api route code -->
-                    <button title="Delete {{ item.type | capitalize }}" class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
+                    <button title="Delete {{ item.type | capitalize }}" class="btn btn-sm btn-outline-danger ms-2"
                             onclick="deleteFile(this, '{{ server_id }}', '{{ item.path | urlencode | urlencode }}', '{{ item.name }}')">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
+                </div>
+
+                <div class="small text-white-50 ps-4 text-truncate">
+                  {{ item.size | filesizeformat }} &middot; {{ item.user }}:{{ item.group }} &middot; {{ item.perms }}
                 </div>
               </div>
             {% endfor %}
@@ -175,12 +170,12 @@
               {% set item = files | selectattr('name', 'equalto', selected_file) | first %}
 
               {% if item %}
-                {% if item.type == 'file' and file.status == 'unsupported_type' %}
+                {% if item.type == 'file' and not file.success and file.error == 'Unsupported mime type' %}
                   <i class="text-danger bi bi-sign-do-not-enter"></i>
                   Cannot display mimetype {{file.mime_type}} for editing
-                {% elif item.type == 'file' and file.status != 'success' %}
+                {% elif item.type == 'file' and not file.success %}
                   <i class="text-danger bi bi-sign-do-not-enter"></i>
-                  Problem loading selected file...
+                  Problem loading selected file{% if file.error %}: {{ file.error }}{% endif %}
                 {% else %}
                   Editing: {{ selected_file }}
                 {% endif %}
@@ -575,3 +570,5 @@ clearSearch.addEventListener("click", function () {
 </script>
 
 {% endblock %}
+
+

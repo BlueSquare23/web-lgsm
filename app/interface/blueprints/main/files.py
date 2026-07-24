@@ -60,8 +60,8 @@ def files():
 
             file = read_file(server, path)
 
-            if file['status'] != 'success':
-                flash("Problem retrieving file contents: {file['status']}", category="error")
+            if not file.get('success'):
+                flash("Problem retrieving file contents: {file['error']}", category="error")
                 return redirect(url_for("main.home"))
 
             filename = os.path.basename(path)
@@ -135,6 +135,8 @@ def files():
             current_path = base_dir
             files = list_dir(server, base_dir, show_hidden)
             file = read_file(server, path)
+
+            current_app.logger.debug(log_wrap("file", file))
 
         return render_template(
             "files.html",

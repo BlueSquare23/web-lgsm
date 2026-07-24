@@ -1,0 +1,11 @@
+- name: Add user to web lgsm group
+  ansible.builtin.command:
+    cmd: "usermod -a -G web-lgsm {{ username }}"
+  become: yes
+  register: usermod_output2
+  when: username is defined 
+
+- name: Display the output of usermod
+  ansible.builtin.debug:
+    var: usermod_output2
+

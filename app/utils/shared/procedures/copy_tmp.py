@@ -25,16 +25,9 @@ def copy_tmp(direction, real_path, tmp_path=None):
     disk, so file content never has to travel over the RPC socket -- only
     the path strings do.
 
-    direction='upload' (tmp_path -> real_path), used by write():
-        Copies bytes only (shutil.copyfile), so an existing real_path keeps
-        its own permissions; a brand new real_path falls back to umask
-        defaults. real_path is validated with traversal_safe/is_excluded.
+    direction='upload' (tmp_path -> real_path), used by write()
 
-    direction='download' (real_path -> tmp_path), used by read():
-        Applies the same not_found/size/mime-type checks the old read_file
-        RPC used to, before copying. tmp_path's permissions are the
-        caller's responsibility -- it must already be chmod'd permissive
-        enough for whichever user actually ends up running this.
+    direction='download' (real_path -> tmp_path), used by read()
 
     Returns:
         dict with keys: status, tmpfile, mime_type
@@ -66,6 +59,7 @@ def copy_tmp(direction, real_path, tmp_path=None):
         try:
             shutil.copyfile(real_path, tmp_path)
             os.chmod(tmp_path, 0o640)
+            shutil.chown(tmp_path, group="web-lgsm")
             return {"status": "success", "tmpfile": tmp_path, "mime_type": mime_type or "text/plain"}
         except Exception as e:
             return {"status": "error", "tmpfile": tmp_path, "error": str(e), "mime_type": None}

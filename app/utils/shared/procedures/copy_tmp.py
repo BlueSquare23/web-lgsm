@@ -19,7 +19,7 @@ ALLOWED_MIME_TYPES = (
 )
 
 
-def copy_tmp(direction, real_path, tmp_path=None):
+def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
     """
     Relays file content between a local /tmp staging file and a real path on
     disk, so file content never has to travel over the RPC socket -- only
@@ -53,8 +53,10 @@ def copy_tmp(direction, real_path, tmp_path=None):
             return {"success": False, "error": "File too large", "tmpfile": tmp_path, "mime_type": None}
 
         mime_type, _ = mimetypes.guess_type(real_path)
-        if mime_type is not None and not mime_type.startswith(ALLOWED_MIME_PREFIXES) and mime_type not in ALLOWED_MIME_TYPES:
-            return {"success": False, "error": "Unsupported mime type", "tmpfile": tmp_path, "mime_type": mime_type}
+
+        if not direct_download:
+            if mime_type is not None and not mime_type.startswith(ALLOWED_MIME_PREFIXES) and mime_type not in ALLOWED_MIME_TYPES:
+                return {"success": False, "error": "Unsupported mime type", "tmpfile": tmp_path, "mime_type": mime_type}
 
         try:
             shutil.copyfile(real_path, tmp_path)

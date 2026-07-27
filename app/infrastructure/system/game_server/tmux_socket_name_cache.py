@@ -42,7 +42,7 @@ class TmuxSocketNameCache:
             file_manager = FileManager()
             gs_id_file = file_manager.read(server, gs_id_file_path)
 
-            if gs_id_file['status'] != 'success':
+            if not gs_id_file['success']:
                 return None
 
             gs_id = gs_id_file['data']

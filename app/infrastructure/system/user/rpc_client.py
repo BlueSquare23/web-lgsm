@@ -25,6 +25,8 @@ class MultiUserRPCClient:
         import importlib
         module = importlib.import_module('shared.procedures')
 
+        self.logger.debug(args)
+
         # Same user import the code and run it.
         if as_user is None:
             func = getattr(module, func_name)

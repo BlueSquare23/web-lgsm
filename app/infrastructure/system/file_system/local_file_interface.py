@@ -8,6 +8,7 @@ import tempfile
 
 from app.utils.helpers import log_wrap
 from .file_interface import FileInterface
+from .utils import is_utf8_decodable
 
 class LocalFileInterface(FileInterface):
     """Interface for local file system operations"""
@@ -23,7 +24,7 @@ class LocalFileInterface(FileInterface):
             return {}
         return {'as_user': self.server.username}
 
-    def read(self, file_path):
+    def read(self, file_path, download):
         """
         Reads local files via multi user rpc service.
 
@@ -36,7 +37,7 @@ class LocalFileInterface(FileInterface):
         tmp_path = None
 
         try:
-            result = self.executor.call('copy_tmp', 'download', file_path, **kwargs)
+            result = self.executor.call('copy_tmp', 'download', file_path, None, download, **kwargs)
             self.logger.debug(result)
 
             if not result.get('success'):
@@ -45,7 +46,13 @@ class LocalFileInterface(FileInterface):
             tmp_path = result.get('tmpfile')
 
             with open(tmp_path, 'rb') as f:
-                result['data'] = f.read().decode('utf-8')
+                if is_utf8_decodable(tmp_path):
+                    result['data'] = f.read().decode('utf-8')
+                    result['decodable'] = True
+                else:
+                    result['data'] = f.read()
+                    result['decodable'] = False
+
             return result
 
         except Exception as e:
@@ -70,6 +77,7 @@ class LocalFileInterface(FileInterface):
         try:
             with os.fdopen(tmp_fd, 'wb') as tmp_file:
                 if isinstance(content, str):
+                    content = content.replace('\r\n', '\n')
                     tmp_file.write(content.encode("utf-8"))
                 elif isinstance(content, (bytes, bytearray)):
                     tmp_file.write(content)

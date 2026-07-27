@@ -12,7 +12,7 @@ class SSHFileInterface(FileInterface):
         super().__init__(server)
         self.client_interface = client_interface
 
-    def read(self, file_path):
+    def read(self, file_path, download=False):
         """
         Returns:
             dict with keys: status, mime_type, data
@@ -29,7 +29,7 @@ class SSHFileInterface(FileInterface):
                     content = file.read()
 
             return {
-                'status': 'success',
+                'success': True,
                 'mime_type': None,
                 'data': content.decode()
             }
@@ -37,7 +37,8 @@ class SSHFileInterface(FileInterface):
         except Exception as e:
             self.logger.debug(e)
             return {
-                'status': 'error',
+                'success': False,
+                'error': str(e),
                 'mime_type': None,
                 'data': None
             }

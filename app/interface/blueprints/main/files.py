@@ -58,19 +58,19 @@ def files():
 
             log_audit_event(current_user.id,  f"User '{current_user.username}', downloaded config '{path}'")
 
-            file = read_file(server, path)
+            file = read_file(server, path, download=True)
 
-            if not file.get('success'):
-                flash("Problem retrieving file contents: {file['error']}", category="error")
-                return redirect(url_for("main.home"))
+            if not file['success']:
+                flash(f"Problem retrieving file contents: {file['error']}", category="error")
+                return redirect(url_for("main.files"))
 
             filename = os.path.basename(path)
 
             return send_file(
-                io.BytesIO(file['data'].encode("utf-8")),
+                io.BytesIO(file['data'].encode('utf-8') if file['decodable'] else file['data']),
                 as_attachment=True,
                 download_name=filename,
-                mimetype="text/plain",
+                mimetype=file['mime_type'],
             )
 
         server = None

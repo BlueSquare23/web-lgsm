@@ -232,15 +232,24 @@
     in the long run.
   - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
 
+* [ ] **Make Sure RPC Server Processes Are Killable**
+  - This is going to be tricky because they're started as root...
+  - I think the answer might be have them actually started as the user. But
+    that makes things more complicated again. Will have to think...
+
+* [x] **Allow direct download to bypass mimetype restrictions**
+  - Right now download of images and other files gets blocked because
+    `copy_tmp` procedure has restrictions around mimes that can be displayed.
+  - This makes sense for file display, but not for file download.
+  - I'm also not a huge fan of file size restriction for direct download. But
+    for now is necessary to avoid the dreaded OOM killer. Need to figure out
+    buffered read from tmp for direct download.
+
 * [x] **Rekajigger File Read & Write to use copy temp files instead of passing file content through socket!!!**
   - We've already learned the hard way that we can't pass file content through the socket for file uploads (aka file writes). It'll hit the OOM killer and kill everything!
   - I added a size restriction to file reads, and that works, but now read and write are asymmetrical and I don't like that.
   - Also hampers size of files one can download.
   - So instead I need to rework the classes that surround file upload and download and make it all work via temp files manipulated by rpc procedures!
-
-* [ ] **Build out better cleanup for rpc server threads**
-  - Right now nothing cleans up rpc threads after the main flask server is shut down. So they build up and leave zombies. Gotta fix that!!!
-  - Think this is mainly a problem for dev/debug mode. Can't reproduce for non-dev and think its because of flask reloader causing dupes. Will fix l8tr
 
 * [x] **Fix double starting of RPC servers on app startup!**
   - For some reason I haven't quite figured out yet, when you start the app, it starts all of the rpc server threads twice. Doesn't break anything, but also why is it doing that? Its just messy and needs investigated / fixed!

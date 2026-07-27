@@ -43,7 +43,7 @@ class FileManager:
 #        self.logger.debug(f"#################### SERVER USER {self.server.username}")
         self.manager.check(self.server.username)
     
-    def read(self, server, file_path):
+    def read(self, server, file_path, download=False):
         """
         Read a file from the server.
         
@@ -55,7 +55,7 @@ class FileManager:
         """
         self.server = server
         self._check_thead()
-        return self.interface.read(file_path)
+        return self.interface.read(file_path, download)
     
     def write(self, server, file_path, content):
         """

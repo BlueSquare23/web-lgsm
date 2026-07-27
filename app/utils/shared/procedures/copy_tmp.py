@@ -8,7 +8,10 @@ from pathlib import Path
 from .traversal_safe import traversal_safe
 from .is_excluded import is_excluded
 
-MAX_DOWNLOAD_SIZE = 5 * 1024 * 1024  # 500MB
+# Only applies to files loaded into the in-browser editor (direct_download=False)
+# Those get fully decoded into memory for the textarea. Actual file
+# downloads are streamed straight from disk and have no such limit.
+MAX_INLINE_VIEW_SIZE = 5 * 1024 * 1024  # 5MB
 
 ALLOWED_MIME_PREFIXES = ('text/',)
 ALLOWED_MIME_TYPES = (
@@ -49,7 +52,7 @@ def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
         if not os.path.isfile(real_path) or not traversal_safe(real_path) or is_excluded(real_path):
             return {"success": False, "error": "Permission denied", "tmpfile": tmp_path, "mime_type": None}
 
-        if Path(real_path).stat().st_size > MAX_DOWNLOAD_SIZE:
+        if not direct_download and Path(real_path).stat().st_size > MAX_INLINE_VIEW_SIZE:
             return {"success": False, "error": "File too large", "tmpfile": tmp_path, "mime_type": None}
 
         mime_type, _ = mimetypes.guess_type(real_path)

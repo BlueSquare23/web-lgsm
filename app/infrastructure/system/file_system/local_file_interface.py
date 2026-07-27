@@ -28,22 +28,36 @@ class LocalFileInterface(FileInterface):
         """
         Reads local files via multi user rpc service.
 
+        When download=True, the file's contents are never loaded into memory:
+        the tmp file staged by copy_tmp is left in place and handed back via
+        result['tmpfile'] so the caller can stream it straight to the client
+        (e.g. Flask's send_file), then clean it up itself once the response
+        has actually been sent via cleanup_download().
+
         Returns:
-            dict with keys: success, error, mime_type, data
+            dict with keys: success, error, mime_type, data (only when
+            download=False), tmpfile
         """
         self.logger.info(log_wrap("reading file_path", file_path))
 
         kwargs = self._rpc_kwargs()
         tmp_path = None
+        keep_tmp = False
 
         try:
             result = self.executor.call('copy_tmp', 'download', file_path, None, download, **kwargs)
             self.logger.debug(result)
 
+            tmp_path = result.get('tmpfile')
+
             if not result.get('success'):
                 return result
 
-            tmp_path = result.get('tmpfile')
+            if download:
+                # Caller owns tmp_path from here on and is responsible for
+                # calling cleanup_download() once it's done streaming.
+                keep_tmp = True
+                return result
 
             with open(tmp_path, 'rb') as f:
                 if is_utf8_decodable(tmp_path):
@@ -60,8 +74,16 @@ class LocalFileInterface(FileInterface):
             return result
 
         finally:
-            if tmp_path:
+            if tmp_path and not keep_tmp:
                 self.executor.call('cleanup_tmp', tmp_path, **kwargs)  # whoever created it, deletes it
+
+    def cleanup_download(self, tmp_path):
+        """
+        Deletes a tmp file previously staged by read(file_path, download=True)
+        once the caller is done streaming it to the client.
+        """
+        self.logger.info(log_wrap("cleaning up download tmp_path", tmp_path))
+        return self.executor.call('cleanup_tmp', tmp_path, **self._rpc_kwargs())
 
     def write(self, file_path, content):
         """

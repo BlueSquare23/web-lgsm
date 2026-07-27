@@ -86,6 +86,7 @@ from app.application.use_cases.config.batch_update_config import BatchUpdateConf
 # Files
 from app.infrastructure.system.file_system.file_manager import FileManager
 from app.application.use_cases.file_system.read_file import ReadFile
+from app.application.use_cases.file_system.cleanup_download import CleanupDownload
 from app.application.use_cases.file_system.write_file import WriteFile 
 from app.application.use_cases.file_system.delete_file import DeleteFile 
 from app.application.use_cases.file_system.rename_file import RenameFile 
@@ -416,6 +417,11 @@ class Container:
 
     def read_file(self):
         return ReadFile(
+            file_manager=self.file_manager()
+        )
+
+    def cleanup_download_file(self):
+        return CleanupDownload(
             file_manager=self.file_manager()
         )
 

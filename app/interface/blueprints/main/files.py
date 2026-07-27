@@ -1,5 +1,4 @@
 import os
-import io
 import json
 
 from flask_login import login_required, current_user
@@ -12,7 +11,7 @@ from app.interface.forms import SaveForm, UploadForm, DownloadForm, validation_e
 
 from . import main_bp
 
-from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access, is_safe_path, is_dir
+from app.interface.use_cases import read_file, write_file, list_dir, get_game_server, list_user_game_servers, log_audit_event, getboolean_config, check_user_access, is_safe_path, is_dir, cleanup_download_file
 
 
 ######### File Manager Page #########
@@ -65,13 +64,18 @@ def files():
                 return redirect(url_for("main.files"))
 
             filename = os.path.basename(path)
+            tmp_path = file['tmpfile']
 
-            return send_file(
-                io.BytesIO(file['data'].encode('utf-8') if file['decodable'] else file['data']),
+            response = send_file(
+                tmp_path,
                 as_attachment=True,
                 download_name=filename,
                 mimetype=file['mime_type'],
             )
+            # tmp_path is streamed lazily as the response body is sent, so it
+            # can only be cleaned up once the client has actually received it.
+            response.call_on_close(cleanup_download_file(server, tmp_path))
+            return response
 
         server = None
         file = None

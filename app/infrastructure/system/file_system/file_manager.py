@@ -56,7 +56,19 @@ class FileManager:
         self.server = server
         self._check_thead()
         return self.interface.read(file_path, download)
-    
+
+    def cleanup_download(self, server, tmp_path):
+        """
+        Delete a tmp file staged by a previous read(server, path, download=True)
+        call, once the caller is done streaming it to the client.
+
+        Args:
+            tmp_path (str): Path to the staged tmp file
+        """
+        self.server = server
+        self._check_thead()
+        return self.interface.cleanup_download(tmp_path)
+
     def write(self, server, file_path, content):
         """
         Write content to a file on the server.

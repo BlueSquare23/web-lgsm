@@ -254,17 +254,22 @@
           <h5 class="text-light">Upload</h5>
           <p class="text-white small">Upload File</p>
 
-          <form method="POST" action="/files" enctype="multipart/form-data">
+          <form id="uploadForm" method="POST" action="/files" enctype="multipart/form-data">
             {{ upload_form.csrf_token }}
             {{ upload_form.server_id(value=server_id) }}
-          
+
             {% if current_path %}
               {{ upload_form.path(value=current_path) }}
             {% endif %}
-          
+
             {{ upload_form.file(class="form-control mb-2") }}
-          
+
             {{ upload_form.upload_submit(class="btn btn-outline-secondary w-100") }}
+
+            <div id="uploadProgressWrap" class="progress mt-2 d-none">
+              <div id="uploadProgressBar" class="progress-bar" role="progressbar" aria-label="Upload progress"
+                   style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
           </form>
         </div>
       </div>
@@ -521,6 +526,67 @@ document.getElementById("createFileForm").addEventListener("submit", async funct
   } catch (err) {
     alert("Error creating file: " + err.message);
   }
+});
+
+/* Upload File w/ progress bar */
+const uploadForm = document.getElementById("uploadForm");
+const uploadProgressWrap = document.getElementById("uploadProgressWrap");
+const uploadProgressBar = document.getElementById("uploadProgressBar");
+
+uploadForm.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const formData = new FormData(uploadForm);
+
+  // A real browser submit sends the clicked submit button's name=value pair
+  // along with the rest of the form; new FormData(form) does not, since no
+  // button was "clicked" here. The server tells forms apart on this route
+  // by checking for "upload_submit" in request.form, so we add it back
+  // manually, reading it off the button itself rather than hardcoding it.
+  const submitBtn = uploadForm.querySelector('[type="submit"]');
+  if (submitBtn && submitBtn.name) {
+    formData.set(submitBtn.name, submitBtn.value || "");
+  }
+
+  const xhr = new XMLHttpRequest();
+
+  xhr.upload.addEventListener("progress", function (event) {
+    if (!event.lengthComputable) return;
+
+    const percent = Math.round((event.loaded / event.total) * 100);
+    uploadProgressBar.style.width = `${percent}%`;
+    uploadProgressBar.setAttribute("aria-valuenow", percent);
+    uploadProgressBar.textContent = `${percent}%`;
+  });
+
+  xhr.addEventListener("loadstart", function () {
+    submitBtn.disabled = true;
+    uploadProgressWrap.classList.remove("d-none");
+  });
+
+  xhr.addEventListener("loadend", function () {
+    submitBtn.disabled = false;
+    uploadProgressWrap.classList.add("d-none");
+  });
+
+  xhr.addEventListener("load", function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      // Server redirects (302 -> 200) to the updated file listing after a
+      // successful upload; XHR follows that transparently, so responseURL
+      // is the final page. Flask's flash() message rides along in the
+      // session cookie either way, so navigating there shows it normally.
+      window.location.href = xhr.responseURL || uploadForm.action;
+    } else {
+      showAlert(`Upload failed (HTTP ${xhr.status})`, "danger");
+    }
+  });
+
+  xhr.addEventListener("error", function () {
+    showAlert("Upload failed: network error", "danger");
+  });
+
+  xhr.open("POST", uploadForm.action);
+  xhr.send(formData);
 });
 
 const fileSearch = document.getElementById("fileSearch");

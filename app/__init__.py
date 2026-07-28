@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import logging
-from flask import Flask
+from flask import Flask, request
 from pathlib import Path
 from dotenv import load_dotenv
 from logging.config import dictConfig
@@ -162,8 +162,26 @@ def create_app():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
 
-    # Upload size limit
+    # Request body size limit -- applies to everything by default.
     app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
+
+    @app.before_request
+    def lift_content_length_limit_for_uploads():
+        # File uploads are streamed straight to disk in fixed-size chunks
+        # (see LocalFileInterface.write), so they're never fully buffered in
+        # memory. So there's no technical reason to cap them. Everything else
+        # still gets the default MAX_CONTENT_LENGTH above. mimetype comes
+        # from the Content-Type header, so this check happens before any
+        # body bytes are read/parsed.
+        if (
+            request.method == "POST"
+            and request.endpoint == "main.files"
+            and request.mimetype == "multipart/form-data"
+        ):
+            app.config["MAX_CONTENT_LENGTH"] = None
+        else:
+            app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
+
 
     @app.after_request
     def add_security_headers(response):

@@ -224,7 +224,7 @@
 * [ ] **Add more Custom Themeing options to config**
   - So I've already got a couple of color options for the config.
 
-* [ ] **Fix Form Classes that ChatGPT Fucked Up**
+* [x] **Fix Form Classes that ChatGPT Fucked Up**
   - I was being lazy and threw my old monolithic form files at chatgpt to break
     up and told it "don't change anything." Well it removed all my placeholder
     text cause its an idiot.

@@ -39,7 +39,6 @@ class EditUsersForm(FlaskForm):
         default="false",
     )
 
-
     # Basic bool perms
     enable_otp = BooleanField("Enable Two Factor Auth")
 

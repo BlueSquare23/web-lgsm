@@ -19,14 +19,28 @@ class AddForm(FlaskForm):
 
     install_name = StringField(
         "Installation Title",
-        render_kw={"class": "form-control"},
-        validators=[InputRequired(), Length(max=150), Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG)],
+        render_kw={
+            "class": "form-control",
+            "placeholder": "Enter a unique name for this install",
+        },
+        validators=[
+            InputRequired(),
+            Length(max=150),
+            Regexp(BAD_CHARS.replace(' ', ''), message=BAD_CHARS_MSG)
+        ],
     )
 
     install_path = StringField(
         "Installation directory path",
-        render_kw={"class": "form-control"},
-        validators=[InputRequired(), Length(max=150), Regexp(BAD_CHARS, message=BAD_CHARS_MSG)],
+        render_kw={
+            "class": "form-control",
+            "placeholder": "Enter the full path to the game server directory",
+        },
+        validators=[
+            InputRequired(), 
+            Length(max=150), 
+            Regexp(BAD_CHARS, message=BAD_CHARS_MSG)
+        ],
     )
 
     installable = container.list_installable_game_servers().execute()
@@ -34,8 +48,38 @@ class AddForm(FlaskForm):
 
     script_name = StringField(
         "LGSM script name",
-        validators=[InputRequired(), Length(max=150), Regexp(BAD_CHARS), AnyOf(servers)],
+        render_kw={
+            "class": "form-control",
+            "placeholder": 'Enter the name of the game server script. For example, "gmodserver"',
+        },
+        validators=[
+            InputRequired(),
+            Length(max=150),
+            Regexp(BAD_CHARS),
+            AnyOf(servers)
+        ],
     )
 
-    username = StringField("Game server system username", validators=[Length(max=150), Regexp(BAD_CHARS)])
-    install_host = StringField("Remote server's IP address or hostname", validators=[Length(max=150), Regexp(BAD_CHARS)])
+    username = StringField(
+        "Game server system username", 
+        render_kw={
+            "class": "form-control",
+            "placeholder": 'Enter system user game server is installed under. For example, "coolguy123"',
+        },
+        validators=[
+            Length(max=150),
+            Regexp(BAD_CHARS)
+        ]
+    )
+
+    install_host = StringField(
+        "Remote server's IP address or hostname",
+        render_kw={
+            "class": "form-control",
+            "placeholder": 'Enter remote server\'s IP address or hostname. For example, "gmod.domain.tld"',
+        },
+        validators=[
+            Length(max=150),
+            Regexp(BAD_CHARS)
+        ]
+    )

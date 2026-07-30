@@ -13,9 +13,6 @@ from flask import (
 )
 
 from app.utils import *
-#from app.interface.forms.views import ValidateID, AddForm
-#from app.interface.forms.validation_errors import validation_errors
-
 from app.interface.forms import ValidateID, AddForm, validation_errors
 
 from app.container import container
@@ -165,6 +162,10 @@ def add():
 
     # Auto add sudoers rule for server.
     if server['install_type'] == 'local' and server['username'] != USER:
+        # TODO: RENAME ALL THIS TO POST-ADD SETUP AND REMOVE SUDOERS ACCESS
+        # CHECK. Its ansible so we don't even really care if its already setup
+        # because should be idempotent.
+
         # Check if system user has sudoers access to alt game server user.
         if not container.check_sudoers_access().execute(username):
             if not container.add_sudoers_rule().execute(username):

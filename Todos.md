@@ -232,10 +232,65 @@
     in the long run.
   - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
 
+* [ ] **Document new multi-user rpc service inner workings**
+  - Since the plan is to make more and more features depend on the multi-user
+    rpc service, should probably keep some notes for myself and others on how
+    it actually works.
+  - Basically just need to explain each user has a systemd service which runs
+    the rpc server. Then the main app has a client that talks back to that
+    rpc server to do things as the user.
+  - Should detail how the service is added (at add or install time) and what
+    the rpc procedures do.
+
+* [ ] **Think more about adding auth to rpc servers**
+  - Right now not too worried about it since the socket file perms do the heavy
+    lifting here. Also no one is hacking my shitty little web app.
+  - But probably not a terrible idea to add it later on down the road.
+  - But also torn because its all on the same system. Seems silly for the main
+    app user/pid to have to use secrets to talk to its children. Like some
+    hacker with a shell on the system as the web-lgsm user could just dump those
+    secrets and then talk to all the child servers.
+  - Have to do some more thinking.
+
+* [ ] **Figure out auto-recreate socket files / dir on app startup**
+  - TIL: That /run is a tmpfs dir so socket files/dirs in there don't survive reboots.
+  - This dashes my hopes of setting it up once at install and moving on with life.
+  - Instead we'll have to have the web-lgsm.py script create these at app startup.
+    - Which means another sudoers rule for creating them which I don't love...
+
 * [ ] **Make Sure RPC Server Processes Are Killable**
   - This is going to be tricky because they're started as root...
   - I think the answer might be have them actually started as the user. But
     that makes things more complicated again. Will have to think...
+  * [x] **Make SystemD Service**
+    - I've decided the way to do this is to go back to systemd idea.
+```
+[Unit]
+Description=Web-LGSM User Module Agent
+After=network.target
+
+[Service]
+Type=simple
+Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
+ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
+Restart=always
+WorkingDirectory=%h
+
+[Install]
+WantedBy=default.target
+```
+  - Enable:
+```
+export XDG_RUNTIME_DIR=/run/user/$UID
+loginctl enable-linger $USER
+mkdir -p ~/.config/systemd/user/
+vim ~/.config/systemd/user/web-lgsm-agent.service
+systemctl --user enable web-lgsm-agent
+```
+    - It has to work for new web-lgsm installs (as web-lgsm user)
+    - It has to work for new game server installs
+    - It has to work for add game server manually
+    - It should check if systemd service is already installed and running
 
 * [x] **Allow direct download to bypass mimetype restrictions**
   - Right now download of images and other files gets blocked because

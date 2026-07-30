@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add manual reset for rpc service daemons to settings page.
+- Add new mechanism for interactive with alt users via novel multi-user rpc backend.
 - Add new file manager interface viewing, editing, uploading, and downloading files.
 - Add custom exclude mechanism (with globs) for exempting files and dirs from the file manager.
 
@@ -18,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flesh out JSON RPC service for running code as alt users.
 - Refactor form classes for better developer ergonomics.
 - Replace old hardcoded file edit page with new file manager.
+
+### Fixed
+
+- Form classes, re-add placeholders after restructure.
 
 ## [v1.9.2 - 2026-04-18]
 

@@ -96,12 +96,9 @@ EOF
     cd $SCRIPTPATH
 
     # Finally setup random key.
-    random_key=$(echo $RANDOM | md5sum | head -c 20)
+    random_key=$(python3 -c 'import secrets; print(secrets.token_hex())')
     echo "SECRET_KEY=\"$random_key\"" > .secret
     chmod 600 .secret
-
-    echo -e "${GREEN}####### Updating Database...${RESET}"
-    /opt/web-lgsm/bin/flask --app app:create_app db upgrade
 
     echo -e "${GREEN}####### Project Setup & Installation Complete!!!${RESET}"
     echo -e "${GREEN}Run the \`web-lgsm.py\` script to start the server.${RESET}"

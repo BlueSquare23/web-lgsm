@@ -1,0 +1,24 @@
+- name: Look up passwd entry for {{ username }}
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ username }}"
+
+- name: Set facts for {{ username }}s uid and home directory
+  set_fact:
+    agent_user_uid: "{{ getent_passwd[username][1] }}"
+    agent_user_home: "{{ getent_passwd[username][4] }}"
+
+- name: Check status of web-lgsm-agent systemd user service for {{ username }}
+  ansible.builtin.systemd_service:
+    name: web-lgsm-agent.service
+    scope: user
+  become: yes
+  become_user: "{{ username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ agent_user_uid }}"
+  register: agent_service_status
+  ignore_errors: yes
+
+- name: Set fact for whether web-lgsm-agent is already running for {{ username }}
+  set_fact:
+    agent_service_active: "{{ (agent_service_status.status is defined) and ((agent_service_status.status.ActiveState | default('')) == 'active') }}"

@@ -176,6 +176,10 @@ fi
 echo -e "${GREEN}####### Installing Python Requirements...${RESET}"
 $VENV_PATH/bin/python3 -m pip install -r requirements.txt
 
+# Upgrade alembic DB
+echo -e "${GREEN}####### Updating Database...${RESET}"
+$VENV_PATH/bin/flask --app app:create_app db upgrade
+
 ## Install Ansible Connector & Playbook files.
 echo -e "${GREEN}####### Installing Web-LGSM Ansible Connector...${RESET}"
 
@@ -222,7 +226,7 @@ echo -e "${GREEN}####### Setting up Multi User RPC Socket Dir${RESET}"
 mkdir -p /run/web-lgsm
 chown root:$USERNAME /run/web-lgsm
 chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
-chmod g+s /var/run/web-lgsm/  # SGID so files are owned by web-lgsm user group
+chmod g+s /run/web-lgsm/  # SGID so files are owned by web-lgsm user group
 
 # For unique game server users, set facls
 if [[ -f app/database.db ]]; then

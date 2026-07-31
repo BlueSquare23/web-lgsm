@@ -11,4 +11,5 @@ PATHS = {
     "ssh-keygen": "/usr/bin/ssh-keygen",
     "rm": "/usr/bin/rm",
     "crontab":"/usr/bin/crontab",
+    "systemctl":"/usr/bin/systemctl",
 }

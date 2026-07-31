@@ -5,17 +5,15 @@ import logging
 
 class MultiUserRPCClient:
     """
-    The user module service runs user module scripts. These module scripts are
-    either imported and run (if no user specified), or run via sudo -u user to
-    retrieve the json, allowing share user module scripts to be seamlessly run as
-    multiple users.
-
-    In/out via stdin/out json.
+    The multi-user rpc service runs rpc procedure (formerly "user module
+    scripts"). These module scripts are either imported and run (if no user
+    specified), or run via sudo -u user to retrieve the json, allowing share user
+    module scripts to be seamlessly run as multiple users.
     """
-    def __init__(self, module_dir='/opt/web-lgsm/utils', logger=logging.getLogger(__name__), socket_dir="/run/web-lgsm"):
-        self.module_dir = os.path.abspath(module_dir)
+    def __init__(self, logger=logging.getLogger(__name__), socket_dir="/run/web-lgsm", module_dir='/opt/web-lgsm/utils'):
         self.logger = logger
-        self.socket_dir = socket_dir
+        self.socket_dir = os.path.abspath(socket_dir)
+        self.module_dir = os.path.abspath(module_dir)
 
     def call(self, func_name, *args, as_user=None, **kwargs):
         """Call a function, optionally as another user"""
@@ -47,6 +45,6 @@ class MultiUserRPCClient:
             resp = client.send(payload, socket_path)
             return resp
         except Exception as e:
-            return {"status":"failure", "reason": f"RCP client failed with: {e}"}
+            return {"success": False, "reason": f"RCP client failed with: {e}"}
 
 

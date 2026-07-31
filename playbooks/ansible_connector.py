@@ -8,8 +8,10 @@
 import os
 import sys
 import json
+import stat
 import yaml
 import glob
+import shutil
 import getopt
 import getpass
 import subprocess
@@ -18,17 +20,25 @@ from sqlalchemy.orm import Session
 
 ## Globals.
 PS = '/usr/bin/ps'
+SUDO = '/usr/bin/sudo'
 PKILL = '/usr/bin/pkill'
-PLAYBOOKS = '/usr/local/share/web-lgsm'  # Playbook dir path.
-VENV = '/opt/web-lgsm'  # System venv path.
-APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT GET'S UPDATED!
+SETFACL = '/usr/bin/setfacl'
+
+PLAYBOOKS = '/usr/local/share/web-lgsm'
+VENV = '/opt/web-lgsm'
+
+with open(f"{PLAYBOOKS}/install_conf.json") as f:
+    install_conf = json.load(f)
+
+APP_PATH = install_conf["APP_PATH"]
+APP_USER = install_conf["USERNAME"]
 
 # Import db classes from app.
 sys.path.append(APP_PATH)
 from app import db
 from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
-# Global options hash.
+# Global options hash defaults.
 O = {"dry": False, "delete": False}
 
 ## Subroutines.
@@ -170,6 +180,21 @@ def post_install_cfg_fix(install_path):
     print("Configuration file common.cgf updated!")
 
 
+def setup_socket_dir(username):
+    """
+    Sets up socket dir and add acl for user.
+    """
+    cmd = [SETFACL, '-m', f'u:{username}:rwx', '/run/web-lgsm/']
+
+    if not O["dry"]:
+        path = "/run/web-lgsm"
+        os.makedirs(path, exist_ok=True)
+        shutil.chown(path, user="root", group=USERNAME)
+        os.chmod(path, 0o1775)
+        os.chmod(path, os.stat(path).st_mode | stat.S_ISGID)
+        run_cmd(cmd)
+
+
 def run_install_new_game_server(server_id):
     """
     Wraps the invocation of the install_new_game_server.yml playbook
@@ -188,7 +213,7 @@ def run_install_new_game_server(server_id):
         PLAYBOOKS, "playbooks/install_new_game_server.yml"
     )
 
-    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
+    sudo_pre_cmd = [SUDO, "-n"]
 
     pre_install_cmd = sudo_pre_cmd + [
         ansible_cmd_path,
@@ -207,13 +232,8 @@ def run_install_new_game_server(server_id):
     else:
         run_cmd(pre_install_cmd)
 
-    socket_setup_cmd = sudo_pre_cmd + ['/usr/bin/setfacl', '-m', f'u:{server.username}:rwx', '/run/web-lgsm/']
-
-    # Set facls for new game server user to rpc service socket dir
-    if O["dry"]:
-        print(socket_setup_cmd)
-    else:
-        run_cmd(socket_setup_cmd)
+    # Setup multi-user rpc socket dir and add facl
+    setup_socket_dir(server.username)
 
     install_reqs = [f"{server.install_path}/{server.script_name}", "auto-install"]
 
@@ -303,7 +323,7 @@ def cancel_install(pid):
     pid_cmd = get_script_cmd_from_pid(pid)
     self_path = os.path.join(os.getcwd(), __file__)
     self_venv = os.path.join(VENV, 'bin/python')
-    self_cmd = f"/usr/bin/sudo -n {self_venv} {self_path}"
+    self_cmd = f"{SUDO} -n {self_venv} {self_path}" # NEEDS TO BE STR, NOT EXECUTED
 
     # Validate to ensure only killing instances of own script pid.
     if self_cmd not in pid_cmd:
@@ -329,7 +349,7 @@ def run_delete_user(server_id):
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     del_user_path = os.path.join(PLAYBOOKS, "playbooks/delete_user.yml")
     cmd = [
-        "/usr/bin/sudo",
+        SUDO,
         "-n",
         ansible_cmd_path,
         del_user_path,
@@ -349,6 +369,8 @@ def run_add_sudoers(username):
     """
     Adds the sudoers rule for the supplied username.
     """
+    setup_socket_dir(username)
+
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     add_user_sudoers_rules_playbook_path = os.path.join(
         PLAYBOOKS, "playbooks/add_user_sudoers_rules.yml"

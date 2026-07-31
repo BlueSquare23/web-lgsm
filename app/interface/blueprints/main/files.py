@@ -140,7 +140,7 @@ def files():
             files = list_dir(server, base_dir, show_hidden)
             file = read_file(server, path)
 
-            current_app.logger.debug(log_wrap("file", file))
+#            current_app.logger.debug(log_wrap("file", file))
 
         return render_template(
             "files.html",

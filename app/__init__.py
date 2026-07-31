@@ -145,10 +145,6 @@ def register_user_loader():
         auth_user = AuthUser(id)
         return auth_user
 
-def launch_rpc_daemon_threads():
-    from app.interface.use_cases import start_rpc_servers
-    start_rpc_servers()
-
 def create_app():
     """Application factory function"""
     # Setup logging first
@@ -235,10 +231,5 @@ def create_app():
     register_blueprints(app)
     register_template_filters(app)
     register_user_loader()
-
-    # Only start one copy of rpc server threads in debug mode.
-    if os.environ.get("DEBUG") != "YES" or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        with app.app_context():
-            launch_rpc_daemon_threads()
 
     return app

@@ -15,9 +15,9 @@ class LocalFileInterface(FileInterface):
 
     USER = getpass.getuser()
 
-    def __init__(self, server, executor):
+    def __init__(self, server, client):
         super().__init__(server)
-        self.executor = executor
+        self.client = client
 
     def _rpc_kwargs(self):
         if self.server.username == LocalFileInterface.USER:
@@ -45,7 +45,7 @@ class LocalFileInterface(FileInterface):
         keep_tmp = False
 
         try:
-            result = self.executor.call('copy_tmp', 'download', file_path, None, download, **kwargs)
+            result = self.client.call('copy_tmp', 'download', file_path, None, download, **kwargs)
             self.logger.debug(result)
 
             tmp_path = result.get('tmpfile')
@@ -75,7 +75,7 @@ class LocalFileInterface(FileInterface):
 
         finally:
             if tmp_path and not keep_tmp:
-                self.executor.call('cleanup_tmp', tmp_path, **kwargs)  # whoever created it, deletes it
+                self.client.call('cleanup_tmp', tmp_path, **kwargs)  # whoever created it, deletes it
 
     def cleanup_download(self, tmp_path):
         """
@@ -83,7 +83,7 @@ class LocalFileInterface(FileInterface):
         once the caller is done streaming it to the client.
         """
         self.logger.info(log_wrap("cleaning up download tmp_path", tmp_path))
-        return self.executor.call('cleanup_tmp', tmp_path, **self._rpc_kwargs())
+        return self.client.call('cleanup_tmp', tmp_path, **self._rpc_kwargs())
 
     def write(self, file_path, content):
         """
@@ -110,12 +110,12 @@ class LocalFileInterface(FileInterface):
             # Temp file must be readable by the daemon running as the target user
             os.chmod(tmp_path, 0o644)
 
-            result = self.executor.call('copy_tmp', 'upload', file_path, tmp_path, **self._rpc_kwargs())
+            result = self.client.call('copy_tmp', 'upload', file_path, tmp_path, **self._rpc_kwargs())
             self.logger.debug(result)
             return result.get('success')
         finally:
             # Tmp file is always ours (we staged it), so we always clean it up ourselves.
-            self.executor.call('cleanup_tmp', tmp_path)
+            self.client.call('cleanup_tmp', tmp_path)
 
     def delete(self, file_path):
         self.logger.info(log_wrap("deleting file_path", file_path))
@@ -123,7 +123,7 @@ class LocalFileInterface(FileInterface):
         args = [ file_path ]
         kwargs = self._rpc_kwargs()
 
-        return self.executor.call('delete_file', *args, **kwargs)
+        return self.client.call('delete_file', *args, **kwargs)
 
     def rename(self, file_path, new_name):
         self.logger.info(log_wrap("renaming file_path", file_path))
@@ -131,4 +131,4 @@ class LocalFileInterface(FileInterface):
         args = [ file_path, new_name ]
         kwargs = self._rpc_kwargs()
 
-        return self.executor.call('rename_file', *args, **kwargs)
+        return self.client.call('rename_file', *args, **kwargs)

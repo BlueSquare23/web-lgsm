@@ -258,7 +258,7 @@
   - Instead we'll have to have the web-lgsm.py script create these at app startup.
     - Which means another sudoers rule for creating them which I don't love...
 
-* [ ] **Make Sure RPC Server Processes Are Killable**
+* [x] **Make Sure RPC Server Processes Are Killable**
   - This is going to be tricky because they're started as root...
   - I think the answer might be have them actually started as the user. But
     that makes things more complicated again. Will have to think...
@@ -291,6 +291,12 @@ systemctl --user enable web-lgsm-agent
     - It has to work for new game server installs
     - It has to work for add game server manually
     - It should check if systemd service is already installed and running
+
+* [x] **Introduce Supervisor Layer to RPC system**
+  - Problem: Manager needed client to do health check and client needed manager
+    to do the restarts. They can't import eachother, circular imports.
+  - Solution: Introduce "Supervisor" layer that imports both the client and the
+    manager for safe auto restart checks.
 
 * [x] **Allow direct download to bypass mimetype restrictions**
   - Right now download of images and other files gets blocked because

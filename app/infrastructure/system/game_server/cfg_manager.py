@@ -6,14 +6,15 @@ import logging
 from app.utils.paths import PATHS
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
-from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
+#from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
+from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
 
 
 class CfgManager:
     USER = getpass.getuser()
 
-    def __init__(self, executor=MultiUserRPCClient(), proc_info_repo=InMemProcInfoRepository(), command_executor=CommandExecutor(), logger=logging.getLogger(__name__)):
-        self.executor = executor
+    def __init__(self, client=MultiUserRPCSupervisor(), proc_info_repo=InMemProcInfoRepository(), command_executor=CommandExecutor(), logger=logging.getLogger(__name__)):
+        self.client = client
         self.proc_info_repo = proc_info_repo
         self.command_executor = command_executor
         self.logger = logger
@@ -33,7 +34,7 @@ class CfgManager:
         if server.username != CfgManager.USER:
             kwargs = { 'as_user': server.username }
 
-        return self.executor.call('find_cfg_paths', *args, **kwargs)
+        return self.client.call('find_cfg_paths', *args, **kwargs)
 
 
     def find_cfg_paths_ssh(self, server, valid_gs_cfgs):

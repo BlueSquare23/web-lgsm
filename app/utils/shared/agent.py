@@ -7,6 +7,7 @@ import traceback
 from shared import MultiUserRCPService
 
 from .procedures import (
+    status,
     list_dir,
     is_dir,
     delete_file,
@@ -21,6 +22,7 @@ from .procedures import (
 
 # Function registry
 FUNCTIONS = {
+    "status": status,
     "list_dir": list_dir,
     "is_dir": is_dir,
     "delete_file": delete_file,

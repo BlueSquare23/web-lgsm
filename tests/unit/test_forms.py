@@ -2,7 +2,7 @@ import pytest
 import os
 from werkzeug.datastructures import MultiDict
 from app.interface.forms.auth import *
-from app.interface.forms.views import *
+from app.interface.forms.main import *
 from app.interface.forms.helpers import *
 
 from app.infrastructure.persistence.models.game_server_model import GameServerModel

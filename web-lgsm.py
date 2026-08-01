@@ -82,6 +82,7 @@ if os.getenv("VIRTUAL_ENV") is None:
 
 # Continue imports once we know we're in a venv.
 import json
+import stat
 import time
 import base64
 import getopt
@@ -90,12 +91,14 @@ import string
 import getpass
 import tarfile
 import random
+import logging
 import configparser
+
+from yaspin import yaspin
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
 from app import db, create_app
 from app.infrastructure.persistence.models.user_model import UserModel
-#from app.infrastructure.system.lgsm.lgsm_manager import LgsmManager
 from app.container import container
 
 # Import config data.
@@ -138,6 +141,73 @@ def check_status():
         print(" [*] Server Not Running.")
 
 
+def check_socket(username, base="/run/web-lgsm"):
+    try:
+        path = os.path.join(base, username)
+        st = os.stat(path)
+        is_sock = stat.S_ISSOCK(st.st_mode)
+        owner_ok = (os.stat(path).st_uid == 0) and (os.stat(path).st_gid == os.getgid())
+        facl_out = subprocess.run(["getfacl", "-p", path], capture_output=True, text=True).stdout
+        acl_ok = f"user:{username}:rwx" in facl_out
+        return is_sock and owner_ok and acl_ok
+    except:
+        return False
+
+
+def pre_flight_checks():
+    """
+    Runs preflight checks:
+      * Are sudoers rules added
+      * Are rpc sockets setup
+      * Are rpc servers running
+    """
+    # Disable logging for preflight checks.
+    logging.disable(logging.CRITICAL)
+
+    sp = yaspin(text="Running preflight checks...", color='green')
+    sp.start()
+
+    # For clean ctrl + c handling.
+    signal.signal(signal.SIGINT, signalint_handler)
+
+    from app import create_app
+    app = create_app()
+
+    with app.app_context():
+        servers = container.list_game_servers().execute()
+
+        # RPC users set (auto unique)
+        users = set()
+        for server in servers:
+            if server.install_type == 'remote' or server.install_type == 'docker':
+                continue
+            users.add(server.username)
+
+        for user in users:
+            if user == getpass.getuser():
+                continue
+
+            needs_fixed = False
+            uid = os.getuid()
+
+            if not container.check_sudoers_access().execute(user):
+                needs_fixed = True
+
+            if not check_socket(user):
+                needs_fixed = True
+
+            if not container.check_rpc_server().execute(user):
+                needs_fixed = True
+
+            if needs_fixed:
+                container.add_sudoers_rule().execute(user)
+
+    sp.text = "Preflight checks finished!"
+    sp.ok("✔")
+
+    # Turn logging back on.
+    logging.disable(logging.NOTSET)
+
 def print_start_banner():
     bar_len = 55
     host_line_char_len = len(" http://:/") + len(HOST) + len(PORT)
@@ -173,12 +243,15 @@ def print_start_banner():
 
 
 def start_server():
+    # Check if gunicorn server is already running.
     status_result = subprocess.run(
         ["pgrep", "-f", "gunicorn.*web-lgsm"], capture_output=True
     )
     if status_result.returncode == 0:
         print(" [!] Server Already Running!")
         exit()
+
+    pre_flight_checks()
 
     print_start_banner()
 
@@ -265,6 +338,8 @@ def start_server():
 
 def start_debug():
     """Starts the app in debug mode"""
+#    pre_flight_checks()
+
     from app import create_app
     if DEBUG:
         os.environ["DEBUG"] = "YES"
@@ -408,7 +483,6 @@ def change_password():
 def update_gs_list():
     """Updates game server json by parsing latest `linuxgsm.sh list` output"""
     lgsmsh = SCRIPTPATH + "/bin/linuxgsm.sh"
-#    check_and_get_lgsmsh(lgsmsh)
     from app import create_app
     app = create_app()
     with app.app_context():
@@ -584,7 +658,7 @@ def run_tests(target):
         target: 'full', None, 'tests/functional/some_test.py::some_test'
     """
 
-    # If in container don't backup db.
+    # If in docker container don't backup db.
     if "CONTAINER" not in os.environ:
         # Backup Database.
         db_file = os.path.join(SCRIPTPATH, "app/database.db")

@@ -6,7 +6,6 @@ import logging
 from app.utils.paths import PATHS
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
-#from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
 from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
 
 

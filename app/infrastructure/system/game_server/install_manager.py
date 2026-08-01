@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import time
@@ -36,10 +37,6 @@ class GameServerInstallManager:
         Returns:
             dict: Dictionary mapping short server names to long server names.
         """
-
-        import os
-        print(os.getcwd())
-
         with open("json/game_servers.json", "r") as file:
             json_data = json.load(file)
     

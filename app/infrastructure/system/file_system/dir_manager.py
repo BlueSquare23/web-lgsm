@@ -3,11 +3,11 @@ import os
 from .local_dir_interface import LocalDirInterface
 from .remote_dir_interface import SSHDirInterface
 
-from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
+from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
 from app.utils.helpers import log_wrap
 
 class DirectoryManager():
-    def __init__(self, executor=MultiUserRPCClient()):
+    def __init__(self, client=MultiUserRPCSupervisor()):
         """
         Initialize DirectoryManager with a server object.
         
@@ -16,7 +16,7 @@ class DirectoryManager():
         """
         self.server = None
         self._interface = None
-        self.executor = executor
+        self.client = client
         
     @property
     def interface(self):
@@ -28,7 +28,7 @@ class DirectoryManager():
             if self.server.install_type == 'remote':
                 self._interface = SSHDirInterface(self.server)
             else:
-                self._interface = LocalDirInterface(self.server, self.executor)
+                self._interface = LocalDirInterface(self.server, self.client)
         return self._interface
 
     def is_dir(self, server, path):

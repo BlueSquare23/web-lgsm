@@ -189,7 +189,7 @@ def setup_socket_dir(username):
     if not O["dry"]:
         path = "/run/web-lgsm"
         os.makedirs(path, exist_ok=True)
-        shutil.chown(path, user="root", group=USERNAME)
+        shutil.chown(path, user="root", group=APP_USER)
         os.chmod(path, 0o1775)
         os.chmod(path, os.stat(path).st_mode | stat.S_ISGID)
         run_cmd(cmd)

@@ -22,7 +22,6 @@ from app import db
 from app import cache
 
 # Constants.
-CWD = os.getcwd()
 USER = getpass.getuser()
 from app.utils.paths import PATHS
 CONNECTOR_CMD = [

@@ -14,9 +14,8 @@ class MultiUserRPCSupervisor:
         self.manager = manager
 
     def call(self, func_name, *args, as_user=None, **kwargs):
-        self.logger.debug(self.manager.check(as_user))
         if as_user is not None and not self.manager.check(as_user):
             self.logger.debug(f"Health check failed for {as_user}, restarting")
-            self.manager.restart(as_user)
+            self.manager.restart(as_user)  # TODO: Catch failures here and re-init all sockets & acls
 
         return self.client.call(func_name, *args, as_user=as_user, **kwargs)

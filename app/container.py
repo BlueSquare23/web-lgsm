@@ -99,6 +99,7 @@ from app.application.use_cases.file_system.is_dir import IsDir
 # RPC Service
 from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
 from app.application.use_cases.rpc_service.start_daemons import StartRPCServers
+from app.application.use_cases.rpc_service.check_server import CheckRPCServer
 
 # Validators
 from app.application.use_cases.validators.filename_length import FilenameLength
@@ -456,6 +457,11 @@ class Container:
 
     def start_rpc_servers(self):
         return StartRPCServers(
+            rpc_server_manager=self.rpc_server_manager()
+        )
+
+    def check_rpc_server(self):
+        return CheckRPCServer(
             rpc_server_manager=self.rpc_server_manager()
         )
 

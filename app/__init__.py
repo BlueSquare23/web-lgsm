@@ -76,7 +76,8 @@ def setup_logging():
     )
 
     current_log_level = logging.getLogger().getEffectiveLevel()
-    print(f"Root logger level: {logging.getLevelName(current_log_level)}")
+    logger = logging.getLogger(__name__)
+    logger.info(f"Root logger level: {logging.getLevelName(current_log_level)}")
 
 def register_extensions(app):
     """Register Flask extensions with the app"""

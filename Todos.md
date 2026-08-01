@@ -224,6 +224,13 @@
 * [ ] **Add more Custom Themeing options to config**
   - So I've already got a couple of color options for the config.
 
+* [ ] **Rename ansible_connector.py**
+  - This is doing more than just running playbooks now. In truth it always has been.
+  - Really its more like the root system connector, with running ansible
+    playbooks as a side gig for it.
+  - I think at the very least the name needs changed. Still workshopping new name ideas.
+  - But might also be a hint that larger components of the app need to change too...
+
 * [x] **Fix Form Classes that ChatGPT Fucked Up**
   - I was being lazy and threw my old monolithic form files at chatgpt to break
     up and told it "don't change anything." Well it removed all my placeholder
@@ -252,11 +259,12 @@
     secrets and then talk to all the child servers.
   - Have to do some more thinking.
 
-* [ ] **Figure out auto-recreate socket files / dir on app startup**
+* [x] **Figure out auto-recreate socket files / dir on app startup**
   - TIL: That /run is a tmpfs dir so socket files/dirs in there don't survive reboots.
   - This dashes my hopes of setting it up once at install and moving on with life.
   - Instead we'll have to have the web-lgsm.py script create these at app startup.
-    - Which means another sudoers rule for creating them which I don't love...
+    - ~Which means another sudoers rule for creating them which I don't love...~
+    - [x] Add preflight checklist and run setup via ansible connector.
 
 * [x] **Make Sure RPC Server Processes Are Killable**
   - This is going to be tricky because they're started as root...

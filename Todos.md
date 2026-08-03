@@ -239,7 +239,7 @@
     in the long run.
   - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
 
-* [ ] **Document new multi-user rpc service inner workings**
+* [x] **Document new multi-user rpc service inner workings**
   - Since the plan is to make more and more features depend on the multi-user
     rpc service, should probably keep some notes for myself and others on how
     it actually works.

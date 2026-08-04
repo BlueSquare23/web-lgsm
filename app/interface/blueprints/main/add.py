@@ -15,7 +15,7 @@ from flask import (
 from app.utils import *
 from app.interface.forms import ValidateID, AddForm, validation_errors
 
-from app.container import container
+from app.interface.use_cases import check_user_access, list_user_game_servers, get_game_server, edit_game_server, edit_user, check_sudoers_access, add_sudoers_rule, log_audit_event
 
 # Constants.
 USER = getpass.getuser()
@@ -38,13 +38,13 @@ def is_valid_uuid(val):
 @login_required
 def add():
     # Check if user has permissions to add route.
-    if not container.check_user_access().execute(current_user.id, "add"):
+    if not check_user_access(current_user.id, "add"):
         flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
     server_json = None
     status_code = 200
-    game_servers = container.list_user_game_servers().execute(current_user.id)
+    game_servers = list_user_game_servers(current_user.id)
     form = AddForm()
 
     if request.method == "GET":
@@ -57,7 +57,7 @@ def add():
                 return redirect(url_for("main.home"))
 
             server_id = request.args.get("server_id")
-            server = container.get_game_server().execute(server_id)
+            server = get_game_server(server_id)
             server = server.__dict__
             server_json = json.dumps(server)
             current_app.logger.info(log_wrap("server_json", server_json))
@@ -94,7 +94,7 @@ def add():
 
     # Does the server already exist?
     new_server = True
-    if container.get_game_server().execute(server['id']):
+    if get_game_server(server['id']):
         new_server = False
 
     # Log & set GameServer obj vars after most of the validation is done.
@@ -138,7 +138,7 @@ def add():
     # Should probably even make form take existing SSH key file path as arg for
     # remote installs.
 
-    result = container.edit_game_server().execute(**server)
+    result = edit_game_server(**server)
     if not result:
         flash("Problem adding server! See logs for details.", category="error")
         return redirect(url_for("main.add"))
@@ -158,7 +158,7 @@ def add():
         current_app.logger.info(
             log_wrap("Updated User Permissions:", current_user.permissions)
         )
-        container.edit_user().execute(**current_user.__dict__)
+        edit_user(**current_user.__dict__)
 
     # Auto add sudoers rule for server.
     if server['install_type'] == 'local' and server['username'] != USER:
@@ -167,12 +167,12 @@ def add():
         # because should be idempotent.
 
         # Check if system user has sudoers access to alt game server user.
-        if not container.check_sudoers_access().execute(username):
-            if not container.add_sudoers_rule().execute(username):
+        if not check_sudoers_access(username):
+            if not add_sudoers_rule(username):
                 flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{username}\n{USER} ALL=({username}) NOPASSWD: ALL")
 
     flash("Game server added!")
-    container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', added game server '{server['install_name']}' with server_id {server['id']}")
+    log_audit_event(current_user.id,  f"User '{current_user.username}', added game server '{server['install_name']}' with server_id {server['id']}")
     return redirect(url_for("main.home"))
 
 

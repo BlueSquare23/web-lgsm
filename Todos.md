@@ -231,6 +231,12 @@
   - I think at the very least the name needs changed. Still workshopping new name ideas.
   - But might also be a hint that larger components of the app need to change too...
 
+* [x] **Update container calls in route code with interface usecase calls**
+  - I wrote the interface usecase shortener and then proceeded to not really
+    use it all that much.
+  - So finally replaced all the old nasty `container.usecase().execute(*args,
+    **kwargs)` calls with shortened versions.
+
 * [x] **Fix Form Classes that ChatGPT Fucked Up**
   - I was being lazy and threw my old monolithic form files at chatgpt to break
     up and told it "don't change anything." Well it removed all my placeholder

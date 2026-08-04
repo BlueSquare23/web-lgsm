@@ -43,7 +43,7 @@ class AddForm(FlaskForm):
         ],
     )
 
-    installable = container.list_installable_game_servers().execute()
+    installable = list_installable_game_servers()
     servers = [script for script in installable] if installable else []
 
     script_name = StringField(

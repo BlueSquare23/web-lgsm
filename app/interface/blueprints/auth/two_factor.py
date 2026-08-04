@@ -8,7 +8,8 @@ from flask import render_template, redirect, url_for, request, flash
 
 from app.interface.forms.auth import OTPSetupForm
 from app.interface.forms.validation_errors import validation_errors
-from app.container import container
+
+from app.interface.use_cases import to_user, edit_user, get_user_totp_uri
 
 from . import auth_bp
 
@@ -21,7 +22,7 @@ from . import auth_bp
 @login_required
 def two_factor_setup():
 
-    user = container.to_user().execute(current_user)
+    user = to_user(current_user)
     form = OTPSetupForm()
     form.user_id = current_user.id
 
@@ -44,7 +45,7 @@ def two_factor_setup():
     flash("Two factor enabled successfully!", category="success")
     user.otp_setup = True
     user.otp_enabled = True
-    container.edit_user().execute(**user.__dict__)
+    edit_user(**user.__dict__)
     return redirect(url_for("main.home"))
 
 
@@ -54,7 +55,7 @@ def two_factor_setup():
 @login_required
 def qrcode():
     # Render qrcode, no caching.
-    url = pyqrcode.create(container.get_user_totp_uri().execute(current_user.id))
+    url = pyqrcode.create(get_user_totp_uri(current_user.id))
     stream = BytesIO()
     url.svg(stream, scale=3)
     return stream.getvalue(), 200, {

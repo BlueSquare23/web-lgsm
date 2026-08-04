@@ -1,7 +1,7 @@
 from flask_login import login_required, current_user
 from flask import render_template, request
 
-from app.container import container
+from app.interface.use_cases import list_audit_logs, list_users
 
 from . import main_bp
 
@@ -18,7 +18,7 @@ def audit():
     user_id = request.args.get('user_id')
     search = request.args.get('search')
 
-    use_case = container.list_audit_logs()
+    use_case = list_audit_logs()
 
     all_audit_events, pagination = use_case.execute(
         page=page,
@@ -28,7 +28,7 @@ def audit():
     )
 
 #    all_users = User.query.order_by(User.username).all()
-    all_users = container.list_users().execute()
+    all_users = list_users()
 
     return render_template(
         'audit.html',

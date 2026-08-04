@@ -18,7 +18,7 @@ from app.interface.forms import ValidateID, JobsForm, validation_errors
 
 from . import main_bp
 
-from app.container import container
+from app.interface.use_cases import get_template_config, check_user_access, list_user_game_servers, list_cron_jobs, list_controls, update_cron_job, get_game_server, log_audit_event
 
 
 ######### Jobs Route #########
@@ -26,10 +26,10 @@ from app.container import container
 @main_bp.route("/jobs", methods=["GET", "POST"])
 @login_required
 def jobs():
-    config = container.get_template_config().execute()
+    config = get_template_config()
 
     # Check if user has permissions to jobs route.
-    if not container.check_user_access().execute(current_user.id, "jobs"):
+    if not check_user_access(current_user.id, "jobs"):
         flash(f"Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
@@ -43,7 +43,7 @@ def jobs():
         server_json = None
         jobs_list = []
         controls_list = []
-        game_servers = container.list_user_game_servers().execute(current_user.id)
+        game_servers = list_user_game_servers(current_user.id)
 
         if request.args:
             # Checking id is valid.
@@ -53,10 +53,10 @@ def jobs():
                 return redirect(url_for("main.jobs"))
 
             server_id = request.args.get("server_id")
-            server = container.get_game_server().execute(server_id)
+            server = get_game_server(server_id)
             server_name = server.install_name
 
-            jobs_list = container.list_cron_jobs().execute(server_id)
+            jobs_list = list_cron_jobs(server_id)
             current_app.logger.info(log_wrap("jobs_list", jobs_list))
 
             server_dict = server.__dict__
@@ -64,7 +64,7 @@ def jobs():
             current_app.logger.info(log_wrap("server_json", server_json))
 
             # Pull in controls list from controls.json file.
-            controls_list = container.list_controls().execute(server.script_name, current_user)
+            controls_list = list_controls(server.script_name, current_user)
 
             # No console for automated jobs. Don't even give the user the option to be stupid.
             form.command.choices = [ctrl.long_ctrl for ctrl in controls_list]
@@ -117,8 +117,7 @@ def jobs():
         }
         current_app.logger.debug(log_wrap("job", job))
 
-#        if container.update_cron_job().execute(**job):   # Hrrrmm... why doesn't this work...
-        if container.update_cron_job().execute(
+        if update_cron_job(
                 job_id=form.job_id.data,
                 schedule=form.schedule.data,
                 command=command,
@@ -126,9 +125,8 @@ def jobs():
                 comment=form.comment.data,
             ):
             flash("Cronjob updated successfully!", category="success")
-#            server = GameServer.query.filter_by(id=form.server_id.data).first()
-            server = container.get_game_server().execute(form.server_id.data)
-            container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
+            server = get_game_server(form.server_id.data)
+            log_audit_event(current_user.id,  f"User '{current_user.username}', edited cronjob for '{server.install_name}'")
             current_app.logger.info(log_wrap("request.form", request.form))
 
             return redirect(url_for("main.jobs", server_id=form.server_id.data))

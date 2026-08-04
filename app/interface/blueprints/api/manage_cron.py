@@ -11,13 +11,13 @@ from app.interface.forms import ValidateID
 
 from . import api
 
-from app.container import container
+from app.interface.use_cases import check_user_access, list_cron_jobs, update_cron_job, delete_cron_job, log_audit_event
 
 ######### API Cron Manager #########
 
 class ManageCron(Resource):
     def check_perms(self, server_id=None):
-        if not container.check_user_access().execute(current_user.id, "jobs", server_id):
+        if not check_user_access(current_user.id, "jobs", server_id):
             resp_dict = { "Error": f"Insufficient permission" }
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
@@ -44,7 +44,7 @@ class ManageCron(Resource):
         if not allowed:
             return resp
 
-        jobs_list = container.list_cron_jobs().execute(server_id)
+        jobs_list = list_cron_jobs(server_id)
 
         if job_id:
             for job in jobs_list:
@@ -89,7 +89,7 @@ class ManageCron(Resource):
             'schedule': schedule,
         }
 
-        if container.update_cron_job().execute(**job):
+        if update_cron_job(**job):
             return {'success':'job updated'}, 201
         else:
             return {'error':'problem updating job'}, 500
@@ -104,8 +104,8 @@ class ManageCron(Resource):
         if not allowed:
             return resp
 
-        if container.delete_cron_job().execute(job_id):
-            container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
+        if delete_cron_job(job_id):
+            log_audit_event(current_user.id, f"User '{current_user.username}', deleted job_id '{job_id}' for server_id '{server_id}'")
             return '', 204
 
         return {'error':'unable to remove job'}, 500

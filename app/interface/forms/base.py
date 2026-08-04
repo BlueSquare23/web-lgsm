@@ -30,7 +30,8 @@ from wtforms import (
 )
 
 from .helpers import ServerExists, ValidConfigFile
-from app.container import container
+
+from app.interface.use_cases import list_installable_game_servers
 
 USERNAME = getpass.getuser()
 

@@ -66,6 +66,7 @@ class CronScheduler:
         return self.update(job, state=False)
 
 
+    # TODO: UPDATE THIS TO USE RPC SERVER FOR LISTING JOBS!!!
     def list(self, server_id):
         """
         Used for getting list of jobs for associated game server.

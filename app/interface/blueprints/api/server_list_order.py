@@ -8,7 +8,7 @@ from app.utils.helpers import log_wrap
 
 from . import api
 
-from app.container import container
+from app.interface.use_cases import get_game_server, edit_game_server
 
 ######### API Server Listing Order #########
 
@@ -25,12 +25,12 @@ class ServerListOrder(Resource):
 
         for index, item in enumerate(order):
 
-            server = container.get_game_server().execute(item['id'])
+            server = get_game_server(item['id'])
             server.sort_order = index
 
             current_app.logger.debug(log_wrap("server", server))
 
-            if not container.edit_game_server().execute(**server.__dict__):
+            if not edit_game_server(**server.__dict__):
                 return {'Error':'Problem updating GameServer sort_order'}, 500
 
         resp_dict = {"success": "Sort order updated successfully"} 

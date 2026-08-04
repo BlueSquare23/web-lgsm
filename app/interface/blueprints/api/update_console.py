@@ -8,7 +8,7 @@ from app.utils import *
 
 from . import api
 
-from app.container import container
+from app.interface.use_cases import check_user_access, get_game_server, get_tmux_socket_name, run_command, get_process
 
 ######### API Update Console #########
 
@@ -16,7 +16,7 @@ class UpdateConsole(Resource):
 
     @login_required
     def post(self, server_id):
-        if not container.check_user_access().execute(current_user.id, "update-console"):
+        if not check_user_access(current_user.id, "update-console"):
             resp_dict = {"Error": "Permission denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
@@ -24,7 +24,7 @@ class UpdateConsole(Resource):
             return response
 
         # Check that the submitted server exists in db.
-        server = container.get_game_server().execute(server_id)
+        server = get_game_server(server_id)
         if server == None:
             resp_dict = {"Error": "Supplied server does not exist!"}
             response = Response(
@@ -32,8 +32,11 @@ class UpdateConsole(Resource):
             )
             return response
 
-        tmux_socket = container.get_tmux_socket_name().execute(server)
+        tmux_socket = get_tmux_socket_name(server)
 
+        # TODO: Change all this, should NOT be happening in route code. Instead
+        # convert to rpc procedure. Also should be happening in infra layer
+        # with a simple usecase to call it.
         cmd = [
             PATHS["tmux"],
             "-L",
@@ -51,8 +54,8 @@ class UpdateConsole(Resource):
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
-        container.run_command().execute(cmd, server, server.id)
-        proc_info = container.get_process().execute(server.id, create=True)
+        run_command(cmd, server, server.id)
+        proc_info = get_process(server.id, create=True)
 
         if proc_info.exit_status > 0:
             resp_dict = {"Error": "Refresh cmd failed!"}

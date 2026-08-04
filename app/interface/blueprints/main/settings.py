@@ -10,11 +10,9 @@ from flask import (
 )
 
 from app.utils import *
-#from app.interface.forms.views import SettingsForm
-#from app.interface.forms.validation_errors import validation_errors
 from app.interface.forms import validation_errors, SettingsForm
 
-from app.container import container
+from app.interface.use_cases import check_user_access, get_template_config, get_config, getint_config, getboolean_config, start_rpc_servers, batch_update_config, run_command, log_audit_event
 
 from . import main_bp
 
@@ -26,32 +24,32 @@ from . import main_bp
 def settings():
 
     # Check if user has permissions to settings route.
-    if not container.check_user_access().execute(current_user.id, "settings"):
+    if not check_user_access(current_user.id, "settings"):
         flash("Your user does not have access to this page", category="error")
         return redirect(url_for("main.home"))
 
     # Create SettingsForm.
     form = SettingsForm()
-    config = container.get_template_config().execute()
+    config = get_template_config()
 
     if request.method == "GET":
         # Set form defaults.
-        form.text_color.default = container.get_config().execute('aesthetic','text_color')
-        form.graphs_primary.default = container.get_config().execute('aesthetic','graphs_primary')
-        form.graphs_secondary.default = container.get_config().execute('aesthetic','graphs_secondary')
-        form.terminal_height.default = container.getint_config().execute('aesthetic','terminal_height')
-        form.delete_user.default = str(container.getboolean_config().execute('settings','delete_user')).lower()
-        form.remove_files.default = str(container.getboolean_config().execute('settings','remove_files')).lower()
+        form.text_color.default = get_config('aesthetic','text_color')
+        form.graphs_primary.default = get_config('aesthetic','graphs_primary')
+        form.graphs_secondary.default = get_config('aesthetic','graphs_secondary')
+        form.terminal_height.default = getint_config('aesthetic','terminal_height')
+        form.delete_user.default = str(getboolean_config('settings','delete_user')).lower()
+        form.remove_files.default = str(getboolean_config('settings','remove_files')).lower()
         form.install_new_user.default = str(
-            container.getboolean_config().execute('settings','install_create_new_user')
+            getboolean_config('settings','install_create_new_user')
         ).lower()
-        form.newline_ending.default = str(container.getboolean_config().execute('settings','end_in_newlines')).lower()
-        form.show_stderr.default = str(container.getboolean_config().execute('settings','show_stderr')).lower()
+        form.newline_ending.default = str(getboolean_config('settings','end_in_newlines')).lower()
+        form.show_stderr.default = str(getboolean_config('settings','show_stderr')).lower()
         form.clear_output_on_reload.default = str(
-            container.getboolean_config().execute('settings','clear_output_on_reload')
+            getboolean_config('settings','clear_output_on_reload')
         ).lower()
         # BooleanFields handle setting default differently from RadioFields.
-        if container.getboolean_config().execute('aesthetic','show_stats'):
+        if getboolean_config('aesthetic','show_stats'):
             form.show_stats.default = "true"
         form.process()  # Required to apply form changes.
 
@@ -106,10 +104,10 @@ def settings():
         cache.clear()
 
     if reset_rpc != None:
-        container.start_rpc_servers().execute()
+        start_rpc_servers()
 
     # Batch update config via context handler.
-    with container.batch_update_config().execute() as config:
+    with batch_update_config() as config:
         config.set('aesthetic', 'text_color', text_color_pref)
         config.set('settings',  'delete_user', user_del_pref)
         config.set('settings',  'remove_files', file_pref)
@@ -133,7 +131,7 @@ def settings():
 
         cmd = ["./web-lgsm.py", "--restart"]
         restart_daemon = Thread(
-            target=container.run_command().execute,
+            target=run_command,
             args=(cmd, None, str(uuid.uuid4()), current_app.app_context()),
             daemon=True,
             name="restart",
@@ -142,6 +140,6 @@ def settings():
         return redirect(url_for("main.settings"))
 
     flash("Settings Updated!")
-    container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
+    log_audit_event(current_user.id, f"User '{current_user.username}', changed setting(s) on settings page")
     return redirect(url_for("main.settings"))
 

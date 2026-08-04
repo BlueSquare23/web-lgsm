@@ -31,16 +31,16 @@ VENV_PATH="/opt/web-lgsm"
 CONNECTOR_PATH="/usr/local/bin"
 SHARE_PATH="/usr/local/share/web-lgsm"
 PLAYBOOKS_PATH="$SHARE_PATH/playbooks"
-SCRIPTPATH=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.APP_PATH')
-USERNAME=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.USERNAME')
-APT_REQS="$SCRIPTPATH/apt-reqs.txt"
+APP_PATH=$(cat "$SHARE_PATH/app_conf.json" | jq -r '.APP_PATH')
+APP_USER=$(cat "$SHARE_PATH/app_conf.json" | jq -r '.APP_USER')
+APT_REQS="$APP_PATH/apt-reqs.txt"
 
-if [[ -z $SCRIPTPATH ]] || [[ -z $USERNAME ]]; then
-    echo -e "${RED}Problem parsing $SHARE_PATH/install_conf.json!${RESET}" >&2
+if [[ -z $APP_PATH ]] || [[ -z $APP_USER ]]; then
+    echo -e "${RED}Problem parsing $SHARE_PATH/app_conf.json!${RESET}" >&2
     exit 9
 fi
 
-cd $SCRIPTPATH
+cd $APP_PATH
 mkdir -p $PLAYBOOKS_PATH
 touch "$SHARE_PATH/web-lgsm_custom_users.yml"
 
@@ -178,20 +178,20 @@ $VENV_PATH/bin/python3 -m pip install -r requirements.txt
 
 # Setup random key.
 random_key=$(python3 -c 'import secrets; print(secrets.token_hex())')
-echo "SECRET_KEY=\"$random_key\"" | /usr/bin/sudo -u $USERNAME tee .secret >/dev/null
+echo "SECRET_KEY=\"$random_key\"" | /usr/bin/sudo -u $APP_USER tee .secret >/dev/null
 chmod 600 .secret
 
 # Upgrade alembic DB
 echo -e "${GREEN}####### Updating Database...${RESET}"
-/usr/bin/sudo -u $USERNAME $VENV_PATH/bin/flask --app app:create_app db upgrade
+/usr/bin/sudo -u $APP_USER $VENV_PATH/bin/flask --app app:create_app db upgrade
 
 ## Install Ansible Connector & Playbook files.
 echo -e "${GREEN}####### Installing Web-LGSM Ansible Connector...${RESET}"
 
 # First hardcode web-lgsm system user into accepted_users validation list and
 # web_user ansible vars files.
-echo "  - $USERNAME" >> $SCRIPTPATH/playbooks/vars/accepted_usernames.yml
-echo "web_lgsm_user: $USERNAME" > $SCRIPTPATH/playbooks/vars/web_lgsm_user.yml
+echo "  - $APP_USER" >> $APP_PATH/playbooks/vars/accepted_usernames.yml
+echo "web_lgsm_user: $APP_USER" > $APP_PATH/playbooks/vars/web_lgsm_user.yml
 
 # Then copy those files into system dirs.
 cp -r playbooks/* $PLAYBOOKS_PATH
@@ -201,7 +201,7 @@ echo -e "${GREEN}####### Setting up Share Modules Dir...${RESET}"
 
 venv_utils="$VENV_PATH/utils"
 mkdir -p "$venv_utils"
-cp -r "$SCRIPTPATH/app/utils/shared" "$venv_utils/"
+cp -r "$APP_PATH/app/utils/shared" "$venv_utils/"
 
 echo -e "${GREEN}####### Setting up Sudoers Rules...${RESET}"
 
@@ -210,10 +210,10 @@ venv_python="$VENV_PATH/bin/python"
 ansible_connector="$CONNECTOR_PATH/ansible_connector.py"
 accpt_usernames="$PLAYBOOKS_PATH/vars/accepted_usernames.yml"
 web_lgsm_user_vars="$PLAYBOOKS_PATH/vars/web_lgsm_user.yml"
-sudoers_file="/etc/sudoers.d/$USERNAME-$USERNAME"
+sudoers_file="/etc/sudoers.d/$APP_USER-$APP_USER"
 
 # Write sudoers rule for passwordless install & delete.
-sudoers_rule="$USERNAME ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
+sudoers_rule="$APP_USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
 temp_sudoers=$(mktemp)
 echo "$sudoers_rule" > "$temp_sudoers"
 chmod 0440 "$temp_sudoers"
@@ -225,20 +225,5 @@ mv "$temp_sudoers" "$sudoers_file"
 find $PLAYBOOKS_PATH -type f -exec chmod 644 {} \;
 find $PLAYBOOKS_PATH -type d -exec chmod 755 {} \;
 chmod 755 $apb $ansible_connector
-
-echo -e "${GREEN}####### Setting up Multi User RPC Socket Dir${RESET}"
-
-mkdir -p /run/web-lgsm
-chown root:$USERNAME /run/web-lgsm
-chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
-chmod g+s /run/web-lgsm/  # SGID so files are owned by web-lgsm user group
-
-# For unique game server users, set facls
-if [[ -f app/database.db ]]; then
-    users=$(sqlite3 $SCRIPTPATH/app/database.db '.mode json' 'select distinct username from game_server_model' | jq -r '.[].username')
-    for user in $users; do
-        setfacl -m u:$user:rwx /run/web-lgsm/
-    done
-fi 
 
 echo -e "${GREEN}####### Root Components Successfully Installed!${RESET}"

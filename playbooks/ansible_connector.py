@@ -27,11 +27,12 @@ SETFACL = '/usr/bin/setfacl'
 PLAYBOOKS = '/usr/local/share/web-lgsm'
 VENV = '/opt/web-lgsm'
 
-with open(f"{PLAYBOOKS}/install_conf.json") as f:
-    install_conf = json.load(f)
+with open(f"{PLAYBOOKS}/app_conf.json") as f:
+    app_conf = json.load(f)
 
-APP_PATH = install_conf["APP_PATH"]
-APP_USER = install_conf["USERNAME"]
+APP_USER = app_conf["APP_USER"]
+APP_PATH = app_conf["APP_PATH"]
+APP_GROUP = app_conf["APP_GROUP"]
 
 # Import db classes from app.
 sys.path.append(APP_PATH)

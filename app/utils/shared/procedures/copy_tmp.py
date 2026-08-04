@@ -21,6 +21,10 @@ ALLOWED_MIME_TYPES = (
     'application/x-yaml',
 )
 
+with open(f"{PLAYBOOKS}/app_conf.json") as f:
+    app_conf = json.load(f)
+
+APP_GROUP = app_conf["APP_GROUP"]
 
 def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
     """
@@ -64,7 +68,7 @@ def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
         try:
             shutil.copyfile(real_path, tmp_path)
             os.chmod(tmp_path, 0o640)
-            shutil.chown(tmp_path, group="web-lgsm")
+            shutil.chown(tmp_path, group=APP_GROUP)
             return {"success": True, "tmpfile": tmp_path, "mime_type": mime_type or "text/plain"}
         except Exception as e:
             return {"success": False, "tmpfile": tmp_path, "error": str(e), "mime_type": None}

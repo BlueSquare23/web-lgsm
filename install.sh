@@ -74,10 +74,11 @@ function run_install() {
         sudo mkdir -p $PLAYBOOKS_PATH
         
         # Build install conf.
-        cat << EOF | sudo tee "$SHARE_PATH/install_conf.json" >/dev/null
+        cat << EOF | sudo tee "$SHARE_PATH/app_conf.json" >/dev/null
 {
-  "USERNAME": "$USER",
-  "APP_PATH": "$SCRIPTPATH"
+  "APP_USER": "$USER",
+  "APP_PATH": "$SCRIPTPATH",
+  "APP_GROUP": "$(id -gn)"
 }
 EOF
         # Enable debug on root_install.sh

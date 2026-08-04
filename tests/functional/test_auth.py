@@ -433,7 +433,8 @@ def test_edit_user_contents(db_session, client, authed_client, test_vars):
         assert b"Can install new game servers" in response.data
         assert b"Can add/edit existing game servers" in response.data
         assert b"Can modify web-lgsm settings page" in response.data
-        assert b"Can edit game server configs" in response.data
+        assert b"Can browse and read files (file manager - readonly)" in response.data
+        assert b"Can edit, rename, upload, &amp; delete files (file manager - full access)" in response.data
         assert b"Can delete game servers" in response.data
         assert b"Allowed Controls" in response.data
         assert b"start" in response.data
@@ -610,7 +611,7 @@ def test_require_auth(db_session, client, setup_client):
         page_requires_auth(client, '/about')
         page_requires_auth(client, '/changelog')
         page_requires_auth(client, '/add')
-        page_requires_auth(client, '/edit')
+        page_requires_auth(client, '/files')
         page_requires_auth(client, '/edit_users')
         page_requires_auth(client, '/api/spec')
 

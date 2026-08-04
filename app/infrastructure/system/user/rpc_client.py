@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import logging
+import getpass
 
 class MultiUserRPCClient:
     """
@@ -26,7 +27,7 @@ class MultiUserRPCClient:
         self.logger.debug(args)
 
         # Same user import the code and run it.
-        if as_user is None:
+        if as_user is None or as_user == getpass.getuser():
             func = getattr(module, func_name)
             return func(*args, **kwargs)
 

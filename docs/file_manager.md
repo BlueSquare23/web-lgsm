@@ -26,9 +26,10 @@ Likewise if your web-lgsm web portal user doesn't have access to some game
 server (as some system user), then you cannot edit files for that game server
 system user.
 
-For example, say your admin has Minecraft installed as the `mcserver` user and
-Multi Theft Auto installed as the `mtaserver` user. If you only have web-lgsm
-access to the Minecraft server, you cannot edit files for the Minecraft server.
+For example, say you have Minecraft installed as the `mcserver` user and Multi
+Theft Auto installed as the `mtaserver` user. If your non-admin user only has
+access to the Minecraft server, you cannot edit files for the Multi Theft Auto
+server.
 
 Similarly, any non-admin users can be give "read only" access to the file
 manager, allowing them to view and browse files, but not edit, upload, or
@@ -37,7 +38,7 @@ delete them.
 ## Custom Excludes
 
 If you'd like to lock down the file manager even further, you can create a
-custom exclude file here:
+custom exclude yaml file here:
 
 ```
 /usr/local/share/web-lgsm_exclude.yml

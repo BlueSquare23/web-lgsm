@@ -1,6 +1,8 @@
 import os
 import json
 
+from urllib.parse import quote
+
 from flask_login import login_required, current_user
 from flask import request, render_template, current_app, redirect, url_for, flash, send_file
 from werkzeug.utils import secure_filename
@@ -49,7 +51,7 @@ def files():
             download_form = DownloadForm(request.args)
             if not download_form.validate():
                 validation_errors(download_form)
-                return redirect(url_for("main.home"))
+                return redirect(url_for("main.files"))
 
             server_id = download_form.server_id.data
             path = download_form.path.data
@@ -124,7 +126,8 @@ def files():
             current_app.logger.debug(log_wrap("path", path))
             current_app.logger.debug(log_wrap("is_safe_path", False))
             flash("Cannot go above game server user's home dir!", category="error")
-            return redirect(url_for("main.files", server_id=server_id, path=f"/home/{server.username}"))
+            encoded_url = quote(f"/home/{server.username}", safe='')
+            return redirect(url_for("main.files", server_id=server_id, path=encoded_url))
 
         # At this point, server and path are guaranteed valid
         current_path = path
@@ -139,8 +142,6 @@ def files():
             current_path = base_dir
             files = list_dir(server, base_dir, show_hidden)
             file = read_file(server, path)
-
-#            current_app.logger.debug(log_wrap("file", file))
 
         return render_template(
             "files.html",
@@ -216,3 +217,6 @@ def files():
             flash("File uploaded!", "success")
 
             return redirect(url_for("main.files", server_id=server_id, path=path))
+
+        flash("You done posted wrong!", "error")
+        return redirect(url_for("main.files"))

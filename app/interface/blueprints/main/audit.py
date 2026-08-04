@@ -18,16 +18,13 @@ def audit():
     user_id = request.args.get('user_id')
     search = request.args.get('search')
 
-    use_case = list_audit_logs()
-
-    all_audit_events, pagination = use_case.execute(
+    all_audit_events, pagination = list_audit_logs(
         page=page,
         per_page=per_page,
         user_id=user_id,
         search=search,
     )
 
-#    all_users = User.query.order_by(User.username).all()
     all_users = list_users()
 
     return render_template(

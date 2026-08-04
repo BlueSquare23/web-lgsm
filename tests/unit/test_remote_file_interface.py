@@ -66,7 +66,8 @@ def test_read_success():
 
     result = fs.read("/fake/path")
 
-    assert result == "hello world"
+    assert result['success'] is True
+    assert result['data'] == "hello world"
 
 def test_read_failure_returns_none():
     from app.infrastructure.system.file_system.remote_file_interface import SSHFileInterface
@@ -82,7 +83,8 @@ def test_read_failure_returns_none():
 
     result = fs.read("/fake/path")
 
-    assert result is None
+    assert result['success'] is False
+    assert result['data'] is None
 
 def test_write_success():
     from app.infrastructure.system.file_system.remote_file_interface import SSHFileInterface

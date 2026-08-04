@@ -308,21 +308,6 @@ def test_add_responses(db_session, client, authed_client, test_vars):
             )
             contains_bad_chars(response2)
 
-            response3 = ''
-            response3 = client.post(
-                "/add",
-                data={
-                    "csrf_token": csrf_token,
-                    "install_type": "local",
-                    "install_name": test_server,
-                    "install_path": test_server_path,
-                    "script_name": char,
-                },
-                follow_redirects=True,
-            )
-            contains_bad_chars(response3)
-
-
         ## Test install details edit.
         server_id = get_server_id(test_server)
 
@@ -766,7 +751,7 @@ def test_install_responses(db_session, client, authed_client, test_vars):
         check_response(response, error_msg, resp_code, "main.install")
 
         # Test invalid script_name.
-        error_msg = b"Invalid script name."
+        error_msg = b"script_name: Invalid value, must be one of:"
         response = client.post(
             "/install", data={"csrf_token": csrf_token, "script_name": "fartingbuttz", "install_name": "Minecraft", "install_type": 'local', "install_path": "/tmp/testing"}, follow_redirects=True
         )
@@ -1065,8 +1050,8 @@ def test_system_usage(db_session, client, authed_client, test_vars):
         assert isinstance(network["bytes_recv_rate"], float)
 
 
-### Edit page tests.
-def test_edit_content(db_session, client, authed_client, add_mock_server, test_vars):
+### Files page tests.
+def test_files_content(db_session, client, authed_client, add_mock_server, test_vars):
     """
     Test edit page basic content.
     """
@@ -1081,16 +1066,15 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
 
         # Default should be cfg_editor off, so page should 302 to home.
         response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
+            f"/files?server_id={server_id}&path={cfg_path}"
         )
         assert response.status_code == 302
 
-        toggle_cfg_editor(True)
-#        os.system("cat main.conf.local")  # Debug
+        toggle_file_manager(True)
 
         # Basic page load test.
         response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
+            f"/files?server_id={server_id}&path={cfg_path}"
         )
         assert response.status_code == 200
 
@@ -1098,18 +1082,21 @@ def test_edit_content(db_session, client, authed_client, add_mock_server, test_v
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Config Editor" in response.data
+        assert b"File Manager" in response.data
+        assert b"Current Path:" in response.data
+        assert b"Select Game Server" in response.data
+        assert b"Files" in response.data
         assert b"Editing:" in response.data
-        assert b"Full path:" in response.data
-        assert b"File Contents" in response.data
-        assert b"Save Changes" in response.data
-        assert b"Download File" in response.data
-        assert b"Back to Controls" in response.data
-        assert b"Important Notice" in response.data
+        assert b"Save File" in response.data
+        assert b"Write changes to disk" in response.data
+        assert b"Download" in response.data
+        assert b"Download selected file" in response.data
+        assert b"Upload" in response.data
+        assert b"Upload File" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
 
-def test_edit_responses(db_session, client, authed_client, add_mock_server, test_vars):
+def test_files_responses(db_session, client, authed_client, add_mock_server, test_vars):
     """
     Test edit page responses.
     """
@@ -1121,10 +1108,10 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
     server_id = get_server_id(test_server)
 
     with client:
-        toggle_cfg_editor(True)
+        toggle_file_manager(True)
 
         response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={cfg_path}"
+            f"/files?server_id={server_id}&path={cfg_path}"
         )
 #        debug_response(response)
         csrf_token = get_csrf_token(response)
@@ -1133,11 +1120,12 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
 
         # Test no csrf_token.
         response = client.post(
-            "/edit",
+            "/files",
             data={
                 "server_id": server_id,
-                "cfg_path": cfg_path,
+                "path": cfg_path,
                 "file_contents": "#### Testing...",
+                "save_submit": "Save",
             },
             follow_redirects=True
         )
@@ -1146,12 +1134,13 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
 
         # Test if edits are saved.
         response = client.post(
-            "/edit",
+            "/files",
             data={
                 "csrf_token": csrf_token,
                 "server_id": server_id,
-                "cfg_path": cfg_path,
+                "path": cfg_path,
                 "file_contents": "#### Testing...",
+                "save_submit": "Save",
             },
             follow_redirects=True
         )
@@ -1161,86 +1150,41 @@ def test_edit_responses(db_session, client, authed_client, add_mock_server, test
         assert b"Home" in response.data
         assert b"Settings" in response.data
         assert b"Logout" in response.data
-        assert b"Config Editor" in response.data
-        assert b"Full path: " in response.data
+        assert b"File Manager" in response.data
         assert b"#### Testing..." in response.data
-        assert b"Save File" in response.data
-        assert b"Download File" in response.data
-        assert b"Back to Controls" in response.data
-        assert b"Important Notice" in response.data
         assert f"Web LGSM - Version: {version}".encode() in response.data
 
         ## Download testing.
         response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={cfg_path}&csrf_token={csrf_token}&download_submit=Download"
+            f"/files?server_id={server_id}&path={cfg_path}&csrf_token={csrf_token}&download_submit=Download"
         )
         assert response.status_code == 200
 
         # No server specified tests.
         resp_code = 200
-        error_msg = b"This field is required"
-        # Test is none.
+        error_msg = b"Please select a game server!"
+        # Test server_id is none.
         response = client.get(
-            f"/edit?cfg_path={cfg_path}", follow_redirects=True
+            f"/files?path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "main.home")
-
-        # Test is null.
-        response = client.get(
-            f"/edit?server_id=&cfg_path={cfg_path}", follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "main.home")
-
-        # No cfg specified tests.
-        # Test is none.
-        response = client.get(
-            f"/edit?server_id={server_id}", follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "main.home")
-
-        # Test is null.
-        response = client.get(
-            f"/edit?server_id={server_id}&cfg_path=", follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "main.home")
+        check_response(response, error_msg, resp_code, "main.files")
 
         # Invalid game server name test.
-        error_msg = b"Invalid game server ID"
+        error_msg = b"Server not found"
         response = client.get(
-            f"/edit?server_id=TEST&cfg_path={cfg_path}", follow_redirects=True
+            f"/files?server_id=TEST&path={cfg_path}", follow_redirects=True
         )
-        check_response(response, error_msg, resp_code, "main.home")
+        check_response(response, error_msg, resp_code, "main.files")
 
-        # No game server installation directory found test.
-        # First move the installation directory to .bak.
-        os.system(f"mv {test_server_path} {test_server_path}.bak")
-
-        error_msg = b"Error reading file"
+        # Test go above user home dir.
+        error_msg = b"Cannot go above game server user&#39;s home dir!"
+        invalid_path = "/etc/passwd"
         response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={cfg_path}", follow_redirects=True
-        )
-        check_response(response, error_msg, resp_code, "main.home")
-
-        # Finally move the installation back into place.
-        os.system(f"mv {test_server_path}.bak {test_server_path}")
-
-        # Invalid config file name test.
-        error_msg = b"Invalid config file name!"
-        invalid_name = cfg_path + "fartingbuttz"
-        response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
+            f"/files?server_id={server_id}&path={invalid_path}",
             follow_redirects=True,
         )
-        check_response(response, error_msg, resp_code, "main.home")
-
-        # No such file test.
-        error_msg = b"Error reading file!"
-        invalid_name = "/blahfart" + cfg_path
-        response = client.get(
-            f"/edit?server_id={server_id}&cfg_path={invalid_name}&csrf_token={csrf_token}",
-            follow_redirects=True,
-        )
-        check_response(response, error_msg, resp_code, "main.home")
+        debug_response(response)
+        check_response(response, error_msg, resp_code, "main.files")
 
 
 def test_new_user_has_no_permissions(client, add_mock_server, user_authed_client_no_perms, test_vars):

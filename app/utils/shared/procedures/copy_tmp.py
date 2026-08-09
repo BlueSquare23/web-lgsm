@@ -31,7 +31,7 @@ PLAYBOOKS = '/usr/local/share/web-lgsm'
 with open(f"{PLAYBOOKS}/app_conf.json") as f:
     app_conf = json.load(f)
 
-APP_GROUP = app_conf["APP_GROUP"]
+APP_USER = app_conf["APP_USER"]
 
 def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
     """
@@ -75,7 +75,7 @@ def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
         try:
             shutil.copyfile(real_path, tmp_path)
             os.chmod(tmp_path, 0o640)
-            subprocess.run([PATHS["setfacl"], "-m", f"u:{APP_GROUP}:r", tmp_path], check=True)
+            subprocess.run([PATHS["setfacl"], "-m", f"u:{APP_USER}:r", tmp_path], check=True)
             return {"success": True, "tmpfile": tmp_path, "mime_type": mime_type or "text/plain"}
         except Exception as e:
             return {"success": False, "tmpfile": tmp_path, "error": str(e), "mime_type": None}

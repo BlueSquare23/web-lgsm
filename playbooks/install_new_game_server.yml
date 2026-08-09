@@ -38,7 +38,6 @@
         - tasks/create_new_user_group.yml
         - tasks/create_new_user.yml
         - tasks/set_default_new_user_group.yml
-        - tasks/add_to_web_lgsm_group.yml
         - tasks/add_sudoers_rule.yml
         - tasks/fix_sudoers_rule.yml
         - tasks/check_web_lgsm_agent_service.yml

@@ -1,12 +1,17 @@
 import os
+import json
 import shutil
 import mimetypes
 import tempfile
+import subprocess
 
 from pathlib import Path
 
 from .traversal_safe import traversal_safe
 from .is_excluded import is_excluded
+
+# TODO: Put this in paths.py & put in system level dir owned by root.
+PATHS = {'setfacl': '/usr/bin/setfacl'}
 
 # Only applies to files loaded into the in-browser editor (direct_download=False)
 # Those get fully decoded into memory for the textarea. Actual file
@@ -20,6 +25,8 @@ ALLOWED_MIME_TYPES = (
     'application/javascript',
     'application/x-yaml',
 )
+
+PLAYBOOKS = '/usr/local/share/web-lgsm'
 
 with open(f"{PLAYBOOKS}/app_conf.json") as f:
     app_conf = json.load(f)
@@ -68,7 +75,7 @@ def copy_tmp(direction, real_path, tmp_path=None, direct_download=False):
         try:
             shutil.copyfile(real_path, tmp_path)
             os.chmod(tmp_path, 0o640)
-            shutil.chown(tmp_path, group=APP_GROUP)
+            subprocess.run([PATHS["setfacl"], "-m", f"u:{APP_GROUP}:r", tmp_path], check=True)
             return {"success": True, "tmpfile": tmp_path, "mime_type": mime_type or "text/plain"}
         except Exception as e:
             return {"success": False, "tmpfile": tmp_path, "error": str(e), "mime_type": None}

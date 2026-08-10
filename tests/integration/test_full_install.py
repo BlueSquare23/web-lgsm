@@ -103,7 +103,40 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
 
-    time.sleep(2)
+    time.sleep(10)
+
+    ##################### DEBUG 
+    import subprocess
+    
+    # Define the command as a list of arguments
+    command = [
+        "sqlite3", 
+        "app/database.db", 
+        ".mode table", 
+        "select * from game_server_model"
+    ]
+    
+    try:
+        # Run the command and capture the output
+        result = subprocess.run(
+            command, 
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        
+        # Print the table output
+        print(result.stdout)
+    
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e.stderr}")
+    except FileNotFoundError:
+        print("Error: sqlite3 CLI is not installed or not in your PATH.")
+
+    # Access the output strings
+    print(result.stdout)  # Output: Hello World\n
+    print(result.stderr) 
+    ##################### DEBUG 
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")
@@ -111,7 +144,7 @@ def game_server_start_stop(client, server_id):
     print(response.get_data(as_text=True))
 
     # Keep checking status till timeout.
-    timeout = 60
+    timeout = 90
     runtime = 0
     while True:
         response = client.get(f"/api/server-status/{server_id}")

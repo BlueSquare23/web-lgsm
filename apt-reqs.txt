@@ -1,4 +1,5 @@
 curl
+dbus-user-session
 findutils
 procps
 tmux

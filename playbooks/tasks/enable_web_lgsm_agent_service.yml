@@ -3,6 +3,18 @@
     cmd: "loginctl enable-linger {{ username }}"
   when: not agent_service_active
 
+# loginctl enable-linger triggers systemd-logind to spin up user@{{
+# agent_user_uid }}.service (which creates /run/user/{{ agent_user_uid }} and
+# the user D-Bus bus) asynchronously. On a busy/slow host (seen on GitHub
+# Actions runners) that can take a moment, and systemctl --user calls made
+# before it's ready fail with the runtime dir missing. So wait for it.
+- name: Wait for {{ username }}s runtime dir to be created after enabling linger
+  ansible.builtin.wait_for:
+    path: "/run/user/{{ agent_user_uid }}"
+    state: present
+    timeout: 30
+  when: not agent_service_active
+
 - name: Create systemd user directory for {{ username }}
   ansible.builtin.file:
     path: "{{ agent_user_home }}/.config/systemd/user"

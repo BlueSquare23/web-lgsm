@@ -186,6 +186,14 @@ app
   accidentally discovered software architecture. So I started learning more about
   design patterns and the clean architecture in an effort to clean this all up!
 
+- **Why the JSON-RPC Service**: This app needs to run things as other users on
+  the system. For a long time we jobbed out to the shell and used hacky `sudo -u` 
+  commands to accomplish this. That has a number of problems including being
+  slow and insecure. To resolve these issues we developed the multi-user json
+  rpc system. Now when some bit of code needs to get run as another user, we
+  write a procedure for it, then call that procedure via the RPC server running
+  as each game server user. For more info see [DESIGN_RPC.md](DESIGN_RPC.md).
+
 ---
 
 ## 6. API Documentation

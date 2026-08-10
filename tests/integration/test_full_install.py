@@ -35,7 +35,6 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     )
 
     print(extract_alert_messages(response))
-#    debug_response(response)
 
     assert response.status_code == 200
     assert b"Installing" in response.data
@@ -119,6 +118,8 @@ def game_server_start_stop(client, server_id):
         assert response.status_code == 200
         resp_dict = response.json
         assert "status" in resp_dict
+
+        print(resp_dict)
 
         if resp_dict["status"] == True:
             break

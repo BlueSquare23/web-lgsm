@@ -1,5 +1,4 @@
 import os
-import fnmatch
 import yaml
 
 def split_patterns(patterns):

@@ -1,24 +1,10 @@
-import os
-import io
-import re
 import pwd
-import json
-import time
-import uuid
-import shlex
-import psutil
-import shutil
 import socket
 import getpass
-import paramiko
-import requests
-import subprocess
-import threading
 
-from datetime import datetime, timedelta
-from flask import flash, current_app, send_file, send_from_directory, url_for, redirect
-
-from app import db
+# TODO: Update trickle down imports. BAD! NEEDS FIXED!
+import os
+from flask import current_app
 from app import cache
 
 # Constants.
@@ -95,7 +81,6 @@ def update_self():
     """
 
     from app.container import container
-    update_cmd = ["./web-lgsm.py", "--auto"]
 
     cmd_id = "update_self"
     container.run_command().execute(cmd, None, cmd_id)
@@ -141,7 +126,7 @@ def is_ssh_accessible(hostname):
             return False
     except socket.gaierror:
         return False
-    except socket.error as e:
+    except socket.error:
         return False
     finally:
         sock.close()

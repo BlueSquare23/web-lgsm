@@ -1,5 +1,3 @@
-import json
-import socket
 import getpass
 import logging
 import traceback

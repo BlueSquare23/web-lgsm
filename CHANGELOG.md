@@ -9,20 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add manual reset for rpc service daemons to settings page.
-- Add new mechanism for interactive with alt users via novel multi-user rpc backend.
-- Add new file manager interface viewing, editing, uploading, and downloading files.
+- Add new file manager interface for viewing, editing, uploading, and downloading files and directories.
+- Add new mechanism for interacting with alt users via novel multi-user RPC backend (MultiUserRPCService), replacing the old user mod service.
+- Add per-user RPC server daemons managed via systemd, with a supervisor layer for health checks and auto-restart on crash.
+- Add manual reset for RPC service daemons to the settings page.
 - Add custom exclude mechanism (with globs) for exempting files and dirs from the file manager.
+- Add file/dir permissions to the file manager (admins get full access, non-admin users can be granted full or read-only access).
+- Add audit logging for file manager actions (create, delete, edit, rename).
+- Add Swagger docs for the new file manager API routes.
+- Add progress bar to file uploads (via XHR).
+- Add support for arbitrary download file sizes and make direct download bypass mimetype restrictions.
+- Add use setfacl for the `copy_tmp` procedure instead of group chown (fixes intermittent staleness bug).
+- Add `APP_GROUP` setting (renamed from `install_conf.json` to `app_conf.json`).
 
 ### Changed
 
 - Flesh out JSON RPC service for running code as alt users.
-- Refactor form classes for better developer ergonomics.
+- Refactor form classes into one class per file for better developer ergonomics.
 - Replace old hardcoded file edit page with new file manager.
+- Rework file upload/download to stream via temp files instead of through the RPC socket, avoiding OOM killer on large files.
+- Update route code to call new interface use-case shortcuts instead of calling the container directly.
+- Refresh README (added 2FA to features list, general cleanup).
+- Add docs on the new JSON RPC system.
 
 ### Fixed
 
 - Form classes, re-add placeholders after restructure.
+- Fix existing test suite so all tests pass again.
+- Import cleanup with pylint.
 
 ## [v1.9.2 - 2026-04-18]
 

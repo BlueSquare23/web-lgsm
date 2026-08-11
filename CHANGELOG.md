@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix delete jobs from db when deleting game server.
 - Remove extra scroll bars for terminal on install & controls pages.
 - Fix .replace calls to strip `:` chars from game server names
 - Remove screen clear from install output print

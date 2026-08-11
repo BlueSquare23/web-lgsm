@@ -9,7 +9,7 @@ from app.utils import *
 
 from . import api
 
-from app.interface.use_cases import get_game_server, getboolean_config, set_config, check_user_access, list_cron_jobs, delete_cron_job, remove_process, list_processes, delete_game_server, log_audit_event
+from app.interface.use_cases import get_game_server, getboolean_config, set_config, check_user_access, remove_process, list_processes, delete_game_server, log_audit_event
 
 ######### API GameServer Delete #########
 
@@ -44,15 +44,6 @@ class GameServerDelete(Resource):
 
         current_app.logger.info(log_wrap(f"{current_user} deleting ID: ", server_id))
         current_app.logger.info(server)
-
-        # Delete cronjobs for server from DB.
-        jobs_list = list_cron_jobs(server.id)
-
-        current_app.logger.info(log_wrap("job_list", jobs_list))
-
-        if len(jobs_list) > 0:
-            for job in jobs_list:
-                delete_cron_job(job.job_id)  ## TODO: Maybe we ought to consider doing a delete batch with context handler so we can bop over a forloop and only commit transaction at end. But for now this is fine. Long line is long...
 
         # Drop any saved proc_info objects.
         remove_process(server_id)

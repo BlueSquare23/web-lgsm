@@ -1,3 +1,4 @@
+import os
 from crontab import CronTab
 
 def edit_cron(state, **job):
@@ -14,7 +15,9 @@ def edit_cron(state, **job):
     comment = f"{job['server_id']}, {job['job_id']},".strip()
     if job['comment']:
         comment = comment + f" {job['comment']}"
-    job_cmd = f"{job['install_path']}/{job['script_name']} {job['command']}"
+
+    script_path = os.path.join(job['install_path'], job['script_name'])
+    job_cmd = f"{script_path} {job['command']}"
 
     print("comment " + comment)
 

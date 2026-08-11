@@ -49,8 +49,7 @@ jobs:
 
       - name: Run Pytest Tests
         run: |
-          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test main
-#          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test full
+          RUNNER_TRACKING_ID="" && $HOME/web-lgsm.py --test full
 
       - name: Generate coverage report
         run: |

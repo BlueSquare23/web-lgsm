@@ -209,6 +209,9 @@ def run_install_new_game_server(server_id):
         print("Installation for server already completed!")
         exit(123)
 
+    # Setup multi-user rpc socket dir and add facl
+    setup_socket_dir(server.username)
+
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     install_gs_playbook_path = os.path.join(
         PLAYBOOKS, "playbooks/install_new_game_server.yml"
@@ -232,9 +235,6 @@ def run_install_new_game_server(server_id):
         print(pre_install_cmd)
     else:
         run_cmd(pre_install_cmd)
-
-    # Setup multi-user rpc socket dir and add facl
-    setup_socket_dir(server.username)
 
     install_reqs = [f"{server.install_path}/{server.script_name}", "auto-install"]
 

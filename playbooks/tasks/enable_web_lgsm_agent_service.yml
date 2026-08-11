@@ -1,7 +1,12 @@
 - name: Enable linger for {{ username }} so user services persist across logout/reboot
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ username }}"
+  register: linger_output
   when: not agent_service_active
+
+- name: Print linger output 
+  ansible.builtin.debug:
+    var: linger_output
 
 - name: Create systemd user directory for {{ username }}
   ansible.builtin.file:

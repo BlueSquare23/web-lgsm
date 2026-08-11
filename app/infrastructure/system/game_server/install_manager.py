@@ -8,7 +8,6 @@ import logging
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
-from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
 
 
 from app.utils.paths import PATHS
@@ -24,9 +23,8 @@ class GameServerInstallManager:
         PATHS["ansible_connector"],
     ]
 
-    def __init__(self, game_server_repository=SqlAlchemyGameServerRepository(), rpc_server_manager=MultiUserRPCServerManager(), logger=logging.getLogger(__name__)):
+    def __init__(self, game_server_repository=SqlAlchemyGameServerRepository(), logger=logging.getLogger(__name__)):
         self.game_server_repository=game_server_repository
-        self.rpc_server_manager=rpc_server_manager
         self.logger = logger
 
     def list(self):
@@ -143,8 +141,6 @@ class GameServerInstallManager:
                 if server.install_finished and not server.install_failed:
                     self.logger.info("<CLEAR DAEMON> - Thread Cleared!")
                     InMemProcInfoRepository().remove(server_id)
-                    # Hack but works, after clear reset rpc servers
-                    self.rpc_server_manager.launch()
                     return
 
             time.sleep(5)

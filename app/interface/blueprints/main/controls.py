@@ -104,6 +104,9 @@ def controls():
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
         current_app.logger.info(log_wrap("controls_list", controls_list))
 
+        if 'success' in cfg_paths and not cfg_paths['success']:
+            cfg_paths = dict()            
+
         return render_template(
             "controls.html",
             user=current_user,

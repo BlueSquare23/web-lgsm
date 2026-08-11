@@ -143,6 +143,14 @@ def files():
             files = list_dir(server, base_dir, show_hidden)
             file = read_file(server, path)
 
+        # Error if can't get files listing.
+        if 'success' in files and not files['success']:
+            error_message = f"Problem retrieving files listing"
+            if 'reason' in files:
+                error_message += ': ' + files['reason']
+            flash(error_message, category="error")
+            files = []
+
         return render_template(
             "files.html",
             user=current_user,

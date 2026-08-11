@@ -5,8 +5,8 @@
 
 - name: Set facts for {{ username }}s uid and home directory
   set_fact:
-    agent_user_uid: "{{ getent_passwd[username][1] }}"
-    agent_user_home: "{{ getent_passwd[username][4] }}"
+    agent_user_uid: "{{ ansible_facts.getent_passwd[username][1] }}"
+    agent_user_home: "{{ ansible_facts.getent_passwd[username][4] }}"
 
 - name: Check status of web-lgsm-agent systemd user service for {{ username }}
   ansible.builtin.systemd_service:

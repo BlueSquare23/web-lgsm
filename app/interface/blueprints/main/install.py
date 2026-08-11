@@ -133,9 +133,8 @@ def install():
     username = form.username.data
 
     # Just to be doubly sure.
-    install_name = install_name.replace(" ", "_")
-    install_name = install_name.replace(":", "")
-    
+    install_name = install_name.replace(" ", "_").replace(":", "")
+
     game_server = {
         "id": None,  # New game server dont have IDs yet.
         "install_name": install_name,
@@ -171,6 +170,7 @@ def install():
 
         edit_user(**user.__dict__)
 
+    #TODO: Move into install manager to launch install.
     cmd = [
         PATHS["sudo"],
         "-n",

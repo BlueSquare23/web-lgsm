@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Remove extra scroll bars for terminal on install & controls pages.
+- Fix .replace calls to strip `:` chars from game server names
+- Remove screen clear from install output print
 - Form classes, re-add placeholders after restructure.
 - Fix existing test suite so all tests pass again.
 - Import cleanup with pylint.

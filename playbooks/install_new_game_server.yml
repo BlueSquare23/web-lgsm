@@ -40,6 +40,7 @@
         - tasks/set_default_new_user_group.yml
         - tasks/add_sudoers_rule.yml
         - tasks/fix_sudoers_rule.yml
+        - tasks/setup_agent_socket_dir.yml
         - tasks/check_web_lgsm_agent_service.yml
         - tasks/enable_web_lgsm_agent_service.yml
 

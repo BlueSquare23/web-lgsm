@@ -1,0 +1,15 @@
+- name: Create multi-user rpc socket dir
+  ansible.builtin.file:
+    path: /run/web-lgsm
+    state: directory
+    owner: root
+    group: "{{ web_lgsm_user }}"
+    mode: '3775' # sticky + setgid + rwxrwxr-x
+
+- name: Grant {{ username }} rwx acl on socket dir so its agent can bind its socket
+  ansible.posix.acl:
+    path: /run/web-lgsm
+    entity: "{{ username }}"
+    etype: user
+    permissions: rwx
+    state: present

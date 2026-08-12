@@ -209,9 +209,6 @@ def run_install_new_game_server(server_id):
         print("Installation for server already completed!")
         exit(123)
 
-    # Setup multi-user rpc socket dir and add facl
-    setup_socket_dir(server.username)
-
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     install_gs_playbook_path = os.path.join(
         PLAYBOOKS, "playbooks/install_new_game_server.yml"

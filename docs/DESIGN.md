@@ -198,7 +198,7 @@ app
 
 ## 6. API Documentation
 - Builtin Swagger documentation under `https://your_web_lgsm_url/docs`.
-![Swagger Docs](images/swagger_docs.gif)
+![Swagger Docs](images/swagger.gif)
 
 ---
 

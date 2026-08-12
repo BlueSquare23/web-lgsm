@@ -41,17 +41,17 @@ The Web-LGSM is a browser-based management interface for the [Linux Game Server 
 
 ## Features
 
-- **One-click installs** — Browse the full LGSM catalog and install over 130+ game server directly from the UI
-- **Live console output** — Watch commands execute in real time via the integrated web terminal
-- **File manager** — Download, upload, edit, and manage files from the comfort of the browser
-- **Schedule jobs** — Create scheduled jobs (updates, backups, restarts, etc) for your game servers through the web UI
-- **Add existing servers** — Import LGSM installations that were set up outside of the Web-LGSM
-- **Remote installs** — Add LGSM game servers that are installed on remote machines and admin them through a single web panel
-- **Docker installs** — Add LGSM game servers that are installed inside of docker containers
-- **Multi-user support** — Create logins for your friends, including builtin permissions management
-- **Audit logging** — See what recent actions have been taken by your web-lgsm panel users (admins only)
-- **Two Factor Support** — Enable optional two factor authentication (via totp) on login page for enhanced security
-- **App settings** — Configure core Web-LGSM behavior from the settings page
+- **One-click installs**: Browse the full LGSM catalog and install over 130+ game server directly from the UI
+- **Live console output**: Watch commands execute in real time via the integrated web terminal
+- **File manager**: Download, upload, edit, and manage files from the comfort of the browser
+- **Schedule jobs**: Create scheduled jobs (updates, backups, restarts, etc) for your game servers through the web UI
+- **Add existing servers**: Import LGSM installations that were set up outside of the Web-LGSM
+- **Remote installs**: Add LGSM game servers that are installed on remote machines and admin them through a single web panel
+- **Docker installs**: Add LGSM game servers that are installed inside of docker containers
+- **Multi-user support**: Create logins for your friends, including builtin permissions management
+- **Audit logging**: See what recent actions have been taken by your web-lgsm panel users (admins only)
+- **Two Factor Support**: Enable optional two factor authentication (via totp) on login page for enhanced security
+- **App settings**: Configure core Web-LGSM behavior from the settings page
 
 ## Requirements
 
@@ -63,7 +63,7 @@ The Web-LGSM is a browser-based management interface for the [Linux Game Server 
 
 ## Installation
 
-Clone the repository as your regular user — **do NOT run as root**:
+Clone the repository as your regular user (**do NOT run as root**):
 
 ```bash
 git clone https://github.com/BlueSquare23/web-lgsm.git
@@ -98,27 +98,38 @@ A full installation and usage tutorial is available on YouTube:
 
 | Setup | Home |
 |-------|------|
-| ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/homepage.gif) |
+| ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/home.gif) |
 
-| Install | Add Existing |
+| Install | Add / Edit |
 |---------|-------------|
 | ![Install Page](docs/images/install.gif) | ![Add Page](docs/images/add.gif) |
 
-| Controls | Start / Stop |
+| Controls | File Manager |
 |----------|-------------|
-| ![View](docs/images/server_controls.png) | ![Running Command](docs/images/start_stop.gif) |
+| ![Controls Page](docs/images/controls.gif) | ![Manage Files](docs/images/files.gif) |
 
+| Jobs | Settings |
+|----------|-------------|
+| ![Manage Jobs](docs/images/cron.gif) | ![Settings Page](docs/images/settings.gif) |
+
+| Add Users | Audit Logs |
+|----------|-------------|
+| ![Edit Users](docs/images/users.gif) | ![Audit Logs](docs/images/audit.gif) |
+
+| About | Swagger Docs |
+|----------|-------------|
+| ![About Page](docs/images/about.gif) | ![Swagger Docs](docs/images/swagger.gif) |
 
 ## Usage
 
 Once logged in, the home page gives you access to all major features:
 
-- **Install** — auto-install any LGSM-supported game server
-- **Add** — import an existing LGSM installation
-- **Controls** — start, stop, restart, and monitor a server; run LGSM commands with live output
-- **File Manager** — edit server config files in-browser *(disabled by default; enable in `main.conf`)*
-- **Job Editor** — edit server scheduled jobs in-browser *(disabled by default; enable in `main.conf`)*
-- **Settings** — manage application preferences
+- **Install**: auto-install any LGSM-supported game server
+- **Add**: import an existing LGSM installation
+- **Controls**: start, stop, restart, and monitor a server; run LGSM commands with live output
+- **File Manager**: edit server config files in-browser *(disabled by default; enable in `main.conf`)*
+- **Job Editor**: edit server scheduled jobs in-browser *(disabled by default; enable in `main.conf`)*
+- **Settings**: manage application preferences
 
 ## Deployment
 

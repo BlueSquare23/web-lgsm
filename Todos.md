@@ -15,11 +15,11 @@
 * [ ] **Create a discord server for project / community**
   - [ ] Update community docs to also point to discord server.
 
-* [ ] **Fix up Readme.**
-  - [ ] Update Readme gifs with newest look of interface.
+* [x] **Fix up Readme.**
+  - [x] Update Readme gifs with newest look of interface.
   - [ ] Add links to discord server.
   - [ ] Add links to new Basic Setup & Docker YouTube Videos.
-  - [ ] Add contribute section pointing users to submitting an issue or submitting a
+  - [x] Add contribute section pointing users to submitting an issue or submitting a
     pull request.
     - I have the community docs for this now.
 
@@ -388,7 +388,7 @@ systemctl --user enable web-lgsm-agent
     - [x] File Read Size Limit Check
     - [x] Add check and auto restart dead rpc server threads
   - Future Features:
-    - [ ] Add Reason for file system failures
+    - [x] Add Reason for file system failures
       - Right now just has status (Success/Fail), should also push through reason for failures.
     - [ ] Create Directory
     - [ ] Move file / directory
@@ -498,14 +498,14 @@ other::r-x
   - That way no file content data for uploads has to go through the socket and
     therefore we don't need to keep it in mem. Just from disk to disk.
 
-* [ ] **Fix current tests**
+* [x] **Fix current tests**
   - Current tests are failing. Need to debug and make tweaks to make sure they
     all pass again.
 
-* [ ] **Write File Manager Tests!!**
-  - [ ] Basic Content Tests
-  - [ ] Basic Reposes Tests
-  - [ ] Basic API Endpoint Tests
+* [x] **Write File Manager Tests!!**
+  - [x] Basic Content Tests
+  - [x] Basic Reposes Tests
+  - [x] Basic API Endpoint Tests
   - [ ] Unit Tests for FileManager
   - [ ] Integration Tests for edit file as alt user after install
 

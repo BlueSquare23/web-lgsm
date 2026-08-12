@@ -25,14 +25,13 @@ class FileRename(Resource):
             resp_dict = {"Error": "Server not found!"}
             return Response(json.dumps(resp_dict, indent=4), status=404, mimetype="application/json")
 
-        # Try unwrap path url encoding
-        try:
-            file_path = unquote(file_path)
-        except Exception as e:
-            resp_dict = {"Error": f"Problem unwrapping path url encoding: {e}"}
-            return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
+        file_path = unquote(file_path)
 
         directory, filename = os.path.split(file_path)
+        if not directory:
+            resp_dict = {"Error": "Bad file_path supplied!"}
+            return Response(json.dumps(resp_dict, indent=4), status=400, mimetype="application/json")
+
         if not is_safe_path(server, directory):
             resp_dict = {"Error": "Not allowed access to this directory"}
             return Response(json.dumps(resp_dict, indent=4), status=403, mimetype="application/json")

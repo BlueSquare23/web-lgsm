@@ -1,6 +1,11 @@
+import os
 import json
 import pytest
+import urllib.parse
+import subprocess
+
 from flask import url_for
+from pathlib import Path
 
 from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
@@ -401,4 +406,300 @@ def test_load_spec(authed_client, add_mock_server, test_vars):
         # optional: check methods exist for a route
         assert "get" in paths["/system-usage"]
         assert "post" in paths["/cron/{server_id}"]
+
+
+def test_file_create(authed_client, add_mock_server, test_vars):
+    """Test create file via api"""
+    server_id = get_server_id(test_vars["test_server"])
+    path = str(Path.home())
+    name = 'testing1234'
+    file = Path(os.path.join(path, name))
+
+    # Make sure test file is removed before tests
+    file.unlink(missing_ok=True)
+
+    with authed_client:
+        # Test only accept json
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            data={
+                "path": path,
+                "name": name,
+            },
+        )
+        check_api_response(response, 415, {'message': "Did not attempt to load JSON data because the request Content-Type was not 'application/json'."})
+
+        # Test only accepts POSTs
+        response = authed_client.delete(f"/api/files/create/{server_id}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+        response = authed_client.get(f"/api/files/create/{server_id}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+
+        # Test with bad server id
+        response = authed_client.post("/api/files/create/BAD_SERVER_ID",
+            json={
+                "path": path,
+                "name": name,
+            },
+        )
+        check_api_response(response, 404, {"Error": "Server not found!"})
+
+        # Test no path in response
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            json={
+                "name": name,
+            },
+        )
+        check_api_response(response, 400, {"Error": "Missing path or name in request body"})
+
+        # Test no name in response
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            json={
+                "path": path,
+            },
+        )
+        check_api_response(response, 400, {"Error": "Missing path or name in request body"})
+
+        # Test filename too long 
+        too_long_name = 'a' * 101
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            json={
+                "path": path,
+                "name": too_long_name,
+            },
+        )
+        check_api_response(response, 400, {"Error": 'Filename must be at most 100 characters long'})
+
+        # Test is excluded dir
+        bad_path = '/etc/'
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            json={
+                "path": bad_path,
+                "name": name,
+            },
+        )
+        check_api_response(response, 403, {"Error": "Not allowed access to this file or directory"})
+
+        # Test legit create file & ensure file actually created
+        response = authed_client.post(f"/api/files/create/{server_id}",
+            json={
+                "path": path,
+                "name": name,
+            },
+        )
+        check_api_response(response, 201)
+        assert file.is_file()
+
+        # Cleanup
+        file.unlink()
+
+
+def test_file_create_no_perms(client, add_mock_server, user_authed_client_no_perms, test_vars):
+    test_server = test_vars["test_server"]
+    server_id = get_server_id(test_server)
+
+    path = str(Path.home())
+    name = 'testing1234'
+    with client:
+        # Test user has no perms for server
+        response = client.post(f"/api/files/create/{server_id}",
+            json={
+                "path": path,
+                "name": name,
+            },
+        )
+        check_api_response(response, 403, {"Error": f"Insufficient permission to create files for {test_server}"})
+ 
+
+def test_file_rename(authed_client, add_mock_server, test_vars):
+    """Test rename file via api"""
+    server_id = get_server_id(test_vars["test_server"])
+    path = str(Path.home())
+    name = 'testing1234'
+    new_name = 'testing5678'
+    file = Path(os.path.join(path, name))
+    file_path = str(file)
+    file_path_urlencoded = urllib.parse.quote(urllib.parse.quote(file_path, safe=""), safe="")  # URL encode twice
+    file_new = Path(os.path.join(path, new_name))
+
+    # Create file we're going to rename
+    file.touch()
+
+    # Make sure test file is removed before tests
+    file_new.unlink(missing_ok=True)
+
+    with authed_client:
+        # Test only accept json
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            data={
+                "new_name": new_name,
+            },
+        )
+        check_api_response(response, 415, {'message': "Did not attempt to load JSON data because the request Content-Type was not 'application/json'."})
+
+        # Test only accepts POSTs
+        response = authed_client.delete(f"/api/files/rename/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+        response = authed_client.get(f"/api/files/rename/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+
+        # Test with bad server id
+        response = authed_client.post(f"/api/files/rename/BAD_SERVER_ID/{file_path_urlencoded}",
+            json={
+                "new_name": new_name,
+            },
+        )
+        check_api_response(response, 404, {"Error": "Server not found!"})
+
+        # Test bad path
+        bad_path = '/etc/passwd'
+        bad_path_urlencoded = urllib.parse.quote(urllib.parse.quote(bad_path, safe=""), safe="")  # URL encode twice
+        response = authed_client.post(f"/api/files/rename/{server_id}/{bad_path_urlencoded}",
+            json={
+                "new_name": new_name,
+            },
+        )
+        check_api_response(response, 403, {"Error": "Not allowed access to this directory"})
+
+        # Test malformed/junk path
+        bad_path = 'fartfartfartfart'
+        bad_path_urlencoded = urllib.parse.quote(urllib.parse.quote(bad_path, safe=""), safe="")  # URL encode twice
+        response = authed_client.post(f"/api/files/rename/{server_id}/{bad_path_urlencoded}",
+            json={
+                "new_name": new_name,
+            },
+        )
+        check_api_response(response, 400, {"Error": "Bad file_path supplied!"})
+
+        # Test with no new_name data
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}", json={})
+        check_api_response(response, 400, {"Error": "Missing new_name in request body"})
+
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "blah": 'blah',
+            },
+        )
+        check_api_response(response, 400, {"Error": "Missing new_name in request body"})
+
+        # Test invalid file_name
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "new_name": '',
+            },
+        )
+        check_api_response(response, 400, {"Error": "Invalid filename"})
+
+        bad_name = 'a' * 101
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "new_name": bad_name, 
+            },
+        )
+        check_api_response(response, 400, {'Error': 'Filename must be at most 100 characters long'})
+
+        # Test legit file rename
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "new_name": new_name, 
+            },
+        )
+        check_api_response(response, 204)
+
+        assert not file.is_file()
+        assert file_new.is_file()
+
+        # Cleanup
+        file_new.unlink()
+
+        # Test renaming non-existent file
+        response = authed_client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "new_name": new_name, 
+            },
+        )
+        check_api_response(response, 500, {"Error": f"Problem renaming file"})
+
+def test_file_rename_no_perms(client, add_mock_server, user_authed_client_no_perms, test_vars):
+    test_server = test_vars["test_server"]
+    server_id = get_server_id(test_server)
+
+    path = str(Path.home())
+    name = 'testing1234'
+    new_name = 'testing5678'
+    file = Path(os.path.join(path, name))
+    file_path = str(file)
+    file_path_urlencoded = urllib.parse.quote(urllib.parse.quote(file_path, safe=""), safe="")  # URL encode twice
+
+    with client:
+        # Test user has no perms for server
+        response = client.post(f"/api/files/rename/{server_id}/{file_path_urlencoded}",
+            json={
+                "new_name": new_name, 
+            },
+        )
+        check_api_response(response, 403, {"Error": f"Insufficient permission to rename files for {test_server}"})
+
+
+def test_file_delete(authed_client, add_mock_server, test_vars):
+    """Test file delete via api"""
+    test_server = test_vars["test_server"]
+    server_id = get_server_id(test_server)
+
+    path = str(Path.home())
+    name = 'testing1234'
+    file = Path(os.path.join(path, name))
+    file_path = str(file)
+    file_path_urlencoded = urllib.parse.quote(urllib.parse.quote(file_path, safe=""), safe="")  # URL encode twice
+
+    # Create file we're going to delete
+    file.touch()
+
+    with authed_client:
+        # Test with bad server id
+        response = authed_client.delete(f"/api/files/delete/BAD_SERVER_ID/{file_path_urlencoded}")
+        check_api_response(response, 404, {"Error": "Server not found!"})
+
+        # Test only accepts DELETEs
+        response = authed_client.post(f"/api/files/delete/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+        response = authed_client.get(f"/api/files/delete/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 405, {'message': "The method is not allowed for the requested URL."})
+
+        # Test not allowed path
+        bad_path = '/etc/passwd'
+        bad_path_urlencoded = urllib.parse.quote(urllib.parse.quote(bad_path, safe=""), safe="")  # URL encode twice
+        response = authed_client.delete(f"/api/files/delete/{server_id}/{bad_path_urlencoded}")
+        check_api_response(response, 403, {"Error": "Not allowed access to this directory"})
+
+        # Test malformed/junk path
+        bad_path = 'fartfartfartfart'
+        bad_path_urlencoded = urllib.parse.quote(urllib.parse.quote(bad_path, safe=""), safe="")  # URL encode twice
+        response = authed_client.delete(f"/api/files/delete/{server_id}/{bad_path_urlencoded}")
+        check_api_response(response, 400, {"Error": "Bad file_path supplied!"})
+
+        # Test actual delete
+        response = authed_client.delete(f"/api/files/delete/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 204)
+        assert not file.is_file()
+
+        # Test deleting non-existent file
+        response = authed_client.delete(f"/api/files/delete/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 500, {"Error": f"Problem deleting file"})
+
+
+def test_file_delete_no_perms(client, add_mock_server, user_authed_client_no_perms, test_vars):
+    test_server = test_vars["test_server"]
+    server_id = get_server_id(test_server)
+
+    path = str(Path.home())
+    name = 'testing1234'
+    new_name = 'testing5678'
+    file = Path(os.path.join(path, name))
+    file_path = str(file)
+    file_path_urlencoded = urllib.parse.quote(urllib.parse.quote(file_path, safe=""), safe="")  # URL encode twice
+
+    with client:
+        # Test user has no perms for server
+        response = client.delete(f"/api/files/delete/{server_id}/{file_path_urlencoded}")
+        check_api_response(response, 403, {"Error": f"Insufficient permission to delete files for {test_server}"})
 

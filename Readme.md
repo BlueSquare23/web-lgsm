@@ -96,19 +96,19 @@ A full installation and usage tutorial is available on YouTube:
 
 ## Screenshots
 
-| Setup | Home |
+| Setup Page | Home Page |
 |-------|------|
 | ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/home.gif) |
 
-| Install | Add / Edit |
+| Install Page | Add / Edit Servers |
 |---------|-------------|
 | ![Install Page](docs/images/install.gif) | ![Add Page](docs/images/add.gif) |
 
-| Controls | File Manager |
+| Controls Page | File Manager |
 |----------|-------------|
 | ![Controls Page](docs/images/controls.gif) | ![Manage Files](docs/images/files.gif) |
 
-| Jobs | Settings |
+| Manage Jobs | Settings Page |
 |----------|-------------|
 | ![Manage Jobs](docs/images/cron.gif) | ![Settings Page](docs/images/settings.gif) |
 
@@ -116,7 +116,7 @@ A full installation and usage tutorial is available on YouTube:
 |----------|-------------|
 | ![Edit Users](docs/images/users.gif) | ![Audit Logs](docs/images/audit.gif) |
 
-| About | Swagger Docs |
+| About Page | Swagger Docs |
 |----------|-------------|
 | ![About Page](docs/images/about.gif) | ![Swagger Docs](docs/images/swagger.gif) |
 

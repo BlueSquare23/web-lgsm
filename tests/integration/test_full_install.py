@@ -1,4 +1,5 @@
 import os
+import pwd
 import time
 import json
 import pytest
@@ -8,7 +9,6 @@ from flask import url_for, request
 from game_servers import game_servers
 import subprocess
 import configparser
-
 
 from utils import *
 
@@ -81,6 +81,57 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     assert installed_successfully
 
 
+def dump_start_diagnostics(server_id):
+    """
+    Prints out whatever we can find about why a game server never reported
+    itself as running, for debugging in CI. Best effort, never raises.
+    """
+    server = GameServerModel.query.filter_by(id=server_id).first()
+    if server is None:
+        print(f"DIAGNOSTICS: no server found for id {server_id}")
+        return
+
+    username = server.username
+    install_path = server.install_path
+
+    as_user = []
+    if username != getpass.getuser():
+        as_user = ["sudo", "-n", "-u", username]
+
+    checks = [
+        ("lgsm/data dir", as_user + ["ls", "-la", f"{install_path}/lgsm/data/"]),
+        ("tmux sessions (default socket)", as_user + ["tmux", "ls"]),
+        ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{pwd.getpwnam(username).pw_uid}/"]),
+        ("processes", ["ps", "aux"]),
+    ]
+
+    print("######################## START DIAGNOSTICS")
+    for label, cmd in checks:
+        print(f"--- {label} ({' '.join(cmd)}) ---")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            print(result.stdout)
+            print(result.stderr)
+        except Exception as e:
+            print(f"failed to run: {e}")
+
+    # Try to tail whatever console log LGSM left behind.
+    try:
+        find_cmd = as_user + ["find", f"{install_path}/log", "-iname", "*console*"]
+        result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+        print(f"--- console log files ---\n{result.stdout}\n{result.stderr}")
+        for log_path in result.stdout.splitlines():
+            print(f"--- tail of {log_path} ---")
+            tail_cmd = as_user + ["tail", "-n", "50", log_path]
+            tail_result = subprocess.run(tail_cmd, capture_output=True, text=True, timeout=10)
+            print(tail_result.stdout)
+            print(tail_result.stderr)
+    except Exception as e:
+        print(f"failed to fetch console logs: {e}")
+
+    print("######################## END START DIAGNOSTICS")
+
+
 def game_server_start_stop(client, server_id):
     response = client.get(
         f"/controls?server_id={server_id}",
@@ -130,6 +181,7 @@ def game_server_start_stop(client, server_id):
         runtime += 10
 
         if runtime > timeout:
+            dump_start_diagnostics(server_id)
             assert True == False  # Force fail timeout.
     
     # Cant win the race if you're asleep.

@@ -92,7 +92,7 @@ A full installation and usage tutorial is available on YouTube:
 [![Web-LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
 > [!NOTE]
-> This video covers v1.3. An updated version is in progress.
+> This video covers v1.3. Will release an updated version soon.
 
 ## Screenshots
 
@@ -177,7 +177,7 @@ For production deployments, always run behind a reverse proxy with TLS. See the 
 
 ## License
 
-MIT — see [license.txt](license.txt) for full terms.
+MIT: See [license.txt](license.txt) for full terms.
 
 ## Author
 

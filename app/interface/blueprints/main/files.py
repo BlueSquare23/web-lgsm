@@ -57,6 +57,14 @@ def files():
             path = download_form.path.data
             server = get_game_server(server_id)
 
+            if not server:
+                flash("Server not found", category="error")
+                return redirect(url_for("main.files"))
+
+            if not check_user_access(current_user.id, "files_edit", server_id):
+                flash("Your user does not have access to this game server", category="error")
+                return redirect(url_for("main.files"))
+
             log_audit_event(current_user.id,  f"User '{current_user.username}', downloaded config '{path}'")
 
             file = read_file(server, path, download=True)
@@ -187,6 +195,14 @@ def files():
             new_file_contents = save_form.file_contents.data
             server = get_game_server(server_id)
 
+            if not server:
+                flash("Server not found", category="error")
+                return redirect(url_for("main.files"))
+
+            if not check_user_access(current_user.id, "files_edit", server_id):
+                flash("Your user does not have access to this game server", category="error")
+                return redirect(url_for("main.files"))
+
             # Security check
             if not is_safe_path(server, path):
                 flash("Invalid path!", "error")
@@ -210,6 +226,14 @@ def files():
             path = upload_form.path.data
             file = upload_form.file.data
             server = get_game_server(server_id)
+
+            if not server:
+                flash("Server not found", category="error")
+                return redirect(url_for("main.files"))
+
+            if not check_user_access(current_user.id, "files_edit", server_id):
+                flash("Your user does not have access to this game server", category="error")
+                return redirect(url_for("main.files"))
 
             filename = secure_filename(file.filename)
             save_path = os.path.join(path, filename)

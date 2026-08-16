@@ -12,4 +12,5 @@ PATHS = {
     "rm": "/usr/bin/rm",
     "crontab":"/usr/bin/crontab",
     "systemctl":"/usr/bin/systemctl",
+    "setfacl":"/usr/bin/setfacl",
 }

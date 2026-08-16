@@ -5,8 +5,10 @@ import getpass
 import logging
 import shutil
 import tempfile
+import subprocess  # For facls via shell. Slow, might replace w/ pylibacl.
 
 from app.utils.helpers import log_wrap
+from app.utils.paths import PATHS
 from .file_interface import FileInterface
 from .utils import is_utf8_decodable
 
@@ -107,8 +109,9 @@ class LocalFileInterface(FileInterface):
                     # File-like stream: copy in 256KB chunks, never fully buffered
                     shutil.copyfileobj(content, tmp_file, length=256 * 1024)
 
-            # Temp file must be readable by the daemon running as the target user
-            os.chmod(tmp_path, 0o644)
+            # Use acls to ensure temp file is readable by target user.
+            os.chmod(tmp_path, 0o600)
+            subprocess.run([PATHS["setfacl"], "-m", f"u:{self.server.username}:r", tmp_path], check=True)
 
             result = self.client.call('copy_tmp', 'upload', file_path, tmp_path, **self._rpc_kwargs())
             self.logger.debug(result)

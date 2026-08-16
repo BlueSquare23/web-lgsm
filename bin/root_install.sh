@@ -176,10 +176,12 @@ fi
 echo -e "${GREEN}####### Installing Python Requirements...${RESET}"
 $VENV_PATH/bin/python3 -m pip install -r requirements.txt
 
-# Setup random key.
-random_key=$(python3 -c 'import secrets; print(secrets.token_hex())')
-echo "SECRET_KEY=\"$random_key\"" | /usr/bin/sudo -u $APP_USER tee .secret >/dev/null
-chmod 600 .secret
+# Setup random key, if doesn't already exist.
+if [[ ! -f "$APP_PATH/.secret" ]]; then
+    random_key=$(python3 -c 'import secrets; print(secrets.token_hex())')
+    echo "SECRET_KEY=\"$random_key\"" | /usr/bin/sudo -u $APP_USER tee "$APP_PATH/.secret" >/dev/null
+    chmod 600 .secret
+fi
 
 # Upgrade alembic DB
 echo -e "${GREEN}####### Updating Database...${RESET}"

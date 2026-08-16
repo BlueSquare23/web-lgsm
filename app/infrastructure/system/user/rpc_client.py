@@ -1,5 +1,6 @@
 import os
 import sys
+import pwd
 import json
 import logging
 import getpass
@@ -11,9 +12,8 @@ class MultiUserRPCClient:
     specified), or run via sudo -u user to retrieve the json, allowing share user
     module scripts to be seamlessly run as multiple users.
     """
-    def __init__(self, logger=logging.getLogger(__name__), socket_dir="/run/web-lgsm", module_dir='/opt/web-lgsm/utils'):
+    def __init__(self, logger=logging.getLogger(__name__), module_dir='/opt/web-lgsm/utils'):
         self.logger = logger
-        self.socket_dir = os.path.abspath(socket_dir)
         self.module_dir = os.path.abspath(module_dir)
 
     def call(self, func_name, *args, as_user=None, **kwargs):
@@ -33,7 +33,8 @@ class MultiUserRPCClient:
 
         from shared import MultiUserRCPService
 
-        socket_path = f"{self.socket_dir}/{as_user}.sock"
+        uid = pwd.getpwnam(as_user).pw_uid
+        socket_path = f"/run/user/{uid}/web-lgsm-agent.sock"
 
         payload = json.dumps({
             "func": func_name,
@@ -41,7 +42,7 @@ class MultiUserRPCClient:
             "kwargs": kwargs,
         })
 
-        client = MultiUserRCPService(None, None, logging.getLogger("rpc_client"))
+        client = MultiUserRCPService(None, None, None, logging.getLogger("rpc_client"))
         try:
             resp = client.send(payload, socket_path)
             return resp

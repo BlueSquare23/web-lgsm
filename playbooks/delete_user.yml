@@ -51,10 +51,4 @@
         state: absent
       when: same_user is not defined or same_user == false
 
-    - name: Remove RPC Socket File
-      file:
-        path: "/run/web-lgsm/{{ username }}.sock"
-        state: absent
-      when: same_user is not defined or same_user == false
-
 ...

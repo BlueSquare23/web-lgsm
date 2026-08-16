@@ -2,17 +2,19 @@ import os
 import json
 import socket
 import logging
+import subprocess
+
 
 class MultiUserRCPService():
     """
     The base class for the Mult-User JSON RPC service.
     """
 
-    def __init__(self, socket_path=None, request_handler=None, logger=logging.getLogger("rpc_sockd_service")):
+    def __init__(self, socket_path=None, request_handler=None, app_user=None, logger=logging.getLogger("rpc_sockd_service")):
         self.socket_path = socket_path
         self.request_handler = request_handler
+        self.app_user = app_user
         self.logger = logger
-
 
     def read_chunk(self, conn, size):
         """
@@ -116,6 +118,7 @@ class MultiUserRCPService():
 
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(socket_path)
+        subprocess.run(["/usr/bin/setfacl", "-m", f"u:{self.app_user}:rw", socket_path], check=True)
 
         sock.listen(128)
 

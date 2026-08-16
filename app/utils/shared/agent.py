@@ -1,6 +1,9 @@
+import os
+import json
 import getpass
 import logging
 import traceback
+import subprocess
 
 from shared import MultiUserRCPService
 
@@ -18,6 +21,10 @@ from .procedures import (
     find_cfg_paths,
     edit_cron,
 )
+
+PLAYBOOKS = '/usr/local/share/web-lgsm'
+with open(f"{PLAYBOOKS}/app_conf.json") as f:
+    APP_USER = json.load(f)["APP_USER"]
 
 # Function registry
 FUNCTIONS = {
@@ -60,8 +67,13 @@ def handle_request(payload):
 # Entry point
 if __name__ == "__main__":
     user = getpass.getuser()
-    socket_path = f"/run/web-lgsm/{user}.sock"
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    socket_path = os.path.join(runtime_dir, "web-lgsm-agent.sock")
+
+    # Let only the app user traverse into our own private runtime dir.
+    subprocess.run(["/usr/bin/setfacl", "-m", f"u:{APP_USER}:x", runtime_dir], check=True)
+
     logging.basicConfig(level=1)
 
-    MultiUserRCPService(None, handle_request, logging.getLogger("rpc_server")).serve(socket_path)
+    MultiUserRCPService(None, handle_request, APP_USER, logging.getLogger("rpc_server")).serve(socket_path)
 

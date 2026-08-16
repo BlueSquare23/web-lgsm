@@ -96,30 +96,28 @@ response message.
 
 ### Socket Dir Permissions & ACLs
 
-The socket dir `/run/web-lgsm` is setup with some custom permission and facls
-to ensure exclusive two way communication between the main app user and target
-game server user and to prevent other game server users from reading and
-writing to each others sockets.
+Each agent's socket lives inside that game server user's own
+`$XDG_RUNTIME_DIR` (i.e. `/run/user/<uid>`), which systemd-logind already
+creates and keeps `0700`-owned by that user alone as part of the
+`loginctl enable-linger` + `systemctl --user` setup described above. 
 
-Specifically, `/run/web-lgsm` dir is owned by `root:<app-user>` with the SGID
-bit set, so socket files created within it are owned by the main app user's
-primary group automatically. It also has the sticky bit set on it so other game
-server users can't delete each others socket files. And lastly, `rwx` facls are
-set on the dir to give each game server user the ability to create files within
-it.
+No other unprivileged user (game server or otherwise) can even traverse into
+another user's runtime dir.
 
-```shell
-ls -lah /run/web-lgsm/
-total 0
-drwxrwsr-t+  2 root         blue  100 Aug  1 21:11 .
-drwxr-xr-x  34 root         root 1.1K Aug  3 09:20 ..
-srwxrwxr-x   1 bf1942server blue    0 Jul 31 23:39 bf1942server.sock
-srwxrwxr-x   1 mcserver     blue    0 Aug  1 21:11 mcserver.sock
-srwxrwxr-x   1 mtaserver    blue    0 Jul 31 23:39 mtaserver.sock
-```
+To allow the web-lgsm's main app user access to the `$XDG_RUNTIME_DIR`, acls
+with `--x` are set on the directory for the main app user.
 
-Its done this way because the individual RPC servers (aka `agent.py`) create
-their socket files within `/run/web-lsgm` whenever they're started.
+1. On startup, before binding, the agent facls its own runtime dir to give
+   the app user execute-only (traverse) access:
+   `setfacl -m u:<app-user>:x $XDG_RUNTIME_DIR`
+2. After binding the socket, the agent facls the socket file itself to give
+   the app user read/write (connect) access:
+   `setfacl -m u:<app-user>:rw $XDG_RUNTIME_DIR/web-lgsm-agent.sock`
+
+Both are `setfacl` calls the agent makes on paths it already owns, so no root
+or sudo is required (the same trick the `copy_tmp` procedure uses). Because
+this happens on every agent start rather than once at install time, it's
+self-healing across reboots and daemon restarts.
 
 ### Why One Class for Server & Client?
 

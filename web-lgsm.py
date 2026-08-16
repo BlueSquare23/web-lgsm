@@ -81,6 +81,7 @@ if os.getenv("VIRTUAL_ENV") is None:
 
 
 # Continue imports once we know we're in a venv.
+import pwd
 import json
 import stat
 import time
@@ -142,16 +143,18 @@ def check_status():
 
 
 def check_socket(username, base="/run/web-lgsm"):
-    try:
-        path = os.path.join(base, username)
-        st = os.stat(path)
-        is_sock = stat.S_ISSOCK(st.st_mode)
-        owner_ok = (os.stat(path).st_uid == 0) and (os.stat(path).st_gid == os.getgid())
-        facl_out = subprocess.run(["getfacl", "-p", path], capture_output=True, text=True).stdout
-        acl_ok = f"user:{username}:rwx" in facl_out
-        return is_sock and owner_ok and acl_ok
-    except:
-        return False
+  def check_socket(username):
+      try:
+          uid = pwd.getpwnam(username).pw_uid
+          path = f"/run/user/{uid}/web-lgsm-agent.sock"
+          st = os.stat(path)
+          is_sock = stat.S_ISSOCK(st.st_mode)
+          owner_ok = st.st_uid == uid
+          facl_out = subprocess.run(["getfacl", "-p", path], capture_output=True, text=True).stdout
+          acl_ok = f"user:{APP_USER}:rw" in facl_out
+          return is_sock and owner_ok and acl_ok
+      except:
+          return False
 
 
 def pre_flight_checks():

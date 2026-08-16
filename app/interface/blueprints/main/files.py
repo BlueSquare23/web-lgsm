@@ -121,6 +121,10 @@ def files():
             flash("Server not found", category="error")
             return redirect(url_for("main.files"))
 
+        if not check_user_access(current_user.id, "files_edit", server_id):
+            flash("Your user does not have access to this game server", category="error")
+            return redirect(url_for("main.files"))
+
         if server.install_type == 'remote' or server.install_type == 'docker':
             flash(f"File manager doesn't support {server.install_type} game servers yet...", category="error")
             return redirect(url_for("main.files"))

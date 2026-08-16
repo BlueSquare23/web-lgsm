@@ -19,12 +19,11 @@ class MultiUserRPCServerManager:
     Start per user rpc servers via systemd service at app startup. Restarts them on demand.
     """
 
-    def __init__(self, logger=logging.getLogger(__name__), game_server_repo=SqlAlchemyGameServerRepository(), executor=CommandExecutor(), client=MultiUserRPCClient(), socket_dir="/run/web-lgsm", module_dir='/opt/web-lgsm/utils'):
+    def __init__(self, logger=logging.getLogger(__name__), game_server_repo=SqlAlchemyGameServerRepository(), executor=CommandExecutor(), client=MultiUserRPCClient(), module_dir='/opt/web-lgsm/utils'):
         self.logger = logger
         self.game_server_repo = game_server_repo
         self.executor = executor
         self.client = client
-        self.socket_dir = os.path.abspath(socket_dir)
         self.module_dir = os.path.abspath(module_dir)
 
     def _manage(self, user, verb):

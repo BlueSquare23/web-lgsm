@@ -181,21 +181,6 @@ def post_install_cfg_fix(install_path):
     print("Configuration file common.cgf updated!")
 
 
-def setup_socket_dir(username):
-    """
-    Sets up socket dir and add acl for user.
-    """
-    cmd = [SETFACL, '-m', f'u:{username}:rwx', '/run/web-lgsm/']
-
-    if not O["dry"]:
-        path = "/run/web-lgsm"
-        os.makedirs(path, exist_ok=True)
-        shutil.chown(path, user="root", group=APP_USER)
-        os.chmod(path, 0o1775)
-        os.chmod(path, os.stat(path).st_mode | stat.S_ISGID)
-        run_cmd(cmd)
-
-
 def run_install_new_game_server(server_id):
     """
     Wraps the invocation of the install_new_game_server.yml playbook
@@ -367,8 +352,6 @@ def run_add_sudoers(username):
     """
     Adds the sudoers rule for the supplied username.
     """
-    setup_socket_dir(username)
-
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     add_user_sudoers_rules_playbook_path = os.path.join(
         PLAYBOOKS, "playbooks/add_user_sudoers_rules.yml"

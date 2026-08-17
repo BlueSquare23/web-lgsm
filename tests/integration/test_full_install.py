@@ -104,6 +104,8 @@ def dump_start_diagnostics(server_id):
         ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{pwd.getpwnam(username).pw_uid}/"]),
         ("processes", ["ps", "auxwww"]),
         ("getfacl", ["getfacl", f"/run/user/{pwd.getpwnam(username).pw_uid}"]),
+        ("agent status", as_user + [f"XDG_RUNTIME_DIR=/run/user/{pwd.getpwnam(username).pw_uid}", "systemctl", "--user", "status", "web-lgsm-agent.service"]),
+        ("journalctl", as_user + [f"XDG_RUNTIME_DIR=/run/user/{pwd.getpwnam(username).pw_uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
     ]
 
     print("######################## START DIAGNOSTICS")

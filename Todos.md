@@ -483,6 +483,12 @@ other::r-x
   - SGID on dir ensures new socket files are created group web-app-user
   - ACLs ensure other users can read and write to the directory
 
+* [x] **Replace /run/web-lgsm with /run/user/<uid> (aka $XDG_RUNTIME_DIR)**
+  - The above was a good first draft, but keeping the sockets all in one shared
+    dir introduces security issues.
+  - Instead switch things to utilize `$XDG_RUNTIME_DIR` since we're already
+    setting per user systemd services.
+
 * [x] **Add manual reset to rpc servers to settings page**
   - I've already had a few times when I've needed to reset them manually.
     Restarting the web app works, but no reason to make users do that when we

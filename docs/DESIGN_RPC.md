@@ -36,19 +36,20 @@ service at add/install time. This acts as the _RPC Server_ ready to receive
 requests to run individual procedures.
 
 ```
-mcserver@wopaguz:~$ systemctl --user status web-lgsm-agent
-● web-lgsm-agent.service - Web-LGSM User Module Agent
+mcserver@wopaguz:~$ systemctl --user status web-lgsm-agent.service
+● web-lgsm-agent.service - Web-LGSM Multi User RPC Server Agent
      Loaded: loaded (/home/mcserver/.config/systemd/user/web-lgsm-agent.service; enabled; vendor preset: enabled)
-     Active: active (running) since Sat 2026-08-01 21:11:50 EDT; 1 day 10h ago
-   Main PID: 539052 (python3)
+     Active: active (running) since Mon 2026-08-17 02:37:45 EDT; 4s ago
+   Main PID: 1287157 (python3)
       Tasks: 1 (limit: 2216)
-     Memory: 8.7M
-        CPU: 96ms
-     CGroup: /user.slice/user-1017.slice/user@1017.service/app.slice/web-lgsm-agent.service
-             └─539052 /opt/web-lgsm/bin/python3 -m shared.agent
+     Memory: 7.9M
+        CPU: 92ms
+     CGroup: /user.slice/user-1020.slice/user@1020.service/app.slice/web-lgsm-agent.service
+             └─1287157 /opt/web-lgsm/bin/python3 -m shared.agent
 
-Aug 01 21:11:50 wopaguz.com systemd[955]: Started Web-LGSM User Module Agent.
-Aug 01 21:11:50 wopaguz.com python3[539052]: INFO:rpc_server:Listening on: /run/web-lgsm/mcserver.sock
+Aug 17 02:37:45 wopaguz.com systemd[1072902]: Started Web-LGSM Multi User RPC Server Agent.
+Aug 17 02:37:45 wopaguz.com python3[1287157]: INFO:rpc_server:Listening on: /run/user/1020/web-lgsm-agent.sock
+
 ```
 
 This systemd service will also be setup by the `web-lgsm.py` script during
@@ -185,8 +186,7 @@ RPC server is running before starting the main app pid. This is useful because
 the contents of `/run` are tmpfs and get cleared out on reboots.
 
 Removing a game server will delete its files (if `remove_files = yes`),
-cleaning up the systemd service for that game server user. And the
-`uninstall.sh` script will cleanup the `/run/web-lgsm` dir.
+cleaning up the systemd service for that game server user.
 
 ## Sources
 

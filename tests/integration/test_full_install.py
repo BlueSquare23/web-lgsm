@@ -102,7 +102,8 @@ def dump_start_diagnostics(server_id):
         ("lgsm/data dir", as_user + ["ls", "-la", f"{install_path}/lgsm/data/"]),
         ("tmux sessions (default socket)", as_user + ["tmux", "ls"]),
         ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{pwd.getpwnam(username).pw_uid}/"]),
-        ("processes", ["ps", "aux"]),
+        ("processes", ["ps", "auxwww"]),
+        ("getfacl", ["getfacl", f"/run/user/{pwd.getpwnam(username).pw_uid}"]),
     ]
 
     print("######################## START DIAGNOSTICS")
@@ -141,7 +142,7 @@ def game_server_start_stop(client, server_id):
     csrf_token = get_csrf_token(response)
     print(csrf_token)
 
-    time.sleep(10)
+    time.sleep(5)
 
     # Test starting the server.
     response = client.post(
@@ -164,7 +165,7 @@ def game_server_start_stop(client, server_id):
     print(response.get_data(as_text=True))
 
     # Keep checking status till timeout.
-    timeout = 90
+    timeout = 60
     runtime = 0
     while True:
         response = client.get(f"/api/server-status/{server_id}")
@@ -193,6 +194,10 @@ def game_server_start_stop(client, server_id):
     resp_dict = response.json
     print(resp_dict)
     assert "status" in resp_dict
+
+    if not resp_dict["status"]:
+        dump_start_diagnostics(server_id)
+
     assert resp_dict["status"] == True
 
     # Enable the send_cmd setting.

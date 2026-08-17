@@ -142,19 +142,18 @@ def check_status():
         print(" [*] Server Not Running.")
 
 
-def check_socket(username, base="/run/web-lgsm"):
-  def check_socket(username):
-      try:
-          uid = pwd.getpwnam(username).pw_uid
-          path = f"/run/user/{uid}/web-lgsm-agent.sock"
-          st = os.stat(path)
-          is_sock = stat.S_ISSOCK(st.st_mode)
-          owner_ok = st.st_uid == uid
-          facl_out = subprocess.run(["getfacl", "-p", path], capture_output=True, text=True).stdout
-          acl_ok = f"user:{APP_USER}:rw" in facl_out
-          return is_sock and owner_ok and acl_ok
-      except:
-          return False
+def check_socket(username):
+    try:
+        uid = pwd.getpwnam(username).pw_uid
+        path = f"/run/user/{uid}/web-lgsm-agent.sock"
+        st = os.stat(path)
+        is_sock = stat.S_ISSOCK(st.st_mode)
+        owner_ok = st.st_uid == uid
+        facl_out = subprocess.run(["getfacl", "-p", path], capture_output=True, text=True).stdout
+        acl_ok = f"user:{APP_USER}:rw" in facl_out
+        return is_sock and owner_ok and acl_ok
+    except:
+        return False
 
 
 def pre_flight_checks():

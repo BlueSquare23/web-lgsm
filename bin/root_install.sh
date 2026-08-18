@@ -196,8 +196,8 @@ cp -r playbooks/* $PLAYBOOKS_PATH
 mv $PLAYBOOKS_PATH/ansible_connector.py $CONNECTOR_PATH
 
 # Hardcode app user into accepted_users validation list and web_lgsm_user ansible vars files.
-echo "  - $APP_USER" | tee -a "$PLAYBOOK_PATH/vars/accepted_usernames.yml" >/dev/null
-echo "web_lgsm_user: $APP_USER" | tee "$PLAYBOOK_PATH/vars/web_lgsm_user.yml" >/dev/null
+echo "  - $APP_USER" | tee -a "$PLAYBOOKS_PATH/vars/accepted_usernames.yml" >/dev/null
+echo "web_lgsm_user: $APP_USER" | tee "$PLAYBOOKS_PATH/vars/web_lgsm_user.yml" >/dev/null
 
 echo -e "${GREEN}####### Setting up Share Modules Dir...${RESET}"
 

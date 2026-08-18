@@ -90,12 +90,6 @@ EOF
         sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
 
-    echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"
-    cd $SCRIPTPATH/app/interface/static/js
-    npm install @xterm/xterm
-    npm install --save @xterm/addon-fit
-    cd $SCRIPTPATH
-
     echo -e "${GREEN}####### Project Setup & Installation Complete!!!${RESET}"
     echo -e "${GREEN}Run the \`web-lgsm.py\` script to start the server.${RESET}"
 }

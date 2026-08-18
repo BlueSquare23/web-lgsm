@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Add bundled JS to repo instead of installing npm and node modules at install time.
 - Flesh out JSON RPC service for running code as alt users.
 - Refactor form classes into one class per file for better developer ergonomics.
 - Replace old hardcoded file edit page with new file manager.

@@ -4,8 +4,6 @@ procps
 tmux
 wget
 python3-venv
-nodejs
-npm
 jq
 sqlite3
 acl

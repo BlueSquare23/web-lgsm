@@ -102,6 +102,19 @@ patterns used in this project.
 - Generally I'm following [Google's Python3 styleguide](https://google.github.io/styleguide/pyguide.html).
 - Ensure your code is well commented, documented, tested.
 
+## Front-End Vendor Bundle
+
+- `app/interface/static/js/vendor/` (the bundled/minified xterm.js + addon-fit
+  the app actually serves) is checked into git and generated at build time,
+  not install time. End-user installs never need Node/npm.
+- If you change `app/interface/static/js/package.json` (e.g. bump the xterm
+  version) or `src/xterm-entry.js`, rebuild the bundle and commit the result:
+  ```bash
+  cd app/interface/static/js
+  npm install
+  npm run build
+  ```
+
 ## Reporting Issues
 
 - If you find a bug or have a suggestion for improvement, please open an issue

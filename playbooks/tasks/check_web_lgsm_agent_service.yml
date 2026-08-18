@@ -8,6 +8,10 @@
     agent_user_uid: "{{ ansible_facts.getent_passwd[username][1] }}"
     agent_user_home: "{{ ansible_facts.getent_passwd[username][4] }}"
 
+- name: DEBUG print resolved uid/home for {{ username }}
+  ansible.builtin.debug:
+    msg: "username={{ username }} agent_user_uid={{ agent_user_uid }} agent_user_home={{ agent_user_home }} raw_getent={{ ansible_facts.getent_passwd[username] }}"
+
 - name: Check status of web-lgsm-agent systemd user service for {{ username }}
   ansible.builtin.systemd_service:
     name: web-lgsm-agent.service

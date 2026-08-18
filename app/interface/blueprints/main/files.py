@@ -1,8 +1,6 @@
 import os
 import json
 
-from urllib.parse import quote
-
 from flask_login import login_required, current_user
 from flask import request, render_template, current_app, redirect, url_for, flash, send_file
 from werkzeug.utils import secure_filename
@@ -137,9 +135,8 @@ def files():
         elif not is_safe_path(server, path):
             current_app.logger.debug(log_wrap("path", path))
             current_app.logger.debug(log_wrap("is_safe_path", False))
-            flash("Cannot go above game server user's home dir!", category="error")
-            encoded_url = quote(f"/home/{server.username}", safe='')
-            return redirect(url_for("main.files", server_id=server_id, path=encoded_url))
+            flash("Invalid path!", category="error")
+            return redirect(url_for("main.files", server_id=server_id))
 
         # At this point, server and path are guaranteed valid
         current_path = path

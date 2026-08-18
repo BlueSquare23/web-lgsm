@@ -1177,7 +1177,7 @@ def test_files_responses(db_session, client, authed_client, add_mock_server, tes
         check_response(response, error_msg, resp_code, "main.files")
 
         # Test go above user home dir.
-        error_msg = b"Cannot go above game server user&#39;s home dir!"
+        error_msg = b"Invalid path!"
         invalid_path = "/etc/passwd"
         response = client.get(
             f"/files?server_id={server_id}&path={invalid_path}",

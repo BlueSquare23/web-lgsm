@@ -110,7 +110,8 @@ def dump_start_diagnostics(server_id):
         ("processes", ["ps", "auxwww"]),
         ("getfacl", ["getfacl", f"/run/user/{uid}"]),
         ("agent status", as_user + [f"XDG_RUNTIME_DIR=/run/user/{uid}", "systemctl", "--user", "status", "web-lgsm-agent.service"]),
-        ("journalctl", as_user + [f"XDG_RUNTIME_DIR=/run/user/{uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
+        ("journalctl (as target user, may be bus-blocked)", as_user + [f"XDG_RUNTIME_DIR=/run/user/{uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
+        ("journalctl (as root, by uid)", ["sudo", "-n", "journalctl", f"_UID={uid}", "-b", "--no-pager", "-n", "200"]),
         ("runtime dir exists", as_user + ["ls", "-la", f"/run/user/{uid}/bus"]),
     ]
 

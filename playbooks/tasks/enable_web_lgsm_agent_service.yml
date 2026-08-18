@@ -4,9 +4,15 @@
   register: linger_output
   when: not agent_service_active
 
-- name: Print linger output 
+- name: Print linger output
   ansible.builtin.debug:
     var: linger_output
+
+- name: Wait for {{ username }}s systemd user bus to come up after enabling linger
+  ansible.builtin.wait_for:
+    path: "/run/user/{{ agent_user_uid }}/bus"
+    timeout: 30
+  when: not agent_service_active
 
 - name: Create systemd user directory for {{ username }}
   ansible.builtin.file:

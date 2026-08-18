@@ -12,7 +12,7 @@ import configparser
 
 from utils import *
 
-def full_game_server_install(client, username=getpass.getuser(), cancel=False):
+def full_game_server_install(client, username=getpass.getuser(), cancel=False, cleanup_ids=None):
     response = client.get("/install")
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
@@ -43,6 +43,9 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     time.sleep(5)
 
     server_id = get_server_id("Minecraft")
+
+    if cleanup_ids is not None:
+        cleanup_ids.append(server_id)
 
     if cancel:
         response = client.get(
@@ -98,14 +101,17 @@ def dump_start_diagnostics(server_id):
     if username != getpass.getuser():
         as_user = ["sudo", "-n", "-u", username]
 
+    uid = pwd.getpwnam(username).pw_uid
+
     checks = [
         ("lgsm/data dir", as_user + ["ls", "-la", f"{install_path}/lgsm/data/"]),
         ("tmux sessions (default socket)", as_user + ["tmux", "ls"]),
-        ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{pwd.getpwnam(username).pw_uid}/"]),
+        ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{uid}/"]),
         ("processes", ["ps", "auxwww"]),
-        ("getfacl", ["getfacl", f"/run/user/{pwd.getpwnam(username).pw_uid}"]),
-        ("agent status", as_user + [f"XDG_RUNTIME_DIR=/run/user/{pwd.getpwnam(username).pw_uid}", "systemctl", "--user", "status", "web-lgsm-agent.service"]),
-        ("journalctl", as_user + [f"XDG_RUNTIME_DIR=/run/user/{pwd.getpwnam(username).pw_uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
+        ("getfacl", ["getfacl", f"/run/user/{uid}"]),
+        ("agent status", as_user + [f"XDG_RUNTIME_DIR=/run/user/{uid}", "systemctl", "--user", "status", "web-lgsm-agent.service"]),
+        ("journalctl", as_user + [f"XDG_RUNTIME_DIR=/run/user/{uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
+        ("runtime dir exists", as_user + ["ls", "-la", f"/run/user/{uid}/bus"]),
     ]
 
     print("######################## START DIAGNOSTICS")
@@ -377,7 +383,7 @@ def console_output(client):
 
 
 @pytest.mark.integration
-def test_install_newuser(db_session, client, authed_client, test_vars):
+def test_install_newuser(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Test install as new user."""
     version = test_vars["version"]
 
@@ -415,7 +421,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','delete_user', True)
 
         # Test full install as new user.
-        full_game_server_install(client, username='mcserver')
+        full_game_server_install(client, username='mcserver', cleanup_ids=cleanup_installed_servers)
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -459,7 +465,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
 
 
 @pytest.mark.integration
-def test_install_sameuser(db_session, client, authed_client, test_vars):
+def test_install_sameuser(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Then test install as existing user."""
 
     # Skip same user install tests for docker. Containers force install new
@@ -502,7 +508,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','install_create_new_user', False)
 
         # Test full install as existing user.
-        full_game_server_install(client, username=getpass.getuser())
+        full_game_server_install(client, username=getpass.getuser(), cleanup_ids=cleanup_installed_servers)
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -514,7 +520,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
 
 
 @pytest.mark.integration
-def test_install_cancel(db_session, client, authed_client, test_vars):
+def test_install_cancel(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Tests starting and canceling a game server installation."""
 
     version = test_vars["version"]
@@ -525,7 +531,7 @@ def test_install_cancel(db_session, client, authed_client, test_vars):
     with client:
 
         # Test full install as existing user.
-        full_game_server_install(client, username='mcserver', cancel=True)
+        full_game_server_install(client, username='mcserver', cancel=True, cleanup_ids=cleanup_installed_servers)
 
         server_id = get_server_id("Minecraft")
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)

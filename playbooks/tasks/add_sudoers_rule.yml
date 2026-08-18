@@ -5,6 +5,7 @@
     host: "ALL"
     runas: "{{ username }}"
     nopassword: true
+    setenv: true
     commands: ALL
     state: present
   when: same_user is not defined or same_user == false

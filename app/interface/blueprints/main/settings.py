@@ -79,8 +79,8 @@ def settings():
     graphs_primary_pref = str(form.graphs_primary.data).lower()
     graphs_secondary_pref = str(form.graphs_secondary.data).lower()
     show_stats_pref = str(form.show_stats.data).lower()
-    purge_cache = str(form.purge_cache.data).lower()
-    reset_rpc = str(form.reset_rpc_servers.data).lower()
+    purge_cache = form.purge_cache.data
+    reset_rpc = form.reset_rpc_servers.data
     install_new_user_pref = str(form.install_new_user.data).lower()
     newline_ending_pref = str(form.newline_ending.data).lower()
     show_stderr_pref = str(form.show_stderr.data).lower()
@@ -96,14 +96,15 @@ def settings():
     current_app.logger.info(log_wrap("graphs_secondary_pref", graphs_secondary_pref))
     current_app.logger.info(log_wrap("show_stats_pref", show_stats_pref))
     current_app.logger.info(log_wrap("purge_cache", purge_cache))
+    current_app.logger.info(log_wrap("reset_rpc", reset_rpc))
     current_app.logger.info(log_wrap("install_new_user_pref", install_new_user_pref))
     current_app.logger.info(log_wrap("newline_ending_pref", newline_ending_pref))
     current_app.logger.info(log_wrap("show_stderr_pref", show_stderr_pref))
 
-    if purge_cache != None:
+    if purge_cache:
         cache.clear()
 
-    if reset_rpc != None:
+    if reset_rpc:
         start_rpc_servers()
 
     # Batch update config via context handler.

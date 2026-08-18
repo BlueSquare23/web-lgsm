@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fix bug on settings page that was clearing server side cache every settings submit.
+- Fix cancel buttons in modals submitting instead of canceling.
 - Fix delete jobs from db when deleting game server.
 - Remove extra scroll bars for terminal on install & controls pages.
 - Fix .replace calls to strip `:` chars from game server names

@@ -13,4 +13,5 @@ PATHS = {
     "crontab":"/usr/bin/crontab",
     "systemctl":"/usr/bin/systemctl",
     "setfacl":"/usr/bin/setfacl",
+    "env":"/usr/bin/env",
 }

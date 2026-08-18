@@ -37,6 +37,7 @@
       [Service]
       Type=simple
       Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
+      Environment="XDG_RUNTIME_DIR=%t"
       ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
       Restart=always
       WorkingDirectory=%h

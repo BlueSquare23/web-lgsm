@@ -41,7 +41,7 @@ class MultiUserRPCServerManager:
         cmd = [
             PATHS['sudo'],
             '-n', '-u', user,
-            f'XDG_RUNTIME_DIR=/run/user/{pwent.pw_uid}',
+            PATHS['env'], f'XDG_RUNTIME_DIR=/run/user/{pwent.pw_uid}',
             PATHS['systemctl'],
             '--user', verb, 'web-lgsm-agent'
         ]

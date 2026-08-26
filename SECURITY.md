@@ -7,7 +7,7 @@ security fixes.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.9.3   | :white_check_mark: |
+| 1.10.0  | :white_check_mark: |
 | 1.9.2   | :white_check_mark: |
 | < 1.9.1 | :x:                |
 

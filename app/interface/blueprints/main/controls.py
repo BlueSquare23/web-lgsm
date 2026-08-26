@@ -10,12 +10,10 @@ from flask import (
 )
 
 from app.utils import *
-from app.interface.forms.validation_errors import validation_errors
-from app.interface.forms.valid_command import valid_command
-from app.interface.forms.views import ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
+from app.interface.forms import validation_errors, ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app import cache
 
-from app.container import container
+from app.interface.use_cases import get_template_config, query_game_server, get_game_server, check_user_access, check_sudoers_access, add_sudoers_rule, list_controls, getboolean_config, find_cfg_paths, get_game_server_power_state, log_audit_event, run_command, list_controls
 
 from . import main_bp
 
@@ -27,7 +25,7 @@ USER = getpass.getuser()
 @main_bp.route("/controls", methods=["GET", "POST"])
 @login_required
 def controls():
-    config = container.get_template_config().execute()
+    config = get_template_config()
 
     # Initialize forms
     send_cmd_form = SendCommandForm()
@@ -40,7 +38,7 @@ def controls():
         if server_name:
             current_app.logger.info(log_wrap("server_name", server_name))
             game_server_data = {'install_name': server_name}
-            server = container.query_game_server().execute(**game_server_data)
+            server = query_game_server(**game_server_data)
             current_app.logger.info(log_wrap("server", server))
             if server == None:
                 flash("Invalid game server name!", category="error")
@@ -55,23 +53,24 @@ def controls():
             return redirect(url_for("main.home"))
 
         server_id = request.args.get("server_id")
-        server = container.get_game_server().execute(server_id)
+        server = get_game_server(server_id)
         current_app.logger.info(log_wrap("server_id", server_id))
         jobs_edit = True if server.install_type == 'local' else False
 
         # Check if user has permissions to game server for controls route.
-        if not container.check_user_access().execute(current_user.id, "controls", server_id):
+        if not check_user_access(current_user.id, "controls", server_id):
             flash("Your user does not have access to this server", category="error")
             return redirect(url_for("main.home"))
 
+        # TODO: REPLACE THIS WHEN I REPLACE THIS IN ADD
         # Auto add sudoers rule for server if it doesn't have one, for backwards compat.
         if server.install_type == 'local' and server.username != USER:
-            if not container.check_sudoers_access().execute(server.username):
-                if not container.add_sudoers_rule().execute(server.username):
+            if not check_sudoers_access(server.username):
+                if not add_sudoers_rule(server.username):
                     flash(f"Please add following rule to give web-lgsm user access to server:\n/etc/sudoers.d/{USER}-{server.username}\n{USER} ALL=({server.username}) NOPASSWD: ALL")
 
         # Pull in controls list from controls.json file.
-        controls_list = container.list_controls().execute(server.script_name, current_user)
+        controls_list = list_controls(server.script_name, current_user)
         current_app.logger.debug(controls_list)
 
         if server.install_type == "remote":
@@ -87,12 +86,12 @@ def controls():
         cache_key = f"cfg_paths_{server_id}"
         cfg_paths = cache.get(cache_key)
 
-        if not container.getboolean_config().execute("settings","cfg_editor"):
+        if not getboolean_config("settings","file_manager"):
             cfg_paths = []
 
         elif cfg_paths is None:  # Not in cache.
             current_app.logger.info("Getting cfg_paths")
-            cfg_paths = container.find_cfg_paths().execute(server)
+            cfg_paths = find_cfg_paths(server)
 
             # Wtf, I don't remember this return "failed" but whatever..
             if cfg_paths == "failed":
@@ -101,9 +100,12 @@ def controls():
 
             cache.set(cache_key, cfg_paths, timeout=1800)
 
-        cfg_paths = container.find_cfg_paths().execute(server)
+        cfg_paths = find_cfg_paths(server)
         current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
         current_app.logger.info(log_wrap("controls_list", controls_list))
+
+        if 'success' in cfg_paths and not cfg_paths['success']:
+            cfg_paths = dict()            
 
         return render_template(
             "controls.html",
@@ -141,7 +143,7 @@ def controls():
         flash("Invalid form submission!", category="error")
         return redirect(url_for("main.controls", server_id=server_id))
 
-    server = container.get_game_server().execute(server_id)
+    server = get_game_server(server_id)
     current_app.logger.info(log_wrap("server_id", server_id))
 
     # TODO: Eventually find a way to move this into ServerControlForm class
@@ -154,21 +156,21 @@ def controls():
         return redirect(url_for("main.controls", server_id=server_id))
 
     # Check if user has permissions to game server for controls route.
-    if not container.check_user_access().execute(current_user.id, "controls", server_id):
+    if not check_user_access(current_user.id, "controls", server_id):
         flash("Your user does not have access to this server", category="error")
         return redirect(url_for("main.home"))
 
-    # If cfg editor is disabled in the main.conf.
-    if not config.getboolean('settings',"cfg_editor"):
+    # If file manager is disabled in the main.conf.
+    if not config.getboolean('settings',"file_manager"):
         cfg_paths = []
     else:
         current_app.logger.info("Getting cfg_paths")
-        cfg_paths = container.find_cfg_paths().execute(server)
+        cfg_paths = find_cfg_paths(server)
 
     current_app.logger.info(log_wrap("cfg_paths", cfg_paths))
 
     # Pull in controls list from controls.json file.
-    controls_list = container.list_controls().execute(server.script_name, current_user)
+    controls_list = list_controls(server.script_name, current_user)
 
     if not controls_list:
         flash("Error loading controls.json file!", category="error")
@@ -178,7 +180,7 @@ def controls():
 
     # Console option, use tmux capture-pane to get output.
     if short_ctrl == "c":
-        active = container.get_game_server_power_state().execute(server)
+        active = get_game_server_power_state(server)
         if not active:
             flash("Server is Off! No Console Output!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
@@ -208,7 +210,7 @@ def controls():
             flash("Send command button disabled!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
 
-        active = container.get_game_server_power_state().execute(server)
+        active = get_game_server_power_state(server)
         if not active:
             flash("Server is Off! Cannot send commands to console!", category="error")
             return redirect(url_for("main.controls", server_id=server_id))
@@ -216,13 +218,13 @@ def controls():
         cmd = [script_path, short_ctrl, send_cmd]
 
         flash("Sending command to console")
-        container.log_audit_event().execute(current_user.id,  f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
+        log_audit_event(current_user.id,  f"User '{current_user.username}', sent command '{send_cmd}' to '{server.install_name}'")
 
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=container.run_command().execute,
+            target=run_command,
             args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="ConsoleCMD",
@@ -239,13 +241,13 @@ def controls():
                 long_ctrl = control.long_ctrl
                 break
 
-        container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
+        log_audit_event(current_user.id, f"User '{current_user.username}', ran '{long_ctrl}' on '{server.install_name}'")
 
         if server.install_type == "docker":
             cmd = docker_cmd_build(server) + cmd
 
         daemon = Thread(
-            target=container.run_command().execute,
+            target=run_command,
             args=(cmd, server, server.id, current_app.app_context()),
             daemon=True,
             name="Command",
@@ -253,4 +255,30 @@ def controls():
         daemon.start()
         return redirect(url_for("main.controls", server_id=server_id))
 
+# TODO/NOTE: This can stay for now, but its on the chopping block. This
+# validation should now be handled by flask-wtf/wtforms classes. Once I get
+# this fixed up in the controls route, this can go.
+def valid_command(ctrl, server, current_user):
+    """
+    Validates short commands from controls route form for game server. Some
+    game servers may have specific game server command exemptions. This
+    function basically just checks if supplied cmd is in list of accepted cmds
+    from get_controls().
+
+    Args:
+        ctrl (str): Short ctrl string to validate.
+        server (GameServer): Game server to check command against.
+        current_user (LocalProxy): Currently logged in flask user object.
+
+    Returns:
+        bool: True if cmd is valid for user & game server, False otherwise.
+    """
+
+    controls = list_controls(server, current_user)
+    for control in controls:
+        # Aka is valid control.
+        if ctrl == control.short_ctrl:
+            return True
+
+    return False
 

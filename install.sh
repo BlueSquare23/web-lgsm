@@ -74,10 +74,11 @@ function run_install() {
         sudo mkdir -p $PLAYBOOKS_PATH
         
         # Build install conf.
-        cat << EOF | sudo tee "$SHARE_PATH/install_conf.json" >/dev/null
+        cat << EOF | sudo tee "$SHARE_PATH/app_conf.json" >/dev/null
 {
-  "USERNAME": "$USER",
-  "APP_PATH": "$SCRIPTPATH"
+  "APP_USER": "$USER",
+  "APP_PATH": "$SCRIPTPATH",
+  "APP_GROUP": "$(id -gn)"
 }
 EOF
         # Enable debug on root_install.sh
@@ -88,20 +89,6 @@ EOF
         sudo chmod 750 "$VENV_PATH/bin/root_install.sh" "$VENV_PATH/bin/uninstall.sh"  "$VENV_PATH/bin/update.py"
         sudo $VENV_PATH/bin/root_install.sh "$debug"
     fi
-
-    echo -e "${GREEN}####### Installing NPM Requirements...${RESET}"
-    cd $SCRIPTPATH/app/interface/static/js
-    npm install @xterm/xterm
-    npm install --save @xterm/addon-fit
-    cd $SCRIPTPATH
-
-    # Finally setup random key.
-    random_key=$(echo $RANDOM | md5sum | head -c 20)
-    echo "SECRET_KEY=\"$random_key\"" > .secret
-    chmod 600 .secret
-
-    echo -e "${GREEN}####### Updating Database...${RESET}"
-    /opt/web-lgsm/bin/flask --app app:create_app db upgrade
 
     echo -e "${GREEN}####### Project Setup & Installation Complete!!!${RESET}"
     echo -e "${GREEN}Run the \`web-lgsm.py\` script to start the server.${RESET}"

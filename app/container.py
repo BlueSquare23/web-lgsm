@@ -86,7 +86,24 @@ from app.application.use_cases.config.batch_update_config import BatchUpdateConf
 # Files
 from app.infrastructure.system.file_system.file_manager import FileManager
 from app.application.use_cases.file_system.read_file import ReadFile
+from app.application.use_cases.file_system.cleanup_download import CleanupDownload
 from app.application.use_cases.file_system.write_file import WriteFile 
+from app.application.use_cases.file_system.delete_file import DeleteFile 
+from app.application.use_cases.file_system.rename_file import RenameFile 
+
+# Dirs 
+from app.infrastructure.system.file_system.dir_manager import DirectoryManager
+from app.application.use_cases.file_system.list_dir import ListDir
+from app.application.use_cases.file_system.is_dir import IsDir
+
+# RPC Service
+from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
+from app.application.use_cases.rpc_service.start_daemons import StartRPCServers
+from app.application.use_cases.rpc_service.check_server import CheckRPCServer
+
+# Validators
+from app.application.use_cases.validators.filename_length import FilenameLength
+from app.application.use_cases.validators.safe_path import IsSafePath
 
 # Controls
 from app.infrastructure.system.repositories.controls_repo import ControlsRepository
@@ -155,6 +172,12 @@ class Container:
 
     def file_manager(self):
         return FileManager()
+
+    def dir_manager(self):
+        return DirectoryManager()
+
+    def rpc_server_manager(self):
+        return MultiUserRPCServerManager()
 
     def sudoers_service(self):
         return SudoersService()
@@ -391,16 +414,65 @@ class Container:
             config_manager=self.config_manager()
         )
 
-    ## File System
+    ## Files
 
     def read_file(self):
         return ReadFile(
             file_manager=self.file_manager()
         )
 
+    def cleanup_download_file(self):
+        return CleanupDownload(
+            file_manager=self.file_manager()
+        )
+
     def write_file(self):
         return WriteFile(
             file_manager=self.file_manager()
+        )
+
+    def delete_file(self):
+        return DeleteFile(
+            file_manager=self.file_manager()
+        )
+
+    def rename_file(self):
+        return RenameFile(
+            file_manager=self.file_manager()
+        )
+
+    ## Dirs
+
+    def list_dir(self):
+        return ListDir(
+            dir_manager=self.dir_manager()
+        )
+
+    def is_dir(self):
+        return IsDir(
+            dir_manager=self.dir_manager()
+        )
+
+    ## RPC Service
+
+    def start_rpc_servers(self):
+        return StartRPCServers(
+            rpc_server_manager=self.rpc_server_manager()
+        )
+
+    def check_rpc_server(self):
+        return CheckRPCServer(
+            rpc_server_manager=self.rpc_server_manager()
+        )
+
+    ## Validators
+
+    def is_filename_length_valid(self):
+        return FilenameLength()
+
+    def is_safe_path(self):
+        return IsSafePath(
+            dir_manager=self.dir_manager()
         )
 
     ## Controls

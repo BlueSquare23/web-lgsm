@@ -8,7 +8,7 @@ from app.utils import *
 
 from . import api
 
-from app.container import container
+from app.interface.use_cases import list_processes, check_user_access, get_process
 
 ######### API CMD Output #########
 
@@ -17,22 +17,21 @@ class CmdOutput(Resource):
     def get(self, server_id):
 
         # Can't do anything if we don't have proc info vessel stored.
-        if server_id not in container.list_processes().execute():
+        if server_id not in list_processes():
             resp_dict = {"Error": "eer never heard of em"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=200, mimetype="application/json"
             )
             return response
 
-        if not container.check_user_access().execute(current_user.id, "cmd-output", server_id):
+        if not check_user_access(current_user.id, "cmd-output", server_id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
             )
             return response
 
-        proc_info = container.get_process().execute(server_id, create=True)
-
+        proc_info = get_process(server_id, create=True)
 
         # Returns json for used by ajax code on /controls route.
         response = Response(proc_info.toJSON(), status=200, mimetype="application/json")

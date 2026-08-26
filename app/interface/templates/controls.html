@@ -49,7 +49,11 @@
           <h5 class="mb-0 text-light">Console Output</h5>
         </div>
         <div class="card-body bg-dark border border-white rounded-3 p-0 m-3">
-          <div id="terminal" style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: auto;" class="rounded-3 p-3" id="output-terminal"></div>
+          <div id="terminal-wrapper"
+               style="height: {{ _config.get('aesthetic','terminal_height') | int * 4 }}0px; resize: vertical; overflow: hidden;"
+               class="rounded-3 p-3">
+            <div id="terminal" style="width: 100%; height: 100%;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -80,7 +84,7 @@
     </form>
   </div>
 
-  {% if _config.getboolean('settings', 'cfg_editor', False) %}
+  {% if _config.getboolean('settings', 'file_manager', False) %}
     {% if user.role == 'admin' or 'edit' in user_perms.routes %}
       {% if cfg_paths|length %}
         <!-- Configuration Files Section -->
@@ -96,8 +100,8 @@
                 <div class="d-flex flex-wrap gap-2">
                   {% for cfg_path in cfg_paths %}
                     {% set cfg_file = cfg_path.split('/')[-1] %}
-                    <a href="/edit?server_id={{server_id}}&cfg_path={{cfg_path}}" class="btn btn-outline-warning">
-                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file }}
+                    <a href="/files?server_id={{server_id}}&path={{cfg_path | urlencode }}" class="btn btn-outline-warning">
+                      <i class="bi bi-pencil-square me-1"></i>{{ cfg_file | urlencode }}
                     </a>
                   {% endfor %}
                 </div>

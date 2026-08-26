@@ -1,12 +1,12 @@
 from flask_login import UserMixin
 
-from app.container import container
+from app.interface.use_cases import get_user
 
 class AuthUser(UserMixin):
     def __init__(self, user_id):
         self.id = user_id
 
-        user = container.get_user().execute(user_id)
+        user = get_user(user_id)
         if not user:
             return
 

@@ -35,5 +35,7 @@
         - tasks/validate_username.yml
         - tasks/add_sudoers_rule.yml
         - tasks/fix_sudoers_rule.yml
+        - tasks/check_web_lgsm_agent_service.yml
+        - tasks/enable_web_lgsm_agent_service.yml
 
 ...

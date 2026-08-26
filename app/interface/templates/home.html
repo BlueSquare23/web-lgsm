@@ -252,50 +252,124 @@
       <div class="row g-3">
 
         {% if user.role == 'admin' or 'install' in parsed_json.routes %}
-        <div class="col-md-4">
-          <a href="/install" class="btn btn-outline-primary w-100">
-            Install New Server
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-cloud-download-fill fs-1 text-primary mb-3"></i>
+              <h5 class="text-light">Install New Server</h5>
+              <p class="text-white small">Deploy a new LGSM game server</p>
+              <a href="/install" class="btn btn-outline-primary w-100">
+                <i class="bi bi-cloud-download-fill me-1"></i>Install New Server
+              </a>
+            </div>
+          </div>
         </div>
         {% endif %}
 
         {% if user.role == 'admin' or 'add' in parsed_json.routes %}
-        <div class="col-md-4">
-          <a href="/add" class="btn btn-outline-secondary w-100">
-            Edit LGSM Installations
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-pencil-square fs-1 text-secondary mb-3"></i>
+              <h5 class="text-light">Add or Edit Installations</h5>
+              <p class="text-white small">Register an existing LGSM install or tweak its settings</p>
+              <a href="/add" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-pencil-square me-1"></i>Add or Edit LGSM Installations
+              </a>
+            </div>
+          </div>
         </div>
         {% endif %}
 
         {% if user.is_authenticated and user.role == 'admin' %}
-        <div class="col-md-4">
-          <a href="/edit_users" class="btn btn-outline-warning w-100">
-            Manage Users
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-people-fill fs-1 text-warning mb-3"></i>
+              <h5 class="text-light">Manage Users</h5>
+              <p class="text-white small">Add, edit, or remove user accounts</p>
+              <a href="/edit_users" class="btn btn-outline-warning w-100">
+                <i class="bi bi-people-fill me-1"></i>Manage Users
+              </a>
+            </div>
+          </div>
         </div>
         {% endif %}
 
         {% if user.role == 'admin' or 'jobs' in parsed_json.routes %}
-        <div class="col-md-4">
-          <a href="/jobs" class="btn btn-outline-success w-100">
-            Scheduled Jobs
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-calendar3 fs-1 text-success mb-3"></i>
+              <h5 class="text-light">Scheduled Jobs</h5>
+              <p class="text-white small">Automate backups, restarts, and updates</p>
+              <a href="/jobs" class="btn btn-outline-success w-100">
+                <i class="bi bi-calendar3 me-1"></i>Scheduled Jobs
+              </a>
+            </div>
+          </div>
         </div>
         {% endif %}
 
         {% if user.role == 'admin' or 'audit' in parsed_json.routes %}
-        <div class="col-md-4">
-          <a href="/audit" class="btn btn-outline-info w-100">
-            Audit Log
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-journal-text fs-1 text-info mb-3"></i>
+              <h5 class="text-light">Audit Log</h5>
+              <p class="text-white small">Review activity and security history</p>
+              <a href="/audit" class="btn btn-outline-info w-100">
+                <i class="bi bi-journal-text me-1"></i>Audit Log
+              </a>
+            </div>
+          </div>
         </div>
         {% endif %}
 
-        <div class="col-md-4">
-          <a href="/2fa_setup" class="btn btn-outline-light w-100">
-            Two-Factor Auth
-          </a>
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-shield-lock-fill fs-1 text-light mb-3"></i>
+              <h5 class="text-light">Two-Factor Auth</h5>
+              <p class="text-white small">Secure your account with 2FA</p>
+              <a href="/2fa_setup" class="btn btn-outline-light w-100">
+                <i class="bi bi-shield-lock-fill me-1"></i>Two-Factor Auth
+              </a>
+            </div>
+          </div>
         </div>
+
+        {% if _config.getboolean('settings','file_manager') %}
+          {% if user.role == 'admin' or 'files' in parsed_json.routes %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card bg-dark border-secondary h-100">
+              <div class="card-body text-center">
+                <i class="bi bi-folder2-open fs-1 text-danger mb-3"></i>
+                <h5 class="text-light">File Manager</h5>
+                <p class="text-white small">Browse and edit server files</p>
+                <a href="/files" class="btn btn-outline-danger w-100">
+                  <i class="bi bi-folder2-open me-1"></i>File Manager
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endif %}
+
+        {% if user.role == 'admin' or 'settings' in parsed_json.routes %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card bg-dark border-secondary h-100">
+            <div class="card-body text-center">
+              <i class="bi bi-gear-fill fs-1 text-primary mb-3"></i>
+              <h5 class="text-light">App Settings</h5>
+              <p class="text-white small">Configure appearance and application options</p>
+              <a href="/settings" class="btn btn-outline-primary w-100">
+                <i class="bi bi-gear-fill me-1"></i>App Settings
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
 
       </div>
 

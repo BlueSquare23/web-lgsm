@@ -5,7 +5,7 @@ project's root directory. This file contains the configurable parameters for
 this app. When the user updates something through the `/settings` page of the
 app its value is stored in the main.conf file. However, not all values in the
 `main.conf` are configurable through the settings page (for security reasons,
-see `cfg_editor`).
+see `file_manager`).
 
 Users can also copy the `main.conf` file to `main.conf.local` to create a
 version of the file that will not be touched by updates. If a `main.conf.local`
@@ -52,19 +52,16 @@ These settings control basic app behaviors.
   whenever a game server entry is removed from the web-lgsm.
   - Default: No (aka keep files on game server delete)
 
-* `cfg_editor`: Controls whether the game server cfg file editor is enabled
-  or disabled.
-  - Default: No (aka cfg file editor disabled)
-  - Warning: Enabling this feature has inherent security risks! Certain game
-    server cfgs may allow for arbitrary shell code to be inserted and run once
-    the game server is started. If you're going to enable this feature just be
-    sure to have a strong password, have SSL, and trust who you give web-lgsm
-    access too!
+* `file_manager`: Controls whether the file manager is enabled or disabled.
+  - Default: No (aka file manager disabled)
+  - Warning: Enabling this feature has inherent security risks! If you're going
+    to enable this feature just be sure to have a strong password, have SSL,
+    and trust who you give web-lgsm access too!
 
 * `send_cmd`: Controls if "Send command to running game server console" button
   on /controls page is enabled or disabled.
   - Default: No (aka send button is disabled)
-  - Warning: Similarly to the `cfg_editor` option, there are some risks
+  - Warning: Similarly to the `file_manager` option, there are some risks
     associated with enabling the `send_cmd` setting. Certain game server
     consoles may allow arbitray code execution. If you're going to enable this
     feature just be sure to have a strong password, have SSL, and trust who you

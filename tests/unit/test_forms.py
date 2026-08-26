@@ -2,7 +2,7 @@ import pytest
 import os
 from werkzeug.datastructures import MultiDict
 from app.interface.forms.auth import *
-from app.interface.forms.views import *
+from app.interface.forms.main import *
 from app.interface.forms.helpers import *
 
 from app.infrastructure.persistence.models.game_server_model import GameServerModel
@@ -114,8 +114,8 @@ def test_settings_form_valid(app):
         assert form.validate() is True
 
 
-# Test UploadTextForm with database validation
-def test_upload_text_form_valid(app, db_session):
+# Test UploadForm with database validation
+def test_upload_form_valid(app, db_session):
     # Create a test server in the database
     test_server = GameServerModel(
         install_type='local',
@@ -127,17 +127,26 @@ def test_upload_text_form_valid(app, db_session):
     db_session.session.add(test_server)
     db_session.session.commit()
 
+    from io import BytesIO
+    from werkzeug.datastructures import FileStorage, MultiDict
+
     form_data = get_form_data(
         app,
-        UploadTextForm,
+        UploadForm,
         server_id=str(test_server.id),
-        cfg_path="server.cfg",
-        file_contents="test content"
+        path="server.cfg",
     )
-    with app.test_request_context():
-        form = UploadTextForm(formdata=form_data, meta={'csrf': False})
-        assert form.validate() is True
 
+    form_data = MultiDict(form_data)
+    form_data['file'] = FileStorage(
+        stream=BytesIO(b"dummy config content"),
+        filename="server.cfg",
+        content_type="text/plain",
+    )
+
+    with app.test_request_context():
+        form = UploadForm(formdata=form_data, meta={'csrf': False})
+        assert form.validate() is True
 
 # Test custom validators with database
 def test_server_exists_validator(app, db_session):

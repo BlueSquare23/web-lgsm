@@ -50,4 +50,5 @@
         path: "/etc/sudoers.d/{{ web_lgsm_user }}-{{ username }}"
         state: absent
       when: same_user is not defined or same_user == false
+
 ...

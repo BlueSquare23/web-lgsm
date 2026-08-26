@@ -43,7 +43,7 @@ class SqlAlchemyCronRepository(CronRepository):
         """Convert job_id into Job entity"""
         model = CronModel.query.filter_by(id=job_id).first()
 
-        # If job doesn't exist, add it.
+        # If job doesn't exist, return None.
         if model == None:
             return None
 
@@ -69,8 +69,8 @@ class SqlAlchemyCronRepository(CronRepository):
         db.session.commit()
         return True
 
-    def list(self):
-        raise NotImplementedError
+    def list(self, server_id):
+        return CronModel.query.filter_by(server_id=server_id).all()
         # TODO: Eventually, we'll want to use the DB to fetch known added jobs,
         # and only depend on system cron for unknown (aka not added aka greyed
         # out jobs). But we're not there yet. Right now all list comes from

@@ -16,7 +16,8 @@ from flask import (
 
 from app.interface.forms.auth import SetupForm
 from app.interface.forms.validation_errors import validation_errors
-from app.container import container
+
+from app.interface.use_cases import list_users, edit_user, log_audit_event
 
 from app.interface.auth.auth_user import AuthUser
 
@@ -27,7 +28,7 @@ from . import auth_bp
 @auth_bp.route("/setup", methods=["GET", "POST"])
 def setup():
     # If already a user added, disable the setup route.
-    if container.list_users().execute():
+    if list_users():
         flash("User already added. Please sign in!", category="error")
         return redirect(url_for("auth.login"))
 
@@ -58,7 +59,7 @@ def setup():
         'otp_secret': None,
         'otp_setup': False,
     }
-    user_id = container.edit_user().execute(**new_user)
+    user_id = edit_user(**new_user)
     if not user_id:
         flash("Problem creating new user...", category="error")
         return redirect(url_for("auth.setup"))
@@ -68,7 +69,7 @@ def setup():
     four_weeks_delta = timedelta(days=28)
     auth_user = AuthUser(user_id)
     login_user(auth_user, remember=True, duration=four_weeks_delta)
-    container.log_audit_event().execute(new_user["id"],  f"New user '{username}' created")
+    log_audit_event(new_user["id"],  f"New user '{username}' created")
 
     if enable_otp:
         return redirect(url_for("auth.two_factor_setup"))

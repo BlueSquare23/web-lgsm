@@ -2,12 +2,14 @@ import os
 import sys
 import json
 import logging
-from flask import Flask
+from flask import Flask, request
 from pathlib import Path
 from dotenv import load_dotenv
 from logging.config import dictConfig
 from flask.logging import default_handler
 from flask_swagger_ui import get_swaggerui_blueprint
+
+from urllib.parse import quote_plus
 
 # Import extensions
 from .extensions import db, login_manager, migrate, cache
@@ -74,7 +76,8 @@ def setup_logging():
     )
 
     current_log_level = logging.getLogger().getEffectiveLevel()
-    print(f"Root logger level: {logging.getLevelName(current_log_level)}")
+    logger = logging.getLogger(__name__)
+    logger.info(f"Root logger level: {logging.getLevelName(current_log_level)}")
 
 def register_extensions(app):
     """Register Flask extensions with the app"""
@@ -126,6 +129,12 @@ def register_template_filters(app):
     def from_json_filter(s):
         return json.loads(s)
 
+    @app.template_filter("urlencode")
+    def urlencode_filter(s):
+        if s is None:
+            return ""
+        return quote_plus(s)
+
 # We're using the AuthUser wrapper to convert the domain user entity into an
 # auth user for flask login stuff.
 def register_user_loader():
@@ -149,6 +158,27 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+
+    # Request body size limit -- applies to everything by default.
+    app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
+
+    @app.before_request
+    def lift_content_length_limit_for_uploads():
+        # File uploads are streamed straight to disk in fixed-size chunks
+        # (see LocalFileInterface.write), so they're never fully buffered in
+        # memory. So there's no technical reason to cap them. Everything else
+        # still gets the default MAX_CONTENT_LENGTH above. mimetype comes
+        # from the Content-Type header, so this check happens before any
+        # body bytes are read/parsed.
+        if (
+            request.method == "POST"
+            and request.endpoint == "main.files"
+            and request.mimetype == "multipart/form-data"
+        ):
+            app.config["MAX_CONTENT_LENGTH"] = None
+        else:
+            app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB
+
 
     @app.after_request
     def add_security_headers(response):

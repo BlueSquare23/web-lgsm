@@ -21,9 +21,9 @@ class CronModel(db.Model):
     game_server = db.relationship('GameServerModel', backref='cron_model')
 
     def __repr__(self):
-        return f"<CronModel(id={self.id}, server_id='{self.server_id}', command='{self.command}', comment='{self.comment}', expression='{self.expression}', date_created='{self.date_created}')>"
+        return f"<CronModel(id={self.id}, server_id='{self.server_id}', command='{self.command}', comment='{self.comment}', schedule='{self.schedule}', date_created='{self.date_created}')>"
 
     def __str__(self):
-        return f"CronModel (ID: {self.id}, Command: {self.command}, Comment: {self.comment}, Expression: {self.expression}, Created: {self.date_created})"
+        return f"CronModel (ID: {self.id}, Command: {self.command}, Comment: {self.comment}, Schedule: {self.schedule}, Created: {self.date_created})"
 
 

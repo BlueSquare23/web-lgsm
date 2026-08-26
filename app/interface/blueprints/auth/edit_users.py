@@ -16,7 +16,7 @@ from app.interface.forms.auth import EditUsersForm
 from app.interface.forms.validation_errors import validation_errors
 from app.utils import log_wrap
 
-from app.container import container
+from app.interface.use_cases import list_game_servers, list_users, query_user, delete_user, log_audit_event, edit_user, log_audit_event
 
 from . import auth_bp
 
@@ -29,8 +29,7 @@ def edit_users():
         flash("Only Admins are allowed to edit users!", category="error")
         return redirect(url_for("main.home"))
 
-#    installed_servers = GameServer.query.all()
-    installed_servers = container.list_game_servers().execute()
+    installed_servers = list_game_servers()
     all_server_ids = [server.id for server in installed_servers]
     all_controls = [
         "start",
@@ -47,8 +46,7 @@ def edit_users():
         "send",
     ]
 
-#    all_users = User.query.all()
-    all_users = container.list_users().execute()
+    all_users = list_users()
     form = EditUsersForm()
 
     # Dynamically set the choices for the SelectMultipleFields.
@@ -67,8 +65,7 @@ def edit_users():
         # api route for delete user, button triggers js fetch req DELETE to API.
         delete = request.args.get("delete")
 
-#        user_ident = User.query.filter_by(username=selected_user).first()
-        user_ident = container.query_user().execute('username', selected_user)
+        user_ident = query_user('username', selected_user)
         if user_ident == None and selected_user != "newuser":
             return redirect(url_for("auth.edit_users", username="newuser"))
 
@@ -88,8 +85,8 @@ def edit_users():
                 )
                 return redirect(url_for("auth.edit_users"))
 
-            container.delete_user().execute(user_ident.id)
-            container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
+            delete_user(user_ident.id)
+            log_audit_event(current_user.id, f"User '{current_user.username}', deleted user '{selected_user}'")
             flash(f"User {selected_user} deleted!")
             return redirect(url_for("auth.edit_users"))
 
@@ -162,8 +159,7 @@ def edit_users():
 
     user_ident = None
     if selected_user != "newuser":
-#        user_ident = User.query.filter_by(username=username).first()
-        user_ident = container.query_user().execute('username', username)
+        user_ident = query_user('username', username)
         if user_ident == None:
             flash("Invalid user selected!", category="error")
             return redirect(url_for("auth.edit_users"))
@@ -228,9 +224,9 @@ def edit_users():
             'otp_setup': False,
         }
 
-        container.edit_user().execute(**new_user)
+        edit_user(**new_user)
 
-        container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', created new user '{username}'")
+        log_audit_event(current_user.id, f"User '{current_user.username}', created new user '{username}'")
         flash("New User Added!")
         return redirect(url_for("main.home"))
 
@@ -242,8 +238,8 @@ def edit_users():
         user_ident.password = generate_password_hash(password1, method="pbkdf2:sha256")
         user_ident.role = role
         user_ident.permissions = json.dumps(permissions)
-        container.edit_user().execute(**user_ident.__dict__)
-        container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
+        edit_user(**user_ident.__dict__)
+        log_audit_event(current_user.id, f"User '{current_user.username}', changed password for user '{username}'")
         flash(f"User {username} Updated!")
         return redirect(url_for("auth.edit_users", username=username))
 
@@ -254,8 +250,8 @@ def edit_users():
     user_ident.role = role
     user_ident.otp_enabled = enable_otp
     user_ident.permissions = json.dumps(permissions)
-    container.edit_user().execute(**user_ident.__dict__)
-    container.log_audit_event().execute(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
+    edit_user(**user_ident.__dict__)
+    log_audit_event(current_user.id, f"User '{current_user.username}', changed permissions for user '{username}'")
     flash(f"User {username} Updated!")
     return redirect(url_for("auth.edit_users", username=username))
 

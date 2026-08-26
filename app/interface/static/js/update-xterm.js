@@ -58,6 +58,14 @@ fitAddon.fit();
 
 term.write('\rWelcome to the web-lgsm!\n\r');
 
+// Re-fit once the web font actually finishes loading. Fira Code loads
+// async, so the very first fit() above measures fallback-font cell
+// widths; refitting after fonts.ready re-measures against the real
+// glyph metrics so rows/cols line up with what's actually rendered.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => fitAddon.fit());
+}
+
 // Handle term div resize.
 const resizeObserver = new ResizeObserver(entries => {
   for (let entry of entries) {
@@ -66,9 +74,11 @@ const resizeObserver = new ResizeObserver(entries => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  const div = document.getElementById('terminal');
-  if (div) resizeObserver.observe(div);
+  const wrapper = document.getElementById('terminal-wrapper');
+  if (wrapper) resizeObserver.observe(wrapper);
 });
+
+window.addEventListener('resize', () => fitAddon.fit());
 
 function refreshOutput(sId) {
   return $.ajax({

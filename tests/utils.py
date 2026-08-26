@@ -64,17 +64,17 @@ def edit_main_conf(section, option, value):
         test_config.write(configfile)
 
 
-def toggle_cfg_editor(enable=False):
+def toggle_file_manager(enable=False):
     """
-    Toggle cfg_editor setting in config file.
+    Toggle file_manager setting in config file.
     """
     test_config = configparser.ConfigParser()
     test_config.read("main.conf.local")
 
     if enable:
-        test_config['settings']['cfg_editor'] = 'yes'
+        test_config['settings']['file_manager'] = 'yes'
     else:
-        test_config['settings']['cfg_editor'] = 'no'
+        test_config['settings']['file_manager'] = 'no'
     with open("main.conf.local", "w") as configfile:
         test_config.write(configfile)
 

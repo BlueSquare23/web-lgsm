@@ -6,6 +6,7 @@ import logging
 
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
+from app.infrastructure.persistence.repositories.cron_repo import SqlAlchemyCronRepository
 
 from app.utils.paths import PATHS
 
@@ -26,8 +27,9 @@ class GameServerManager:
     ]
     USER = getpass.getuser()
 
-    def __init__(self, logger=logging.getLogger(__name__)):
+    def __init__(self, logger=logging.getLogger(__name__), cron_repo=SqlAlchemyCronRepository()):
         self.logger = logger
+        self.cron_repo = cron_repo
 
     def _normalize_path(self, path):
         """
@@ -61,7 +63,14 @@ class GameServerManager:
         Returns:
             bool: True if deletion was successful, False if something went wrong.
         """
+        # Delete cronjobs for game server
+        jobs_list = self.cron_repo.list(server.id)
 
+        if len(jobs_list) > 0:
+            for job in jobs_list:
+                self.cron_repo.delete(job.id)
+
+        # Delete game server itself
         if server.install_type == "local":
             if server.username == GameServerManager.USER:
                 if self._normalize_path(f"/home/{GameServerManager.USER}") == self._normalize_path(server.install_path):

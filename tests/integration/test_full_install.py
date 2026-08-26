@@ -1,4 +1,5 @@
 import os
+import pwd
 import time
 import json
 import pytest
@@ -9,10 +10,9 @@ from game_servers import game_servers
 import subprocess
 import configparser
 
-
 from utils import *
 
-def full_game_server_install(client, username=getpass.getuser(), cancel=False):
+def full_game_server_install(client, username=getpass.getuser(), cancel=False, cleanup_ids=None):
     response = client.get("/install")
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
@@ -35,7 +35,6 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     )
 
     print(extract_alert_messages(response))
-#    debug_response(response)
 
     assert response.status_code == 200
     assert b"Installing" in response.data
@@ -44,6 +43,9 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     time.sleep(5)
 
     server_id = get_server_id("Minecraft")
+
+    if cleanup_ids is not None:
+        cleanup_ids.append(server_id)
 
     if cancel:
         response = client.get(
@@ -82,6 +84,64 @@ def full_game_server_install(client, username=getpass.getuser(), cancel=False):
     assert installed_successfully
 
 
+def dump_start_diagnostics(server_id):
+    """
+    Prints out whatever we can find about why a game server never reported
+    itself as running, for debugging in CI. Best effort, never raises.
+    """
+    server = GameServerModel.query.filter_by(id=server_id).first()
+    if server is None:
+        print(f"DIAGNOSTICS: no server found for id {server_id}")
+        return
+
+    username = server.username
+    install_path = server.install_path
+
+    as_user = []
+    if username != getpass.getuser():
+        as_user = ["sudo", "-n", "-u", username]
+
+    uid = pwd.getpwnam(username).pw_uid
+
+    checks = [
+        ("lgsm/data dir", as_user + ["ls", "-la", f"{install_path}/lgsm/data/"]),
+        ("tmux sessions (default socket)", as_user + ["tmux", "ls"]),
+        ("tmux socket dir", as_user + ["ls", "-la", f"/tmp/tmux-{uid}/"]),
+        ("processes", ["ps", "auxwww"]),
+        ("getfacl", ["getfacl", f"/run/user/{uid}"]),
+        ("agent status", as_user + ["env", f"XDG_RUNTIME_DIR=/run/user/{uid}", "systemctl", "--user", "status", "web-lgsm-agent.service"]),
+        ("journalctl (as target user, may be bus-blocked)", as_user + ["env", f"XDG_RUNTIME_DIR=/run/user/{uid}", "journalctl", "--user-unit=web-lgsm-agent.service", "-b", "-p", "err", "--no-pager"]),
+        ("journalctl (as root, by uid)", ["sudo", "-n", "journalctl", f"_UID={uid}", "-b", "--no-pager", "-n", "500"]),
+        ("runtime dir exists", as_user + ["ls", "-la", f"/run/user/{uid}/bus"]),
+    ]
+
+    print("######################## START DIAGNOSTICS")
+    for label, cmd in checks:
+        print(f"--- {label} ({' '.join(cmd)}) ---")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            print(result.stdout)
+            print(result.stderr)
+        except Exception as e:
+            print(f"failed to run: {e}")
+
+    # Try to tail whatever console log LGSM left behind.
+    try:
+        find_cmd = as_user + ["find", f"{install_path}/log", "-iname", "*console*"]
+        result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+        print(f"--- console log files ---\n{result.stdout}\n{result.stderr}")
+        for log_path in result.stdout.splitlines():
+            print(f"--- tail of {log_path} ---")
+            tail_cmd = as_user + ["tail", "-n", "50", log_path]
+            tail_result = subprocess.run(tail_cmd, capture_output=True, text=True, timeout=10)
+            print(tail_result.stdout)
+            print(tail_result.stderr)
+    except Exception as e:
+        print(f"failed to fetch console logs: {e}")
+
+    print("######################## END START DIAGNOSTICS")
+
+
 def game_server_start_stop(client, server_id):
     response = client.get(
         f"/controls?server_id={server_id}",
@@ -90,6 +150,8 @@ def game_server_start_stop(client, server_id):
     assert response.status_code == 200
     csrf_token = get_csrf_token(response)
     print(csrf_token)
+
+    time.sleep(5)
 
     # Test starting the server.
     response = client.post(
@@ -104,7 +166,7 @@ def game_server_start_stop(client, server_id):
     )
     assert response.status_code == 200
 
-    time.sleep(2)
+    time.sleep(10)
 
     # Check output lines are there.
     response = client.get(f"/api/cmd-output/{server_id}")
@@ -120,6 +182,8 @@ def game_server_start_stop(client, server_id):
         resp_dict = response.json
         assert "status" in resp_dict
 
+        print(resp_dict)
+
         if resp_dict["status"] == True:
             break
 
@@ -127,6 +191,7 @@ def game_server_start_stop(client, server_id):
         runtime += 10
 
         if runtime > timeout:
+            dump_start_diagnostics(server_id)
             assert True == False  # Force fail timeout.
     
     # Cant win the race if you're asleep.
@@ -138,6 +203,10 @@ def game_server_start_stop(client, server_id):
     resp_dict = response.json
     print(resp_dict)
     assert "status" in resp_dict
+
+    if not resp_dict["status"]:
+        dump_start_diagnostics(server_id)
+
     assert resp_dict["status"] == True
 
     # Enable the send_cmd setting.
@@ -315,7 +384,7 @@ def console_output(client):
 
 
 @pytest.mark.integration
-def test_install_newuser(db_session, client, authed_client, test_vars):
+def test_install_newuser(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Test install as new user."""
     version = test_vars["version"]
 
@@ -353,7 +422,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','delete_user', True)
 
         # Test full install as new user.
-        full_game_server_install(client, username='mcserver')
+        full_game_server_install(client, username='mcserver', cleanup_ids=cleanup_installed_servers)
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -397,7 +466,7 @@ def test_install_newuser(db_session, client, authed_client, test_vars):
 
 
 @pytest.mark.integration
-def test_install_sameuser(db_session, client, authed_client, test_vars):
+def test_install_sameuser(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Then test install as existing user."""
 
     # Skip same user install tests for docker. Containers force install new
@@ -440,7 +509,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
         check_main_conf_bool('settings','install_create_new_user', False)
 
         # Test full install as existing user.
-        full_game_server_install(client, username=getpass.getuser())
+        full_game_server_install(client, username=getpass.getuser(), cleanup_ids=cleanup_installed_servers)
         server_id = get_server_id("Minecraft")
 
         game_server_start_stop(client, server_id)
@@ -452,7 +521,7 @@ def test_install_sameuser(db_session, client, authed_client, test_vars):
 
 
 @pytest.mark.integration
-def test_install_cancel(db_session, client, authed_client, test_vars):
+def test_install_cancel(db_session, client, authed_client, test_vars, cleanup_installed_servers):
     """Tests starting and canceling a game server installation."""
 
     version = test_vars["version"]
@@ -463,7 +532,7 @@ def test_install_cancel(db_session, client, authed_client, test_vars):
     with client:
 
         # Test full install as existing user.
-        full_game_server_install(client, username='mcserver', cancel=True)
+        full_game_server_install(client, username='mcserver', cancel=True, cleanup_ids=cleanup_installed_servers)
 
         server_id = get_server_id("Minecraft")
         response = client.delete(f"/api/delete/{server_id}", follow_redirects=True)

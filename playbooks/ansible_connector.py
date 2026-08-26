@@ -8,8 +8,10 @@
 import os
 import sys
 import json
+import stat
 import yaml
 import glob
+import shutil
 import getopt
 import getpass
 import subprocess
@@ -18,17 +20,26 @@ from sqlalchemy.orm import Session
 
 ## Globals.
 PS = '/usr/bin/ps'
+SUDO = '/usr/bin/sudo'
 PKILL = '/usr/bin/pkill'
-PLAYBOOKS = '/usr/local/share/web-lgsm'  # Playbook dir path.
-VENV = '/opt/web-lgsm'  # System venv path.
-APP_PATH = ''  # <-- TO ME: REMEMBER TO MAKE EMPTY STRING AGAIN WHEN THIS SCRIPT GET'S UPDATED!
+SETFACL = '/usr/bin/setfacl'
+
+PLAYBOOKS = '/usr/local/share/web-lgsm'
+VENV = '/opt/web-lgsm'
+
+with open(f"{PLAYBOOKS}/app_conf.json") as f:
+    app_conf = json.load(f)
+
+APP_USER = app_conf["APP_USER"]
+APP_PATH = app_conf["APP_PATH"]
+APP_GROUP = app_conf["APP_GROUP"]
 
 # Import db classes from app.
 sys.path.append(APP_PATH)
 from app import db
 from app.infrastructure.persistence.models.game_server_model import GameServerModel
 
-# Global options hash.
+# Global options hash defaults.
 O = {"dry": False, "delete": False}
 
 ## Subroutines.
@@ -188,7 +199,7 @@ def run_install_new_game_server(server_id):
         PLAYBOOKS, "playbooks/install_new_game_server.yml"
     )
 
-    sudo_pre_cmd = ["/usr/bin/sudo", "-n"]
+    sudo_pre_cmd = [SUDO, "-n"]
 
     pre_install_cmd = sudo_pre_cmd + [
         ansible_cmd_path,
@@ -295,7 +306,7 @@ def cancel_install(pid):
     pid_cmd = get_script_cmd_from_pid(pid)
     self_path = os.path.join(os.getcwd(), __file__)
     self_venv = os.path.join(VENV, 'bin/python')
-    self_cmd = f"/usr/bin/sudo -n {self_venv} {self_path}"
+    self_cmd = f"{SUDO} -n {self_venv} {self_path}" # NEEDS TO BE STR, NOT EXECUTED
 
     # Validate to ensure only killing instances of own script pid.
     if self_cmd not in pid_cmd:
@@ -321,7 +332,7 @@ def run_delete_user(server_id):
     ansible_cmd_path = os.path.join(VENV, "bin/ansible-playbook")
     del_user_path = os.path.join(PLAYBOOKS, "playbooks/delete_user.yml")
     cmd = [
-        "/usr/bin/sudo",
+        SUDO,
         "-n",
         ansible_cmd_path,
         del_user_path,

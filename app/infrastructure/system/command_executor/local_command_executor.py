@@ -9,7 +9,7 @@ class LocalCommandExecutor(BaseCommandExecutor):
         super().__init__()
         self.config = config
     
-    def run(self, cmd, cmd_id=None, app_context=False, timeout=False):
+    def run(self, cmd, cmd_id=None, app_context=False, timeout=False, stdin=None):
         """Execute command locally using subprocess.Popen."""
         if cmd_id is None:
             cmd_id = str(uuid.uuid4())
@@ -25,11 +25,24 @@ class LocalCommandExecutor(BaseCommandExecutor):
         
         self.logger.info(self._log_wrap("cmd", cmd))
         
-        # Subprocess call, Bytes mode, not buffered.
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
-            text=False, bufsize=-1
-        )
+        # Subprocess args, Bytes mode, not buffered.
+        popen_kwargs = {
+            "stdout": subprocess.PIPE, 
+            "stderr": subprocess.PIPE, 
+            "text": False,
+            "bufsize": -1
+        }
+
+        if stdin is not None:
+            popen_kwargs["stdin"] = subprocess.PIPE
+
+        # Subprocess call
+        proc = subprocess.Popen(cmd, **popen_kwargs)
+
+        # Write stdin
+        if stdin is not None:
+            proc.stdin.write(stdin)
+            proc.stdin.close()
         
         proc_info.pid = proc.pid
         
@@ -55,3 +68,4 @@ class LocalCommandExecutor(BaseCommandExecutor):
                 break
             
             self._process_raw_output(out_line, proc_info, output_type)
+

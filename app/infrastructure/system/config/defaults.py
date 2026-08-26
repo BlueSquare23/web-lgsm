@@ -14,7 +14,7 @@ DEFAULTS = {
         'delete_user': True, 
         'show_stderr': True,
         'clear_output_on_reload': True,
-        'cfg_editor': False,
+        'file_manager': False,
         'send_cmd': False,
         'install_create_new_user': True,
         'end_in_newlines': True,

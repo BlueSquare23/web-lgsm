@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import time
@@ -7,6 +8,7 @@ import logging
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoRepository
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
+
 
 from app.utils.paths import PATHS
 
@@ -33,10 +35,6 @@ class GameServerInstallManager:
         Returns:
             dict: Dictionary mapping short server names to long server names.
         """
-
-        import os
-        print(os.getcwd())
-
         with open("json/game_servers.json", "r") as file:
             json_data = json.load(file)
     
@@ -125,7 +123,6 @@ class GameServerInstallManager:
         # Little buffer to make sure install daemon thread starts first.
         time.sleep(5)
 
-#TODO: Sort out logger call, I need a standardized way to do them. I don't like this passing in current app to infra layer.
         self.logger.info("<CLEAR DAEMON> - Starting clear thread")
 
         while runtime < max_lifetime:
@@ -148,4 +145,5 @@ class GameServerInstallManager:
 
             time.sleep(5)
             runtime += 5
+
 

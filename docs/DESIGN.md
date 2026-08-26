@@ -20,10 +20,11 @@
 11. [Database Upgrades](#11-database-upgrades)
 12. [Form Handling & Validation](#12-form-handling--validation)
 13. [Formatting & Linting](#13-formatting--linting)
-14. [Future Work](#14-future-work)
-15. [Contributing](#15-contributing)
-16. [Debugging](#16-debugging)
-17. [References](#17-references)
+14. [Front-End Build / Vendor Bundle](#14-front-end-build--vendor-bundle)
+15. [Future Work](#15-future-work)
+16. [Contributing](#16-contributing)
+17. [Debugging](#17-debugging)
+18. [References](#18-references)
 
 ---
 
@@ -186,11 +187,19 @@ app
   accidentally discovered software architecture. So I started learning more about
   design patterns and the clean architecture in an effort to clean this all up!
 
+- **Why the JSON-RPC Service**: This app needs to run things as other users on
+  the system. For a long time we jobbed out to the shell and used hacky `sudo -u` 
+  commands to accomplish this. That has a number of problems including being
+  slow and insecure. To resolve these issues we developed the multi-user json
+  rpc system. Now when some bit of code needs to get run as another user, we
+  write a procedure for it, then call that procedure via the RPC server running
+  as each game server user. For more info see [DESIGN_RPC.md](DESIGN_RPC.md).
+
 ---
 
 ## 6. API Documentation
 - Builtin Swagger documentation under `https://your_web_lgsm_url/docs`.
-![Swagger Docs](images/swagger_docs.gif)
+![Swagger Docs](images/swagger.gif)
 
 ---
 
@@ -764,18 +773,65 @@ pylint --load-plugins pylint_flask --disable=all --enable=W0611,W0612 app/
 
 ---
 
-## 14. Future Work
+## 14. Front-End Build / Vendor Bundle
+
+- **Why**: We used to install `nodejs`/`npm` via apt on every end-user machine
+  just so `install.sh` could `npm install` xterm.js straight into
+  `app/interface/static/js/`, then serve those raw, unminified `node_modules`
+  files directly to the browser. Two problems with that: apt's `nodejs`/`npm`
+  packages are old/EOL on most supported Debian/Ubuntu releases, and shipping
+  live `node_modules` isn't real dependency management, it's a side effect of
+  the install script. Since xterm.js rarely changes, we treat it as a
+  build-time concern instead: bundle it once, commit the output, and end-user
+  installs never touch Node/npm at all.
+
+- **How it works**: Everything lives under `app/interface/static/js/`:
+
+```
+app/interface/static/js/
+├── src/
+│   └── xterm-entry.js     # Hand-written. Imports xterm + addon-fit,
+│                           # attaches window.Terminal / window.FitAddon.
+├── build.js                # esbuild script. Bundles + minifies src/ -> vendor/.
+├── package.json            # Pins xterm/addon-fit/esbuild versions. Tracked in git.
+├── package-lock.json       # Tracked in git.
+├── node_modules/           # npm install output. Gitignored, build-time only.
+└── vendor/
+    ├── xterm.bundle.js      # What base.html actually serves. Tracked in git.
+    └── xterm.bundle.css     # What base.html actually serves. Tracked in git.
+```
+
+  `vendor/*.bundle.{js,css}` are the only two files `base.html` references
+  (`{{ url_for('static', filename='js/vendor/xterm.bundle.js') }}`, etc).
+  Nobody hand-edits them, they're generated.
+
+- **Rebuilding**: Only needed if you touch `src/xterm-entry.js` or bump a
+  version in `package.json`. Requires Node/npm on your dev machine, but not
+  on any machine actually running web-lgsm.
+
+```bash
+cd app/interface/static/js
+npm install
+npm run build
+```
+
+  Commit the resulting `vendor/xterm.bundle.js` and `vendor/xterm.bundle.css`
+  along with your `src/`/`package.json` change.
+
+---
+
+## 15. Future Work
 - **Planned Features**: See [`Todos.md`](../Todos.md) for planned features and maintenance.
 - **Known Issues**: You can find known issues and suggested features for the project under [its github issues page](https://github.com/bluesquare23/web-lgsm/issues).
 
 ---
 
-## 15. Contributing
+## 16. Contributing
 - **How to Contribute**: Check out our [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - **Code of Conduct**: Check out our [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 ---
 
-## 16. Debugging
+## 17. Debugging
 - **Debugging Classes**:
 You can run the code from a class file isolated like this:
 
@@ -804,7 +860,7 @@ you're trying to test out. Just make sure you source the venv first!
 
 ---
 
-## 17. References
+## 18. References
 - **Links**:
   - [Docs](.)
   - [Youtube Tutorials](NOT FINISHED YET...)

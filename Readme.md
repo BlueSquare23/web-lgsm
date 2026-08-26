@@ -1,8 +1,6 @@
-<h1 align="center">Web LGSM</h1>
+<h1 align="center">Web-LGSM</h1>
 
-<h3 align="center">🐧 A simple web interface for the <a href="https://linuxgsm.com/">LGSM</a>! 🕹️ </h3>
-
-</p>
+<h3 align="center">A basic web panel for the <a href="https://linuxgsm.com/">Linux Game Server Manager</a></h3>
 
 <p align="center">
   <a href="./license.txt">
@@ -30,219 +28,159 @@
   </a>
 </p>
 
+---
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
+> [!NOTE]
+> The Web-LGSM is an independent fan project and is not affiliated with the official [LGSM Project](https://linuxgsm.com/).
 
-## :thought_balloon: Main Idea
+---
 
-This project is intended to be an easy to use web interface for the [Linux Game
-Server Manager (LGSM)](https://linuxgsm.com/) command line tool. The LGSM is a
-fantastic tool for installing and administering game servers via the CLI.
-However, some users would rather manage their game server through a web
-interface. That is what this project attempts to be.
+## Overview
 
-> :round_pushpin: _<span style="color: orange;">Note</span>: The web-lgsm is a
-> fan project, and <span style="color: red;">**NOT**</span> affiliated in any
-> way with the official [LSGM Project](https://linuxgsm.com/)_
+The Web-LGSM is a browser-based management interface for the [Linux Game Server Manager (LGSM)](https://linuxgsm.com/). LGSM is a powerful CLI tool for installing and running game servers. This application wraps that functionality in an accessible web UI, so you can manage your game servers without touching the command line.
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
+## Features
 
-## :arrow_double_down: Installation (Debian & Ubuntu Only)
+- **One-click installs**: Browse the full LGSM catalog and install over 130+ game server directly from the UI
+- **Live console output**: Watch commands execute in real time via the integrated web terminal
+- **File manager**: Download, upload, edit, and manage files from the comfort of the browser
+- **Schedule jobs**: Create scheduled jobs (updates, backups, restarts, etc) for your game servers through the web UI
+- **Add existing servers**: Import LGSM installations that were set up outside of the Web-LGSM
+- **Remote installs**: Add LGSM game servers that are installed on remote machines and admin them through a single web panel
+- **Docker installs**: Add LGSM game servers that are installed inside of docker containers
+- **Multi-user support**: Create logins for your friends, including builtin permissions management
+- **Audit logging**: See what recent actions have been taken by your web-lgsm panel users (admins only)
+- **Two Factor Support**: Enable optional two factor authentication (via totp) on login page for enhanced security
+- **App settings**: Configure core Web-LGSM behavior from the settings page
 
-* First `SSH` to the server where you're running the LGSM and clone this repo
-  as your user (NOT root):
+## Requirements
 
-```
+- Debian or Ubuntu Linux *(see note below for other distributions)*
+- Python 3.9 or greater
+- Standard shell utilities (see `apt-reqs.txt` for a full list)
+
+> Running a different distribution? If you can manually install the required Python dependencies and shell utilities, Web-LGSM should run on any Linux distribution supported by the base LGSM project.
+
+## Installation
+
+Clone the repository as your regular user (**do NOT run as root**):
+
+```bash
 git clone https://github.com/BlueSquare23/web-lgsm.git
-```
-
-* Then cd down into the installation directory and run the `install.sh` script.
-
-```
 cd web-lgsm
 ./install.sh
 ```
 
-* Once the install completes, start the server using the `web-lgsm.py` script.
+Start the server:
 
-```
+```bash
 ./web-lgsm.py
 ```
 
-* You can also stop the server with the `web-lgsm.py` script.
+Stop the server:
 
-```
+```bash
 ./web-lgsm.py --stop
 ```
 
-> :round_pushpin: _<span style="color: orange;">Note:</span> At this point the
-> `install.sh` script only supports Debian & Ubuntu Linux. However, technically
-> all the project needs to run is python3.9 or greater and some common shell
-> utilities._
-> 
-> _If you're able to install the required dependencies through your
-> distributions package manager and install the required python modules then
-> you should be able to run this on basically any flavor of Linux that is
-> supported by the base LGSM project._
+After starting, open the web address in your browser. You'll be directed to the **Setup** page to create your first user account.
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
+### Video Walkthrough
 
-### :film_strip: Installation Setup & Overview Video Tutorial
+A full installation and usage tutorial is available on YouTube:
 
-Check out the YouTube video tutorial linked below for information about
-installation, setup, and usage!
+[![Web-LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
 
-> :round_pushpin: _<span style="color: orange;">Note:</span> This video is old
-> (for v1.3). I'll be making a new one soon!_
+> [!NOTE]
+> This video covers v1.3. Will release an updated version soon.
 
-[![Web LGSM - Installation Setup & Overview Video](https://img.youtube.com/vi/aK_NsJIyIvk/0.jpg)](https://www.youtube.com/watch?v=aK_NsJIyIvk)
+## Screenshots
 
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
+| Setup Page | Home Page |
+|-------|------|
+| ![Setup Page](docs/images/setup.gif) | ![Home Page](docs/images/home.gif) |
 
-### :wrench: Setup & Basic Usage
+| Install Page | Add / Edit Servers |
+|---------|-------------|
+| ![Install Page](docs/images/install.gif) | ![Add Page](docs/images/add.gif) |
 
-#### Setup Page
+| Controls Page | File Manager |
+|----------|-------------|
+| ![Controls Page](docs/images/controls.gif) | ![Manage Files](docs/images/files.gif) |
 
-After starting the server you can browse to the web address in a browser and
-you'll be directed to the  web-lgsm `Setup` page, where you can create a user.
+| Manage Jobs | Settings Page |
+|----------|-------------|
+| ![Manage Jobs](docs/images/cron.gif) | ![Settings Page](docs/images/settings.gif) |
 
-![Setup Page](docs/images/setup.gif)
+| Add Users | Audit Logs |
+|----------|-------------|
+| ![Edit Users](docs/images/users.gif) | ![Audit Logs](docs/images/audit.gif) |
 
-#### Home Page
+| About Page | Swagger Docs |
+|----------|-------------|
+| ![About Page](docs/images/about.gif) | ![Swagger Docs](docs/images/swagger.gif) |
 
-After creating a user, you'll be automatically logged in and redirected to the
-home page.
+## Usage
 
-![Home Page](docs/images/homepage.gif)
+Once logged in, the home page gives you access to all major features:
 
-From the home page you can do several things!
+- **Install**: auto-install any LGSM-supported game server
+- **Add**: import an existing LGSM installation
+- **Controls**: start, stop, restart, and monitor a server; run LGSM commands with live output
+- **File Manager**: edit server config files in-browser *(disabled by default; enable in `main.conf`)*
+- **Job Editor**: edit server scheduled jobs in-browser *(disabled by default; enable in `main.conf`)*
+- **Settings**: manage application preferences
 
-#### Install Page
+## Deployment
 
-You can auto install a new LGSM server from their entire list of available game
-servers.
+If you're going to run the web-lgsm exposed on the public internet, the recommended approach is to:
 
-![Install Page](docs/images/install.gif)
+1. Firewall the Web-LGSM port (default: `12357`) from public access
+2. Proxy connections through a production web server such as **Apache** or **Nginx** with **SSL/TLS** enabled
 
-Once the installation process is started a set of spinners and an installing...
-message will appear above the live running console output of the ongoing
-installation.
+See [`docs/suggested_deployment.md`](docs/suggested_deployment.md) for a full deployment guide.
 
-#### Add Page
+## Stack
 
-If you already have an LGSM game server installed and setup on your machine and
-you want to add it to the Web-LGSM interface you can do so by clicking the "Add
-an Existing LGSM Installation" option.
+| Layer | Technology |
+|-------|-----------|
+| Language | [Python 3](https://www.python.org/) |
+| Web Framework | [Flask](https://palletsprojects.com/p/flask/) |
+| Database | [SQLite](https://www.sqlite.org/index.html) |
+| ORM | [SQLAlchemy](https://www.sqlalchemy.org/) |
+| CSS Framework | [Bootstrap 5](https://getbootstrap.com/) |
+| JavaScript | [jQuery / Ajax](https://api.jquery.com/jQuery.ajax/) |
+| Web Terminal | [Xterm.js](https://xtermjs.org/) |
+| SSH Client | [Paramiko](https://www.paramiko.org/) |
+| Testing | [Pytest](https://docs.pytest.org/) |
+| Automation | [Ansible](https://www.ansible.com/) |
+| Web Server | [Gunicorn](https://gunicorn.org/) |
 
-![Add Page](docs/images/add.gif)
+## Contributing
 
-#### Controls Page
+> [!NOTE]
+> We're actively seeking contributors! See the [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more information.
 
-Once you have a server added or installed you can access its `controls` page by
-clicking on the link for it under the "Installed Servers" list on the home
-page.
+Bug reports, security disclosures, and pull requests are all welcome.
 
-The console menu includes most of the common LGSM script commands, besides the
-ones that require additional user input.
+- **Bugs & issues:** [GitHub Issues](https://github.com/BlueSquare23/web-lgsm/issues/new)
+- **Contact:** [johnlradford.io/contact](https://johnlradford.io/contact.php)
+- **Pull requests:** open against the latest `dev-x.y.z` branch
 
-[:framed_picture: Controls Page Image](docs/images/server_controls.png)
+## Security
 
-#### Running a Command
+All user input is validated server-side before any system interaction. No raw user input reaches the shell.
 
-The console page also includes a **live** output feed from the command being
-executed in a python subprocess shell on the system.
+That said, this project is actively developed and maintained by one person right now ([me](https://johnlradford.io/)). If you discover a vulnerability, please report it via the [issues page](https://github.com/BlueSquare23/web-lgsm/issues/new) or the [contact form](https://johnlradford.io/contact.php) rather than disclosing it publicly. Security patches are prioritized.
 
-![Running Command](docs/images/start_stop.gif)
+For production deployments, always run behind a reverse proxy with TLS. See the [Deployment](#deployment) section above.
 
-#### Config Editor
+## License
 
-You can click one of the edit config buttons on a given game server's controls
-page to access the config editor. From the config editor you can change any of
-the necessary game server settings and save them. You can also download a copy
-of the config file.
+MIT: See [license.txt](license.txt) for full terms.
 
-[:framed_picture: Editing A Game Server Config Page Image](docs/images/config_editor.png)
+## Author
 
-> :round_pushpin: _<span style="color: orange;">Note</span>: the config editor
-> is disabled by default and can only be enabled by editing the `main.conf`
-> file directly._
+**John L. Radford** — [johnlradford.io](https://johnlradford.io/)
 
-#### Settings Page
-
-There's a basic app settings page.
-
-![Settings Page](docs/images/settings.gif)
-
-#### Login Page
-
-And if you log out or are logged out, there's also a basic login page.
-
-[:framed_picture: Login Page Image](docs/images/login.png)
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :bangbang: A Note on Deployment Security
-
-If you're going to run the Web-LGSM exposed to the public internet you should
-firewall off the port for this app (defaults to 12357) and proxy connections to
-this app through a **real** web server such as Apache or Nginx with SSL
-encryption!
-
-For more information see: `docs/suggested_deployment.md`.
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :books: Stack Technologies
-
-* Language: [Python 3](https://www.python.org/)
-* Web Framework: [Flask](https://palletsprojects.com/p/flask/)
-* Database: [SQLite](https://www.sqlite.org/index.html)
-* ORM: [SQLAlchemy](https://www.sqlalchemy.org/)
-* CSS Framework: [Bootstrap 5](https://getbootstrap.com/docs/5.0/getting-started/introduction/)
-* JavaScript: [jQuery ajax](https://api.jquery.com/jQuery.ajax/)
-* Web Terminal: [Xterm.js](https://xtermjs.org/)
-* SSH Client [Paramiko](https://www.paramiko.org/)
-* Testing: [Pytest](https://docs.pytest.org/)
-* Automation: [Ansible](https://www.ansible.com/)
-* Web Server: [Gunicorn](https://gunicorn.org/)
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :bug: Bugs
-
-I want to try to keep up with this as a pet project so feel free to report any
-bugs or security issues to me via [this project's github issues page](https://github.com/BlueSquare23/web-lgsm/issues/new) 
-or [my site's contact form](https://johnlradford.io/contact.php).  Or if you're interested in
-contributing to the project feel free to submit a pull request!
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :closed_lock_with_key: Security & Liability
-
-This project is MIT licensed meaning I claim no liability for any damages that
-may result from the use or abuse of this piece of software. Use at your own
-risk! I have tried to take security precautions when building this app in order
-to prevent it from being horribly abused.
-
-However, please note I am an amateur programmer and this app is fundamentally
-sorta suss. It is a web portal for wrapping shell commands. Everything should
-be validated, and no user input should be getting down to the shell.
-Nonetheless, there are lots of hackers out there with a better knowledge of
-application security than me and I make no claims that this is 100% unhackable.
-
-I will try to patch any security vulnerabilities I find as time goes on. If you
-find any and want to help feel free to submit them!
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :free: License MIT
-
-[MIT License Text](license.txt)
-
-![-----------------------------------------------------](https://johnlradford.io/static/img/bar.gif)
-
-## :writing_hand: Author
-
-[John L. Radford](https://johnlradford.io/)
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)

@@ -18,6 +18,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+#    runs-on: self-hosted
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
@@ -36,8 +37,8 @@ jobs:
 
       - name: Install & Setup Java for Mockcraft Server Tests
         run: |
-          sudo apt update
-          sudo apt install openjdk-25-jdk
+          sudo apt-get update
+          sudo apt-get install -y openjdk-25-jdk
           set -x
           sudo update-alternatives --list java
           sudo update-alternatives --set java /usr/lib/jvm/java-25-openjdk-amd64/bin/java

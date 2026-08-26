@@ -15,7 +15,7 @@ RAW_URL = 'https://raw.githubusercontent.com/BlueSquare23/web-lgsm'
 UNINSTALL_URL =  RAW_URL + '/refs/heads/master/uninstall.sh'
 ROOT_INSTALL_URL =  RAW_URL + '/refs/heads/master/bin/root_install.sh'
 UPDATE_PY_URL =  RAW_URL + '/refs/heads/bin/update.py'
-INSTALL_CONF = '/usr/local/share/web-lgsm/install_conf.json'
+APP_CONF = '/usr/local/share/web-lgsm/app_conf.json'
 
 # Global options hash.
 O = {"quiet": False, "check": False, "auto": False, "noback": False}
@@ -149,9 +149,9 @@ def update_weblgsm():
     """
     Upgrades the web-lgsm itself.
     """
-    conf = read_json_file(INSTALL_CONF);
+    conf = read_json_file(APP_CONF);
     app_path = conf['APP_PATH']
-    username = conf['USERNAME']
+    app_user = conf['APP_USER']
 
     # Change dir to web-lgsm install path.
     os.chdir(app_path)
@@ -190,9 +190,9 @@ def update_weblgsm():
     uninst_script = '/opt/web-lgsm/bin/uninstall.sh'
     run_command([uninst_script, uninst_opt])
 
-    # Have to write install_conf back to disk.
+    # Have to write app_conf back to disk.
     os.makedirs('/usr/local/share/web-lgsm')
-    with open(INSTALL_CONF, 'w') as json_file:
+    with open(APP_CONF, 'w') as json_file:
         json.dump(conf, json_file, indent=4)
 
     # Fetch new uninstall.sh for future updates / uninstalls.
@@ -216,14 +216,14 @@ def update_weblgsm():
 
     if not O["quiet"]:
         print(" [*] Pulling update from github...")
-    run_command(['git', 'fetch', '--all'], username)
-    run_command(['git', 'reset', '--hard', 'origin/master'], username)
+    run_command(['git', 'fetch', '--all'], app_user)
+    run_command(['git', 'reset', '--hard', 'origin/master'], app_user)
 
     if not O["quiet"]:
         print(" [*] Installing user components...")
 
     install_script = os.path.join(app_path, 'install.sh')
-    run_command([install_script, '--skiproot'], username)
+    run_command([install_script, '--skiproot'], app_user)
 
     # Green check!
     if not O["quiet"]:

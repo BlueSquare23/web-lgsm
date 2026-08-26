@@ -19,7 +19,8 @@ from flask import (
 from app.interface.forms.auth import LoginForm 
 from app.interface.forms.validation_errors import validation_errors
 from app.interface.http.client_ip import get_client_ip
-from app.container import container
+
+from app.interface.use_cases import list_users, is_blocked_blocklist, query_user, add_failed_blocklist, add_failed_blocklist, log_audit_event
 
 from . import auth_bp
 
@@ -32,13 +33,13 @@ def login():
     # Create LoginForm.
     form = LoginForm()
 
-    if not container.list_users().execute():
+    if not list_users():
         flash("Please add a user!", category="success")
         return redirect(url_for("auth.setup"))
 
     ip = get_client_ip(request)
 
-    if container.is_blocked_blocklist().execute(ip):
+    if is_blocked_blocklist(ip):
         return 'Access denied', 403
 
     if request.method == "GET":
@@ -54,23 +55,23 @@ def login():
     otp_code = form.otp_code.data
 
     # Check login info.
-    user = container.query_user().execute('username', username)
+    user = query_user('username', username)
     if user == None:
-        container.add_failed_blocklist().execute(ip)
+        add_failed_blocklist(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
     current_app.logger.info(user)
 
     if not check_password_hash(user.password, password):
-        container.add_failed_blocklist().execute(ip)
+        add_failed_blocklist(ip)
         flash("Incorrect Username or Password!", category="error")
         return render_template("login.html", user=current_user, form=form), 403
 
     if current_user.is_authenticated:
         logout_user()
 
-    four_weeks_delta = timedelta(days=28)
+    two_weeks_delta = timedelta(days=14)
 
     # Handle 2fa Logins.
     if user.otp_enabled:
@@ -79,23 +80,23 @@ def login():
             auth_user = AuthUser(user.id)
             current_app.logger.info(auth_user.id)
 
-            login_user(auth_user, remember=True, duration=four_weeks_delta)
+            login_user(auth_user, remember=True, duration=two_weeks_delta)
             confirm_login()
-            container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
+            log_audit_event(user.id,  f"User '{username}' logged in")
             flash("Please setup two factor authentication!", category="success")
             return redirect(url_for("auth.two_factor_setup"))
 
         if not user.verify_totp(otp_code):
-            container.add_failed_blocklist().execute(ip)
+            add_failed_blocklist(ip)
             flash("Invalid otp 2fa code!", category="error")
             return render_template("login.html", user=current_user, form=form), 403
 
     flash("Logged in!", category="success")
     auth_user = AuthUser(user.id)
     current_app.logger.info(auth_user)
-    login_user(auth_user, remember=True, duration=four_weeks_delta)
+    login_user(auth_user, remember=True, duration=two_weeks_delta)
     confirm_login()
-    container.log_audit_event().execute(user.id,  f"User '{username}' logged in")
+    log_audit_event(user.id,  f"User '{username}' logged in")
     return redirect(url_for("main.home"))
 
 

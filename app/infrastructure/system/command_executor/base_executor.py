@@ -54,21 +54,24 @@ class BaseCommandExecutor(CommandExecutor):
             proc_info.stderr.append(line)
             log_msg = self._log_wrap("stderr", line.replace("\n", ""))
             self.logger.debug(log_msg)
-    
+
     def _log_wrap(self, stream_type, message):
         """Wrapper for logging (assuming this exists somewhere)."""
         # TODO: This should be imported from utils 
         return f"[{stream_type}] {message}"
-    
+
     def _process_raw_output(self, raw_line, proc_info, output_type):
         """Process raw output line with carriage return/newline handling."""
         if not raw_line:
             return
-        
+
         for rline in raw_line.split("\r"):
             if rline == "":
                 continue
-            
+
+            # Strip ansi hex code for clearing screen.
+            rline = rline.replace("\x1b[H", "").replace("\x1b[2J", "").replace("\x1b[3J", "")
+
             # Add back in carriage returns, ignoring lines terminated with a newline.
             if not rline.endswith("\r") and not rline.endswith("\n"):
                 rline = rline + "\r"

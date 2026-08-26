@@ -1,0 +1,71 @@
+- name: Enable linger for {{ username }} so user services persist across logout/reboot
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ username }}"
+  register: linger_output
+  when: not agent_service_active
+
+- name: Print linger output
+  ansible.builtin.debug:
+    var: linger_output
+
+- name: Wait for {{ username }}s systemd user bus to come up after enabling linger
+  ansible.builtin.wait_for:
+    path: "/run/user/{{ agent_user_uid }}/bus"
+    timeout: 30
+  when: not agent_service_active
+
+- name: Create systemd user directory for {{ username }}
+  ansible.builtin.file:
+    path: "{{ agent_user_home }}/.config/systemd/user"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0755'
+  when: not agent_service_active
+
+- name: Install web-lgsm-agent systemd user unit file for {{ username }}
+  ansible.builtin.copy:
+    dest: "{{ agent_user_home }}/.config/systemd/user/web-lgsm-agent.service"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Web-LGSM Multi User RPC Server Agent
+      After=network.target
+
+      [Service]
+      Type=simple
+      Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
+      Environment="XDG_RUNTIME_DIR=%t"
+      ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
+      Restart=always
+      WorkingDirectory=%h
+
+      [Install]
+      WantedBy=default.target
+  when: not agent_service_active
+
+- name: Enable and start web-lgsm-agent systemd user service for {{ username }}
+  ansible.builtin.systemd_service:
+    name: web-lgsm-agent.service
+    scope: user
+    daemon_reload: yes
+    enabled: yes
+    state: started
+  become: yes
+  become_user: "{{ username }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ agent_user_uid }}"
+  when: not agent_service_active
+
+- name: Persist XDG_RUNTIME_DIR in {{ username }}s ~/.bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ agent_user_home }}/.bashrc"
+    regexp: '^export XDG_RUNTIME_DIR='
+    line: 'export XDG_RUNTIME_DIR="/run/user/{{ agent_user_uid }}"'
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    create: yes
+    mode: '0644'
+  when: not agent_service_active

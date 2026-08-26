@@ -31,16 +31,16 @@ VENV_PATH="/opt/web-lgsm"
 CONNECTOR_PATH="/usr/local/bin"
 SHARE_PATH="/usr/local/share/web-lgsm"
 PLAYBOOKS_PATH="$SHARE_PATH/playbooks"
-SCRIPTPATH=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.APP_PATH')
-USERNAME=$(cat "$SHARE_PATH/install_conf.json" | jq -r '.USERNAME')
-APT_REQS="$SCRIPTPATH/apt-reqs.txt"
+APP_PATH=$(cat "$SHARE_PATH/app_conf.json" | jq -r '.APP_PATH')
+APP_USER=$(cat "$SHARE_PATH/app_conf.json" | jq -r '.APP_USER')
+APT_REQS="$APP_PATH/apt-reqs.txt"
 
-if [[ -z $SCRIPTPATH ]] || [[ -z $USERNAME ]]; then
-    echo -e "${RED}Problem parsing $SHARE_PATH/install_conf.json!${RESET}" >&2
+if [[ -z $APP_PATH ]] || [[ -z $APP_USER ]]; then
+    echo -e "${RED}Problem parsing $SHARE_PATH/app_conf.json!${RESET}" >&2
     exit 9
 fi
 
-cd $SCRIPTPATH
+cd $APP_PATH
 mkdir -p $PLAYBOOKS_PATH
 touch "$SHARE_PATH/web-lgsm_custom_users.yml"
 
@@ -138,20 +138,21 @@ else
     exit 1
 fi
 
-all_reqs_csv=$(grep 'all,' <<< "$apt_csv" | sed 's/all,//g')
-all_reqs=$(tr ',' "\n" <<< "$all_reqs_csv")
+lgsm_reqs_csv=$(grep 'all,' <<< "$apt_csv" | sed 's/all,//g')
+lgsm_reqs=$(tr ',' "\n" <<< "$lgsm_reqs_csv")
 
 # Append lgsm requirements to web-lgsm apt reqs.
-echo "$all_reqs" >> "$APT_REQS"
+base_reqs="$(cat $APT_REQS)"
+all_reqs=$(printf "%s\n%s" "$base_reqs" "$lgsm_reqs")
 
 # Install apt requirements!
-for req in $(cat "$APT_REQS"); do
+while IFS= read -r req; do
     if ! dpkg-query -W --showformat='${db:Status-Status}\n' "$req" 2>/dev/null | grep -q '^installed$'; then
         echo -e "${GREEN}####### Installing \`$req\`...${RESET}"
         echo $req >> installed.log
         apt-get install -y $req
     fi
-done
+done <<< "$all_reqs"
 
 if ! which python3  &>/dev/null; then
     echo -e "${GREEN}####### Installing \`python3\`...${RESET}"
@@ -176,23 +177,33 @@ fi
 echo -e "${GREEN}####### Installing Python Requirements...${RESET}"
 $VENV_PATH/bin/python3 -m pip install -r requirements.txt
 
+# Setup random key, if doesn't already exist.
+if [[ ! -f "$APP_PATH/.secret" ]]; then
+    random_key=$(python3 -c 'import secrets; print(secrets.token_hex())')
+    echo "SECRET_KEY=\"$random_key\"" | sudo -u $APP_USER tee "$APP_PATH/.secret" >/dev/null
+    chmod 600 .secret
+fi
+
+# Upgrade alembic DB
+echo -e "${GREEN}####### Updating Database...${RESET}"
+sudo -u $APP_USER $VENV_PATH/bin/flask --app app:create_app db upgrade
+
 ## Install Ansible Connector & Playbook files.
 echo -e "${GREEN}####### Installing Web-LGSM Ansible Connector...${RESET}"
 
-# First hardcode web-lgsm system user into accepted_users validation list and
-# web_user ansible vars files.
-echo "  - $USERNAME" >> $SCRIPTPATH/playbooks/vars/accepted_usernames.yml
-echo "web_lgsm_user: $USERNAME" > $SCRIPTPATH/playbooks/vars/web_lgsm_user.yml
-
-# Then copy those files into system dirs.
+# Copy playbook files into system dirs.
 cp -r playbooks/* $PLAYBOOKS_PATH
 mv $PLAYBOOKS_PATH/ansible_connector.py $CONNECTOR_PATH
+
+# Hardcode app user into accepted_users validation list and web_lgsm_user ansible vars files.
+echo "  - $APP_USER" | tee -a "$PLAYBOOKS_PATH/vars/accepted_usernames.yml" >/dev/null
+echo "web_lgsm_user: $APP_USER" | tee "$PLAYBOOKS_PATH/vars/web_lgsm_user.yml" >/dev/null
 
 echo -e "${GREEN}####### Setting up Share Modules Dir...${RESET}"
 
 venv_utils="$VENV_PATH/utils"
 mkdir -p "$venv_utils"
-cp -r "$SCRIPTPATH/app/utils/shared" "$venv_utils/"
+cp -r "$APP_PATH/app/utils/shared" "$venv_utils/"
 
 echo -e "${GREEN}####### Setting up Sudoers Rules...${RESET}"
 
@@ -201,10 +212,10 @@ venv_python="$VENV_PATH/bin/python"
 ansible_connector="$CONNECTOR_PATH/ansible_connector.py"
 accpt_usernames="$PLAYBOOKS_PATH/vars/accepted_usernames.yml"
 web_lgsm_user_vars="$PLAYBOOKS_PATH/vars/web_lgsm_user.yml"
-sudoers_file="/etc/sudoers.d/$USERNAME-$USERNAME"
+sudoers_file="/etc/sudoers.d/$APP_USER-$APP_USER"
 
 # Write sudoers rule for passwordless install & delete.
-sudoers_rule="$USERNAME ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
+sudoers_rule="$APP_USER ALL=(root) NOPASSWD: $venv_python $ansible_connector *"
 temp_sudoers=$(mktemp)
 echo "$sudoers_rule" > "$temp_sudoers"
 chmod 0440 "$temp_sudoers"

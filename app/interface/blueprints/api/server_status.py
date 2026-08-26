@@ -5,11 +5,10 @@ from flask_login import login_required, current_user
 from flask_restful import Resource
 
 from app.utils import *
-#from app.models import GameServer
 
 from . import api
 
-from app.container import container
+from app.interface.use_cases import get_game_server, check_user_access, get_game_server_power_state
 
 ######### API Server Statuses #########
 
@@ -17,7 +16,7 @@ class ServerStatus(Resource):
     @login_required
     def get(self, server_id):
 #        server = GameServer.query.filter_by(id=server_id).first()
-        server = container.get_game_server().execute(server_id)
+        server = get_game_server(server_id)
         if server == None:
             resp_dict = {"Error": "Invalid id"}
             response = Response(
@@ -25,14 +24,14 @@ class ServerStatus(Resource):
             )
             return response
 
-        if not container.check_user_access().execute(current_user.id, "server-statuses", server.id):
+        if not check_user_access(current_user.id, "server-statuses", server.id):
             resp_dict = {"Error": "Permission Denied!"}
             response = Response(
                 json.dumps(resp_dict, indent=4), status=403, mimetype="application/json"
             )
             return response
 
-        server_status = container.get_game_server_power_state().execute(server)
+        server_status = get_game_server_power_state(server)
 
         resp_dict = {"id": server.id, "status": server_status}
         current_app.logger.info(log_wrap("resp_dict", resp_dict))

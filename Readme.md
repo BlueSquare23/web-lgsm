@@ -199,4 +199,5 @@ MIT: See [license.txt](license.txt) for full terms.
 ## Support
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)
+
 [![Patreon](docs/images/PATREON_WORDMARK_1_BLACK_RGB.png)](https://patreon.com/web_lgsm?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)

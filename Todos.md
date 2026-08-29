@@ -1,38 +1,38 @@
-## Version 1.8.0 Todos
+## Version 1.1x.x Todos
 
 ### PR / Tutorials
 
 * [ ] **Get this up on docker hub and let people install by just pulling container image**
   - Then add to the readme pull from docker as alt way to install.
 
-* [ ] **Add new docs & Fix existing docs.**
+* [x] **Add new docs & Fix existing docs.**
   - A decent amount of review needs done here, I haven't even begun to look but
     probs going to be a lot.
 
 * [ ] **Make a github wiki and turn docs into wiki pages**
   - [More info on gh wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages)
 
-* [ ] **Create a discord server for project / community**
-  - [ ] Update community docs to also point to discord server.
+* [x] **Create a discord server for project / community**
+  - [x] Update community docs to also point to discord server.
 
 * [x] **Fix up Readme.**
   - [x] Update Readme gifs with newest look of interface.
-  - [ ] Add links to discord server.
+  - [x] Add links to discord server.
   - [ ] Add links to new Basic Setup & Docker YouTube Videos.
   - [x] Add contribute section pointing users to submitting an issue or submitting a
     pull request.
     - I have the community docs for this now.
 
-* [ ] **Setup a Community Discord Server**
+* [x] **Setup a Community Discord Server**
   - Some people might have simple sorta support questions or ideas in there.
     I'll try to remember to check it every once in a while.
   - [ ] Add link to discord to Readme!
 
-* [ ] **Create Patreon or Ko-fi donation platform**
+* [x] **Create Patreon or Ko-fi donation platform**
   - Actually had a user request this. Doesn't seem too hard to setup and even
     if only a few people give, still could be nice to get a few extra bucks a
     month.
-  - [ ] Add link to Readme.
+  - [x] Add link to Readme.
 
 * [ ] **YouTube Video Tutorials**
   - [ ] Mention Patreon or whatever & buy me a coffee link videos.
@@ -82,68 +82,14 @@
         - Add Nginx Proxy Manager to it.
 
 
-## Main Goals for v1.9 -> v1.10
+## Main Goals for v1.10 -> v1.11
 
 * **THE BIG FIVE!**
   - [x] File Manager
   - [ ] Interactive Terminal
   - [x] Frontend Overhaul
-  - [ ] Docker in Docker
+  - [ ] Docker Beside Docker
   - [ ] Promotion & Community
-
-* [x] **Revamp the interface design and layout**
-  - I'm not much of a front end guy. However, this project has simply come too
-    far with the original design / layout of the main pages and it needs an
-    overhaul.
-  - What I really want is a more web 2.0, discordesque design. 
-  - For example, one idea I had was a panel that comes out from the side with
-    different sections for navigating the app. Rather than the current "Other
-    Options" list on the home page.
-    - Then you could get to any page from any page and is a more comfortable
-      way people are used to navigating web apps.
-    - So would need to come up with an accordion of app's sorta hierarchy and
-      page structure. Something like this for example:
-      - Home Page
-        - Same Installed List, but more configurable settings for them
-          - Sort by user, Alpha, Custom Order.
-        - Stats
-        - Links
-      - GameServers
-        - Controls
-        - Jobs
-        - Configs
-        - Install
-        - Edit
-      - Settings
-        - App Settings
-        - User Settings
-    - That's just an example, I've also toyed around with the idea of the home
-      page having the terminal on it and then install or commands somehow both
-      display through that main single and only terminal. Like the apps built
-      around the central terminal device.
-      - I really like this idea but I have no idea how to impliment it.
-  - And yeah just overall learn some more CSS and put some more time into the
-    frontend of this app to really make it spiffy and nice.
-  - The frontend's kinda always been an after thought. Like oh shit I need an
-    interface let me put some buttons on a page real quick and tweak the
-    default bootstrap styling.
-    - And that works fine, but its nothing to write home about. I want this to
-      be spiffy and to shine.
-
-* [x] **Improve overall design & documentation for project**
-  - I want to actually properly try to design, document, and build out parts of
-    this app. Full honest, I've never really done real software design before
-    and this app up until this point (2025) was build with nothing but loose design 
-    ideas and hopes and dreams.
-  - This lack of design has fucked me and hampered the future development of
-    this app. Oh well live and learn.
-  - Major goal moving forward is to properly think, read, test, mockup, design,
-    document, then build.
-
-* [ ] **Validation logic should happen in the form classes**
-  - FlaskForm/Wtforms is our user input handling & validation layer.
-  - All user input coming into the app, even through the API should go through
-    a form class for valiation.
 
 * [ ] **Enable remote install over ssh via ansible connector**
   - From the very beginning when I first wrote the ansible connector I imagined
@@ -215,7 +161,7 @@
   - But we'll get way more users if we just publish on docker and let people
     run it in a container they can teardown whenever.
 
-## Version 1.9.x Todos
+## Version 1.1x.x Todos
 
 ### New Features, Highlevel Release Goals
 
@@ -231,30 +177,6 @@
   - I think at the very least the name needs changed. Still workshopping new name ideas.
   - But might also be a hint that larger components of the app need to change too...
 
-* [x] **Update container calls in route code with interface usecase calls**
-  - I wrote the interface usecase shortener and then proceeded to not really
-    use it all that much.
-  - So finally replaced all the old nasty `container.usecase().execute(*args,
-    **kwargs)` calls with shortened versions.
-
-* [x] **Fix Form Classes that ChatGPT Fucked Up**
-  - I was being lazy and threw my old monolithic form files at chatgpt to break
-    up and told it "don't change anything." Well it removed all my placeholder
-    text cause its an idiot.
-  - Should've just copied and pasted to begin with, would've saved me more time
-    in the long run.
-  - To be fair it didn't break any of the forms, but like c'mon man. Silly robit.
-
-* [x] **Document new multi-user rpc service inner workings**
-  - Since the plan is to make more and more features depend on the multi-user
-    rpc service, should probably keep some notes for myself and others on how
-    it actually works.
-  - Basically just need to explain each user has a systemd service which runs
-    the rpc server. Then the main app has a client that talks back to that
-    rpc server to do things as the user.
-  - Should detail how the service is added (at add or install time) and what
-    the rpc procedures do.
-
 * [ ] **Think more about adding auth to rpc servers**
   - Right now not too worried about it since the socket file perms do the heavy
     lifting here. Also no one is hacking my shitty little web app.
@@ -265,253 +187,20 @@
     secrets and then talk to all the child servers.
   - Have to do some more thinking.
 
-* [x] **Figure out auto-recreate socket files / dir on app startup**
-  - TIL: That /run is a tmpfs dir so socket files/dirs in there don't survive reboots.
-  - This dashes my hopes of setting it up once at install and moving on with life.
-  - Instead we'll have to have the web-lgsm.py script create these at app startup.
-    - ~Which means another sudoers rule for creating them which I don't love...~
-    - [x] Add preflight checklist and run setup via ansible connector.
+* [ ] **Future File Manager Features**
+  - [ ] Create Directory
+  - [ ] Move file / directory
+  - Non-day1 stuff.
+  - [ ] It'd be cool if could return info about mime type with file contents.
+    Then we could set the CodeMirror extension to be the same so syntax
+    hightlight always works. We might even just be able to use the file extention
+    tbh.
+  - [ ] Full support for file manager over SSH and in docker via module scripts.
+    - These module scripts are handy, might as well use them over ssh and
+      inside of a container if we can.
+    - So they need shipped and installed there somehow...
 
-* [x] **Make Sure RPC Server Processes Are Killable**
-  - This is going to be tricky because they're started as root...
-  - I think the answer might be have them actually started as the user. But
-    that makes things more complicated again. Will have to think...
-  * [x] **Make SystemD Service**
-    - I've decided the way to do this is to go back to systemd idea.
-```
-[Unit]
-Description=Web-LGSM User Module Agent
-After=network.target
-
-[Service]
-Type=simple
-Environment="PYTHONPATH=$PYTHONPATH:/opt/web-lgsm/utils"
-ExecStart=/opt/web-lgsm/bin/python3 -m shared.agent
-Restart=always
-WorkingDirectory=%h
-
-[Install]
-WantedBy=default.target
-```
-  - Enable:
-```
-export XDG_RUNTIME_DIR=/run/user/$UID
-loginctl enable-linger $USER
-mkdir -p ~/.config/systemd/user/
-vim ~/.config/systemd/user/web-lgsm-agent.service
-systemctl --user enable web-lgsm-agent
-```
-    - It has to work for new web-lgsm installs (as web-lgsm user)
-    - It has to work for new game server installs
-    - It has to work for add game server manually
-    - It should check if systemd service is already installed and running
-
-* [x] **Introduce Supervisor Layer to RPC system**
-  - Problem: Manager needed client to do health check and client needed manager
-    to do the restarts. They can't import eachother, circular imports.
-  - Solution: Introduce "Supervisor" layer that imports both the client and the
-    manager for safe auto restart checks.
-
-* [x] **Allow direct download to bypass mimetype restrictions**
-  - Right now download of images and other files gets blocked because
-    `copy_tmp` procedure has restrictions around mimes that can be displayed.
-  - This makes sense for file display, but not for file download.
-  - I'm also not a huge fan of file size restriction for direct download. But
-    for now is necessary to avoid the dreaded OOM killer. Need to figure out
-    buffered read from tmp for direct download.
-
-* [x] **Rekajigger File Read & Write to use copy temp files instead of passing file content through socket!!!**
-  - We've already learned the hard way that we can't pass file content through the socket for file uploads (aka file writes). It'll hit the OOM killer and kill everything!
-  - I added a size restriction to file reads, and that works, but now read and write are asymmetrical and I don't like that.
-  - Also hampers size of files one can download.
-  - So instead I need to rework the classes that surround file upload and download and make it all work via temp files manipulated by rpc procedures!
-
-* [x] **Fix double starting of RPC servers on app startup!**
-  - For some reason I haven't quite figured out yet, when you start the app, it starts all of the rpc server threads twice. Doesn't break anything, but also why is it doing that? Its just messy and needs investigated / fixed!
-  - Figure it out! Silly flask debug reloader starts a watcher of `__init__.py`, that's where the double spawn is coming from. 
-
-* [x] **Get Basic FileManager Setup**
-  - I need to figure out if I'm just pushing dir stuff through file pipes or
-    making new dir only pipes...
-  - [x] Replace edit page with new file manager instead.
-    - Links to confs on controls page will be replace with quick links to new file manager page.
-  - UI:
-    - [x] A delete file button.
-    - [x] Fix selected file so its highlighted (something's wonky there)
-    - [x] Create new file - modal pops up with option to name file
-    - [x] Rename file - modal pops open with rename option
-    - [x] Show hidden files button.
-    - [x] Search files, just frontend js.
-    - [x] List of files needs to be put in scrollable list.
-    - [x] Page for browsing files.
-    - [x] List of files and directories on the system on the left.
-    - [x] Click file it opens the file, click dir opens the dir.
-    - [x] Add perms to files list
-    - [x] Make files list auto scroll to selected file on refresh.
-    - [x] Save search bar search to session var
-    - [x] Add X to clear search bar
-    - [x] Make sure path is always URL encoded in url bar, not strictly
-          necessary, but just to be consistent and look more professional.
-    - [x] On file delete, fix js to remove item from list. (currently broken)
-  - API:
-    - [x] New file routes need validation and hardened against directory traversal attempts.
-    - [x] New perms for file editor, replace edit perms with file perms.
-    - [x] File/dir delete api route
-    - [x] File/dir create api route
-      - [x] Make create route work, some bug with write "" right now.
-    - [x] File/dir rename api route
-    - [x] Swagger docs for new api routes
-  - Core Code:
-    - [x] Make `is_safe_path` also check custom excludes.
-      - can do the exact same thing as user mod service scripts
-```python
-    (dir_exact, dir_globs), (file_exact, file_globs) = load_exclusions()
-    if matches(directory, dir_exact, dir_globs) or is_path_under_excluded_dir(directory, dir_exact, dir_globs):
-        return files
-```
-    - [x] Add Audit logging for it all
-      - [x] create file
-      - [x] delete file
-      - [x] edit file
-      - [x] rename file
-    - [x] Ensure `read_file` only read's plain text files.
-    - [x] A working save button.
-    - [x] A working Download button.
-    - [x] A working upload button.
-    - [x] Some sort of directory manager class, similar to file manager.
-    - [x] Use cases and container wiring to go along with it all.
-    - [x] Clean up / rip out remaining references to edit route and page.
-    - [x] Locked down to under users home dir.
-    - [x] Show sizes (raw bytes can convert in template with `filesizeformat`)
-    - [x] Rename Directory
-    - [x] Delete Directory
-    - [x] File Read Size Limit Check
-    - [x] Add check and auto restart dead rpc server threads
-  - Future Features:
-    - [x] Add Reason for file system failures
-      - Right now just has status (Success/Fail), should also push through reason for failures.
-    - [ ] Create Directory
-    - [ ] Move file / directory
-    - Non-day1 stuff.
-    - [ ] It'd be cool if could return info about mime type with file contents.
-      Then we could set the CodeMirror extension to be the same so syntax
-      hightlight always works. We might even just be able to use the file extention
-      tbh.
-    - [ ] Full support for file manager over SSH and in docker via module scripts.
-      - These module scripts are handy, might as well use them over ssh and
-        inside of a container if we can.
-      - So they need shipped and installed there somehow...
-
-* [x] **CRITICAL! Fix User Mod Service to use Stdin for JSON**
-  - Right now we're passing all json via command line flags. This breaks on large inputs!
-```
-OSError: [Errno 7] Argument list too long: 'sudo'
-```
-  - Since the user mod service is now the backbone of the file manager, we
-    can't just be having it break on file reads and writes and stuff.
-  - Good news is we just have to fix the input via the cli.py and the way the json is sent via the cmd.
-
-* [x] **Design MultiUserRCPService Client & Server**
-  - A client class.
-  - A server class.
-  - Each game server user runs a **Server** instance.
-  - The web-lgsm flask app is the **Client** instance.
-  - Python `socket` is bytes.
-  - Payload format is:
-    - Two Raw Bytes specifying content header length
-    - UTF-8 JSON Content Header with Content-Length
-    - UTF-8 JSON Content Body read in till Content-Length
-    - Directly ~stolen from~ inspired by: https://realpython.com/python-sockets/ ;)
-  - Still debating how to launch the RPC server for each game server user... At
-    first I was thinking just per user systemd services, but that strikes me as
-    brittle and disjointed.
-    - Instead, I'm thinking a better approach might be if the main web-lgsm
-      init launched each daemon separately in a thread via a sudo -u gsuser
-      rule and just managed their state that way. 
-    - Then all the RPC server threads are only running when the app itself is running.
-    - And if a thread crashes or something the app can restart it.
-    - So that's maybe a new class... We'll cross that bridge when we get to it.
-
-* [x] **Design Init for MultiUserRCPService Servers**
-  - These are long running processes, lets run them in background threads on
-    app init.
-  - Need some mechanism for restarting if they die or something goes wrong.
-  - [x] **New Class for MultiUserRCPServerManager**
-
-* [x] **Rename UserModuleService stuff to MultiUserRCPServiceClient and move things around**
-  - [x] I want to change this to just be the client code adapter thingy for the MultiUserRCPService.
-
-* [x] **Upgrade User Module Service to New MultiUserRCPService**
-  - (still workshopping the name)
-  - This is setup at install / add time.
-  - This is a basic json rpc service working via a unix domain socket.
-  - Socket Permissions I think are going to be:
-```
-sudo mkdir /run/web-lgsm  # Will happen by install.sh
-sudo chown blue:blue /run/web-lgsm
-sudo chmod 1775 /run/web-lgsm  # MAKE STICKY!!!
-sudo chmod g+s /var/run/web-lgsm/  # SET SGID (ALL SUB FILES INHERIT web-lgsm GROUP!)
-sudo apt install acl  # Will be handled by install.sh
-sudo setfacl -m u:mcserver:rwx /run/web-lgsm/  # Well be set by install / add
-```
- 
-```
-» sudo ls -lah /run/web-lgsm/
-total 0
-drwxrwsr-t+  2 root      blue  100 May 18 11:50 .
-drwxr-xr-x  34 root      root 1.2K May 18 11:41 ..
-srwxrwxr-x   1 blue      blue    0 May 18 11:50 blue.sock
-srwxrwxr-x   1 mcserver  blue    0 May 18 11:50 mcserver.sock
-srwxrwxr-x   1 mtaserver blue    0 May 18 11:50 mtaserver.sock
-
-» sudo getfacl /run/web-lgsm/
-getfacl: Removing leading '/' from absolute path names
-# file: run/web-lgsm/
-# owner: root
-# group: blue
-# flags: -st
-user::rwx
-user:mcserver:rwx
-user:mtaserver:rwx
-group::rwx
-mask::rwx
-other::r-x
-```
-  - So Socket files are owned user:web-app-user
-  - Dir is sticky so no one can delete others files
-  - Users can't read / write each others files
-  - SGID on dir ensures new socket files are created group web-app-user
-  - ACLs ensure other users can read and write to the directory
-
-* [x] **Replace /run/web-lgsm with /run/user/<uid> (aka $XDG_RUNTIME_DIR)**
-  - The above was a good first draft, but keeping the sockets all in one shared
-    dir introduces security issues.
-  - Instead switch things to utilize `$XDG_RUNTIME_DIR` since we're already
-    setting per user systemd services.
-
-* [x] **Add manual reset to rpc servers to settings page**
-  - I've already had a few times when I've needed to reset them manually.
-    Restarting the web app works, but no reason to make users do that when we
-    already have a usecase for it.
-
-* [x] **Fix file upload to use tempfile instead of json rpc socket**
-  - Welp I learned real quick that I can't push files through the unix domain
-    socket for the json rpc service because the entire app will get killed by
-    the systems oom killer. 
-  - So instead we're going to just stream the bytes from the upload buffer
-    directly into a tempfile and then copy that tempfile into place via an rpc
-    procedure.
-  - That way no file content data for uploads has to go through the socket and
-    therefore we don't need to keep it in mem. Just from disk to disk.
-
-* [x] **Fix current tests**
-  - Current tests are failing. Need to debug and make tweaks to make sure they
-    all pass again.
-
-* [x] **Write File Manager Tests!!**
-  - [x] Basic Content Tests
-  - [x] Basic Reposes Tests
-  - [x] Basic API Endpoint Tests
+* [ ] **More tests**
   - [ ] Unit Tests for FileManager
   - [ ] Integration Tests for edit file as alt user after install
 
@@ -530,74 +219,6 @@ other::r-x
     pure python for local. It can all be PURE PYTHON! Better for security and
     maintainability.
 
-* [x] **File/Dir Manager User Permissions**
-  - Global disable in the main.conf(.local) for the entire file manager.
-  - Admins can do anything.
-  - Non admin users can be given full access or read only access.
-
-* [x] **File/Dir Manager Ignore List Mechanism**
-  - We need a way for users to hardcode a ~list~ set of files & dirs that are off limits to the app.
-  - Should have just a list of dirs and anything under them is no go.
-  - Needs to be stored as root and ignored if not there.
-  - Not overwritten by updates.
-  - The app should read this ~list~ set in, cache it, then reference it (and recheck
-    timestamp to update cache) every time a request comes in to the Route or
-    API routes.
-  - The ~list~ set should also be checked every user module script run.
-  - **The Plan**
-    - New optional yaml file:
-```
-/usr/local/share/web-lgsm_exclude.yml
-```
-    - Formatted like this:
-```yaml
-exclude_files:
-  - file123.txt
-  - "*.sh"
-
-exclude_dirs:
-  - /home/user123/some/path
-  - /home/user456/another_path
-```
-  - [x] Those will get imported by user module scripts.
-  - [x] We'll wire up usecases through the user module service to call validator module scripts.
-  - [x] These new user mod service scripts will be directly imported by other user
-    mod service scripts for validation in that layer. They'll also be directly
-    imported by user mod service in infra layer to include them in the app and be
-    made accessible via usecases.
-  - What's great about this approach is I can prototype it all just in the route
-    code for same user installs which is very oldschool how I used to write all
-    the route code.
-
-* [x] **Validation for file manager**
-  - Breaking this out into its own todo to keep above list clean / short.
-  - Basically, I want reusable validation.
-  - We need to validate in the forms. 
-  - We also need to validate in the user module scripts.
-  - I'm thinking maybe we can create a neutral form class that we somehow use in both place...
-    - But then it'd be weird because it'd have to be up in opt shared utils so the mod scripts could import.
-    - Cause root shit shouldn't import from writeable as the user files.
-  - If we do have to reuse code, wouldn't be the worst thing.
-  - **Types of Validation**
-    - [x] Words of affirmation. The file manager deserves to feel loved too!
-    - [x] Hardcoded ignore list paths. (lock down allowed paths)
-    - [x] No special chars in file names. Avoid .. or / or $blah etc. (sanitize with werkzeug.utils `secure_filename`)
-    - [x] File name length limits, put in forms class.
-    - [x] Upload file size limits.
-
-* [x] **Refactor forms**
-  - First off all forms need to be broken up into their own form class files.
-  - We'll wire it up as a forms package.
-    - The base import stuff will all go in a junk file.
-    - We also have the helpers.py in there for other misc forms helper utils.
-    - Not super clean, but ehh better than everything in two big form classes files.
-  - Then similar forms need rewritten to be smarter.
-    - [ ] For example, the Upload, Download, and Save forms all have a server
-      id, path, and submit button. So those three classes can inherit from a
-      general FileForm class or something and then the only part that's
-      different is if it needs a TextAreaField required for Save vs nothing for
-      Download vs _something..._ for upload (still haven't figure out upload yet).
-
 * [ ] **Add sliding session expiration (aka session renewed every request) to user login**
   - Basically, we want so that if the user visits the web app often enough,
     just keep them logged in indefinitely. But we don't want to have really
@@ -609,14 +230,6 @@ exclude_dirs:
     update remember me cookie expiration." That might require a full
     `login_user` call, idk yet. But think that might be fine...
 
-* [ ] **Change secret generation to use recommended python instead**
-  - https://flask.palletsprojects.com/en/stable/quickstart/#sessions
-  - From the docs:
-```shell
-python3 -c 'import secrets; print(secrets.token_hex())'
-b7e4a7e242e81ad0c6b2eba7ce90f52bbf9e56407a8ebcbec2ac0bfa6a752def
-```
-
 * [ ] **Add install new game servers to containers**
   - Instead of installing as new system users, allow install game servers
     inside of containers.
@@ -624,27 +237,7 @@ b7e4a7e242e81ad0c6b2eba7ce90f52bbf9e56407a8ebcbec2ac0bfa6a752def
   - And/Or tell users manually create the ports.
   - And/Or just let them directly access and edit the yaml via web file editor.
 
-* [ ] **Look into Docker in Docker (DinD) deployment**
-  - If this is viable and not too annoying, I think it could be the main way
-    for distributing, deploying, and updating the app.
-  - I don't think the bare metal install will ever go away, but if we can wrap
-    it in layers of containers, that significantly boots our security without
-    requiring too many fundamental app rewrites.
-  - Idea is:
-```
-Host Machine
-└── Web App Container (with DinD)
-    ├── Inner Docker Daemon (runs inside)
-    └── Game Server Container A (managed by inner daemon)
-    └── Game Server Container B (managed by inner daemon)
-```
-  - Then new default setup would be install new game servers to sub containers,
-    instead of to users on the system.
-
-
-## Version 1.9.4 Todos
-
-### New Features, Highlevel Release Goals
+### New Features
 
 * [ ] **Add collapsible sitemap accordion panel to righthand side**
   - Goal is get to any page from any page by opening up side panel and going
@@ -929,27 +522,6 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - Those will then be parsed and loaded by the app.
     - I think I want to limit these to showing up on the controls page.
 
-* [ ] **Fully integrated file explorer for managing files and mods**
-  - Idea here is to clean up the existing edit page and add in a file manager.
-    - So right now file manager takes as input the full path to files. This is
-      dumb as hell. It should only take in relative path to game server's base
-      dir. Keeps url looking cleaner + implicitly limits to game server dir.
-  - I'm not super thrilled with the idea of doing a full file manager by
-    wrapping shell commands. But designwise I've sorta backed myself into that
-    corner. How else do I do it over ssh, most of the app works over ssh.
-  - There are hacky ways to run native python over ssh, but that's really not
-    much better than just using shell commands.
-  - I think it'll be okay if I just do these operations:
-    - list
-    - edit
-    - delete
-    - create
-    - upload
-  - Just like the file editor it'll be disabled by default and users will have
-    to opt-in to enable it. And won't be accessable from setting page.
-  - This will take some work to do properly and safely. But we'll figure it out.
-
-
 * [ ] **Add more thorough tests over SSH.**
   - Setup a remote host with Minecraft on it.
   - Add flag to web-lgsm.py to do `--test_ssh`.
@@ -957,7 +529,6 @@ Maybe I'll do these things but really they're all just kinda dreams for now.
     - Can't add a priv key so can't connect the ci tests to a remote host.
     - This would just be for me to run manually every so often to check
       everything over remote ssh is all good.
-
 
 * [ ] **Look into Conda/Mamba as a better way of packaging project's system dependencies.**
   - I would get more control over specific package builds and would be platform independent.

@@ -5,34 +5,11 @@
 * [ ] **Get this up on docker hub and let people install by just pulling container image**
   - Then add to the readme pull from docker as alt way to install.
 
-* [x] **Add new docs & Fix existing docs.**
-  - A decent amount of review needs done here, I haven't even begun to look but
-    probs going to be a lot.
-
 * [ ] **Make a github wiki and turn docs into wiki pages**
   - [More info on gh wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages)
 
-* [x] **Create a discord server for project / community**
-  - [x] Update community docs to also point to discord server.
-
-* [x] **Fix up Readme.**
-  - [x] Update Readme gifs with newest look of interface.
-  - [x] Add links to discord server.
+* [ ] **Create new walkthrough video.**
   - [ ] Add links to new Basic Setup & Docker YouTube Videos.
-  - [x] Add contribute section pointing users to submitting an issue or submitting a
-    pull request.
-    - I have the community docs for this now.
-
-* [x] **Setup a Community Discord Server**
-  - Some people might have simple sorta support questions or ideas in there.
-    I'll try to remember to check it every once in a while.
-  - [ ] Add link to discord to Readme!
-
-* [x] **Create Patreon or Ko-fi donation platform**
-  - Actually had a user request this. Doesn't seem too hard to setup and even
-    if only a few people give, still could be nice to get a few extra bucks a
-    month.
-  - [x] Add link to Readme.
 
 * [ ] **YouTube Video Tutorials**
   - [ ] Mention Patreon or whatever & buy me a coffee link videos.
@@ -88,8 +65,16 @@
   - [x] File Manager
   - [ ] Interactive Terminal
   - [x] Frontend Overhaul
-  - [ ] Docker Beside Docker
+  - [ ] Docker Beside Docker (w/ docker proxy setup)
   - [ ] Promotion & Community
+
+### Misc Immediate Todos
+
+* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
+  - For the biggest stuff either fix there on the spot (if able) or make a todo
+    below for later.
+  - But want to try to clean up some of that backlog.
+  - Just run `grep -R TODO app/*` to find em all!
 
 * [ ] **Enable remote install over ssh via ansible connector**
   - From the very beginning when I first wrote the ansible connector I imagined
@@ -111,16 +96,6 @@
 * [ ] **Try to make draft version of pie in the sky custom command web-modules**
   - So like users could define custom command modules and add them to the page
     as specialized buttons or whatever to do the needful.
-
-* [ ] **Build (or otherwise integrate with existing) web based remote file browser / mod manager**
-  - Seems like the community wants an FTP-like web interface.
-  - Building this myself from scratch would take a ton of effort and time that
-    I don't really have tbh. Unless people are willing to be very patient.
-  - A better road would be to integrate someone else's existing web based file
-    browser into my project. There is one Flask extention for file browser I
-    saw but it sucks and I don't want to use it and I can't use it for over ssh :(
-  - So still no idea how to do this but might end up having to write it mostly
-    from scratch.
 
 * [ ] **Allow in app game server moves**
   - This should be integrated with the in app file browser whenever I get to that. 
@@ -149,12 +124,6 @@
     docs.
     - https://fastapi.tiangolo.com/
   
-* [ ] **Use Web Sockets for realtime communication**
-  - The console for this thing is just some inefficient jquery contently making
-    requests back to api endpoints. It works, but its a hacky mess. 
-  - I want to transition the app to use web sockets for this communication
-    instead.
-
 * [ ] **Get app up on docker hub**
   - Should distribute via dockerhub too. Right now have experimental docker
     compose, that needs some love too.
@@ -162,8 +131,6 @@
     run it in a container they can teardown whenever.
 
 ## Version 1.1x.x Todos
-
-### New Features, Highlevel Release Goals
 
 * [ ] **Rewrite xtermjs code to fix live console output & to fix carriage returns prints.**
 
@@ -282,12 +249,6 @@ If you need any icons, we're also using bootstrap icons, so you can just use any
 https://icons.getbootstrap.com/
 ```
 
-* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
-  - For the biggest stuff either fix there on the spot (if able) or make a todo
-    below for later.
-  - But want to try to clean up some of that backlog.
-  - Just run `grep -R TODO app/*` to find em all!
-
 ### The Meat
 
 * [ ] **Add Login IP address to Audit Log for Logins**
@@ -338,7 +299,6 @@ https://icons.getbootstrap.com/
     might have to look at gunicorn and see if there's something we can do to
     catch 500's and send a stack trace and maybe some anonomized vars dump back
     to me somehow. (Email sucks so prolly just post to a site I control)
-
 
 ### The Rest
 

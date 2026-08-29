@@ -179,8 +179,24 @@ For production deployments, always run behind a reverse proxy with TLS. See the 
 
 MIT: See [license.txt](license.txt) for full terms.
 
-## Author
+## Social
 
-**John L. Radford** — [johnlradford.io](https://johnlradford.io/)
+- [Discord](https://discord.gg/4rv7zSHcr)
+- [YouTube](https://www.youtube.com/@web-lgsm)
+
+## Contributors
+
+<p align="center">
+  <a href="https://github.com/BlueSquare23/web-lgsm/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=BlueSquare23/web-lgsm">
+  </a>
+</p>
+
+<p align="center">
+  <sub>Built and maintained by <a href="https://github.com/BlueSquare23">@BlueSquare23</a>. Your face could be here next... See <a href="docs/CONTRIBUTING.md">CONTRIBUTING.md</a>.</sub>
+</p>
+
+## Support
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/bluesquare23)
+[![Patreon](docs/images/PATREON_WORDMARK_1_BLACK_RGB.png)](https://patreon.com/web_lgsm?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink)

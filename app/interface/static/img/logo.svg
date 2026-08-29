@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Web-LGSM">
+  <title>Web-LGSM</title>
+  <defs>
+    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%"
+            color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="4"
+                    flood-color="#8f8fff" flood-opacity="0.9"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="10"
+                    flood-color="#8f8fff" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <!-- badge: a server node / honeycomb cell -->
+  <path d="M 110.68,32.00 Q 128.00,22.00 145.32,32.00 L 202.48,65.00 Q 219.80,75.00 219.80,95.00 L 219.80,161.00 Q 219.80,181.00 202.48,191.00 L 145.32,224.00 Q 128.00,234.00 110.68,224.00 L 53.52,191.00 Q 36.20,181.00 36.20,161.00 L 36.20,95.00 Q 36.20,75.00 53.52,65.00 Z" fill="#15181a"/>
+  <path d="M 114.14,44.00 Q 128.00,36.00 141.86,44.00 L 193.82,74.00 Q 207.67,82.00 207.67,98.00 L 207.67,158.00 Q 207.67,174.00 193.82,182.00 L 141.86,212.00 Q 128.00,220.00 114.14,212.00 L 62.18,182.00 Q 48.33,174.00 48.33,158.00 L 48.33,98.00 Q 48.33,82.00 62.18,74.00 Z" fill="none" stroke="#3333b0" stroke-width="2" stroke-linejoin="round" opacity="0.55"/>
+
+  <g filter="url(#neon)">
+    <path d="M 110.68,32.00 Q 128.00,22.00 145.32,32.00 L 202.48,65.00 Q 219.80,75.00 219.80,95.00 L 219.80,161.00 Q 219.80,181.00 202.48,191.00 L 145.32,224.00 Q 128.00,234.00 110.68,224.00 L 53.52,191.00 Q 36.20,181.00 36.20,161.00 L 36.20,95.00 Q 36.20,75.00 53.52,65.00 Z" fill="none" stroke="#4d4dff" stroke-width="8" stroke-linejoin="round"/>
+    <!-- terminal prompt: chevron doubles as a play arrow -->
+    <path d="M 92,98 L 130,126 L 92,154" fill="none" stroke="#4d4dff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="124" y1="160" x2="170" y2="160" stroke="#4d4dff" stroke-width="16" stroke-linecap="round"/>
+  </g>
+</svg>

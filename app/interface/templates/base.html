@@ -10,6 +10,7 @@
     <!-- Bootstrap CSS Only -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='js/vendor/xterm.bundle.css') }}" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -59,8 +60,8 @@
     <!-- Bootstrap Navbar https://getbootstrap.com/docs/5.1/components/navbar/ -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-white">
       <div class="container-fluid">
-        <a class="navbar-brand" title="Home" href="/home">
-          <img src="/static/img/favicon.ico" alt="" width="30" height="24" class="d-inline-block align-text-top" />
+        <a class="navbar-brand mx-auto" title="Home" href="/home">
+          <img src="/static/img/logo.svg" alt="Web-LGSM" width="28" height="28" class="d-inline-block align-text-top" />
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
           <span class="navbar-toggler-icon"></span>

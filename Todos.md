@@ -2,9 +2,6 @@
 
 ### PR / Tutorials
 
-* [ ] **Get this up on docker hub and let people install by just pulling container image**
-  - Then add to the readme pull from docker as alt way to install.
-
 * [ ] **Make a github wiki and turn docs into wiki pages**
   - [More info on gh wiki](https://docs.github.com/en/communities/documenting-your-project-with-wikis/adding-or-editing-wiki-pages)
 
@@ -33,8 +30,6 @@
         - Will already have one setup beforehand, just need to add it to the web interface.
       6. Add a game server via docker.
         - Will already have one setup beforehand, just need to add it to the web interface.
-  - [ ] Add "OLD VERSION" to the title of old video.
-    - [ ] Also link to newest video in the endcard and description.
   - [ ] Full Web-LGSM Docker Installation, Setup, Overview w/ Portainer & Nginx Proxy Manager.
     - The idea here is everything's in a container. 
     - Basic Script:
@@ -61,20 +56,26 @@
 
 ## Main Goals for v1.10 -> v1.11
 
-* **THE BIG FIVE!**
+* [ ] **Get this up on docker hub and let people install by just pulling container image**
+  - Then add to the readme pull from docker as alt way to install.
+
+* **THE BIG SIX!**
   - [x] File Manager
+  - [ ] RPCify The Planet
   - [ ] Interactive Terminal
   - [x] Frontend Overhaul
-  - [ ] Docker Beside Docker (w/ docker proxy setup)
+  - [ ] Docker Beside Docker (w/ docker-proxy setup)
   - [ ] Promotion & Community
 
-### Misc Immediate Todos
-
-* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
-  - For the biggest stuff either fix there on the spot (if able) or make a todo
-    below for later.
-  - But want to try to clean up some of that backlog.
-  - Just run `grep -R TODO app/*` to find em all!
+* [ ] **Replace shell calls with RPC procedures**
+  - No need to job out to the shell now that we have the rpc daemons running.
+  - [ ] **Make RPC System handle streaming.**
+    - Can't used fix length payload for live console updates.
+    - Have to stream off the socket instead. Need to learn how to do that.
+      - I'm thinking 90% of procedures will have fixed content length.
+      - And header will specify if its fix len buffered or unbuffered...
+  - [ ] **Make RPC System work for ssh & docker**
+    - SSH is going to be easier but again need to do above todo research first.
 
 * [ ] **Enable remote install over ssh via ansible connector**
   - From the very beginning when I first wrote the ansible connector I imagined
@@ -84,14 +85,27 @@
     - Right now you can manage them over ssh, but never got around to making
       install over ssh work.
 
-* [ ] **Get fully working shell interface through web terminal**
-  - This would be a direct passthrough to a live shell session running as the
-    user with stdin, stdout, stderr of the node xterm session plugged directly
-    into 0,1,2 of an underlying shell session running as the user for that game
-    server.
-  - Like many of other *spicy* features, this will ship DISABLED by default.
-  - Mainly I just kinda want to see if I can do it. 
-  - Would be dope if it could work as any user that web-lgsm has access to.
+* [ ] **Install inside container**
+  - The base LGSM project already provides docker compose files for game servers.
+  - Need to make an automated 
+
+* [ ] **Docker beside docker**
+  - Thought is:
+    - Main app in container
+    - Install into container
+    - 
+
+### Misc Immediate Todos
+
+* [ ] **Finally do away with old `utils.py` (aka `utils/helpers.py`) file**
+  - Global includes in here are breaking a bunch of stuff.
+  - Should've never `include *` from there. Oh well live and learn.
+
+* [ ] **Explore old INLINE TODO's for v1.9.0 and see what's most important**
+  - For the biggest stuff either fix there on the spot (if able) or make a todo
+    below for later.
+  - But want to try to clean up some of that backlog.
+  - Just run `grep -R TODO app/*` to find em all!
 
 * [ ] **Try to make draft version of pie in the sky custom command web-modules**
   - So like users could define custom command modules and add them to the page
@@ -249,8 +263,6 @@ If you need any icons, we're also using bootstrap icons, so you can just use any
 https://icons.getbootstrap.com/
 ```
 
-### The Meat
-
 * [ ] **Add Login IP address to Audit Log for Logins**
   - Should say: `User 'username' logged in from 1.1.1.1`
 
@@ -300,6 +312,15 @@ https://icons.getbootstrap.com/
     catch 500's and send a stack trace and maybe some anonomized vars dump back
     to me somehow. (Email sucks so prolly just post to a site I control)
 
+* [ ] **Get fully working shell interface through web terminal**
+  - This would be a direct passthrough to a live shell session running as the
+    user with stdin, stdout, stderr of the node xterm session plugged directly
+    into 0,1,2 of an underlying shell session running as the user for that game
+    server.
+  - Like many of other *spicy* features, this will ship DISABLED by default.
+  - Mainly I just kinda want to see if I can do it. 
+  - Would be dope if it could work as any user that web-lgsm has access to.
+
 ### The Rest
 
 * [ ] **Find way to detect available server controls on a per server basis**
@@ -346,8 +367,6 @@ https://icons.getbootstrap.com/
       make sure things are all good.
     - But I can do that, so I should be doing that. Oh well always more things
       to do than time to do them.
-
-## Version 1.9.x Todos
 
 * [ ] **More Cron Improvements**
   - [ ] Add `@reboot`, `@daily`, `@hourly`, etc. to cron scheduler.

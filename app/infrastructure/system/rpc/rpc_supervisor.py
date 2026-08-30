@@ -1,8 +1,8 @@
 import logging
 import getpass
 
-from app.infrastructure.system.user.rpc_client import MultiUserRPCClient
-from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
+from app.infrastructure.system.rpc.rpc_client import MultiUserRPCClient
+from app.infrastructure.system.rpc.rpc_server_manager import MultiUserRPCServerManager
 
 class MultiUserRPCSupervisor:
     """

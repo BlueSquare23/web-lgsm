@@ -4,7 +4,7 @@ import logging
 from .local_file_interface import LocalFileInterface
 from .remote_file_interface import SSHFileInterface
 
-from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
+from app.infrastructure.system.rpc.rpc_supervisor import MultiUserRPCSupervisor
 
 class FileManager:
     def __init__(self, logger=logging.getLogger(__name__), client=MultiUserRPCSupervisor()):

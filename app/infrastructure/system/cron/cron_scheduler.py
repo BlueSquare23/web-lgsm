@@ -13,7 +13,7 @@ from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoR
 
 from app.domain.entities.job import Job
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
-from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
+from app.infrastructure.system.rpc.rpc_supervisor import MultiUserRPCSupervisor
 
 class CronScheduler:
     """

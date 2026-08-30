@@ -12,10 +12,10 @@ from flask import (
     current_app,
 )
 
-from app.utils import *
+from app.utils import log_wrap
 from app.interface.forms import ValidateID, AddForm, validation_errors
 
-from app.interface.use_cases import check_user_access, list_user_game_servers, get_game_server, edit_game_server, edit_user, check_sudoers_access, add_sudoers_rule, log_audit_event
+from app.interface.use_cases import check_user_access, list_user_game_servers, get_game_server, edit_game_server, edit_user, check_sudoers_access, add_sudoers_rule, log_audit_event, get_uid
 
 # Constants.
 USER = getpass.getuser()

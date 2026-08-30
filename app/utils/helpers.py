@@ -32,23 +32,6 @@ def log_wrap(item_name, item):
     return log_msg
 
 
-def get_uid(username):
-    """
-    Translates a username to a uid using pwd module.
-
-    Args:
-        username(str): User to get uid for
-
-    Returns:
-        uid (str): Either returns the uid for user or None if can't get uid
-    """
-    try:
-        user_info = pwd.getpwnam(username)
-        return user_info.pw_uid
-    except KeyError:
-        return None
-
-
 def docker_cmd_build(server):
     """
     Builds docker cmd reused all over for given GameServer.

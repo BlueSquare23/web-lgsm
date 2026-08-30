@@ -3,7 +3,7 @@ import os
 from .local_dir_interface import LocalDirInterface
 from .remote_dir_interface import SSHDirInterface
 
-from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
+from app.infrastructure.system.rpc.rpc_supervisor import MultiUserRPCSupervisor
 from app.utils.helpers import log_wrap
 
 class DirectoryManager():

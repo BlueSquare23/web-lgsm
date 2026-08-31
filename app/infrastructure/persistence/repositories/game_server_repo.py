@@ -54,7 +54,7 @@ class SqlAlchemyGameServerRepository(GameServerRepository):
         if model == None:
             return None
 
-        # Convert model object to Job entity.
+        # Convert model object to GameServer entity.
         data = {
             'id': model.id,
             'install_name': model.install_name,

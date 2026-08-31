@@ -114,22 +114,3 @@ def is_ssh_accessible(hostname):
     finally:
         sock.close()
 
-# TODO: Give this the clean arch treatment
-def read_changelog():
-    """
-    Reads in the local CHANGELOG.md file and returns its contents.
-
-    Args:
-        None
-
-    Returns:
-        str: Contents of CHANGELOG.md file or err str.
-    """
-    try:
-        with open("CHANGELOG.md", "r") as file:
-            contents = file.read()
-        return contents
-
-    except Exception as e:
-        return f"Problem reading CHANGELOG.md: {e}"
-

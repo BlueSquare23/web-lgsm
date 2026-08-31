@@ -95,6 +95,10 @@ from app.application.use_cases.file_system.write_file import WriteFile
 from app.application.use_cases.file_system.delete_file import DeleteFile 
 from app.application.use_cases.file_system.rename_file import RenameFile 
 
+# Changelog
+from app.infrastructure.system.file_system.read_changelog import ChangelogReader
+from app.application.use_cases.file_system.read_changelog import ReadChangelog
+
 # Dirs 
 from app.infrastructure.system.file_system.dir_manager import DirectoryManager
 from app.application.use_cases.file_system.list_dir import ListDir
@@ -195,6 +199,9 @@ class Container:
     def system_user_info(self):
         return UserInfo()
 
+    def changelog_reader(self):
+        return ChangelogReader()
+
     # ---- Use Cases ----
 
     ## Audit
@@ -283,6 +290,7 @@ class Container:
         )
 
     ## System User
+
     def get_uid(self):
         return GetUID(
             system_user_info=self.system_user_info()
@@ -464,6 +472,13 @@ class Container:
     def is_dir(self):
         return IsDir(
             dir_manager=self.dir_manager()
+        )
+
+    ## Changelog
+
+    def read_changelog(self):
+        return ReadChangelog(
+            changelog_reader=self.changelog_reader()
         )
 
     ## RPC Service

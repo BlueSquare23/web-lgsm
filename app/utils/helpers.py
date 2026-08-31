@@ -1,6 +1,4 @@
 import pwd
-import socket
-import getpass
 
 # TODO: Update trickle down imports. BAD! NEEDS FIXED!
 import os
@@ -8,7 +6,6 @@ from flask import current_app
 from app import cache
 
 # Constants.
-USER = getpass.getuser()
 from app.utils.paths import PATHS
 CONNECTOR_CMD = [
     PATHS["sudo"],
@@ -80,37 +77,4 @@ def update_self():
 
     if "Update Required" in proc_info.stdout:
         return "Web LGSM Upgraded! Restarting momentarily..."
-
-
-# TODO: Give this the clean arch treatment
-def is_ssh_accessible(hostname):
-    """
-    Checks if a hostname/IP has an accessible SSH server on port 22.
-
-    Args:
-        hostname (str): The hostname or IP address to check.
-
-    Returns:
-        bool: True if SSH is accessible, False otherwise.
-    """
-    port = 22
-    timeout = 5
-
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-
-        result = sock.connect_ex((hostname, port))
-
-        # Check the result: 0 means the port is open.
-        if result == 0:
-            return True
-        else:
-            return False
-    except socket.gaierror:
-        return False
-    except socket.error:
-        return False
-    finally:
-        sock.close()
 

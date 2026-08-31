@@ -1,3 +1,5 @@
+import getpass
+
 from threading import Thread
 from flask_login import login_required, current_user
 from flask import (
@@ -9,11 +11,11 @@ from flask import (
     current_app,
 )
 
-from app.utils import *
+from app.utils import log_wrap
 from app.interface.forms import validation_errors, ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app import cache
 
-from app.interface.use_cases import get_template_config, query_game_server, get_game_server, check_user_access, check_sudoers_access, add_sudoers_rule, list_controls, getboolean_config, find_cfg_paths, get_game_server_power_state, log_audit_event, run_command, list_controls
+from app.interface.use_cases import get_template_config, query_game_server, get_game_server, check_user_access, check_sudoers_access, add_sudoers_rule, list_controls, getboolean_config, find_cfg_paths, get_game_server_power_state, log_audit_event, run_command, list_controls, is_ssh_accessible
 
 from . import main_bp
 

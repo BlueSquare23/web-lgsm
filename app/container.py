@@ -41,6 +41,10 @@ from app.application.use_cases.user.list_user_game_servers import ListUserGameSe
 from app.infrastructure.system.user.user_info import UserInfo
 from app.application.use_cases.user.get_uid import GetUID
 
+# SSH
+from app.infrastructure.system.ssh.port_checker import PortChecker
+from app.application.use_cases.ssh.is_accessible import IsAccessible
+
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
 from app.infrastructure.system.game_server.game_server_manager import GameServerManager
@@ -199,6 +203,9 @@ class Container:
     def system_user_info(self):
         return UserInfo()
 
+    def port_checker(self):
+        return PortChecker()
+
     def changelog_reader(self):
         return ChangelogReader()
 
@@ -294,6 +301,13 @@ class Container:
     def get_uid(self):
         return GetUID(
             system_user_info=self.system_user_info()
+        )
+
+    ## SSH
+
+    def is_ssh_accessible(self):
+        return IsAccessible(
+            port_checker=self.port_checker()
         )
 
     ## GameServer

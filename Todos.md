@@ -93,7 +93,7 @@
   - Thought is:
     - Main app in container
     - Install into container
-    - 
+    - Use docker-proxy to talk between containers securely
 
 ### Misc Immediate Todos
 

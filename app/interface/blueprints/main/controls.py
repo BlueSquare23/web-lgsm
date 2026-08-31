@@ -1,3 +1,4 @@
+import os
 import getpass
 
 from threading import Thread
@@ -11,7 +12,7 @@ from flask import (
     current_app,
 )
 
-from app.utils import log_wrap
+from app.utils import log_wrap, docker_cmd_build
 from app.interface.forms import validation_errors, ValidateID, SendCommandForm, ServerControlForm, SelectCfgForm
 from app import cache
 

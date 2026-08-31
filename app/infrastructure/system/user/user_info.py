@@ -2,7 +2,7 @@ import pwd
 
 class UserInfo():
 
-    def get_uid(username):
+    def get_uid(self, username):
         """
         Translates a username to a uid using pwd module.
     

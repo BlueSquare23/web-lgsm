@@ -1,5 +1,3 @@
-import pwd
-
 # TODO: Update trickle down imports. BAD! NEEDS FIXED!
 import os
 from flask import current_app
@@ -28,7 +26,8 @@ def log_wrap(item_name, item):
     log_msg = f"{item_name} {str(type(item))}: {item}"
     return log_msg
 
-
+# This is going away anyways, fine here for now. But going to be replaced when
+# shell calls are replaced.
 def docker_cmd_build(server):
     """
     Builds docker cmd reused all over for given GameServer.
@@ -48,6 +47,7 @@ def docker_cmd_build(server):
         server.username,
         server.script_name,
     ]
+
 
 # TODO: This needs a sudo password or it wont work...
 def update_self():

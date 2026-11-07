@@ -17,8 +17,9 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
-#    runs-on: self-hosted
+    runs-on: ubuntu-24.04
+# TODO: Update once lgsm support u26
+#    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.10.1 - unreleased]
+
+### Added
+
+- New procedure for listing jobs (aka reinvent crontab -l as json rpc procedure).
+
+### Changed
+
+- Make `CronScheduler.list()` use json rpc service for listing jobs.
+- Update Werkzeug to 3.1.9 in requirements.txt.
+- Restructure `read_changelog` to make clean arch.
+- Change logo image to new original mark.
+
+### Fixed
+
+- Fix cron descriptions to be more natural language + fix `*/x` syntax issue. (Resolves [Issue 69](https://github.com/BlueSquare23/web-lgsm/issues/69)) 
+- Fix cron comment edit creating duplicate jobs by making idempotent on JOB-SHORT-UUID. (Resolves [Issue 69](https://github.com/BlueSquare23/web-lgsm/issues/69))
+
 ## [v1.10.0 - 2026-08-26]
 
 ### Added

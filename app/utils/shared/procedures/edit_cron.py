@@ -1,4 +1,5 @@
 import os
+import re
 from crontab import CronTab
 
 def edit_cron(state, **job):
@@ -11,24 +12,28 @@ def edit_cron(state, **job):
     Returns:
         bool: True if write successful, False otherwise.
     """
+    # Identity of the job: only server_id + job_id
+    identity = f"{job['server_id']}, {job['job_id']}"
 
-    comment = f"{job['server_id']}, {job['job_id']},".strip()
+    # Full comment written to the crontab (identity + optional user comment)
+    comment = f"{identity},"
     if job['comment']:
-        comment = comment + f" {job['comment']}"
+        comment += f" {job['comment']}"
 
     script_path = os.path.join(job['install_path'], job['script_name'])
     job_cmd = f"{script_path} {job['command']}"
-
-    print("comment " + comment)
 
     custom_job_prefix = 'custom: '
     if job["command"].startswith(custom_job_prefix):
         job_cmd = job['command'].replace(custom_job_prefix, '')
 
-    cron = CronTab(user=True)  # User module script user
+    cron = CronTab(user=True)  # User rpc service user
 
-    # Remove existing job with same comment (idempotent behavior)
-    cron.remove_all(comment=comment)
+    # Remove existing job with same identity (idempotent behavior)
+    # Match any job whose comment starts with "<server_id>, <job_id>"
+    # followed by a comma or end of string, regardless of the trailing comment.
+    identity_re = re.compile(rf"^{re.escape(identity)}(,|$)")
+    cron.remove_all(comment=identity_re)
 
     # Do job edit
     if state:

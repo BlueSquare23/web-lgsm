@@ -1,14 +1,9 @@
-import pwd
-import socket
-import getpass
-
 # TODO: Update trickle down imports. BAD! NEEDS FIXED!
 import os
 from flask import current_app
 from app import cache
 
 # Constants.
-USER = getpass.getuser()
 from app.utils.paths import PATHS
 CONNECTOR_CMD = [
     PATHS["sudo"],
@@ -31,24 +26,8 @@ def log_wrap(item_name, item):
     log_msg = f"{item_name} {str(type(item))}: {item}"
     return log_msg
 
-
-def get_uid(username):
-    """
-    Translates a username to a uid using pwd module.
-
-    Args:
-        username(str): User to get uid for
-
-    Returns:
-        uid (str): Either returns the uid for user or None if can't get uid
-    """
-    try:
-        user_info = pwd.getpwnam(username)
-        return user_info.pw_uid
-    except KeyError:
-        return None
-
-
+# This is going away anyways, fine here for now. But going to be replaced when
+# shell calls are replaced.
 def docker_cmd_build(server):
     """
     Builds docker cmd reused all over for given GameServer.
@@ -68,6 +47,7 @@ def docker_cmd_build(server):
         server.username,
         server.script_name,
     ]
+
 
 # TODO: This needs a sudo password or it wont work...
 def update_self():
@@ -97,56 +77,4 @@ def update_self():
 
     if "Update Required" in proc_info.stdout:
         return "Web LGSM Upgraded! Restarting momentarily..."
-
-
-# TODO: Give this the clean arch treatment
-def is_ssh_accessible(hostname):
-    """
-    Checks if a hostname/IP has an accessible SSH server on port 22.
-
-    Args:
-        hostname (str): The hostname or IP address to check.
-
-    Returns:
-        bool: True if SSH is accessible, False otherwise.
-    """
-    port = 22
-    timeout = 5
-
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(timeout)
-
-        result = sock.connect_ex((hostname, port))
-
-        # Check the result: 0 means the port is open.
-        if result == 0:
-            return True
-        else:
-            return False
-    except socket.gaierror:
-        return False
-    except socket.error:
-        return False
-    finally:
-        sock.close()
-
-# TODO: Give this the clean arch treatment
-def read_changelog():
-    """
-    Reads in the local CHANGELOG.md file and returns its contents.
-
-    Args:
-        None
-
-    Returns:
-        str: Contents of CHANGELOG.md file or err str.
-    """
-    try:
-        with open("CHANGELOG.md", "r") as file:
-            contents = file.read()
-        return contents
-
-    except Exception as e:
-        return f"Problem reading CHANGELOG.md: {e}"
 

@@ -1,3 +1,5 @@
+import getpass
+
 from threading import Thread
 from flask_login import login_required, current_user
 from flask import (
@@ -9,12 +11,14 @@ from flask import (
     current_app,
 )
 
-from app.utils import *
+from app.utils import log_wrap, update_self
 from app.interface.forms import validation_errors, SettingsForm
 
 from app.interface.use_cases import check_user_access, get_template_config, get_config, getint_config, getboolean_config, start_rpc_servers, batch_update_config, run_command, log_audit_event
 
 from . import main_bp
+
+USER = getpass.getuser()
 
 
 ######### Settings Page #########

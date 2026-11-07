@@ -13,19 +13,13 @@ from app.infrastructure.system.repositories.proc_info_repo import InMemProcInfoR
 
 from app.domain.entities.job import Job
 from app.infrastructure.system.command_executor.command_executor import CommandExecutor
-from app.infrastructure.system.user.rpc_supervisor import MultiUserRPCSupervisor
+from app.infrastructure.system.rpc.rpc_supervisor import MultiUserRPCSupervisor
 
 class CronScheduler:
     """
     Infrastructure layer class for interacting with the systems crontab via the
     ansible connector.
     """
-    CONNECTOR_CMD = [
-        PATHS["sudo"],
-        "-n",
-        "/opt/web-lgsm/bin/python",
-        PATHS["ansible_connector"],
-    ]
 
     # Dep invert these to make testing easier
     def __init__(self, command_service=CommandExecutor(), client=MultiUserRPCSupervisor(), game_server_repo=SqlAlchemyGameServerRepository(), cron_repo=SqlAlchemyCronRepository()):
@@ -66,26 +60,23 @@ class CronScheduler:
         return self.update(job, state=False)
 
 
-    # TODO: UPDATE THIS TO USE RPC SERVER FOR LISTING JOBS!!!
     def list(self, server_id):
         """
         Used for getting list of jobs for associated game server.
 
         Returns:
-            list: Passthrough to parse_cron_jobs().
+            list: Does `crontab -l` (essentially) via rpc procedure then passes to parse_jobs
         """
+        args = [ server_id ]
+
         server = self.game_server_repo.get(server_id)
+        kwargs = {'as_user': server.username}
 
-        cmd_id = 'list_jobs'
-        InMemProcInfoRepository().remove(cmd_id)  # Clear any old proc_info objects
+        jobs = self.client.call('list_cron', *args, **kwargs)
+        jobs_str = "\n".join(jobs["jobs"])
 
-        cmd = [PATHS['crontab'], '-l']
+        return self.parse_cron_jobs(jobs_str, server_id)
 
-        self.command_service.run(cmd, server, cmd_id)
-
-        proc_info = InMemProcInfoRepository().get(cmd_id)
-
-        return self.parse_cron_jobs("".join(proc_info.stdout), server.id)
 
     def parse_cron_jobs(self, cron_text, target_uuid):
         jobs = []

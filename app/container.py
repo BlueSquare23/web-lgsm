@@ -24,7 +24,7 @@ from app.application.use_cases.cron.update_cron_job import UpdateCronJob
 from app.application.use_cases.cron.delete_cron_job import DeleteCronJob
 from app.application.use_cases.cron.list_cron_jobs import ListCronJobs
 
-# User
+# App User
 from app.infrastructure.persistence.repositories.user_repo import SqlAlchemyUserRepository
 from app.application.use_cases.user.to_user import ToUser
 from app.application.use_cases.user.list_users import ListUsers
@@ -36,6 +36,14 @@ from app.application.use_cases.user.delete_user import DeleteUser
 from app.application.use_cases.user.get_user_totp_uri import GetUserTotpUri
 from app.application.use_cases.user.verify_user_totp import VerifyUserTotp
 from app.application.use_cases.user.list_user_game_servers import ListUserGameServers
+
+# System User
+from app.infrastructure.system.user.user_info import UserInfo
+from app.application.use_cases.user.get_uid import GetUID
+
+# SSH
+from app.infrastructure.system.ssh.port_checker import PortChecker
+from app.application.use_cases.ssh.is_accessible import IsAccessible
 
 # GameServer
 from app.infrastructure.persistence.repositories.game_server_repo import SqlAlchemyGameServerRepository
@@ -91,13 +99,17 @@ from app.application.use_cases.file_system.write_file import WriteFile
 from app.application.use_cases.file_system.delete_file import DeleteFile 
 from app.application.use_cases.file_system.rename_file import RenameFile 
 
+# Changelog
+from app.infrastructure.system.file_system.read_changelog import ChangelogReader
+from app.application.use_cases.file_system.read_changelog import ReadChangelog
+
 # Dirs 
 from app.infrastructure.system.file_system.dir_manager import DirectoryManager
 from app.application.use_cases.file_system.list_dir import ListDir
 from app.application.use_cases.file_system.is_dir import IsDir
 
 # RPC Service
-from app.infrastructure.system.user.rpc_server_manager import MultiUserRPCServerManager
+from app.infrastructure.system.rpc.rpc_server_manager import MultiUserRPCServerManager
 from app.application.use_cases.rpc_service.start_daemons import StartRPCServers
 from app.application.use_cases.rpc_service.check_server import CheckRPCServer
 
@@ -188,6 +200,15 @@ class Container:
     def lgsm_manager(self):
         return LgsmManager()
 
+    def system_user_info(self):
+        return UserInfo()
+
+    def port_checker(self):
+        return PortChecker()
+
+    def changelog_reader(self):
+        return ChangelogReader()
+
     # ---- Use Cases ----
 
     ## Audit
@@ -222,7 +243,7 @@ class Container:
             cron_scheduler=self.cron_scheduler(),
         )
 
-    ## User
+    ## App User
 
     def to_user(self):
         return ToUser(
@@ -273,6 +294,20 @@ class Container:
         return ListUserGameServers(
             user_repository=self.user_repository(),
             game_server_repository=self.game_server_repository(),
+        )
+
+    ## System User
+
+    def get_uid(self):
+        return GetUID(
+            system_user_info=self.system_user_info()
+        )
+
+    ## SSH
+
+    def is_ssh_accessible(self):
+        return IsAccessible(
+            port_checker=self.port_checker()
         )
 
     ## GameServer
@@ -451,6 +486,13 @@ class Container:
     def is_dir(self):
         return IsDir(
             dir_manager=self.dir_manager()
+        )
+
+    ## Changelog
+
+    def read_changelog(self):
+        return ReadChangelog(
+            changelog_reader=self.changelog_reader()
         )
 
     ## RPC Service

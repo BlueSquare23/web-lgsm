@@ -7,13 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.10.1 - unreleased]
 
-### Added
-
 ### Changed
 
 - Logo image to new original mark
 
 ### Fixed
+
+- Fix cron descriptions to be more natural language + fix `*/x` syntax issue. (Resolves [Issue 69](https://github.com/BlueSquare23/web-lgsm/issues/69)) 
+- Fix cron comment edit creating duplicate jobs by making idempotent on JOB-SHORT-UUID. (Resolves [Issue 69](https://github.com/BlueSquare23/web-lgsm/issues/69))
 
 ## [v1.10.0 - 2026-08-26]
 

@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New procedure for listing jobs (aka reinvent crontab -l as json rpc procedure)
+- New procedure for listing jobs (aka reinvent crontab -l as json rpc procedure).
 
 ### Changed
 
-- Logo image to new original mark
-- Make CronScheduler.list use json rpc service for listing jobs
+- Make `CronScheduler.list()` use json rpc service for listing jobs.
+- Update Werkzeug to 3.1.9 in requirements.txt.
+- Restructure `read_changelog` to make clean arch.
+- Change logo image to new original mark.
 
 ### Fixed
 

@@ -20,6 +20,7 @@ from .procedures import (
     traversal_safe,
     find_cfg_paths,
     edit_cron,
+    list_cron,
 )
 
 PLAYBOOKS = '/usr/local/share/web-lgsm'
@@ -40,6 +41,7 @@ FUNCTIONS = {
     "traversal_safe": traversal_safe,
     "find_cfg_paths": find_cfg_paths,
     "edit_cron": edit_cron,
+    "list_cron": list_cron,
 }
 
 # Request handler

@@ -97,6 +97,12 @@
 
 ### Misc Immediate Todos
 
+* [ ] **Change way I'm doing semantic versioning**
+  - MAJOR.MINOR.PATCH
+  - Major: New breaking backwards compat changes
+  - Minor: New feature
+  - Patch: Fix bug(s)
+
 * [ ] **Finally do away with old `utils.py` (aka `utils/helpers.py`) file**
   - Global includes in here are breaking a bunch of stuff.
   - Should've never `include *` from there. Oh well live and learn.
